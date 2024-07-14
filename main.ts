@@ -20,6 +20,7 @@ import {
 import { Extension } from "@codemirror/state";
 import { tinyLinkPlugin } from "./cm6";
 import { assert } from "console";
+import { inflate } from "zlib";
 
 type HeadingAnalysisResult = {
 	isValid: boolean; // 是否有效
@@ -279,7 +280,7 @@ function get_is_heading(head_analysis: HeadingAnalysisResult): boolean {
 	if (!head_analysis.isValid) {
 		return false;
 	}
-	console.log("head_analysis", head_analysis); // debug
+	// console.log("head_analysis", head_analysis); // debug
 
 	if (!head_analysis.isMultiline) {
 		// single line
@@ -330,6 +331,38 @@ function gen_insert_blocklink_singleline(
 
 	editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
 	return `^${id}`;
+}
+
+function gen_insert_blocklink_multline(
+	block: SectionCache,
+	editor: Editor,
+	settings: PluginSettings,
+	heading_level: number
+) {
+	const id = generateRandomId(
+		settings.enble_prefix ? settings.id_prefix : "",
+		settings.id_length
+	);
+
+	const sectionEnd = block.position.end;
+	const end: EditorPosition = {
+		ch: sectionEnd.col,
+		line: sectionEnd.line,
+	};
+
+	// const spacer = shouldInsertAfter(block) ? "\n\n" : " "; // insert to line or next line
+	const heading = "#".repeat(heading_level); // generate heading
+	editor.replaceRange(`\n\n ${heading} ^${id}`, end); // insert block id at end of block
+
+	const cursor = editor.getCursor("from"); // getCursor
+	// const lineLength = editor.getLine(cursor.line).length;
+	editor.setCursor(cursor.line, cursor.ch);
+	editor.replaceRange(`${heading} ˅${id}\n\n`, {
+		line: cursor.line,
+		ch: 0,
+	});
+
+	return `˅${id}`;
 }
 
 /**
@@ -496,6 +529,18 @@ export default class BlockLinkPlus extends Plugin {
 					head_analysis.block,
 					editor,
 					this.settings
+				);
+				this.copyLinkToClipboard(file, link, isEmbed);
+			} else if (head_analysis.block) {
+				if (head_analysis.minLevelInRange != Infinity) {
+					return;
+				}
+
+				const link = gen_insert_blocklink_multline(
+					head_analysis.block,
+					editor,
+					this.settings,
+					head_analysis.nearestBeforeStartLevel + 1
 				);
 				this.copyLinkToClipboard(file, link, isEmbed);
 			}
