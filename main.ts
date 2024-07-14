@@ -419,17 +419,19 @@ function markdownPostProcessor(el: HTMLElement) {
 			NodeFilter.SHOW_TEXT,
 			null
 		);
-		let currentNode: Node | null = walker.currentNode;
+		let nodes: Node[] = [];
+		let node: Node;
+		// @ts-ignore
+		while ((node = walker.nextNode())) {
+			nodes.push(node);
+		}
 
-		while (currentNode) {
-			const originalText = currentNode.textContent; // 直接处理每个节点
-			let cleanedText = originalText
-				? originalText.replace(/\s*˅[a-zA-Z0-9-]*/g, "")
-				: "";
-			if (originalText !== cleanedText) {
-				currentNode.textContent = cleanedText;
-			}
-			currentNode = walker.nextNode(); // 移动到下一个节点
+		for (node of nodes) {
+			// @ts-ignore
+			node.textContent = node.textContent.replace(
+				/\s*˅[a-zA-Z0-9-]*/g,
+				""
+			);
 		}
 	}
 }
