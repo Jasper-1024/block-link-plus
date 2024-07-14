@@ -436,6 +436,16 @@ function markdownPostProcessor(el: HTMLElement) {
 	}
 }
 
+function ensureStyleOnce(id: string, css: string) {
+    if (!document.getElementById(id)) {
+        const style = document.createElement('style');
+        style.id = id;
+        style.type = 'text/css';
+        style.innerText = css;
+        document.head.appendChild(style);
+    }
+}
+
 /**
  * Creates a BlockLinkPlusViewPlugin with the specified rule.
  *
@@ -445,9 +455,22 @@ function markdownPostProcessor(el: HTMLElement) {
 function createViewPlugin(
 	rule: string = "(^| )˅[a-zA-Z0-9_]+$"
 ): BlockLinkPlusViewPlugin {
+
+	ensureStyleOnce(
+		"unique-style-id",
+		`
+        .small_id {
+            font-size: 1.5rem;
+            opacity: 0.8;
+            vertical-align: top;
+            font-weight: normal;
+        }
+    `
+	);
+
 	let decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
-		decoration: Decoration.mark({ class: "small-font" }),
+		decoration: Decoration.mark({ class: "small_id" }),
 	});
 	return ViewPlugin.define(
 		(view) => ({

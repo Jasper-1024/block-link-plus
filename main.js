@@ -273,10 +273,30 @@ function markdownPostProcessor(el) {
     }
   }
 }
+function ensureStyleOnce(id, css) {
+  if (!document.getElementById(id)) {
+    const style = document.createElement("style");
+    style.id = id;
+    style.type = "text/css";
+    style.innerText = css;
+    document.head.appendChild(style);
+  }
+}
 function createViewPlugin(rule = "(^| )\u02C5[a-zA-Z0-9_]+$") {
+  ensureStyleOnce(
+    "unique-style-id",
+    `
+        .small_id {
+            font-size: 1.5rem;
+            opacity: 0.8;
+            vertical-align: top;
+            font-weight: normal;
+        }
+    `
+  );
   let decorator = new import_view.MatchDecorator({
     regexp: new RegExp(rule, "g"),
-    decoration: import_view.Decoration.mark({ class: "small-font" })
+    decoration: import_view.Decoration.mark({ class: "small_id" })
   });
   return import_view.ViewPlugin.define(
     (view) => ({
