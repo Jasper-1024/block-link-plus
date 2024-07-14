@@ -47,7 +47,7 @@ type HeadingAnalysisResult = {
 export const enum MultLineHandle {
 	oneline, // as one line handle
 	heading, // add new heading, if select text contain not heading
-	//todo multblock, // add new block, if select text contain not block
+	multblock, // add new block, if select text contain not block
 }
 
 export type KeysOfType<Obj, Type> = {
@@ -67,16 +67,19 @@ interface PluginSettings {
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
-	mult_line_handle: MultLineHandle.oneline,
-	enble_prefix: false,
-	id_prefix: "123",
-	id_length: 4,
+	mult_line_handle: MultLineHandle.oneline, // as one line handle
+	enble_prefix: false, // no prefix
+	id_prefix: "", // prefix
+	id_length: 4, // id length
 };
 
 /**
- * Generates a random ID.
+ * Generates a random ID with the specified prefix and length.
  *
- * @returns A string representing the random ID.
+ * @param prefix - The prefix to be added to the ID (optional).
+ * @param length - The length of the random ID. Must be between 3 and 7 (inclusive).
+ * @returns The generated random ID.
+ * @throws Error if the length is not between 3 and 7.
  */
 function generateRandomId(prefix: string, length: number): string {
 	if (length < 3 || length > 7) {
@@ -86,21 +89,6 @@ function generateRandomId(prefix: string, length: number): string {
 	return `${prefix}${separator}${Math.random()
 		.toString(36)
 		.substring(2, 2 + length)}`;
-}
-
-// Function to sanitize the heading by replacing illegal characters
-const illegalHeadingCharsRegex = /[!"#$%&()*+,.:;<=>?@^`{|}~\/\[\]\\]/g;
-/**
- * Sanitizes a heading by replacing illegal characters and removing extra whitespace.
- *
- * @param heading - The heading to sanitize.
- * @returns The sanitized heading.
- */
-function sanitizeHeading(heading: string) {
-	return heading
-		.replace(illegalHeadingCharsRegex, " ")
-		.replace(/\s+/g, " ")
-		.trim();
 }
 
 /**
@@ -230,13 +218,6 @@ function analyzeHeadings(
 		}
 	});
 
-	console.log(
-		"analyzeHeadings",
-		headingAtStart,
-		minLevelInRange,
-		inner_levels
-	);
-
 	// 检查在 hasHeadingAtStart 为 true 时，其 level 是否是范围内最小的，并且这个值的 heading 是否唯一
 	if (hasHeadingAtStart && headingAtStart != null) {
 		// @ts-ignore | ts 类型识别错误了
@@ -281,10 +262,10 @@ function analyzeHeadings(
 }
 
 /**
- * Determines if the provided `head_analysis` is a heading.
+ * Determines whether the given `head_analysis` is a heading.
  *
  * @param head_analysis - The analysis result of a heading.
- * @returns A boolean indicating whether the `head_analysis` is a heading.
+ * @returns `true` if the `head_analysis` is a heading, `false` otherwise.
  */
 function get_is_heading(head_analysis: HeadingAnalysisResult): boolean {
 	// invalid input
@@ -325,7 +306,7 @@ function gen_insert_blocklink_singleline(
 	settings: PluginSettings
 ): string {
 	if (block.id) {
-		return block.id;
+		return `^${block.id}`;
 	}
 
 	const sectionEnd = block.position.end;
@@ -344,7 +325,16 @@ function gen_insert_blocklink_singleline(
 	return `^${id}`;
 }
 
-function gen_insert_blocklink_multline(
+/**
+ * Generates and inserts a block link with a multiline heading.
+ *
+ * @param block - The section cache representing the block.
+ * @param editor - The editor instance.
+ * @param settings - The plugin settings.
+ * @param heading_level - The level of the heading.
+ * @returns The generated block ID.
+ */
+function gen_insert_blocklink_multline_heading(
 	block: SectionCache,
 	editor: Editor,
 	settings: PluginSettings,
@@ -377,6 +367,47 @@ function gen_insert_blocklink_multline(
 }
 
 /**
+ * Generates block links for multiple lines of a block.
+ *
+ * @param fileCache - The cached metadata of the file.
+ * @param editor - The editor instance.
+ * @param settings - The plugin settings.
+ * @returns An array of block link IDs or an empty string.
+ */
+function gen_insert_blocklink_multline_block(
+	fileCache: CachedMetadata,
+	editor: Editor,
+	settings: PluginSettings
+): string[] | string {
+	if (fileCache.sections == null) return "";
+
+	const start_line = editor.getCursor("from").line;
+	const end_line = editor.getCursor("to").line;
+
+	const sortedSections = [...fileCache.sections].sort(
+		(a, b) => a.position.start.line - b.position.start.line
+	);
+	let links = new Array<string>();
+
+	for (const section of sortedSections) {
+		if (section.position.start.line > end_line) break;
+		if (
+			section.position.start.line >= start_line &&
+			section.position.end.line <= end_line
+		) {
+			const id = gen_insert_blocklink_singleline(
+				section,
+				editor,
+				settings
+			);
+			links.push(id);
+		}
+	}
+
+	return links;
+}
+
+/**
  * Processes the markdown element by removing specific text patterns.
  * make ˅id to ""
  * @param el - The HTML element to process.
@@ -403,7 +434,12 @@ function markdownPostProcessor(el: HTMLElement) {
 	}
 }
 
-// Creates a ViewPlugin from a LinkifyRule.
+/**
+ * Creates a BlockLinkPlusViewPlugin with the specified rule.
+ *
+ * @param rule - The regular expression rule used to match the block links.
+ * @returns The created BlockLinkPlusViewPlugin.
+ */
 function createViewPlugin(
 	rule: string = "(^| )˅[a-zA-Z0-9_]+$"
 ): BlockLinkPlusViewPlugin {
@@ -447,19 +483,21 @@ export default class BlockLinkPlus extends Plugin {
 			)
 		);
 
-		// Register global command
-		// this.addCommand({
-		// 	id: "copy-link-to-block",
-		// 	name: "Copy link to current block or heading",
-		// 	editorCheckCallback: (isChecking, editor, view) =>
-		// 		this.handleCommand(isChecking, editor, view, false),
-		// });
-		// this.addCommand({
-		// 	id: "copy-embed-to-block",
-		// 	name: "Copy embed to current block or heading",
-		// 	editorCheckCallback: (isChecking, editor, view) =>
-		// 		this.handleCommand(isChecking, editor, view, true),
-		// });
+		this.addCommand({
+			id: "copy-link-to-block2",
+			name: "Copy link to current block or heading",
+			editorCheckCallback: (isChecking, editor, view) => {
+				return this.handleCommand(isChecking, editor, view, false);
+			},
+		});
+
+		this.addCommand({
+			id: "copy-embed-to-block2",
+			name: "Copy embed to current block or heading",
+			editorCheckCallback: (isChecking, editor, view) => {
+				return this.handleCommand(isChecking, editor, view, true);
+			},
+		});
 
 		// for reading mode
 		this.registerMarkdownPostProcessor(markdownPostProcessor);
@@ -532,59 +570,148 @@ export default class BlockLinkPlus extends Plugin {
 		if (!view.file || !head_analysis.isValid) return; // no file or invalid input
 
 		const { file, editor } = view;
+		const fileCache = this.app.metadataCache.getFileCache(file);
+		if (!fileCache) return; // no fileCache, return
+
+		// console.log("handleMenuItemClick", fileCache);
 
 		if (!head_analysis.isMultiline) {
-			// signle line
-			if (isHeading && head_analysis.headingAtStart) {
-				// start_line is a heading
-				this.copyLinkToClipboard(
-					file,
-					head_analysis.headingAtStart.heading,
-					isEmbed
-				);
-			} else if (!isHeading && head_analysis.block) {
-				// start_line is not a heading
-				const link = gen_insert_blocklink_singleline(
-					head_analysis.block,
-					editor,
-					this.settings
-				);
-				this.copyLinkToClipboard(file, link, isEmbed);
-			}
-			return;
+			// Single line
+			this.handleSingleLine(
+				file,
+				isHeading,
+				isEmbed,
+				head_analysis,
+				editor
+			);
+		} else {
+			// Multi line
+			this.handleMultiLine(
+				file,
+				isHeading,
+				isEmbed,
+				head_analysis,
+				editor,
+				fileCache
+			);
 		}
-		// multi line
+	}
+
+	private handleSingleLine(
+		file: any,
+		isHeading: boolean,
+		isEmbed: boolean,
+		head_analysis: HeadingAnalysisResult,
+		editor: any
+	) {
 		if (isHeading && head_analysis.headingAtStart) {
 			// start_line is a heading
-			this.copyLinkToClipboard(
+			this.copyToClipboard(
+				file,
+				head_analysis.headingAtStart.heading,
+				isEmbed
+			);
+		} else if (!isHeading && head_analysis.block) {
+			// start_line is not a heading
+			const link = gen_insert_blocklink_singleline(
+				head_analysis.block,
+				editor,
+				this.settings
+			);
+			this.copyToClipboard(file, link, isEmbed);
+		}
+	}
+
+	private handleMultiLine(
+		file: any,
+		isHeading: boolean,
+		isEmbed: boolean,
+		head_analysis: HeadingAnalysisResult,
+		editor: any,
+		fileCache: any
+	) {
+		if (isHeading && head_analysis.headingAtStart) {
+			// start_line is a heading
+			this.copyToClipboard(
 				file,
 				head_analysis.headingAtStart.heading,
 				isEmbed
 			);
 		} else {
-			if (
-				this.settings.mult_line_handle == MultLineHandle.oneline &&
-				head_analysis.block
-			) {
+			this.handleMultiLineBlock(
+				file,
+				isEmbed,
+				head_analysis,
+				editor,
+				fileCache
+			);
+		}
+	}
+
+	private _gen_insert_blocklink_multline_heading(
+		fileCache: CachedMetadata,
+		editor: any,
+		head_analysis: HeadingAnalysisResult
+	): string {
+		if (!head_analysis.block) return "";
+
+		return gen_insert_blocklink_multline_heading(
+			head_analysis.block,
+			editor,
+			this.settings,
+			head_analysis.nearestBeforeStartLevel + 1
+		);
+	}
+
+	private _gen_insert_blocklink_multline_block(
+		fileCache: CachedMetadata,
+		editor: any,
+		head_analysis: HeadingAnalysisResult
+	) {
+		return gen_insert_blocklink_multline_block(
+			fileCache,
+			editor,
+			this.settings
+		);
+	}
+
+	private handleMultiLineBlock(
+		file: any,
+		isEmbed: boolean,
+		head_analysis: HeadingAnalysisResult,
+		editor: any,
+		fileCache: any
+	) {
+		if (this.settings.mult_line_handle == MultLineHandle.oneline) {
+			if (head_analysis.block) {
 				const link = gen_insert_blocklink_singleline(
 					head_analysis.block,
 					editor,
 					this.settings
 				);
-				this.copyLinkToClipboard(file, link, isEmbed);
-			} else if (head_analysis.block) {
-				if (head_analysis.minLevelInRange != Infinity) {
-					return;
-				}
-
-				const link = gen_insert_blocklink_multline(
-					head_analysis.block,
-					editor,
-					this.settings,
-					head_analysis.nearestBeforeStartLevel + 1
-				);
-				this.copyLinkToClipboard(file, link, isEmbed);
+				this.copyToClipboard(file, link, isEmbed);
 			}
+			return;
+		} else {
+			if (head_analysis.minLevelInRange != Infinity) {
+				new Notice(
+					`Please select text that does not include headings`,
+					1500
+				);
+				return;
+			}
+			const linkMethod =
+				this.settings.mult_line_handle == MultLineHandle.heading
+					? this._gen_insert_blocklink_multline_heading
+					: this._gen_insert_blocklink_multline_block;
+			const link = linkMethod.call(
+				this,
+				fileCache,
+				editor,
+				head_analysis
+			);
+			this.copyToClipboard(file, link, isEmbed);
+			return;
 		}
 	}
 
@@ -602,56 +729,86 @@ export default class BlockLinkPlus extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	handleCommand(
+	private handleCommand(
 		isChecking: boolean,
 		editor: Editor,
 		view: MarkdownView | MarkdownFileInfo,
 		isEmbed: boolean
 	) {
-		// if (isChecking) {
-		// 	// @ts-ignore
-		// 	return !!this.getBlock(editor, view.file);
-		// }
-		// const file = view.file;
-		// if (!file) return;
-		// const block = this.getBlock(editor, file);
-		// if (!block) return;
-		// const isHeading = !!(block as any).heading;
-		// if (isHeading) {
-		// 	this.handleHeading(view.file!, block as HeadingCache, isEmbed);
-		// } else {
-		// 	const file = view.file!;
-		// 	this.handleBlock(
-		// 		file,
-		// 		editor,
-		// 		block as SectionCache | ListItemCache,
-		// 		isEmbed
-		// 	);
-		// }
+		if (isChecking) {
+			return true;
+		}
+
+		const file: TFile | null = view.file;
+		if (!file) return; // no file , return
+
+		const start_line = editor.getCursor("from").line;
+		const end_line = editor.getCursor("to").line;
+		const fileCache = this.app.metadataCache.getFileCache(file);
+		if (!fileCache) return; // no fileCache, return
+
+		let head_analysis = analyzeHeadings(fileCache, start_line, end_line);
+		if (!head_analysis.isValid) {
+			return; // invalid input
+		}
+
+		let isHeading = get_is_heading(head_analysis); // is heading?
+
+		if (!head_analysis.isMultiline) {
+			// Single line
+			this.handleSingleLine(
+				file,
+				isHeading,
+				isEmbed,
+				head_analysis,
+				editor
+			);
+		} else {
+			// Multi line
+			this.handleMultiLine(
+				file,
+				isHeading,
+				isEmbed,
+				head_analysis,
+				editor,
+				fileCache
+			);
+		}
+		return true;
 	}
 
 	/**
-	 * Copies a link to a block to the clipboard.
+	 * Copies links to one or more blocks to the clipboard.
 	 *
-	 * @param file - The file containing the block.
-	 * @param link - block link is ^id, heading link is heading without `#`
-	 * @param isEmbed - Specifies whether the link should be embedded.
-	 * @param alias - An optional alias for the link.
+	 * @param file - The file containing the blocks.
+	 * @param links - An array of block links (^id) or heading links (heading without `#`).
+	 * @param isEmbed - Specifies whether the links should be embedded.
+	 * @param alias - An optional alias for the links.
 	 */
-	copyLinkToClipboard(
+	copyToClipboard(
 		file: TFile,
-		link: string,
+		links: string | string[],
 		isEmbed: boolean,
 		alias?: string
 	) {
-		navigator.clipboard.writeText(
-			`${isEmbed ? "!" : ""}${this.app.fileManager.generateMarkdownLink(
-				file,
-				"",
-				"#" + link,
-				alias
-			)}`
-		);
+		// Convert single link to array if necessary
+		const linksArray = typeof links === "string" ? [links] : links;
+
+		const markdownLinks = linksArray
+			.map((link, index) => {
+				const addNewLine = index < links.length - 1 ? "\n" : "";
+				return `${
+					isEmbed ? "!" : ""
+				}${this.app.fileManager.generateMarkdownLink(
+					file,
+					"",
+					"#" + link,
+					alias
+				)}${addNewLine}`;
+			})
+			.join("");
+
+		navigator.clipboard.writeText(markdownLinks);
 	}
 }
 
@@ -749,19 +906,22 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		// title
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Block-link-plus Settings" });
+		containerEl.createEl("h2", { text: "Block-link Settings" });
 
-		//@ts-ignore
-		this.addDropdownSetting("mult_line_handle", ["0", "1"], (option) => {
-			const optionsSet = new Map([
-				["0", "Default"],
-				["1", "Add new heading"],
-				// Add new members here as needed
-				// ["2", "New Member Description"],
-			]);
-			return optionsSet.get(option) || "Unknown";
-		})
-			.setName("Multi-line Block ID")
+		this.addDropdownSetting(
+			//@ts-ignore
+			"mult_line_handle",
+			["0", "1", "2"],
+			(option) => {
+				const optionsSet = new Map([
+					["0", "Default"],
+					["1", "Add new heading"],
+					["2", "Add multi block"],
+				]);
+				return optionsSet.get(option) || "Unknown";
+			}
+		)
+			.setName("Multi-line Block Behavior")
 			.setDesc(
 				"Define how multi-line selections generate block IDs. 'Default' treats them as a single line."
 			);
