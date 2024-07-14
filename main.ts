@@ -37,14 +37,28 @@ type HeadingAnalysisResult = {
 	isEndLineJustBeforeHeading: boolean; // end_line 是否正好是某个 heading 的 start.line - 1
 };
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+export const enum MultLineHandle {
+	oneline, // as one line handle
+	heading, // add new heading, if select text contain not heading
+	//todo multblock, // add new block, if select text contain not block
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: "default",
+export type KeysOfType<Obj, Type> = {
+	[k in keyof Obj]: Obj[k] extends Type ? k : never;
+}[keyof Obj];
+
+interface PluginSettings {
+	mult_line_handle: MultLineHandle;
+	enble_prefix: boolean;
+	id_prefix: string;
+	id_length: number;
+}
+
+const DEFAULT_SETTINGS: PluginSettings = {
+	mult_line_handle: MultLineHandle.oneline,
+	enble_prefix: false,
+	id_prefix: "123",
+	id_length: 4,
 };
 
 /**
@@ -52,8 +66,14 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
  *
  * @returns A string representing the random ID.
  */
-function generateRandomId(): string {
-	return Math.random().toString(36).substring(2, 6);
+function generateRandomId(prefix: string, length: number): string {
+	if (length < 3 || length > 7) {
+		throw new Error("Length must be between 3 and 7.");
+	}
+	const separator = prefix ? "-" : "";
+	return `${prefix}${separator}${Math.random()
+		.toString(36)
+		.substring(2, 2 + length)}`;
 }
 
 // Function to sanitize the heading by replacing illegal characters
@@ -73,7 +93,7 @@ function sanitizeHeading(heading: string) {
 
 /**
  * Determines whether a block should be inserted at next line.
- * 
+ *
  * @param block - The block to check.
  * @returns `true` if the block should be inserted after, `false` otherwise.
  */
@@ -89,10 +109,9 @@ function shouldInsertAfter(block: ListItemCache | SectionCache) {
 	}
 }
 
-
 /**
  * Analyzes the headings within a specified range of lines in a file.
- * 
+ *
  * @param fileCache - The cached metadata of the file.
  * @param start_line - The starting line of the range.
  * @param end_line - The ending line of the range.
@@ -121,7 +140,7 @@ function analyzeHeadings(
 		};
 	}
 
-	console.log("analyzeHeadings", fileCache, start_line, end_line); // debug
+	// console.log("analyzeHeadings", fileCache, start_line, end_line); // debug
 	// one line
 	if (start_line == end_line) {
 		let head_block: HeadingCache | undefined = fileCache.headings?.find(
@@ -133,8 +152,8 @@ function analyzeHeadings(
 
 		let block = (fileCache.sections || []).find((section) => {
 			return (
-				section.position.start.line <= start_line &&
-				section.position.end.line >= start_line
+				section.position.start.line <= end_line &&
+				section.position.end.line >= end_line
 			);
 		})!;
 		return {
@@ -226,12 +245,18 @@ function analyzeHeadings(
 			}
 		}
 	}
+	let block = (fileCache.sections || []).find((section) => {
+		return (
+			section.position.start.line <= end_line &&
+			section.position.end.line >= end_line
+		);
+	})!;
 	return {
 		isValid: true,
 		start_line,
 		end_line,
 		isMultiline: true,
-		block: null,
+		block: block,
 		nearestBeforeStartLevel,
 		minLevelInRange,
 		hasHeadingAtStart,
@@ -245,7 +270,7 @@ function analyzeHeadings(
 
 /**
  * Determines if the provided `head_analysis` is a heading.
- * 
+ *
  * @param head_analysis - The analysis result of a heading.
  * @returns A boolean indicating whether the `head_analysis` is a heading.
  */
@@ -284,7 +309,8 @@ function get_is_heading(head_analysis: HeadingAnalysisResult): boolean {
  */
 function gen_insert_blocklink_singleline(
 	block: SectionCache,
-	editor: Editor
+	editor: Editor,
+	settings: PluginSettings
 ): string {
 	if (block.id) {
 		return block.id;
@@ -296,7 +322,10 @@ function gen_insert_blocklink_singleline(
 		line: sectionEnd.line,
 	};
 
-	const id = generateRandomId(); // gen id
+	const id = generateRandomId(
+		settings.enble_prefix ? settings.id_prefix : "",
+		settings.id_length
+	);
 	const spacer = shouldInsertAfter(block) ? "\n\n" : " "; // insert to line or next line
 
 	editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
@@ -331,13 +360,18 @@ function markdownPostProcessor(el: HTMLElement) {
 }
 
 // all plugin need extends Plugin
-export default class BlockLinkPlugin extends Plugin {
+export default class BlockLinkPlus extends Plugin {
 	appName = this.manifest.name;
-	settings: MyPluginSettings;
+	settings: PluginSettings;
 	editorExtensions: Extension[] = [];
 
 	async onload() {
 		console.log(`loading ${this.appName}`);
+
+		// Load settings.
+		await this.loadSettings();
+		// Create settings tab.
+		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
 
 		// Register right click menu
 		this.registerEvent(
@@ -381,7 +415,7 @@ export default class BlockLinkPlugin extends Plugin {
 		if (!fileCache) return; // no fileCache, return
 
 		let head_analysis = analyzeHeadings(fileCache, start_line, end_line);
-		console.log("head_analysis", head_analysis); // debug
+		// console.log("head_analysis", head_analysis); // debug
 
 		if (!head_analysis.isValid) {
 			return; // invalid input
@@ -438,7 +472,8 @@ export default class BlockLinkPlugin extends Plugin {
 				// start_line is not a heading
 				const link = gen_insert_blocklink_singleline(
 					head_analysis.block,
-					editor
+					editor,
+					this.settings
 				);
 				this.copyLinkToClipboard(file, link, isEmbed);
 			}
@@ -452,6 +487,18 @@ export default class BlockLinkPlugin extends Plugin {
 				head_analysis.headingAtStart.heading,
 				isEmbed
 			);
+		} else {
+			if (
+				this.settings.mult_line_handle == MultLineHandle.oneline &&
+				head_analysis.block
+			) {
+				const link = gen_insert_blocklink_singleline(
+					head_analysis.block,
+					editor,
+					this.settings
+				);
+				this.copyLinkToClipboard(file, link, isEmbed);
+			}
 		}
 	}
 
@@ -635,7 +682,10 @@ export default class BlockLinkPlugin extends Plugin {
 			line: sectionEnd.line,
 		};
 
-		const id = generateRandomId(); // 生成 id
+		const id = generateRandomId(
+			this.settings.enble_prefix ? this.settings.id_prefix : "",
+			this.settings.id_length
+		);
 		const spacer = shouldInsertAfter(block) ? "\n\n" : " "; // 插入位置
 
 		editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
@@ -707,4 +757,128 @@ export default class BlockLinkPlugin extends Plugin {
 
 	// 	true_level = minLevelInRange - 1;
 	// }
+}
+
+class BlockLinkPlusSettingsTab extends PluginSettingTab {
+	plugin: BlockLinkPlus;
+
+	constructor(app: App, plugin: BlockLinkPlus) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	addToggleSetting(
+		settingName: KeysOfType<PluginSettings, boolean>,
+		extraOnChange?: (value: boolean) => void
+	) {
+		return new Setting(this.containerEl).addToggle((toggle) => {
+			toggle
+				.setValue(this.plugin.settings[settingName])
+				.onChange(async (value) => {
+					// @ts-ignore
+					this.plugin.settings[settingName] = value;
+					await this.plugin.saveSettings();
+					extraOnChange?.(value);
+				});
+		});
+	}
+
+	// 文本输入框
+	addTextInputSetting(
+		settingName: KeysOfType<PluginSettings, string>,
+		placeholder: string
+	) {
+		return new Setting(this.containerEl).addText((text) =>
+			text
+				.setPlaceholder(placeholder)
+				.setValue(this.plugin.settings[settingName])
+				.onChange(async (value) => {
+					if (value.length > 0) {
+						// @ts-ignore
+						this.plugin.settings[settingName] = value;
+						await this.plugin.saveSettings();
+					}
+				})
+		);
+	}
+
+	addDropdownSetting(
+		settingName: KeysOfType<PluginSettings, string>,
+		options: string[],
+		display?: (option: string) => string
+	) {
+		return new Setting(this.containerEl).addDropdown((dropdown) => {
+			const displayNames = new Set<string>();
+			for (const option of options) {
+				const displayName = display?.(option) ?? option;
+				if (!displayNames.has(displayName)) {
+					dropdown.addOption(option, displayName);
+					displayNames.add(displayName);
+				}
+			}
+			dropdown
+				.setValue(this.plugin.settings[settingName])
+				.onChange(async (value) => {
+					// @ts-ignore
+					this.plugin.settings[settingName] = value;
+					await this.plugin.saveSettings();
+				});
+		});
+	}
+
+	addSliderSetting(
+		settingName: KeysOfType<PluginSettings, number>,
+		min: number,
+		max: number,
+		step: number
+	) {
+		return new Setting(this.containerEl).addSlider((slider) => {
+			slider
+				.setLimits(min, max, step)
+				.setValue(this.plugin.settings[settingName])
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					// @ts-ignore
+					this.plugin.settings[settingName] = value;
+					await this.plugin.saveSettings();
+				});
+		});
+	}
+
+	addHeading(heading: string) {
+		return new Setting(this.containerEl).setName(heading).setHeading();
+	}
+
+	display(): void {
+		const { containerEl } = this;
+		// title
+		containerEl.empty();
+		containerEl.createEl("h2", { text: "Block-link-plus Settings" });
+
+		//@ts-ignore
+		this.addDropdownSetting("mult_line_handle", ["0", "1"], (option) => {
+			const optionsSet = new Map([
+				["0", "Default"],
+				["1", "Add new heading"],
+				// Add new members here as needed
+				// ["2", "New Member Description"],
+			]);
+			return optionsSet.get(option) || "Unknown";
+		})
+			.setName("Multi-line Block ID")
+			.setDesc(
+				"Define how multi-line selections generate block IDs. 'Default' treats them as a single line."
+			);
+
+		this.addHeading("Block ID settings");
+		this.addSliderSetting("id_length", 3, 7, 1)
+			.setName("Max Block ID Length")
+			.setDesc("Set the maximum number of characters for a block ID.");
+
+		this.addToggleSetting("enble_prefix").setName("Custom ID Prefix");
+
+		this.addTextInputSetting("id_prefix", "")
+			.setName("Block ID Prefix")
+			.setDesc("Block ID will be: prefix-random_str");
+	}
 }
