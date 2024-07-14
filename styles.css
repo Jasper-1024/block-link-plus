@@ -7,7 +7,8 @@ If your plugin does not need CSS, delete this file.
 
 */
 .small-font {
-    font-size: 0.8em;
+    font-size: 1.5rem;
     opacity: 0.8;
     vertical-align: top;
+    font-weight: normal;
 }

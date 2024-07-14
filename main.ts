@@ -17,10 +17,16 @@ import {
 	CachedMetadata,
 } from "obsidian";
 
-import { Extension } from "@codemirror/state";
-import { tinyLinkPlugin } from "./cm6";
+import {
+	Decoration,
+	MatchDecorator,
+	ViewPlugin,
+	ViewUpdate,
+} from "@codemirror/view";
+import { Extension, RangeSet } from "@codemirror/state";
 import { assert } from "console";
 import { inflate } from "zlib";
+// import { RangeSet } from "@codemirror/state";
 
 type HeadingAnalysisResult = {
 	isValid: boolean; // 是否有效
@@ -47,6 +53,11 @@ export const enum MultLineHandle {
 export type KeysOfType<Obj, Type> = {
 	[k in keyof Obj]: Obj[k] extends Type ? k : never;
 }[keyof Obj];
+
+type BlockLinkPlusViewPlugin = ViewPlugin<{
+	decorations: RangeSet<Decoration>;
+	update(u: ViewUpdate): void;
+}>;
 
 interface PluginSettings {
 	mult_line_handle: MultLineHandle;
@@ -392,10 +403,32 @@ function markdownPostProcessor(el: HTMLElement) {
 	}
 }
 
+// Creates a ViewPlugin from a LinkifyRule.
+function createViewPlugin(
+	rule: string = "(^| )˅[a-zA-Z0-9_]+$"
+): BlockLinkPlusViewPlugin {
+	let decorator = new MatchDecorator({
+		regexp: new RegExp(rule, "g"),
+		decoration: Decoration.mark({ class: "small-font" }),
+	});
+	return ViewPlugin.define(
+		(view) => ({
+			decorations: decorator.createDeco(view),
+			update(u) {
+				this.decorations = decorator.updateDeco(u, this.decorations);
+			},
+		}),
+		{
+			decorations: (v) => v.decorations,
+		}
+	);
+}
+
 // all plugin need extends Plugin
 export default class BlockLinkPlus extends Plugin {
 	appName = this.manifest.name;
 	settings: PluginSettings;
+	viewPlugin: BlockLinkPlusViewPlugin;
 	editorExtensions: Extension[] = [];
 
 	async onload() {
@@ -429,10 +462,18 @@ export default class BlockLinkPlus extends Plugin {
 		// });
 
 		// for reading mode
-		// this.registerMarkdownPostProcessor(markdownPostProcessor);
-		//
-		// this.registerEditorExtension([tinyLinkPlugin]);
+		this.registerMarkdownPostProcessor(markdownPostProcessor);
+		// for live preview
+		this.viewPlugin = createViewPlugin();
+		this.registerEditorExtension([this.viewPlugin]);
+		// this.refreshExtensions();
 	}
+
+	// Creates new LinkifyViewPlugins and registers them.
+	// refreshExtensions() {
+	// 	this.viewPlugin = createViewPlugin();
+	// 	this.app.workspace.updateOptions();
+	// }
 
 	private handleEditorMenu(
 		menu: Menu,
@@ -547,25 +588,6 @@ export default class BlockLinkPlus extends Plugin {
 		}
 	}
 
-	private handleItemClick(
-		view: any,
-		block: HeadingCache | SectionCache | ListItemCache,
-		isEmbed: boolean
-	): void {
-		if (view.file) {
-			if ("heading" in block) {
-				this.handleHeading(view.file, block as HeadingCache, isEmbed);
-			} else {
-				this.handleBlock(
-					view.file,
-					view.editor,
-					block as SectionCache | ListItemCache,
-					isEmbed
-				);
-			}
-		}
-	}
-
 	onunload() {}
 
 	async loadSettings() {
@@ -586,74 +608,26 @@ export default class BlockLinkPlus extends Plugin {
 		view: MarkdownView | MarkdownFileInfo,
 		isEmbed: boolean
 	) {
-		if (isChecking) {
-			// @ts-ignore
-			return !!this.getBlock(editor, view.file);
-		}
-
-		const file = view.file;
-		if (!file) return;
-
-		const block = this.getBlock(editor, file);
-
-		if (!block) return;
-
-		const isHeading = !!(block as any).heading;
-
-		if (isHeading) {
-			this.handleHeading(view.file!, block as HeadingCache, isEmbed);
-		} else {
-			const file = view.file!;
-			this.handleBlock(
-				file,
-				editor,
-				block as SectionCache | ListItemCache,
-				isEmbed
-			);
-		}
-	}
-
-	getBlock(editor: Editor, file: TFile) {
-		const cursor = editor.getCursor("to");
-
-		const cursor_to = editor.getCursor("to");
-		const cursor_from = editor.getCursor("from");
-
-		const fileCache = this.app.metadataCache.getFileCache(file);
-
-		// console.log("fileCache", fileCache); // debug
-
-		// 查找 section
-		let block: ListItemCache | HeadingCache | SectionCache = (
-			fileCache?.sections || []
-		).find((section) => {
-			// cursor.line 当前行 所在的 ListItemCache | HeadingCache | SectionCache
-			return (
-				section.position.start.line <= cursor.line &&
-				section.position.end.line >= cursor.line
-			);
-		})!; // add type assertion here
-
-		// 如果从 section 找到的是 list
-		if (block?.type === "list") {
-			// 查找 item
-			block = (fileCache?.listItems || []).find((item) => {
-				return (
-					item.position.start.line <= cursor.line &&
-					item.position.end.line >= cursor.line
-				);
-			}) as ListItemCache;
-		} else if (block?.type === "heading") {
-			// 如果是 heading
-			// 查找 heading
-			block = (fileCache?.headings || []).find((heading) => {
-				return (
-					heading.position.start.line === block.position.start.line
-				);
-			}) as HeadingCache;
-		}
-
-		return block;
+		// if (isChecking) {
+		// 	// @ts-ignore
+		// 	return !!this.getBlock(editor, view.file);
+		// }
+		// const file = view.file;
+		// if (!file) return;
+		// const block = this.getBlock(editor, file);
+		// if (!block) return;
+		// const isHeading = !!(block as any).heading;
+		// if (isHeading) {
+		// 	this.handleHeading(view.file!, block as HeadingCache, isEmbed);
+		// } else {
+		// 	const file = view.file!;
+		// 	this.handleBlock(
+		// 		file,
+		// 		editor,
+		// 		block as SectionCache | ListItemCache,
+		// 		isEmbed
+		// 	);
+		// }
 	}
 
 	/**
@@ -679,129 +653,6 @@ export default class BlockLinkPlus extends Plugin {
 			)}`
 		);
 	}
-
-	// title -> link
-	handleHeading(file: TFile, block: HeadingCache, isEmbed: boolean) {
-		navigator.clipboard.writeText(
-			`${isEmbed ? "!" : ""}${this.app.fileManager.generateMarkdownLink(
-				file,
-				"",
-				"#" + sanitizeHeading(block.heading)
-			)}`
-		);
-	}
-
-	handleBlock(
-		file: TFile,
-		editor: Editor,
-		block: ListItemCache | SectionCache,
-		isEmbed: boolean
-	) {
-		const blockId = block.id;
-
-		// Copy existing block id
-		if (blockId) {
-			return navigator.clipboard.writeText(
-				`${
-					isEmbed ? "!" : ""
-				}${this.app.fileManager.generateMarkdownLink(
-					file,
-					"",
-					"#^" + blockId
-				)}`
-			);
-		}
-
-		// Add a block id
-		// const sectionStart = block.position.start;
-		// const start: EditorPosition = {
-		// 	ch: editor.getLine(sectionStart.line).length,
-		// 	line: sectionStart.line,
-		// };
-
-		let selectedText = editor.getSelection().trim(); // get selected text
-
-		const sectionEnd = block.position.end;
-		const end: EditorPosition = {
-			ch: sectionEnd.col,
-			line: sectionEnd.line,
-		};
-
-		const id = generateRandomId(
-			this.settings.enble_prefix ? this.settings.id_prefix : "",
-			this.settings.id_length
-		);
-		const spacer = shouldInsertAfter(block) ? "\n\n" : " "; // 插入位置
-
-		editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
-
-		const cursor = editor.getCursor("from"); // getCursor 可以获取上下界
-		// for headlink
-		if (sectionEnd.line != cursor.line) {
-			const lineLength = editor.getLine(cursor.line).length;
-			editor.setCursor(cursor.line, cursor.ch);
-			editor.replaceRange(` ˅${id}`, {
-				line: cursor.line,
-				ch: lineLength,
-			});
-		}
-
-		navigator.clipboard.writeText(
-			`${isEmbed ? "!" : ""}${this.app.fileManager.generateMarkdownLink(
-				file,
-				"",
-				"#^" + id
-			)}`
-		);
-	}
-
-	// test(
-	// 	file: TFile,
-	// 	editor: Editor,
-	// 	isEmbed: boolean
-	// ) {
-	// 	const cursor_start = editor.getCursor("from");
-	// 	const cursor_end = editor.getCursor("to");
-
-	// 	if (cursor_start.line > cursor_end.line) { // err
-	// 		console.log("start line should be less than end line, start: ", cursor_start.line, "end: ", cursor_end.line);
-	// 		return;
-	// 	}
-
-	// 	if (cursor_start.line == cursor_end.line) {
-	// 		//todo: one line handle
-	// 		return;
-	// 	}
-
-	// 	const fileCache = this.app.metadataCache.getFileCache(file);
-	// 	console.log("fileCache", fileCache); // just for debug
-
-	// 	const { nearestBeforeStartLevel, minLevelInRange, hasHeadingAtStart, hasHeadingAtEnd, headingAtStart, headingAtEnd, isStartHeadingMinLevel, isEndLineJustBeforeHeading } = analyzeHeadings(fileCache, cursor_start.line, cursor_end.line);
-	// 	console.log("nearestBeforeStartLevel", nearestBeforeStartLevel, "minLevelInRange", minLevelInRange, "hasHeadingAtStart", hasHeadingAtStart, "hasHeadingAtEnd", hasHeadingAtEnd, "headingAtStart", headingAtStart, "headingAtEnd", headingAtEnd);
-
-	// 	// 开始行存在 heading  且 开始行的 level 是整段文本的最小 level 且 结束行正好是某个 heading 的上一行
-	// 	if (hasHeadingAtStart && isStartHeadingMinLevel && isEndLineJustBeforeHeading) {
-	// 		// 选中文本恰好是一个 level 最小的 heading 的全部内容
-	// 		// todo 直接拷贝 headingAtStart 的标题作为 id
-	// 	}
-
-	// 	if (minLevelInRange == 1) {
-	// 		// 无法处理
-	// 		return;
-	// 	}
-
-	// 	let true_level = 0;
-	// 	if(minLevelInRange == 999) { // 选中文本中没有 heading
-	// 		true_level = nearestBeforeStartLevel + 1; // 外部最近的 heading 的 level + 1
-	// 		// 外部没有 heading 时候 nearestBeforeStartLevel = 0, 所以 true_level = 1
-	// 	}
-
-	// 	if (nearestBeforeStartLevel >= minLevelInRange) { // 选中文本中 heading 的 level 大于等于外部最近的 heading 的 level
-	// 		true_level = minLevelInRange - 1;// 取最小能包裹 选中文本 的 level
-	// 	}
-
-	// 	true_level = minLevelInRange - 1;
-	// }
 }
 
 class BlockLinkPlusSettingsTab extends PluginSettingTab {
