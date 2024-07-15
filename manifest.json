@@ -5,7 +5,8 @@
 	"minAppVersion": "0.22.0",
 	"description": "Enhances Obsidian's right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.",
 	"author": "Jasper",
-	"authorUrl": "https://github.com/Jasper-1024/obsidian-block-link-plus/",
+	"authorUrl": "https://jasper1024.com/",
 	"fundingUrl": "https://obsidian.md/pricing",
+	"repo": "Jasper-1024/obsidian-block-link-plus",
 	"isDesktopOnly": false
 }
