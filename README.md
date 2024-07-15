@@ -8,6 +8,9 @@ for chinese version, please refer to [README_zh.md](README_zh.md)
 
 The usage is completely the same as [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main).
 
+![image](https://onedrive.live.com/embed?resid=97B34FCBD7B2D46D%21384&authkey=%21AHX6qKOaQZLJXOU&width=1024)
+
+
 ## Features
 
 ### Multi-line Text Blocks
