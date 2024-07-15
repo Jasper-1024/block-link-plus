@@ -8,7 +8,7 @@ for chinese version, please refer to [README_zh.md](README_zh.md)
 
 The usage is completely the same as [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main).
 
-![image](https://onedrive.live.com/embed?resid=97B34FCBD7B2D46D%21384&authkey=%21AHX6qKOaQZLJXOU&width=1024)
+![image](https://github.com/Jasper-1024/obsidian-block-link-plus/blob/d5ed80a5f370cd1159dfd9669d796583b471dc13/user_case.gif)
 
 
 ## Features
