@@ -3,7 +3,7 @@
 	"name": "Block Link Plus",
 	"version": "1.0.3",
 	"minAppVersion": "0.22.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
+	"description": "Enhances Obsidian's right-click menu with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.",
 	"author": "Jasper",
 	"authorUrl": "obsidian-block-link-plus",
 	"fundingUrl": "https://obsidian.md/pricing",
