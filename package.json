@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-block-link-plus",
+	"name": "block-link-plus",
 	"version": "0.1.1",
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",

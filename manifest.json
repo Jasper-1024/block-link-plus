@@ -6,6 +6,6 @@
 	"description": "Enhances right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.",
 	"author": "Jasper",
 	"authorUrl": "https://jasper1024.com/",
-	"repo": "Jasper-1024/obsidian-block-link-plus",
+	"repo": "Jasper-1024/block-link-plus",
 	"isDesktopOnly": false
 }
