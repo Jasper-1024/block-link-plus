@@ -2,10 +2,9 @@
 	"id": "block-link-plus",
 	"name": "Block Link Plus",
 	"version": "1.0.3",
-	"minAppVersion": "0.22.0",
+	"minAppVersion": "0.15.0",
 	"description": "Enhances right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.",
 	"author": "Jasper",
 	"authorUrl": "https://jasper1024.com/",
-	"repo": "Jasper-1024/block-link-plus",
 	"isDesktopOnly": false
 }

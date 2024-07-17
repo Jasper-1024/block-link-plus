@@ -486,7 +486,7 @@ export default class BlockLinkPlus extends Plugin {
 		);
 
 		this.addCommand({
-			id: "copy-link-to-block2",
+			id: "copy-link-to-block",
 			name: "Copy link to current block or heading",
 			editorCheckCallback: (isChecking, editor, view) => {
 				return this.handleCommand(isChecking, editor, view, false);
@@ -494,7 +494,7 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		this.addCommand({
-			id: "copy-embed-to-block2",
+			id: "copy-embed-to-block",
 			name: "Copy embed to current block or heading",
 			editorCheckCallback: (isChecking, editor, view) => {
 				return this.handleCommand(isChecking, editor, view, true);
@@ -908,7 +908,7 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		// title
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Block-link Settings" });
+		containerEl.createEl("h2", { text: "Block link Plus" });
 
 		this.addDropdownSetting(
 			//@ts-ignore
@@ -928,7 +928,7 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				"Define how multi-line selections generate block IDs. 'Default' treats them as a single line."
 			);
 
-		this.addHeading("Block ID settings");
+		this.addHeading("Block ID");
 		this.addSliderSetting("id_length", 3, 7, 1)
 			.setName("Max Block ID Length")
 			.setDesc("Set the maximum number of characters for a block ID.");
