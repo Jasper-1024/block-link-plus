@@ -923,20 +923,20 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				return optionsSet.get(option) || "Unknown";
 			}
 		)
-			.setName("Multi-line Block Behavior")
+			.setName("Multi-line block behavior")
 			.setDesc(
-				"Define how multi-line selections generate block IDs. 'Default' treats them as a single line."
+				"Define how multi-line selections generate block ids. 'Default' treats them as a single line."
 			);
 
-		this.addHeading("Block ID");
+		this.addHeading("Block id");
 		this.addSliderSetting("id_length", 3, 7, 1)
-			.setName("Max Block ID Length")
-			.setDesc("Set the maximum number of characters for a block ID.");
+			.setName("Max block id Length")
+			.setDesc("Set the maximum number of characters for a block id.");
 
-		this.addToggleSetting("enble_prefix").setName("Custom ID Prefix");
+		this.addToggleSetting("enble_prefix").setName("Custom id prefix");
 
 		this.addTextInputSetting("id_prefix", "")
-			.setName("Block ID Prefix")
-			.setDesc("Block ID will be: prefix-random_str");
+			.setName("Block id prefix")
+			.setDesc("Block id will be: prefix-random_str");
 	}
 }
