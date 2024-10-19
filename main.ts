@@ -309,11 +309,10 @@ function gen_insert_blocklink_singleline(
 		return `^${block.id}`;
 	}
 
-	const sectionEnd = block.position.end;
-	const end: EditorPosition = {
-		ch: sectionEnd.col,
-		line: sectionEnd.line,
-	};
+	const end =
+		block.type == "list" // if type is list, insert id on current line
+			? editor.getCursor("to")
+			: { ch: block.position.end.col, line: block.position.end.line }; // else insert id at end of block
 
 	const id = generateRandomId(
 		settings.enble_prefix ? settings.id_prefix : "",
