@@ -520,23 +520,20 @@ export default class BlockLinkPlus extends Plugin {
 		view: MarkdownView | MarkdownFileInfo
 	) {
 		const file: TFile | null = view.file;
-		if (!file) return; // no file , return
+		if (!file) return;
 
 		const start_line = editor.getCursor("from").line;
 		const end_line = editor.getCursor("to").line;
 		const fileCache = this.app.metadataCache.getFileCache(file);
-		if (!fileCache) return; // no fileCache, return
+		if (!fileCache) return;
 
 		let head_analysis = analyzeHeadings(fileCache, start_line, end_line);
-		// console.log("head_analysis", head_analysis); // debug
-
-		if (!head_analysis.isValid) {
-			return; // invalid input
-		}
-		let isHeading = get_is_heading(head_analysis); // is heading?
+		if (!head_analysis.isValid) return;
+		
+		let isHeading = get_is_heading(head_analysis);
 
 		// inner function
-		const addItemToMenu = (title: string, isEmbed: boolean) => {
+		const addItemToMenu = (title: string, isEmbed: boolean, isUrl: boolean = false) => {
 			menu.addItem((item: any) => {
 				item.setTitle(title)
 					.setIcon("links-coming-in")
@@ -545,7 +542,8 @@ export default class BlockLinkPlus extends Plugin {
 							view,
 							isHeading,
 							isEmbed,
-							head_analysis
+							head_analysis,
+							isUrl
 						)
 					);
 			});
@@ -560,41 +558,31 @@ export default class BlockLinkPlus extends Plugin {
 			isHeading ? "Copy heading embed" : "Copy block embed",
 			true
 		);
+		// obsidian url
+		addItemToMenu(
+			isHeading ? "Copy heading to obsidian url" : "Copy block to obsidian url",
+			false,
+			true
+		);
 	}
 
 	private handleMenuItemClick(
 		view: any,
 		isHeading: boolean,
 		isEmbed: boolean,
-		head_analysis: HeadingAnalysisResult
+		head_analysis: HeadingAnalysisResult,
+		isUrl: boolean = false
 	) {
-		if (!view.file || !head_analysis.isValid) return; // no file or invalid input
+		if (!view.file || !head_analysis.isValid) return;
 
 		const { file, editor } = view;
 		const fileCache = this.app.metadataCache.getFileCache(file);
-		if (!fileCache) return; // no fileCache, return
-
-		// console.log("handleMenuItemClick", fileCache);
+		if (!fileCache) return;
 
 		if (!head_analysis.isMultiline) {
-			// Single line
-			this.handleSingleLine(
-				file,
-				isHeading,
-				isEmbed,
-				head_analysis,
-				editor
-			);
+			this.handleSingleLine(file, isHeading, isEmbed, head_analysis, editor, isUrl);
 		} else {
-			// Multi line
-			this.handleMultiLine(
-				file,
-				isHeading,
-				isEmbed,
-				head_analysis,
-				editor,
-				fileCache
-			);
+			this.handleMultiLine(file, isHeading, isEmbed, head_analysis, editor, fileCache, isUrl);
 		}
 	}
 
@@ -603,23 +591,24 @@ export default class BlockLinkPlus extends Plugin {
 		isHeading: boolean,
 		isEmbed: boolean,
 		head_analysis: HeadingAnalysisResult,
-		editor: any
+		editor: any,
+		isUrl: boolean = false
 	) {
 		if (isHeading && head_analysis.headingAtStart) {
-			// start_line is a heading
 			this.copyToClipboard(
 				file,
 				head_analysis.headingAtStart.heading,
-				isEmbed
+				isEmbed,
+				undefined,
+				isUrl
 			);
 		} else if (!isHeading && head_analysis.block) {
-			// start_line is not a heading
 			const link = gen_insert_blocklink_singleline(
 				head_analysis.block,
 				editor,
 				this.settings
 			);
-			this.copyToClipboard(file, link, isEmbed);
+			this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
 		}
 	}
 
@@ -629,23 +618,19 @@ export default class BlockLinkPlus extends Plugin {
 		isEmbed: boolean,
 		head_analysis: HeadingAnalysisResult,
 		editor: any,
-		fileCache: any
+		fileCache: any,
+		isUrl: boolean = false
 	) {
 		if (isHeading && head_analysis.headingAtStart) {
-			// start_line is a heading
 			this.copyToClipboard(
 				file,
 				head_analysis.headingAtStart.heading,
-				isEmbed
+				isEmbed,
+				undefined,
+				isUrl
 			);
 		} else {
-			this.handleMultiLineBlock(
-				file,
-				isEmbed,
-				head_analysis,
-				editor,
-				fileCache
-			);
+			this.handleMultiLineBlock(file, isEmbed, head_analysis, editor, fileCache, isUrl);
 		}
 	}
 
@@ -676,12 +661,21 @@ export default class BlockLinkPlus extends Plugin {
 		);
 	}
 
+	private _gene_obsidian_url(file: TFile, blockId: string): string {
+		const vault = this.app.vault.getName();
+		const filePath = encodeURIComponent(file.path);
+		const encodedBlockId = encodeURIComponent(`#${blockId}`);
+		
+		return `obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId}`;
+	}
+
 	private handleMultiLineBlock(
 		file: any,
 		isEmbed: boolean,
 		head_analysis: HeadingAnalysisResult,
 		editor: any,
-		fileCache: any
+		fileCache: any,
+		isUrl: boolean = false
 	) {
 		if (this.settings.mult_line_handle == MultLineHandle.oneline) {
 			if (head_analysis.block) {
@@ -690,7 +684,7 @@ export default class BlockLinkPlus extends Plugin {
 					editor,
 					this.settings
 				);
-				this.copyToClipboard(file, link, isEmbed);
+				this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
 			}
 			return;
 		} else {
@@ -711,7 +705,7 @@ export default class BlockLinkPlus extends Plugin {
 				editor,
 				head_analysis
 			);
-			this.copyToClipboard(file, link, isEmbed);
+			this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
 			return;
 		}
 	}
@@ -790,17 +784,18 @@ export default class BlockLinkPlus extends Plugin {
 		file: TFile,
 		links: string | string[],
 		isEmbed: boolean,
-		alias?: string
+		alias?: string,
+		isUrl: boolean = false
 	) {
-		// Convert single link to array if necessary
 		const linksArray = typeof links === "string" ? [links] : links;
 
-		const markdownLinks = linksArray
+		const content = linksArray
 			.map((link, index) => {
-				const addNewLine = index < links.length - 1 ? "\n" : "";
-				return `${
-					isEmbed ? "!" : ""
-				}${this.app.fileManager.generateMarkdownLink(
+				const addNewLine = index < linksArray.length - 1 ? "\n" : "";
+				if (isUrl) {
+					return `${this._gene_obsidian_url(file, link)}${addNewLine}`;
+				}
+				return `${isEmbed ? "!" : ""}${this.app.fileManager.generateMarkdownLink(
 					file,
 					"",
 					"#" + link,
@@ -809,7 +804,7 @@ export default class BlockLinkPlus extends Plugin {
 			})
 			.join("");
 
-		navigator.clipboard.writeText(markdownLinks);
+		navigator.clipboard.writeText(content);
 	}
 }
 
