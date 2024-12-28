@@ -10,8 +10,21 @@ The usage is completely the same as [copy-block-link](https://github.com/mgmeyer
 
 ![image](https://github.com/Jasper-1024/obsidian-block-link-plus/blob/d5ed80a5f370cd1159dfd9669d796583b471dc13/user_case.gif)
 
-
 ## Features
+
+### Block Link Types
+
+The plugin supports three types of block links:
+- Regular link: Copy block/heading as a regular link
+- Embed: Copy block/heading as an embed
+- Obsidian URI: Copy block/heading as an Obsidian URI for external access
+
+### Block Link Alias
+
+You can customize how block link aliases are generated:
+- Default: No alias
+- First x characters: Use the first x characters of the block content as alias
+- Heading: Use the nearest heading as alias
 
 ### Multi-line Text Blocks
 
@@ -22,7 +35,6 @@ Obsidian's block reference has not yet supported the creation of multi-line text
 The first method is using headings: adding the selected text to a new heading and copying the link pointing to that heading.
 - Distinguish using `˅id` from normal headings
 - Modify the rendering of `## ˅id` under reading mode and live preview to make it more similar to a normal block reference.
-
 
 ```bash
 ## ˅id
