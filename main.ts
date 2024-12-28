@@ -28,6 +28,8 @@ import { assert } from "console";
 import { inflate } from "zlib";
 // import { RangeSet } from "@codemirror/state";
 
+const MAX_ALIAS_LENGTH = 100;
+
 type HeadingAnalysisResult = {
 	isValid: boolean; // 是否有效
 	start_line: number; // 选中文本的开始行
@@ -42,6 +44,8 @@ type HeadingAnalysisResult = {
 	headingAtEnd: HeadingCache | null; // 在 end_line 处的 heading | 仅在 hasHeadingAtEnd 为 true 时有效
 	isStartHeadingMinLevel: boolean; //	headingAtStart 是否是最小其唯一 level 的 heading | 仅在 hasHeadingAtStart 为 true 时有效
 	isEndLineJustBeforeHeading: boolean; // end_line 是否正好是某个 heading 的 start.line - 1
+	blockContent: string | null;        // 处理后的块内容
+	nearestHeadingTitle: string | null; // 最近的标题内容
 };
 
 export const enum MultLineHandle {
@@ -126,15 +130,95 @@ function shouldInsertAfter(block: ListItemCache | SectionCache) {
 }
 
 /**
+ * handle single line content
+ * @param line original line content
+ * @returns processed line content
+ */
+function processLineContent(line: string): string {
+	// empty line
+	if (!line.trim()) return '';
+
+	// remove HTML tags
+	line = line.replace(/<[^>]+>/g, '');
+
+	// handle list mark
+	line = line.replace(/^[\s]*[-*+]\s+/, '');
+	line = line.replace(/^[\s]*\d+\.\s+/, '');
+
+	// handle block quote
+	line = line.replace(/^[\s]*>+\s*/, '');
+
+	// handle block id at end of line
+	line = line.replace(/\s*\^[a-zA-Z0-9-]+$/, '');
+
+	return line.trim();
+}
+
+/**
+ * handle multi line content
+ * @param editor - The editor instance
+ * @param start_line - The starting line number
+ * @param end_line - The ending line number
+ * @param alias_length - The maximum length of alias
+ * @returns processed content
+ */
+function processMultiLineContent(
+	editor: Editor,
+	start_line: number,
+	end_line: number,
+	alias_length: number
+): string {
+	// find first non empty line as real start line
+	let currentLine = start_line;
+	while (currentLine <= end_line) {
+		const line = editor.getLine(currentLine);
+		// 去掉行尾的 block id
+		const lineWithoutBlockId = line.replace(/\s*\^[a-zA-Z0-9-]+$/, '');
+
+		if (!lineWithoutBlockId.trim()) {
+			currentLine++;
+			continue;
+		}
+		// handle special format line
+		if (lineWithoutBlockId.startsWith('|-') || lineWithoutBlockId.startsWith('```')) {
+			// if table separator or code block start, jump to next line
+			currentLine++;
+			if (currentLine <= end_line) {
+				const nextLine = editor.getLine(currentLine);
+				// if code block language identifier, jump to next line
+				if (nextLine.match(/^```\w+$/)) {
+					currentLine++;
+				}
+			}
+			continue;
+		}
+
+		// handle current line content
+		const processedContent = processLineContent(lineWithoutBlockId);
+		if (processedContent) {
+			// if processed content is not empty, return processed content (limit length)
+			return processedContent.slice(0, alias_length);
+		}
+
+		currentLine++;
+	}
+
+	// if all lines are empty, return empty string
+	return '';
+}
+
+/**
  * Analyzes the headings within a specified range of lines in a file.
  *
  * @param fileCache - The cached metadata of the file.
+ * @param editor - The editor instance.
  * @param start_line - The starting line of the range.
  * @param end_line - The ending line of the range.
  * @returns The analysis result of the headings within the specified range.
  */
 function analyzeHeadings(
 	fileCache: CachedMetadata,
+	editor: Editor,
 	start_line: number,
 	end_line: number
 ): HeadingAnalysisResult {
@@ -153,8 +237,13 @@ function analyzeHeadings(
 			headingAtEnd: null,
 			isStartHeadingMinLevel: false,
 			isEndLineJustBeforeHeading: false,
+			blockContent: null,
+			nearestHeadingTitle: null,
 		};
 	}
+
+	let closestBeforeStartDistance = Infinity; // record the closest heading distance at [0, start_line)
+	let nearestHeadingTitle: string | null = null;
 
 	// console.log("analyzeHeadings", fileCache, start_line, end_line); // debug
 	// one line
@@ -172,6 +261,23 @@ function analyzeHeadings(
 				section.position.end.line >= end_line
 			);
 		})!;
+
+		const blockContent = block ? processLineContent(editor.getLine(start_line)) : null;
+		fileCache.headings?.forEach((heading) => {
+			const { start, end } = heading.position;
+			// 对于 start.line 在 (0, start_line) 开区间的处理
+			if (start.line < start_line) {
+				// 跳过以 ^ 或 ˅ 开头的标题
+				if (heading.heading.startsWith('^') || heading.heading.startsWith('˅')) {
+					return;
+				}
+				const distance = start_line - start.line;
+				if (start_line - start.line < closestBeforeStartDistance) {
+					nearestHeadingTitle = heading.heading;  // 记录最近的标题内容
+				}
+			}
+		});
+
 		return {
 			isValid: true,
 			start_line,
@@ -186,6 +292,8 @@ function analyzeHeadings(
 			headingAtEnd: null,
 			isStartHeadingMinLevel: block ? true : false,
 			isEndLineJustBeforeHeading: false,
+			blockContent,
+			nearestHeadingTitle,
 		};
 	}
 
@@ -200,9 +308,8 @@ function analyzeHeadings(
 
 	let isEndLineJustBeforeHeading = false;
 
-	let closestBeforeStartDistance = Infinity; // record the closest heading distance at [0, start_line)
-
 	let inner_levels = new Array<number>();
+
 
 	fileCache.headings?.forEach((heading) => {
 		const { start, end } = heading.position;
@@ -212,6 +319,11 @@ function analyzeHeadings(
 			if (start_line - start.line < closestBeforeStartDistance) {
 				closestBeforeStartDistance = distance;
 				nearestBeforeStartLevel = heading.level;
+				// 跳过以 ^ 或 ˅ 开头的标题 | 这里存疑,有可能存在 多行 block 套 block ;
+				if (heading.heading.startsWith('^') || heading.heading.startsWith('˅')) {
+					return;
+				}
+				nearestHeadingTitle = heading.heading;  // 记录最近的标题内容
 			}
 		}
 		// 对于 start.line 在 [start_line, end_line] 全闭区间的处理
@@ -260,6 +372,11 @@ function analyzeHeadings(
 			section.position.end.line >= end_line
 		);
 	})!;
+
+	const blockContent = block ?
+		processMultiLineContent(editor, start_line, end_line, MAX_ALIAS_LENGTH) :
+		null;
+
 	return {
 		isValid: true,
 		start_line,
@@ -274,6 +391,8 @@ function analyzeHeadings(
 		headingAtEnd,
 		isStartHeadingMinLevel,
 		isEndLineJustBeforeHeading,
+		blockContent,
+		nearestHeadingTitle,
 	};
 }
 
@@ -543,9 +662,14 @@ export default class BlockLinkPlus extends Plugin {
 		const fileCache = this.app.metadataCache.getFileCache(file);
 		if (!fileCache) return;
 
-		let head_analysis = analyzeHeadings(fileCache, start_line, end_line);
+		let head_analysis = analyzeHeadings(fileCache, editor, start_line, end_line);
+
+		// debug
+		console.log("head_analysis", head_analysis.blockContent);
+		console.log("head_analysis", head_analysis.nearestHeadingTitle);
+
 		if (!head_analysis.isValid) return;
-		
+
 		let isHeading = get_is_heading(head_analysis);
 
 		// inner function
@@ -622,7 +746,7 @@ export default class BlockLinkPlus extends Plugin {
 				file,
 				head_analysis.headingAtStart.heading,
 				isEmbed,
-				undefined,
+				undefined,  // heading 不需要 alias
 				isUrl
 			);
 		} else if (!isHeading && head_analysis.block) {
@@ -631,7 +755,8 @@ export default class BlockLinkPlus extends Plugin {
 				editor,
 				this.settings
 			);
-			this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
+			const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 		}
 	}
 
@@ -688,7 +813,7 @@ export default class BlockLinkPlus extends Plugin {
 		const vault = this.app.vault.getName();
 		const filePath = encodeURIComponent(file.path);
 		const encodedBlockId = encodeURIComponent(`#${blockId}`);
-		
+
 		return `obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId}`;
 	}
 
@@ -707,7 +832,8 @@ export default class BlockLinkPlus extends Plugin {
 					editor,
 					this.settings
 				);
-				this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
+				const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+				this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 			}
 			return;
 		} else {
@@ -728,12 +854,13 @@ export default class BlockLinkPlus extends Plugin {
 				editor,
 				head_analysis
 			);
-			this.copyToClipboard(file, link, isEmbed, undefined, isUrl);
+			const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 			return;
 		}
 	}
 
-	onunload() {}
+	onunload() { }
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -765,7 +892,7 @@ export default class BlockLinkPlus extends Plugin {
 		const fileCache = this.app.metadataCache.getFileCache(file);
 		if (!fileCache) return; // no fileCache, return
 
-		let head_analysis = analyzeHeadings(fileCache, start_line, end_line);
+		let head_analysis = analyzeHeadings(fileCache, editor, start_line, end_line);
 		if (!head_analysis.isValid) {
 			return; // invalid input
 		}
@@ -802,6 +929,7 @@ export default class BlockLinkPlus extends Plugin {
 	 * @param links - An array of block links (^id) or heading links (heading without `#`).
 	 * @param isEmbed - Specifies whether the links should be embedded.
 	 * @param alias - An optional alias for the links.
+	 * @param isUrl - Specifies whether the links should be URL links.
 	 */
 	copyToClipboard(
 		file: TFile,
@@ -828,6 +956,36 @@ export default class BlockLinkPlus extends Plugin {
 			.join("");
 
 		navigator.clipboard.writeText(content);
+	}
+
+	/**
+	 * Calculate alias based on settings and analysis result
+	 */
+	private calculateAlias(
+		isHeading: boolean,
+		isEmbed: boolean,
+		isUrl: boolean,
+		alias_length: number,
+		head_analysis: HeadingAnalysisResult
+	): string | undefined {
+		// 以下情况不需要 alias：
+		// 1. 是 heading
+		// 2. 是 embed 链接
+		// 3. 是 URL 链接
+		// 4. settings 设置为 Default
+		if (isHeading || isEmbed || isUrl || this.settings.alias_type === BlockLinkAliasType.Default) {
+			return undefined;
+		}
+
+		// 根据设置计算 alias
+		switch (Number(this.settings.alias_type)) {
+			case BlockLinkAliasType.FirstChars:
+				return head_analysis.blockContent != null ? head_analysis.blockContent.slice(0, alias_length) : undefined;
+			case BlockLinkAliasType.Heading:
+				return head_analysis.nearestHeadingTitle != null ? head_analysis.nearestHeadingTitle.slice(0, alias_length) : undefined;
+			default:
+				return undefined;
+		}
 	}
 }
 
@@ -944,7 +1102,7 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setDesc(
 				"Define how multi-line selections generate block ids. 'Default' treats them as a single line."
 			);
-		
+
 		this.addDropdownSetting(
 			//@ts-ignore
 			"alias_type",
@@ -966,11 +1124,11 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addSliderSetting("alias_length", 1, 50, 1)
 			.setName("Alias length")
 			.setDesc("Set the length of the alias (1-50). Only used when alias type is 'First x characters'.");
-		
+
 		//right click menu
 		this.addHeading("Right click menu");
 		this.addToggleSetting("enable_right_click_block").setName("Copy block link");
-		this.addToggleSetting("enable_right_click_embed").setName("Copy embed link"); 
+		this.addToggleSetting("enable_right_click_embed").setName("Copy embed link");
 		this.addToggleSetting("enable_right_click_url").setName("Copy URL link");
 
 		// block id
