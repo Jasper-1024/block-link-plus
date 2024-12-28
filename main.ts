@@ -621,7 +621,7 @@ export default class BlockLinkPlus extends Plugin {
 
 		this.addCommand({
 			id: "copy-link-to-block",
-			name: "Copy link to current block or heading",
+			name: "Copy Block Link",
 			editorCheckCallback: (isChecking, editor, view) => {
 				return this.handleCommand(isChecking, editor, view, false);
 			},
@@ -629,9 +629,17 @@ export default class BlockLinkPlus extends Plugin {
 
 		this.addCommand({
 			id: "copy-embed-to-block",
-			name: "Copy embed to current block or heading",
+			name: "Copy Block as Embed",
 			editorCheckCallback: (isChecking, editor, view) => {
 				return this.handleCommand(isChecking, editor, view, true);
+			},
+		});
+
+		this.addCommand({
+			id: "copy-url-to-block",
+			name: "Copy Block as Obsidian URI",
+			editorCheckCallback: (isChecking, editor, view) => {
+				return this.handleCommand(isChecking, editor, view, false, true);
 			},
 		});
 
@@ -665,8 +673,8 @@ export default class BlockLinkPlus extends Plugin {
 		let head_analysis = analyzeHeadings(fileCache, editor, start_line, end_line);
 
 		// debug
-		console.log("head_analysis", head_analysis.blockContent);
-		console.log("head_analysis", head_analysis.nearestHeadingTitle);
+		// console.log("head_analysis", head_analysis.blockContent);
+		// console.log("head_analysis", head_analysis.nearestHeadingTitle);
 
 		if (!head_analysis.isValid) return;
 
@@ -692,21 +700,21 @@ export default class BlockLinkPlus extends Plugin {
 		// add menu items based on settings
 		if (this.settings.enable_right_click_block) {
 			addItemToMenu(
-				isHeading ? "Copy link to heading" : "Copy link to block",
+				isHeading ? "Copy Heading as Link" : "Copy Block as Link",
 				false
 			);
 		}
 
 		if (this.settings.enable_right_click_embed) {
 			addItemToMenu(
-				isHeading ? "Copy heading embed" : "Copy block embed",
+				isHeading ? "Copy Heading as Embed" : "Copy Block as Embed",
 				true
 			);
 		}
 
 		if (this.settings.enable_right_click_url) {
 			addItemToMenu(
-				isHeading ? "Copy Obsidian URI for heading" : "Copy Obsidian URI for block",
+				isHeading ? "Copy Heading as Obsidian URI" : "Copy Block as Obsidian URI",
 				false,
 				true
 			);
@@ -717,7 +725,7 @@ export default class BlockLinkPlus extends Plugin {
 		view: any,
 		isHeading: boolean,
 		isEmbed: boolean,
-		head_analysis: HeadingAnalysisResult,
+			head_analysis: HeadingAnalysisResult,
 		isUrl: boolean = false
 	) {
 		if (!view.file || !head_analysis.isValid) return;
@@ -839,7 +847,7 @@ export default class BlockLinkPlus extends Plugin {
 		} else {
 			if (head_analysis.minLevelInRange != Infinity) {
 				new Notice(
-					`Please select text that does not include headings`,
+					`Selection cannot contain headings`,
 					1500
 				);
 				return;
@@ -878,7 +886,8 @@ export default class BlockLinkPlus extends Plugin {
 		isChecking: boolean,
 		editor: Editor,
 		view: MarkdownView | MarkdownFileInfo,
-		isEmbed: boolean
+		isEmbed: boolean,
+		isUrl: boolean = false
 	) {
 		if (isChecking) {
 			return true;
@@ -906,7 +915,8 @@ export default class BlockLinkPlus extends Plugin {
 				isHeading,
 				isEmbed,
 				head_analysis,
-				editor
+				editor,
+				isUrl
 			);
 		} else {
 			// Multi line
@@ -916,7 +926,8 @@ export default class BlockLinkPlus extends Plugin {
 				isEmbed,
 				head_analysis,
 				editor,
-				fileCache
+				fileCache,
+				isUrl
 			);
 		}
 		return true;
