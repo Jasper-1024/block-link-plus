@@ -565,21 +565,28 @@ export default class BlockLinkPlus extends Plugin {
 			});
 		};
 
-		// add menu item
-		addItemToMenu(
-			isHeading ? "Copy link to heading" : "Copy link to block",
-			false
-		);
-		addItemToMenu(
-			isHeading ? "Copy heading embed" : "Copy block embed",
-			true
-		);
-		// obsidian url
-		addItemToMenu(
-			isHeading ? "Copy heading to obsidian url" : "Copy block to obsidian url",
-			false,
-			true
-		);
+		// add menu items based on settings
+		if (this.settings.enable_right_click_block) {
+			addItemToMenu(
+				isHeading ? "Copy link to heading" : "Copy link to block",
+				false
+			);
+		}
+
+		if (this.settings.enable_right_click_embed) {
+			addItemToMenu(
+				isHeading ? "Copy heading embed" : "Copy block embed",
+				true
+			);
+		}
+
+		if (this.settings.enable_right_click_url) {
+			addItemToMenu(
+				isHeading ? "Copy Obsidian URI for heading" : "Copy Obsidian URI for block",
+				false,
+				true
+			);
+		}
 	}
 
 	private handleMenuItemClick(
