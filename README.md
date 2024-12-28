@@ -6,7 +6,12 @@ for chinese version, please refer to [README_zh.md](README_zh.md)
 
 ## Usage
 
-The usage is completely the same as [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main).
+The plugin provides multiple ways to access its features:
+- Right-click menu in editor
+- Command palette
+- Configurable menu items (can be enabled/disabled in settings)
+
+The basic usage is the same as [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main).
 
 ![image](https://github.com/Jasper-1024/obsidian-block-link-plus/blob/d5ed80a5f370cd1159dfd9669d796583b471dc13/user_case.gif)
 
@@ -23,8 +28,10 @@ The plugin supports three types of block links:
 
 You can customize how block link aliases are generated:
 - Default: No alias
-- First x characters: Use the first x characters of the block content as alias
+- First x characters: Use the first x characters of the block content as alias (length configurable in settings)
 - Heading: Use the nearest heading as alias
+
+The alias feature only applies to regular block links (not for embeds or URIs).
 
 ### Multi-line Text Blocks
 
@@ -66,6 +73,16 @@ Block ID = prefix-random characters
 - Customize the prefix of the block ID and the length of random characters (3-7)
 
 This feature currently does not have more practical uses, but perhaps more aggregation operations can be performed through the prefix of the block ID.
+
+## Changelog
+
+### 1.1.0
+- Added support for Obsidian URI links
+- Added customizable block link alias types:
+  - First x characters of block content
+  - Nearest heading title
+- Improved command and menu text for better clarity
+- Fixed consistency between command palette and right-click menu functionality
 
 ## License
 
