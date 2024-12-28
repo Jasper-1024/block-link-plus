@@ -50,6 +50,12 @@ export const enum MultLineHandle {
 	multblock, // add new block, if select text contain not block
 }
 
+export const enum BlockLinkAliasType {
+	Default, // no alias
+	FirstChars, // first x characters of block content
+	Heading // alias as heading
+}
+
 export type KeysOfType<Obj, Type> = {
 	[k in keyof Obj]: Obj[k] extends Type ? k : never;
 }[keyof Obj];
@@ -61,6 +67,11 @@ type BlockLinkPlusViewPlugin = ViewPlugin<{
 
 interface PluginSettings {
 	mult_line_handle: MultLineHandle;
+	alias_type: BlockLinkAliasType;
+	enable_right_click_block: boolean;
+	enable_right_click_embed: boolean;
+	enable_right_click_url: boolean;
+	alias_length: number;
 	enble_prefix: boolean;
 	id_prefix: string;
 	id_length: number;
@@ -68,6 +79,11 @@ interface PluginSettings {
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	mult_line_handle: MultLineHandle.oneline, // as one line handle
+	alias_type: BlockLinkAliasType.Default, // no alias
+	enable_right_click_block: true,
+	enable_right_click_embed: true,
+	enable_right_click_url: false,
+	alias_length: 20,
 	enble_prefix: false, // no prefix
 	id_prefix: "", // prefix
 	id_length: 4, // id length
@@ -921,7 +937,36 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setDesc(
 				"Define how multi-line selections generate block ids. 'Default' treats them as a single line."
 			);
+		
+		this.addDropdownSetting(
+			//@ts-ignore
+			"alias_type",
+			["0", "1", "2"],
+			(option) => {
+				const optionsSet = new Map([
+					["0", "Default"],
+					["1", "First x characters"],
+					["2", "Heading"],
+				]);
+				return optionsSet.get(option) || "Unknown";
+			}
+		)
+			.setName("Block link alias type")
+			.setDesc(
+				"Define how to generate block link alias. Only applies when copying block links (not embed/URL links). Default shows no alias, just the block ID."
+			);
 
+		this.addSliderSetting("alias_length", 1, 50, 1)
+			.setName("Alias length")
+			.setDesc("Set the length of the alias (1-50). Only used when alias type is 'First x characters'.");
+		
+		//right click menu
+		this.addHeading("Right click menu");
+		this.addToggleSetting("enable_right_click_block").setName("Copy block link");
+		this.addToggleSetting("enable_right_click_embed").setName("Copy embed link"); 
+		this.addToggleSetting("enable_right_click_url").setName("Copy URL link");
+
+		// block id
 		this.addHeading("Block id");
 		this.addSliderSetting("id_length", 3, 7, 1)
 			.setName("Max block id Length")
