@@ -57,7 +57,8 @@ export const enum MultLineHandle {
 export const enum BlockLinkAliasType {
 	Default, // no alias
 	FirstChars, // first x characters of block content
-	Heading // alias as heading
+	Heading, // alias as heading
+	SelectedText // alias as selected text
 }
 
 export type KeysOfType<Obj, Type> = {
@@ -994,6 +995,11 @@ export default class BlockLinkPlus extends Plugin {
 				return head_analysis.blockContent != null ? head_analysis.blockContent.slice(0, alias_length) : undefined;
 			case BlockLinkAliasType.Heading:
 				return head_analysis.nearestHeadingTitle != null ? head_analysis.nearestHeadingTitle.slice(0, alias_length) : undefined;
+			case BlockLinkAliasType.SelectedText:
+				const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+				if (!editor) return undefined;
+				const selectedText = editor.getSelection();
+				return selectedText ? selectedText.slice(0, alias_length) : undefined;
 			default:
 				return undefined;
 		}
@@ -1117,12 +1123,13 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addDropdownSetting(
 			//@ts-ignore
 			"alias_type",
-			["0", "1", "2"],
+			["0", "1", "2", "3"],
 			(option) => {
 				const optionsSet = new Map([
 					["0", "Default"],
 					["1", "First x characters"],
 					["2", "Heading"],
+					["3", "Selected text"]
 				]);
 				return optionsSet.get(option) || "Unknown";
 			}
