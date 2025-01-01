@@ -78,6 +78,11 @@ This feature currently does not have more practical uses, but perhaps more aggre
 
 ## Changelog
 
+### 1.1.3
+- Fixed block ID handling for list items
+- Optimized block ID insertion position for list type blocks
+- Improved list block handling logic
+
 ### 1.1.2
 - Added new block link alias type: Selected text
 - Improved alias handling for heading blocks

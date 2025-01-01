@@ -441,10 +441,21 @@ function gen_insert_blocklink_singleline(
 	editor: Editor,
 	settings: PluginSettings
 ): string {
+
 	if (block.id) {
 		return `^${block.id}`;
 	}
+	// if block is list, maybe a little complex
 
+	// for https://github.com/Jasper-1024/block-link-plus/issues/9
+	if (block.type === "list") {
+        const line = editor.getLine(block.position.start.line);
+        const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
+        if (blockIdMatch) {
+            return `^${blockIdMatch[1]}`;
+        }
+    }
+	// for https://github.com/Jasper-1024/block-link-plus/issues/3
 	const end =
 		block.type == "list" // if type is list, insert id on current line
 			? editor.getCursor("to")
@@ -994,7 +1005,11 @@ export default class BlockLinkPlus extends Plugin {
 				const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
 				if (!editor) return undefined;
 				const selectedText = editor.getSelection();
-				return selectedText ? selectedText.slice(0, alias_length) : undefined;
+				if (selectedText == "") {
+					return undefined;
+				}
+				const processedText = processLineContent(selectedText);
+				return processedText ? processedText.slice(0, alias_length) : undefined;
 			default:
 				return undefined;
 		}
