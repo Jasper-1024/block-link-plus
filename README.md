@@ -30,8 +30,10 @@ You can customize how block link aliases are generated:
 - Default: No alias
 - First x characters: Use the first x characters of the block content as alias (length configurable in settings)
 - Heading: Use the nearest heading as alias
+- Selected text: Use the selected text as alias (length configurable in settings)
 
 The alias feature only applies to regular block links (not for embeds or URIs).
+For heading blocks, the heading text will always be used as the alias unless 'No alias' is selected.
 
 ### Multi-line Text Blocks
 
@@ -75,6 +77,13 @@ Block ID = prefix-random characters
 This feature currently does not have more practical uses, but perhaps more aggregation operations can be performed through the prefix of the block ID.
 
 ## Changelog
+
+### 1.1.1
+- Added new block link alias type: Selected text
+- Improved alias handling for heading blocks
+- Fixed alias generation for single-line blocks
+- Enhanced alias type configuration options
+- Improved documentation and settings descriptions
 
 ### 1.1.0
 - Added support for Obsidian URI links
