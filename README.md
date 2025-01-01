@@ -78,7 +78,7 @@ This feature currently does not have more practical uses, but perhaps more aggre
 
 ## Changelog
 
-### 1.1.1
+### 1.1.2
 - Added new block link alias type: Selected text
 - Improved alias handling for heading blocks
 - Fixed alias generation for single-line blocks
