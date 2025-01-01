@@ -1121,22 +1121,24 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			["0", "1", "2", "3"],
 			(option) => {
 				const optionsSet = new Map([
-					["0", "Default"],
-					["1", "First x characters"],
-					["2", "Heading"],
+					["0", "No alias"],
+					["1", "First X chars"],
+					["2", "Parent heading"],
 					["3", "Selected text"]
 				]);
 				return optionsSet.get(option) || "Unknown";
 			}
 		)
-			.setName("Block link alias type")
+			.setName("Block link alias style")
 			.setDesc(
-				"Define how to generate block link alias. Only applies when copying block links (not embed/URL links). Default shows no alias, just the block ID."
+				"Choose how to generate aliases for block links." +
+				"This setting only affects block links (not embed/URL links)." +
+				"For heading blocks, alias will always be the heading text unless 'No alias' is selected."
 			);
 
-		this.addSliderSetting("alias_length", 1, 50, 1)
+		this.addSliderSetting("alias_length", 1, 100, 1)
 			.setName("Alias length")
-			.setDesc("Set the length of the alias (1-50). Only used when alias type is 'First x characters'.");
+			.setDesc("Set the length of the alias (1-100). Only used when alias type is 'First X chars'.");
 
 		//right click menu
 		this.addHeading("Right click menu");
