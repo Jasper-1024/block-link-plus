@@ -726,7 +726,7 @@ export default class BlockLinkPlus extends Plugin {
 		view: any,
 		isHeading: boolean,
 		isEmbed: boolean,
-			head_analysis: HeadingAnalysisResult,
+		head_analysis: HeadingAnalysisResult,
 		isUrl: boolean = false
 	) {
 		if (!view.file || !head_analysis.isValid) return;
@@ -750,21 +750,13 @@ export default class BlockLinkPlus extends Plugin {
 		editor: any,
 		isUrl: boolean = false
 	) {
-		if (isHeading && head_analysis.headingAtStart) {
-			this.copyToClipboard(
-				file,
-				head_analysis.headingAtStart.heading,
-				isEmbed,
-				undefined,  // heading 不需要 alias
-				isUrl
-			);
-		} else if (!isHeading && head_analysis.block) {
-			const link = gen_insert_blocklink_singleline(
-				head_analysis.block,
-				editor,
-				this.settings
-			);
-			const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+		const link = (isHeading && head_analysis.headingAtStart) ? head_analysis.headingAtStart.heading : (!isHeading && head_analysis.block) ? gen_insert_blocklink_singleline(
+			head_analysis.block,
+			editor,
+			this.settings
+		) : undefined;
+		if (link) {
+			const alias = this.calculateAlias(isHeading, isEmbed, isUrl, this.settings.alias_length, head_analysis);
 			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 		}
 	}
@@ -981,12 +973,15 @@ export default class BlockLinkPlus extends Plugin {
 		head_analysis: HeadingAnalysisResult
 	): string | undefined {
 		// 以下情况不需要 alias：
-		// 1. 是 heading
-		// 2. 是 embed 链接
-		// 3. 是 URL 链接
-		// 4. settings 设置为 Default
-		if (isHeading || isEmbed || isUrl || this.settings.alias_type === BlockLinkAliasType.Default) {
+		// 1. 是 embed 链接
+		// 2. 是 URL 链接
+		// 3. settings 设置为 Default
+		if (isEmbed || isUrl || this.settings.alias_type === BlockLinkAliasType.Default) {
 			return undefined;
+		}
+		// heading 情况下 alias 只能是 heading
+		if (isHeading && head_analysis.headingAtStart) {
+			return head_analysis.headingAtStart.heading;
 		}
 
 		// 根据设置计算 alias
