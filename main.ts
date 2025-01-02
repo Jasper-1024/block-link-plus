@@ -129,7 +129,6 @@ function shouldInsertAfter(block: ListItemCache | SectionCache) {
 		].includes((block as SectionCache).type);
 	}
 }
-
 /**
  * handle single line content
  * @param line original line content
@@ -151,6 +150,9 @@ function processLineContent(line: string): string {
 
 	// handle block id at end of line
 	line = line.replace(/\s*\^[a-zA-Z0-9-]+$/, '');
+
+	// replace newlines with spaces
+	line = line.replace(/\n/g, ' ');
 
 	return line.trim();
 }
@@ -1009,7 +1011,7 @@ export default class BlockLinkPlus extends Plugin {
 					return undefined;
 				}
 				const processedText = processLineContent(selectedText);
-				return processedText ? processedText.slice(0, alias_length) : undefined;
+				return processedText ? processedText : undefined;
 			default:
 				return undefined;
 		}
