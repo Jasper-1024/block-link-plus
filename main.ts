@@ -449,12 +449,12 @@ function gen_insert_blocklink_singleline(
 
 	// for https://github.com/Jasper-1024/block-link-plus/issues/9
 	if (block.type === "list") {
-        const line = editor.getLine(block.position.start.line);
-        const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
-        if (blockIdMatch) {
-            return `^${blockIdMatch[1]}`;
-        }
-    }
+		const line = editor.getLine(block.position.start.line);
+		const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
+		if (blockIdMatch) {
+			return `^${blockIdMatch[1]}`;
+		}
+	}
 	// for https://github.com/Jasper-1024/block-link-plus/issues/3
 	const end =
 		block.type == "list" // if type is list, insert id on current line
@@ -1130,6 +1130,10 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				"Define how multi-line selections generate block ids. 'Default' treats them as a single line."
 			);
 
+		// Block link	
+		this.addHeading("Block link").setDesc("Link: [[file#block_id]]");
+		this.addToggleSetting("enable_right_click_block").setName("Enable block link in right click menu");
+
 		this.addDropdownSetting(
 			//@ts-ignore
 			"alias_type",
@@ -1144,25 +1148,26 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				return optionsSet.get(option) || "Unknown";
 			}
 		)
-			.setName("Block link alias style")
+			.setName("Alias style")
 			.setDesc(
 				"Choose how to generate aliases for block links." +
-				"This setting only affects block links (not embed/URL links)." +
 				"For heading blocks, alias will always be the heading text unless 'No alias' is selected."
 			);
 
 		this.addSliderSetting("alias_length", 1, 100, 1)
 			.setName("Alias length")
-			.setDesc("Set the length of the alias (1-100). Only used when alias type is 'First X chars'.");
+			.setDesc("Set the length of the alias (1-100). Only used when alias style is 'First X chars'.");
 
-		//right click menu
-		this.addHeading("Right click menu");
-		this.addToggleSetting("enable_right_click_block").setName("Copy block link");
-		this.addToggleSetting("enable_right_click_embed").setName("Copy embed link");
-		this.addToggleSetting("enable_right_click_url").setName("Copy URL link");
+		// Embed link
+		this.addHeading("Embed link").setDesc("Link: ![[file#block_id]]");
+		this.addToggleSetting("enable_right_click_embed").setName("Enable embed link in right click menu");
+
+		// Obsidian URI
+		this.addHeading("Obsidian URI link").setDesc("Link: obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId} ");
+		this.addToggleSetting("enable_right_click_url").setName("Enable Obsidian URI link in right click menu");
 
 		// block id
-		this.addHeading("Block id");
+		this.addHeading("Block Id").setDesc("Custom block_id");
 		this.addSliderSetting("id_length", 3, 7, 1)
 			.setName("Max block id Length")
 			.setDesc("Set the maximum number of characters for a block id.");
