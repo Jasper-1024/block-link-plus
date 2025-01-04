@@ -80,6 +80,7 @@ interface PluginSettings {
 	enble_prefix: boolean;
 	id_prefix: string;
 	id_length: number;
+	heading_id_newline: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -92,6 +93,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	enble_prefix: false, // no prefix
 	id_prefix: "", // prefix
 	id_length: 4, // id length
+	heading_id_newline: false,
 };
 
 /**
@@ -129,6 +131,7 @@ function shouldInsertAfter(block: ListItemCache | SectionCache) {
 		].includes((block as SectionCache).type);
 	}
 }
+
 /**
  * handle single line content
  * @param line original line content
@@ -463,6 +466,22 @@ function gen_insert_blocklink_singleline(
 			? editor.getCursor("to")
 			: { ch: block.position.end.col, line: block.position.end.line }; // else insert id at end of block
 
+	// 处理 heading 的特殊情况
+	if (block.type === "heading" && settings.heading_id_newline) {
+		const id = generateRandomId(
+			settings.enble_prefix ? settings.id_prefix : "",
+			settings.id_length
+		);
+
+		// 在标题下方插入带空行的 block ID
+		editor.replaceRange(
+			`\n\n^${id}\n\n`,
+			{ line: block.position.end.line, ch: block.position.end.col }
+		);
+
+		return `^${id}`;
+	}
+
 	const id = generateRandomId(
 		settings.enble_prefix ? settings.id_prefix : "",
 		settings.id_length
@@ -763,13 +782,19 @@ export default class BlockLinkPlus extends Plugin {
 		editor: any,
 		isUrl: boolean = false
 	) {
-		const link = (isHeading && head_analysis.headingAtStart) ? head_analysis.headingAtStart.heading : (!isHeading && head_analysis.block) ? gen_insert_blocklink_singleline(
-			head_analysis.block,
-			editor,
-			this.settings
-		) : undefined;
+		let link: string | undefined;
+
+		if (this.settings.heading_id_newline && head_analysis.block) {
+			link = gen_insert_blocklink_singleline(head_analysis.block, editor, this.settings);
+		} else if (isHeading && head_analysis.headingAtStart) {
+			link = head_analysis.headingAtStart.heading;
+		} else if (!isHeading && head_analysis.block) {
+			link = gen_insert_blocklink_singleline(head_analysis.block, editor, this.settings);
+		}
+
 		if (link) {
 			const alias = this.calculateAlias(isHeading, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			console.log("single line alias: ", alias);
 			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 		}
 	}
@@ -989,7 +1014,7 @@ export default class BlockLinkPlus extends Plugin {
 		// 1. 是 embed 链接
 		// 2. 是 URL 链接
 		// 3. settings 设置为 Default
-		if (isEmbed || isUrl || this.settings.alias_type === BlockLinkAliasType.Default) {
+		if (isEmbed || isUrl || Number(this.settings.alias_type) === BlockLinkAliasType.Default) {
 			return undefined;
 		}
 		// heading 情况下 alias 只能是 heading
@@ -1159,6 +1184,10 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addSliderSetting("alias_length", 1, 100, 1)
 			.setName("Alias length")
 			.setDesc("Set the length of the alias (1-100). Only used when alias style is 'First X chars'.");
+
+		this.addToggleSetting("heading_id_newline")
+			.setName("Experimental: Heading block ID style")
+			.setDesc("Place block ID in new line when selecting a single heading line only");
 
 		// Embed link
 		this.addHeading("Embed link").setDesc("Link: ![[file#block_id]]");
