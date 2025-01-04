@@ -43,7 +43,8 @@ Obsidian's block reference has not yet supported the creation of multi-line text
 
 The first method is using headings: adding the selected text to a new heading and copying the link pointing to that heading.
 - Distinguish using `˅id` from normal headings
-- Modify the rendering of `## ˅id` under reading mode and live preview to make it more similar to a normal block reference.
+- Modify the rendering of `## ˅id` under reading mode and live preview to make it more similar to a normal block reference
+- Control heading ID newline behavior with experimental option `heading_id_newline`
 
 ```bash
 ## ˅id
@@ -77,6 +78,12 @@ Block ID = prefix-random characters
 This feature currently does not have more practical uses, but perhaps more aggregation operations can be performed through the prefix of the block ID.
 
 ## Changelog
+
+### 1.2.0
+- Reorganized settings menu structure for better usability
+- Fixed heading block handling when text contains headings
+- Added experimental option: heading_id_newline for controlling heading block ID newline behavior
+- Improved settings text clarity and organization
 
 ### 1.1.3
 - Fixed block ID handling for list items
