@@ -46,8 +46,6 @@ type HeadingAnalysisResult = {
 	isEndLineJustBeforeHeading: boolean; // end_line 是否正好是某个 heading 的 start.line - 1
 	blockContent: string | null;        // 处理后的块内容
 	nearestHeadingTitle: string | null; // 最近的标题内容
-	selectedText: string | null; // 选中的文本
-	blockText: string | null; // 选中的块内容
 };
 
 export const enum MultLineHandle {
@@ -83,9 +81,6 @@ interface PluginSettings {
 	id_prefix: string;
 	id_length: number;
 	heading_id_newline: boolean;
-	enable_block_notification: boolean;
-	enable_embed_notification: boolean;
-	enable_url_notification: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -99,9 +94,6 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	id_prefix: "", // prefix
 	id_length: 4, // id length
 	heading_id_newline: false,
-	enable_block_notification: true,
-	enable_embed_notification: true,
-	enable_url_notification: true,
 };
 
 /**
@@ -253,15 +245,11 @@ function analyzeHeadings(
 			isEndLineJustBeforeHeading: false,
 			blockContent: null,
 			nearestHeadingTitle: null,
-			selectedText: null,
-			blockText: null,
 		};
 	}
 
 	let closestBeforeStartDistance = Infinity; // record the closest heading distance at [0, start_line)
 	let nearestHeadingTitle: string | null = null;
-	let selectedText = editor.getSelection();
-	let blockText = editor.getRange({ line: start_line, ch: 0 }, { line: end_line, ch: editor.getLine(end_line).length });
 
 	// console.log("analyzeHeadings", fileCache, start_line, end_line); // debug
 	// one line
@@ -312,8 +300,6 @@ function analyzeHeadings(
 			isEndLineJustBeforeHeading: false,
 			blockContent,
 			nearestHeadingTitle,
-			selectedText,
-			blockText
 		};
 	}
 
@@ -413,8 +399,6 @@ function analyzeHeadings(
 		isEndLineJustBeforeHeading,
 		blockContent,
 		nearestHeadingTitle,
-		selectedText,
-		blockText
 	};
 }
 
@@ -469,7 +453,6 @@ function gen_insert_blocklink_singleline(
 	// if block is list, maybe a little complex
 
 	// for https://github.com/Jasper-1024/block-link-plus/issues/9
-	// if already has block id, return 
 	if (block.type === "list") {
 		const line = editor.getLine(block.position.start.line);
 		const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
@@ -478,11 +461,10 @@ function gen_insert_blocklink_singleline(
 		}
 	}
 	// for https://github.com/Jasper-1024/block-link-plus/issues/3
-	// if block is list, block.position.end will be the end of the list, that may expand selected zone
-	const end: EditorPosition = {
-		line: block.type === "list" ? editor.getCursor("to").line : block.position.end.line,
-		ch: block.type === "list" ? editor.getLine(editor.getCursor("to").line).length : block.position.end.col
-	};
+	const end =
+		block.type == "list" // if type is list, insert id on current line
+			? editor.getCursor("to")
+			: { ch: block.position.end.col, line: block.position.end.line }; // else insert id at end of block
 
 	// 处理 heading 的特殊情况
 	if (block.type === "heading" && settings.heading_id_newline) {
@@ -493,7 +475,7 @@ function gen_insert_blocklink_singleline(
 
 		// 在标题下方插入带空行的 block ID
 		editor.replaceRange(
-			`\n\n^${id}`,
+			`\n\n^${id}\n\n`,
 			{ line: block.position.end.line, ch: block.position.end.col }
 		);
 
@@ -504,8 +486,8 @@ function gen_insert_blocklink_singleline(
 		settings.enble_prefix ? settings.id_prefix : "",
 		settings.id_length
 	);
-
 	const spacer = shouldInsertAfter(block) ? "\n\n" : " "; // insert to line or next line
+
 	editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
 	return `^${id}`;
 }
@@ -551,34 +533,6 @@ function gen_insert_blocklink_multline_heading(
 	return `˅${id}`;
 }
 
-
-function _gen_insert_block_singleline(
-	line_num: number,
-	editor: Editor,
-	settings: PluginSettings
-): string {
-	// if already has block id, return 
-	const line = editor.getLine(line_num);
-	const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
-	if (blockIdMatch) {
-		return `^${blockIdMatch[1]}`;
-	}
-
-	const end: EditorPosition = {
-		line: line_num,
-		ch: editor.getLine(line_num).length
-	};
-
-	const id = generateRandomId(
-		settings.enble_prefix ? settings.id_prefix : "",
-		settings.id_length
-	);
-
-	const spacer = " "; // insert to line or next line
-	editor.replaceRange(`${spacer}^${id}`, end); // insert block id at end of block
-	return `^${id}`;
-}
-
 /**
  * Generates block links for multiple lines of a block.
  *
@@ -603,30 +557,17 @@ function gen_insert_blocklink_multline_block(
 	let links = new Array<string>();
 
 	for (const section of sortedSections) {
-		// section is out of the [start_line, end_line]
-		if (section.position.start.line > end_line || section.position.end.line < start_line) continue;
-
-		// list type is special
-		if (section.type === "list") {
-			let _start_line = Math.max(section.position.start.line, start_line);
-			let _end_line = Math.min(section.position.end.line, end_line);
-			for (let i = _start_line; i <= _end_line; i++) {
-				const id = _gen_insert_block_singleline(i, editor, settings);
-				links.push(id);
-			}
-		} else {
-			// section is in the [start_line, end_line]
-			if (
-				section.position.start.line >= start_line &&
-				section.position.end.line <= end_line
-			) {
-				const id = gen_insert_blocklink_singleline(
-					section,
-					editor,
-					settings
-				);
-				links.push(id);
-			}
+		if (section.position.start.line > end_line) break;
+		if (
+			section.position.start.line >= start_line &&
+			section.position.end.line <= end_line
+		) {
+			const id = gen_insert_blocklink_singleline(
+				section,
+				editor,
+				settings
+			);
+			links.push(id);
 		}
 	}
 
@@ -852,7 +793,8 @@ export default class BlockLinkPlus extends Plugin {
 		}
 
 		if (link) {
-			const alias = this.calculateAlias(link, isHeading, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			const alias = this.calculateAlias(isHeading, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			console.log("single line alias: ", alias);
 			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 		}
 	}
@@ -929,7 +871,7 @@ export default class BlockLinkPlus extends Plugin {
 					editor,
 					this.settings
 				);
-				const alias = this.calculateAlias(link, false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+				const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
 				this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 			}
 			return;
@@ -951,7 +893,7 @@ export default class BlockLinkPlus extends Plugin {
 				editor,
 				head_analysis
 			);
-			const alias = this.calculateAlias(link, false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
+			const alias = this.calculateAlias(false, isEmbed, isUrl, this.settings.alias_length, head_analysis);
 			this.copyToClipboard(file, link, isEmbed, alias, isUrl);
 			return;
 		}
@@ -1035,11 +977,10 @@ export default class BlockLinkPlus extends Plugin {
 		file: TFile,
 		links: string | string[],
 		isEmbed: boolean,
-		alias?: string | string[],
+		alias?: string,
 		isUrl: boolean = false
 	) {
 		const linksArray = typeof links === "string" ? [links] : links;
-		const aliasArray = typeof alias === "string" ? [alias] : alias;
 
 		const content = linksArray
 			.map((link, index) => {
@@ -1051,34 +992,24 @@ export default class BlockLinkPlus extends Plugin {
 					file,
 					"",
 					"#" + link,
-					aliasArray?.[index] ?? ""
+					alias
 				)}${addNewLine}`;
 			})
 			.join("");
 
 		navigator.clipboard.writeText(content);
-
-		// Show notification based on settings
-		if (isUrl && this.settings.enable_url_notification) {
-			new Notice("Obsidian URI copied to clipboard");
-		} else if (isEmbed && this.settings.enable_embed_notification) {
-			new Notice("Block embed link copied to clipboard");
-		} else if (!isEmbed && !isUrl && this.settings.enable_block_notification) {
-			new Notice("Block link copied to clipboard");
-		}
 	}
 
 	/**
 	 * Calculate alias based on settings and analysis result
 	 */
 	private calculateAlias(
-		links: string[] | string,
 		isHeading: boolean,
 		isEmbed: boolean,
 		isUrl: boolean,
 		alias_length: number,
-		head_analysis: HeadingAnalysisResult,
-	): string[] | string | undefined {
+		head_analysis: HeadingAnalysisResult
+	): string | undefined {
 		// 以下情况不需要 alias：
 		// 1. 是 embed 链接
 		// 2. 是 URL 链接
@@ -1094,20 +1025,18 @@ export default class BlockLinkPlus extends Plugin {
 		// 根据设置计算 alias
 		switch (Number(this.settings.alias_type)) {
 			case BlockLinkAliasType.FirstChars:
-				// Return the first X chars of each line if links is an array
-				return links instanceof Array
-					? head_analysis.blockText?.split("\n").filter(line => line.length > 0).map(line => processLineContent(line).slice(0, alias_length))
-					: head_analysis.blockContent?.slice(0, alias_length);
+				return head_analysis.blockContent != null ? head_analysis.blockContent.slice(0, alias_length) : undefined;
 			case BlockLinkAliasType.Heading:
 				return head_analysis.nearestHeadingTitle != null ? head_analysis.nearestHeadingTitle.slice(0, alias_length) : undefined;
 			case BlockLinkAliasType.SelectedText:
-				const selectedText = head_analysis.selectedText?.trim();
-				if (!selectedText) {
+				const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+				if (!editor) return undefined;
+				const selectedText = editor.getSelection();
+				if (selectedText == "") {
 					return undefined;
 				}
-				return links instanceof Array
-					? selectedText.split("\n").filter(line => line.length > 0).map(line => processLineContent(line))
-					: processLineContent(selectedText) || undefined;
+				const processedText = processLineContent(selectedText);
+				return processedText ? processedText : undefined;
 			default:
 				return undefined;
 		}
@@ -1231,7 +1160,6 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// Block link	
 		this.addHeading("Block link").setDesc("Link: [[file#block_id]]");
 		this.addToggleSetting("enable_right_click_block").setName("Enable block link in right click menu");
-		this.addToggleSetting("enable_block_notification").setName("Show notification when block link is copied");
 
 		this.addDropdownSetting(
 			//@ts-ignore
@@ -1264,12 +1192,10 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// Embed link
 		this.addHeading("Embed link").setDesc("Link: ![[file#block_id]]");
 		this.addToggleSetting("enable_right_click_embed").setName("Enable embed link in right click menu");
-		this.addToggleSetting("enable_embed_notification").setName("Show notification when embed link is copied");
 
 		// Obsidian URI
 		this.addHeading("Obsidian URI link").setDesc("Link: obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId} ");
 		this.addToggleSetting("enable_right_click_url").setName("Enable Obsidian URI link in right click menu");
-		this.addToggleSetting("enable_url_notification").setName("Show notification when URI link is copied");
 
 		// block id
 		this.addHeading("Block Id").setDesc("Custom block_id");

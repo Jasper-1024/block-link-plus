@@ -79,6 +79,13 @@ This feature currently does not have more practical uses, but perhaps more aggre
 
 ## Changelog
 
+### 1.2.3
+- Improved multi-line block handling, especially for list items
+- Enhanced alias generation for multi-line blocks
+- Added configurable notifications for block link copying
+- Fixed list block ID handling and positioning
+- Improved selected text handling for aliases
+
 ### 1.2.0
 - Reorganized settings menu structure for better usability
 - Fixed heading block handling when text contains headings
