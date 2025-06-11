@@ -236,6 +236,29 @@ function analyzeHeadings(
 	start_line: number,
 	end_line: number
 ): HeadingAnalysisResult {
+	if (start_line === 0 && end_line === 0) {
+		console.log("block-link-plus: analyzeHeadings: start_line === 0 && end_line === 0");
+		return {
+			isValid: false,
+			start_line,
+			end_line,
+			isMultiline: false,
+			block: null,
+			nearestBeforeStartLevel: 0,
+			minLevelInRange: Infinity,
+			hasHeadingAtStart: false,
+			hasHeadingAtEnd: false,
+			headingAtStart: null,
+			headingAtEnd: null,
+			isStartHeadingMinLevel: false,
+			isEndLineJustBeforeHeading: false,
+			blockContent: null,
+			nearestHeadingTitle: null,
+			selectedText: null,
+			blockText: null,
+		};
+	}
+
 	if (!fileCache || end_line < start_line) {
 		return {
 			isValid: false,
