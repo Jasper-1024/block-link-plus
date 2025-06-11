@@ -86,6 +86,13 @@ interface PluginSettings {
 	enable_block_notification: boolean;
 	enable_embed_notification: boolean;
 	enable_url_notification: boolean;
+	// Time Section
+	enable_time_section: boolean;
+	time_section_format: string;
+	daily_note_pattern: string;
+	insert_heading_level: boolean;
+	daily_note_heading_level: number;
+	enable_time_section_in_menu: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -102,6 +109,13 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	enable_block_notification: true,
 	enable_embed_notification: true,
 	enable_url_notification: true,
+	// Time Section
+	enable_time_section: true,
+	time_section_format: "HH:mm",
+	daily_note_pattern: "\\d{4}-\\d{1,2}-\\d{1,2}",
+	insert_heading_level: true,
+	daily_note_heading_level: 2,
+	enable_time_section_in_menu: false,
 };
 
 /**
@@ -137,6 +151,41 @@ function shouldInsertAfter(block: ListItemCache | SectionCache) {
 			"comment",
 			"footnoteDefinition",
 		].includes((block as SectionCache).type);
+	}
+}
+
+/**
+ * Format current time to specified format
+ * @param format Time format, e.g. "HH:mm"
+ * @returns Formatted time string
+ */
+function formatCurrentTime(format: string): string {
+	const now = new Date();
+	const hours = now.getHours().toString().padStart(2, '0');
+	const minutes = now.getMinutes().toString().padStart(2, '0');
+	
+	// 简单的格式替换
+	return format
+		.replace('HH', hours)
+		.replace('mm', minutes);
+}
+
+/**
+ * Check if the file name matches the daily note format
+ * @param fileName File name
+ * @param pattern Daily note regex pattern
+ * @returns Whether it is a daily note
+ */
+function isDailyNote(fileName: string, pattern: string): boolean {
+	console.log(`isDailyNote checking: fileName="${fileName}", pattern="${pattern}"`);
+	try {
+		const regex = new RegExp(pattern);
+		const isMatch = regex.test(fileName);
+		// console.log(`isDailyNote result: ${isMatch ? "MATCH" : "NO MATCH"}`);
+		return isMatch;
+	} catch (e) {
+		console.error("Invalid regex pattern for daily note:", e);
+		return false;
 	}
 }
 
@@ -304,6 +353,11 @@ function analyzeHeadings(
 		})!;
 
 		const blockContent = block ? processLineContent(editor.getLine(start_line)) : null;
+		
+		// 添加与多行分析类似的逻辑来计算 nearestBeforeStartLevel
+		let nearestBeforeStartLevel = 0;
+		let closestBeforeStartDistance = Infinity;
+		
 		fileCache.headings?.forEach((heading) => {
 			const { start, end } = heading.position;
 			// 对于 start.line 在 (0, start_line) 开区间的处理
@@ -313,8 +367,10 @@ function analyzeHeadings(
 					return;
 				}
 				const distance = start_line - start.line;
-				if (start_line - start.line < closestBeforeStartDistance) {
-					nearestHeadingTitle = heading.heading;  // 记录最近的标题内容
+				if (distance < closestBeforeStartDistance) {
+					closestBeforeStartDistance = distance;
+					nearestBeforeStartLevel = heading.level;
+					nearestHeadingTitle = heading.heading; 
 				}
 			}
 		});
@@ -325,7 +381,7 @@ function analyzeHeadings(
 			end_line,
 			isMultiline: false,
 			block,
-			nearestBeforeStartLevel: 0,
+			nearestBeforeStartLevel,
 			minLevelInRange: head_block ? head_block.level : Infinity,
 			hasHeadingAtStart: !!block,
 			hasHeadingAtEnd: false,
@@ -758,6 +814,13 @@ export default class BlockLinkPlus extends Plugin {
 			},
 		});
 
+		// Insert time section
+		this.addCommand({
+			id: "insert-time-section",
+			name: "Insert Time Section",
+			editorCheckCallback: this.handleTimeCommand.bind(this)
+		});
+
 		// for reading mode
 		this.registerMarkdownPostProcessor(markdownPostProcessor);
 		// for live preview
@@ -790,6 +853,7 @@ export default class BlockLinkPlus extends Plugin {
 		// debug
 		// console.log("head_analysis", head_analysis.blockContent);
 		// console.log("head_analysis", head_analysis.nearestHeadingTitle);
+		// console.log("head_analysis", head_analysis.nearestBeforeStartLevel);
 
 		if (!head_analysis.isValid) return;
 
@@ -833,6 +897,17 @@ export default class BlockLinkPlus extends Plugin {
 				false,
 				true
 			);
+		}
+
+		// Insert time section
+		if (this.settings.enable_time_section && this.settings.enable_time_section_in_menu) {
+			menu.addItem((item) => {
+				item.setTitle("Insert Time Section")
+					.setIcon("clock")
+					.onClick(() => {
+						this.handleInsertTimeSection(editor, view, head_analysis);
+					});
+			});
 		}
 	}
 
@@ -1135,6 +1210,116 @@ export default class BlockLinkPlus extends Plugin {
 				return undefined;
 		}
 	}
+
+	/**
+	 * Handle inserting time section
+	 * @param editor Editor instance
+	 * @param view Current view
+	 * @param headAnalysis Optional existing heading analysis result
+	 */
+	private handleInsertTimeSection(
+		editor: Editor,
+		view: MarkdownView | MarkdownFileInfo,
+		headAnalysis?: HeadingAnalysisResult
+	) {
+		// Check if the feature is enabled
+		if (!this.settings.enable_time_section) return;
+		
+		// Get current file
+		const file: TFile | null = view.file;
+		if (!file) return;
+		
+		// Get current formatted time
+		const timeStr = formatCurrentTime(this.settings.time_section_format);
+		
+		// Get current cursor position
+		const cursorLine = editor.getCursor().line;
+		
+		// Determine heading level
+		let headingLevel = 1;
+		let insertText = "";
+		
+		// Check if it is a daily note
+		const isDaily = isDailyNote(file.basename, this.settings.daily_note_pattern);
+		
+		if (isDaily) {
+			// Daily note uses fixed level
+			headingLevel = this.settings.daily_note_heading_level;
+		} else {
+			// Use existing analysis if provided, otherwise analyze heading level at current position
+			if (headAnalysis && headAnalysis.isValid) {
+				// Use the heading level before the current position + 1
+				// If there is no previous heading, use level 1
+				headingLevel = Math.min(headAnalysis.nearestBeforeStartLevel + 1, 6);
+				if (headingLevel === 0) headingLevel = 1;
+			} else {
+				// Analyze heading level at current position
+				const fileCache = this.app.metadataCache.getFileCache(file);
+				if (fileCache) {
+					const newHeadAnalysis = analyzeHeadings(fileCache, editor, cursorLine, cursorLine);
+					if (newHeadAnalysis.isValid) {
+						// Use the heading level before the current position + 1
+						// If there is no previous heading, use level 1
+						headingLevel = Math.min(newHeadAnalysis.nearestBeforeStartLevel + 1, 6);
+						if (headingLevel === 0) headingLevel = 1;
+					}
+				}
+			}
+		}
+		
+		// Prepare text to insert
+		if (this.settings.insert_heading_level) {
+			insertText = "#".repeat(headingLevel) + " " + timeStr + "\n";
+		} else {
+			insertText = timeStr + "\n";
+		}
+		
+		// Insert text at current position
+		editor.replaceRange(insertText, editor.getCursor());
+		
+		// Move cursor to the position after inserted text
+		const newPosition = {
+			line: cursorLine + 1,
+			ch: 0
+		};
+		editor.setCursor(newPosition);
+	}
+
+	/**
+	 * Handle the insert time section command
+	 * @param isChecking Whether this is a checking call
+	 * @param editor Editor instance
+	 * @param view Current view
+	 * @returns Whether the command can be executed
+	 */
+	private handleTimeCommand(
+		isChecking: boolean,
+		editor: Editor,
+		view: MarkdownView | MarkdownFileInfo
+	): boolean {
+		if (isChecking) {
+			return this.settings.enable_time_section;
+		}
+		
+		// Similar to handleCommand but for time section
+		const file: TFile | null = view.file;
+		if (!file) return false;
+		
+		const start_line = editor.getCursor("from").line;
+		const end_line = editor.getCursor("to").line;
+		const fileCache = this.app.metadataCache.getFileCache(file);
+		if (!fileCache) return false;
+		
+		let head_analysis = analyzeHeadings(fileCache, editor, start_line, end_line);
+		if (!head_analysis.isValid) {
+			// Even if analysis is invalid, we can still insert time section
+			this.handleInsertTimeSection(editor, view);
+		} else {
+			this.handleInsertTimeSection(editor, view, head_analysis);
+		}
+		
+		return true;
+	}
 }
 
 class BlockLinkPlusSettingsTab extends PluginSettingTab {
@@ -1305,5 +1490,31 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addTextInputSetting("id_prefix", "")
 			.setName("Block id prefix")
 			.setDesc("Block id will be: prefix-random_str");
+
+		// 时间章节设置
+		this.addHeading("Time Section").setDesc("Insert time-based headings");
+		
+		this.addToggleSetting("enable_time_section")
+			.setName("Enable time section feature");
+		
+		this.addToggleSetting("enable_time_section_in_menu")
+			.setName("Show in context menu")
+			.setDesc("If enabled, adds time section option to the right-click menu");
+		
+		this.addTextInputSetting("time_section_format", "HH:mm")
+			.setName("Time format")
+			.setDesc("Format for the time section (HH:mm = 24-hour format)");
+		
+		this.addToggleSetting("insert_heading_level")
+			.setName("Insert as heading")
+			.setDesc("If enabled, inserts time with heading marks (#), otherwise inserts just the time");
+
+		this.addTextInputSetting("daily_note_pattern", "\\d{4}-\\d{1,2}-\\d{1,2}")
+			.setName("Daily note pattern")
+			.setDesc("Regular expression to identify daily note filenames (default: YYYY-MM-DD)");
+		
+		this.addSliderSetting("daily_note_heading_level", 1, 6, 1)
+			.setName("Daily note heading level")
+			.setDesc("Heading level to use in daily notes (1-6, corresponds to #-######)");
 	}
 }
