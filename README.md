@@ -79,6 +79,11 @@ This feature currently does not have more practical uses, but perhaps more aggre
 
 ## Changelog
 
+### 1.2.4
+- Added validation for edge cases in heading analysis to improve stability
+- Enhanced error handling for the analyzeHeadings function
+- Fixed potential issues when start_line and end_line are both zero
+
 ### 1.2.3
 - Improved multi-line block handling, especially for list items
 - Enhanced alias generation for multi-line blocks
