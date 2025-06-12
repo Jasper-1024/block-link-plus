@@ -77,7 +77,33 @@ Block ID = prefix-random characters
 
 This feature currently does not have more practical uses, but perhaps more aggregation operations can be performed through the prefix of the block ID.
 
+### Time Section
+
+The Time Section feature allows you to quickly insert timestamps as headings, which is particularly useful for daily notes and meeting notes:
+
+- Insert timestamps in configurable format (default: HH:mm)
+- Special handling for daily notes with customizable filename pattern detection
+- Automatic heading level determination based on document structure
+- Option to display time sections as plain text in preview mode
+- Accessible through command palette and context menu (optional)
+
+```bash
+## 09:30
+Meeting notes...
+
+## 14:15
+Follow-up discussion...
+```
+
 ## Changelog
+
+### 1.3.0
+- Added Time Section feature for inserting timestamps as headings
+- Added automatic heading level determination for time sections
+- Added special handling for daily notes with customizable pattern matching
+- Added option to display time sections as plain text in preview mode
+- Improved heading analysis with better level detection
+- Fixed cursor positioning after inserting elements
 
 ### 1.2.4
 - Added validation for edge cases in heading analysis to improve stability
