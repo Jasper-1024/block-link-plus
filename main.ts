@@ -93,6 +93,7 @@ interface PluginSettings {
 	insert_heading_level: boolean;
 	daily_note_heading_level: number;
 	enable_time_section_in_menu: boolean;
+	time_section_plain_style: boolean; // Controls whether time sections should be displayed as plain text
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -116,6 +117,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	insert_heading_level: true,
 	daily_note_heading_level: 2,
 	enable_time_section_in_menu: false,
+	time_section_plain_style: false, // Default to standard heading style
 };
 
 /**
@@ -168,6 +170,19 @@ function formatCurrentTime(format: string): string {
 	return format
 		.replace('HH', hours)
 		.replace('mm', minutes);
+}
+
+/**
+ * Check if a text is a time section heading
+ * @param text Text to check
+ * @param format Time format to match (default: HH:mm)
+ * @returns Whether the text is a time section
+ */
+function isTimeSection(text: string, format: string = "HH:mm"): boolean {
+	// Heading pattern: #+ HH:mm
+	// This regex matches strings like "## 19:19" or "# 09:05"
+	const regex = new RegExp(`^(#{1,6})\\s+(\\d{1,2}:\\d{1,2})$`);
+	return regex.test(text);
 }
 
 /**
@@ -713,35 +728,6 @@ function gen_insert_blocklink_multline_block(
 }
 
 /**
- * Processes the markdown element by removing specific text patterns.
- * make ˅id to ""
- * @param el - The HTML element to process.
- */
-function markdownPostProcessor(el: HTMLElement) {
-	if (el.firstChild instanceof Node) {
-		let walker = document.createTreeWalker(
-			el.firstChild,
-			NodeFilter.SHOW_TEXT,
-			null
-		);
-		let nodes: Node[] = [];
-		let node: Node;
-		// @ts-ignore
-		while ((node = walker.nextNode())) {
-			nodes.push(node);
-		}
-
-		for (node of nodes) {
-			// @ts-ignore
-			node.textContent = node.textContent.replace(
-				/\s*˅[a-zA-Z0-9-]*/g,
-				""
-			);
-		}
-	}
-}
-
-/**
  * Creates a BlockLinkPlusViewPlugin with the specified rule.
  *
  * @param rule - The regular expression rule used to match the block links.
@@ -752,7 +738,14 @@ function createViewPlugin(
 ): BlockLinkPlusViewPlugin {
 	let decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
-		decoration: Decoration.mark({ class: "small-font" }),
+		decoration: (match) => {
+			// Check if this is a time section heading
+			if (match[0].match(/^#{1,6}\s+\d{1,2}:\d{1,2}$/)) {
+				return Decoration.mark({ class: "time-section-plain" });
+			}
+			// Default decoration for block IDs
+			return Decoration.mark({ class: "small-font" });
+		}
 	});
 	return ViewPlugin.define(
 		(view) => ({
@@ -781,6 +774,9 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
+
+		// Add custom CSS
+		this.addCustomStyles();
 
 		// Register right click menu
 		this.registerEvent(
@@ -822,19 +818,80 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		// for reading mode
-		this.registerMarkdownPostProcessor(markdownPostProcessor);
+		this.registerMarkdownPostProcessor(this.markdownPostProcessor.bind(this));
+		
 		// for live preview
-		this.viewPlugin = createViewPlugin();
-		this.registerEditorExtension([this.viewPlugin]);
+		this.updateViewPlugin();
+		
 		// this.refreshExtensions();
 	}
 
+	/**
+	 * Updates the view plugin with the current settings.
+	 * This should be called whenever settings that affect the display are changed.
+	 */
+	public updateViewPlugin() {
+		// Create regex for both block IDs and time sections if enabled
+		let rule = "(^| )˅[a-zA-Z0-9_]+$";
+		
+		if (this.settings.time_section_plain_style) {
+			// Add time section pattern to the regex
+			rule = `(${rule})|(^#{1,6}\\s+\\d{1,2}:\\d{1,2}$)`;
+		}
+		
+		this.viewPlugin = createViewPlugin(rule);
+		this.registerEditorExtension([this.viewPlugin]);
+	}
+	
+	/**
+	 * Processes markdown elements for rendering.
+	 * Handles special markers and applies custom styling.
+	 * @param el The HTML element to process
+	 */
+	private markdownPostProcessor(el: HTMLElement) {
+		if (!el.firstChild) return;
+		
+		// Process text nodes to handle special markers
+		if (el.firstChild instanceof Node) {
+			let walker = document.createTreeWalker(
+				el.firstChild,
+				NodeFilter.SHOW_TEXT,
+				null
+			);
+			let nodes: Node[] = [];
+			let node: Node;
+			// @ts-ignore
+			while ((node = walker.nextNode())) {
+				nodes.push(node);
+			}
+
+			for (node of nodes) {
+				// @ts-ignore
+				node.textContent = node.textContent.replace(
+					/\s*˅[a-zA-Z0-9-]*/g,
+					""
+				);
+			}
+		}
+		
+		// Process time section headings if enabled
+		if (this.settings.time_section_plain_style) {
+			const headings = el.querySelectorAll('h1, h2, h3, h4, h5, h6');
+			headings.forEach(heading => {
+				if (heading.textContent && isTimeSection(heading.textContent.trim())) {
+					// Add a special class to style time sections as plain text
+					heading.classList.add('time-section-plain');
+				}
+			});
+		}
+	}
+	
 	// Creates new LinkifyViewPlugins and registers them.
 	// refreshExtensions() {
 	// 	this.viewPlugin = createViewPlugin();
 	// 	this.app.workspace.updateOptions();
 	// }
-
+	
 	private handleEditorMenu(
 		menu: Menu,
 		editor: Editor,
@@ -1055,7 +1112,11 @@ export default class BlockLinkPlus extends Plugin {
 		}
 	}
 
-	onunload() { }
+	onunload() { 
+		console.log(`unloading ${this.appName}`);
+		// The register method in addCustomStyles already handles
+		// removing the style element, so we don't need to do it here
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -1067,6 +1128,9 @@ export default class BlockLinkPlus extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// Update view plugin after saving settings
+		// This ensures that the plugin is updated whenever settings are changed
+		this.updateViewPlugin();
 	}
 
 	private handleCommand(
@@ -1320,6 +1384,34 @@ export default class BlockLinkPlus extends Plugin {
 		
 		return true;
 	}
+
+	/**
+	 * Adds custom CSS styles to the document for plugin-specific styling
+	 */
+	private addCustomStyles() {
+		// Add the time-section-plain style to the document
+		const css = `
+			.time-section-plain {
+				font-size: var(--font-text-size) !important;
+				font-weight: normal !important;
+				color: var(--text-normal) !important;
+				margin-top: 0 !important;
+				margin-bottom: 0 !important;
+				line-height: var(--line-height-normal) !important;
+				/* Remove any special heading styling */
+				border: none !important;
+				padding: 0 !important;
+			}
+		`;
+		
+		// Create a style element and append it to the document head
+		const styleEl = document.createElement('style');
+		styleEl.textContent = css;
+		document.head.appendChild(styleEl);
+		
+		// Store a reference to remove it on unload
+		this.register(() => styleEl.remove());
+	}
 }
 
 class BlockLinkPlusSettingsTab extends PluginSettingTab {
@@ -1508,6 +1600,13 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("insert_heading_level")
 			.setName("Insert as heading")
 			.setDesc("If enabled, inserts time with heading marks (#), otherwise inserts just the time");
+
+		this.addToggleSetting("time_section_plain_style", (value) => {
+			// Update view plugin when setting changes
+			this.plugin.updateViewPlugin();
+		})
+			.setName("Plain text style in preview")
+			.setDesc("If enabled, time sections will appear as plain text in preview mode, even when inserted as headings");
 
 		this.addTextInputSetting("daily_note_pattern", "\\d{4}-\\d{1,2}-\\d{1,2}")
 			.setName("Daily note pattern")
