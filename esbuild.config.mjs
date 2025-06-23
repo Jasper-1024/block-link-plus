@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import fs from "fs";
+import path from "path";
 
 const banner =
 `/*
@@ -10,6 +12,22 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+
+// Plugin to rename CSS files
+let renamePlugin = {
+	name: 'rename-styles',
+	setup(build) {
+		build.onEnd(() => {
+			const { outfile } = build.initialOptions;
+			const outcss = outfile.replace(/\.js$/, '.css');
+			const fixcss = outfile.replace(/main\.js$/, 'styles.css');
+			if (fs.existsSync(outcss)) {
+				console.log('Renaming', outcss, 'to', fixcss);
+				fs.renameSync(outcss, fixcss);
+			}
+		});
+	},
+};
 
 const context = await esbuild.context({
 	banner: {
@@ -38,6 +56,18 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
+	loader: {
+		".tsx": "tsx",
+		".ts": "ts",
+		".jsx": "jsx",
+		".js": "js",
+		".ttf": "base64",
+		".css": "css",
+	},
+	plugins: [renamePlugin],
+	define: { 
+		'process.env.NODE_ENV': prod ? '"production"' : '"development"' 
+	},
 });
 
 if (prod) {
