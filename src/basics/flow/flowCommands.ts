@@ -1,16 +1,20 @@
-import BlockLinkPlus from "main";
 import i18n from "shared/i18n";
+import { Command } from 'obsidian';
 
-export const loadFlowCommands = (plugin: BlockLinkPlus) => {
-  plugin.addCommand({
+export const loadFlowCommands = (
+    addCommand: (cmd: Command) => any,
+    openFlow: () => void,
+    closeFlow: () => void
+) => {
+  addCommand({
     id: "mk-open-flow",
     name: i18n.commandPalette.openFlow,
-    callback: () => plugin.openFlow(),
+    callback: openFlow,
   });
 
-  plugin.addCommand({
+  addCommand({
     id: "mk-close-flow",
     name: i18n.commandPalette.closeFlow,
-    callback: () => plugin.closeFlow(),
+    callback: closeFlow,
   });
 };

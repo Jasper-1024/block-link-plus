@@ -1,0 +1,11 @@
+.time-section-plain {
+    font-size: var(--font-text-size) !important;
+    font-weight: normal !important;
+    color: var(--text-normal) !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: var(--line-height-normal) !important;
+    /* Remove any special heading styling */
+    border: none !important;
+    padding: 0 !important;
+} 

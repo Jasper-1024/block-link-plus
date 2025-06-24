@@ -382,3 +382,15 @@ body.mk-flow-state {
 .mobile-toolbar-options-container {
   border-top: 1px solid var(--mk-ui-divider);
 }
+
+/* src/css/custom-styles.css */
+.time-section-plain {
+  font-size: var(--font-text-size) !important;
+  font-weight: normal !important;
+  color: var(--text-normal) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: var(--line-height-normal) !important;
+  border: none !important;
+  padding: 0 !important;
+}
