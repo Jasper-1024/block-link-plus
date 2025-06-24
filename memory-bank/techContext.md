@@ -1,25 +1,50 @@
 # σ₃: Technical Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
+*v1.0 | Created: 2024-12-19 | Updated: {TODAY}*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🛠️ Technology Stack
+- 🖥️ **Frontend**: Svelte (Obsidian's UI framework), React (for Flow Editor components)
+- ⚙️ **Backend/Core**: TypeScript
+- 📦 **Build Tools**: esbuild
+- 📋 **Package Manager**: npm
+- 📝 **Language**: TypeScript 4.7.4
+- 🧩 **Core Framework**: Obsidian API v1.3.5, CodeMirror 6
 
-### 🖥️ Frontend
-- **TypeScript**: 主要开发语言，v4.7.4
-- **Obsidian API**: 插件开发框架
-- **CodeMirror 6**: 编辑器扩展和自定义
-- **React**: 用于内联编辑功能的 UI 组件 (从 Basics 插件集成)
+## 🏛️ Architecture Overview
+The plugin uses a modular architecture centered on a lightweight **Orchestrator (`main.ts`)**. This central file delegates all major functionalities to specialized managers and modules, ensuring high cohesion and low coupling.
 
-### 🏗️ Build System
-- **ESBuild**: 构建工具，v0.17.3
-- **Node.js**: 运行环境
-- **npm**: 包管理器
+### Key Components:
+- **`main.ts` (Orchestrator)**: The main entry point. It handles the plugin lifecycle (`onload`, `onunload`), registers basic commands, and, most importantly, initializes and wires together the various managers and modules.
+- **`FlowEditorManager` (`src/features/flow-editor/`)**: A dedicated manager that encapsulates all logic for the "Flow Editor" and "Basics" features. It is instantiated by `main.ts` and handles its own command registration, workspace patching, and UI management for the flow editor.
+- **`src/features/` (Feature Modules)**: Contains other self-contained modules for specific features like `command-handler` and `time-section`.
+- **`src/ui/` (UI Modules)**: Contains modules responsible for the user interface, such as the settings tab (`SettingsTab.ts`) and editor context menu (`EditorMenu.ts`).
+- **`src/basics/` & `src/shared`**: These are considered a library or submodule providing the core "Flow Editor" functionality, managed by `FlowEditorManager`.
 
-### 🧪 Testing
-- **自定义测试框架**: 项目特定的测试实现
+## ⛓️ Dependencies
+- **Obsidian API**: Core dependency for interacting with the Obsidian environment.
+- **CodeMirror**: Used for editor extensions.
+- **React**: Used by the Flow Editor components.
+- **Internal Modules**: `main.ts` now primarily depends on `FlowEditorManager` and the UI modules. `FlowEditorManager` in turn depends on the `basics` library.
 
-### 📦 Packaging
-- **Obsidian Plugin System**: 插件打包和分发
+## 🧱 Code Structure
+- **`main.ts`**: The orchestrator/core file. (Significantly smaller and cleaner).
+- **`src/`**: Contains all source code.
+  - **`features/`**: Home for modular features.
+    - **`flow-editor/`**: Contains the `FlowEditorManager`.
+  - **`ui/`**: Houses UI-related code.
+  - **`basics/`**: The integrated inline editing feature library.
+  - **`shared/`**: Shared code for the library.
+- **`memory-bank/`**: Project documentation.
+
+## ⚖️ Technical Debt
+- **Architectural Debt**: **Very Low**. The primary architectural debt related to the monolithic `main.ts` has been resolved. The extraction of `FlowEditorManager` was the final major step in this process. The architecture is now clean and modular.
+- **Testing Debt**: **High**. This is now the primary source of technical debt. The recent refactoring was not covered by tests, making the codebase vulnerable to regressions.
+
+## 🚀 Refactoring Goals
+- **Modularization**: **Complete**. The goal of breaking down the monolithic `main.ts` has been achieved. All major features are now encapsulated in their own modules or managers.
+- **Clear Interfaces**: **Achieved**. The delegation pattern from `main.ts` to `FlowEditorManager` and other modules provides clear separation.
+- **Improved Readability**: **Achieved**. The new directory structure is more logical and easier to navigate.
+- **Increased Maintainability**: **Achieved**. The codebase is now easier to understand and safer to modify.
 
 ## 📚 Dependencies
 

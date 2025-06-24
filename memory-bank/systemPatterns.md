@@ -1,248 +1,105 @@
 # σ₂: System Patterns
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
+*v1.0 | Created: 2024-12-19 | Updated: {TODAY}*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🏛️ Architecture Overview
 
-Block Link Plus 是一个 Obsidian 插件，提供增强的块引用功能，现已集成内联编辑能力。系统架构由以下几个主要部分组成：
+Block Link Plus has transitioned to a highly modular architecture centered around an **Orchestrator Pattern**. The `main.ts` file acts as the central orchestrator, delegating tasks to specialized, independent feature and UI modules. This design significantly improves maintainability, scalability, and testability.
 
-### 核心架构
-- **插件生命周期管理**: 初始化、加载和卸载流程
-- **块链接生成系统**: 创建和管理块链接
-- **多行块处理策略**: 处理多行文本块
-- **时间章节功能**: 时间戳和日记集成
-- **内联编辑功能**: 嵌入块的直接编辑能力 (新集成)
+### Core Architecture
+- **Orchestrator (`main.ts`)**: Manages the plugin lifecycle and settings. It coordinates actions by delegating all business logic to specialized managers and modules, acting as a lightweight central hub.
+- **`FlowEditorManager` (`src/features/flow-editor/`)**: A dedicated manager that encapsulates all logic related to the "Flow Editor" and "Basics" functionalities, including command creation, workspace patching, and editor lifecycle management.
+- **Core Feature Modules (`src/features/`)**: Self-contained modules that encapsulate specific business logic.
+  - **`heading-analysis.ts`**: Provides functions for analyzing document headings.
+  - **`clipboard-handler.ts`**: Manages clipboard operations like copying links and generating aliases.
+  - **`command-handler.ts`**: Contains the core logic for all registered plugin commands.
+- **UI Modules (`src/ui/`)**: Components responsible for rendering and managing all user interface elements.
+  - **`EditorMenu.ts`**: Manages the logic and event handling for the editor's right-click context menu.
+  - **`SettingsTab.ts`**: Renders the plugin's settings panel.
+- **Shared Code (`src/utils.ts`, `src/types.ts`)**: Common utilities and type definitions used across the application.
 
 ### 架构演进
-当前架构正从单文件结构向模块化系统演进，通过将功能拆分为独立模块，提高代码可维护性和扩展性。
+The architecture has successfully evolved from a monolithic structure. `main.ts` has been significantly streamlined and no longer acts as a "God Object." A major refactoring was completed to extract all "Flow Editor" logic into a dedicated `FlowEditorManager`, further purifying `main.ts`'s role as an orchestrator.
 
 ## 🧩 System Components
 
 ### 核心组件
-1. **BlockLinkPlus**: 主插件类，管理生命周期和功能集成
-2. **ViewPlugin**: CodeMirror 视图插件，处理文本渲染
-3. **SettingsTab**: 用户设置界面
-4. **BlockLinkGenerator**: 块链接生成逻辑
-5. **FlowEditor**: 内联编辑器组件 (新增)
+1. **`BlockLinkPlus` (Orchestrator)**: The main plugin class in `main.ts`.
+2. **`FlowEditorManager`**: Manages the entire "Flow Editor" feature set.
+3. **Core Feature Modules**:
+   - `heading-analysis`, `clipboard-handler`, `command-handler`
+4. **UI Modules**:
+   - `EditorMenu`, `SettingsTab`, `ViewPlugin`
 
 ### 组件关系
+```mermaid
+graph TD
+    subgraph Orchestrator
+        A[main.ts]
+    end
+
+    subgraph Feature Managers
+        G[FlowEditorManager]
+    end
+
+    subgraph Core Features
+        B[command-handler]
+        C[heading-analysis]
+        D[clipboard-handler]
+    end
+    
+    subgraph UI Layer
+        E[EditorMenu]
+        F[SettingsTab]
+    end
+
+    A -- instantiates and initializes --> G
+    A -- registers commands via --> B
+    A -- listens for menu events via --> E
+    B -- uses --> C
+    B -- uses --> D
 ```
-BlockLinkPlus
-├── ViewPlugin (渲染)
-├── SettingsTab (配置)
-├── BlockLinkGenerator (核心功能)
-├── TimeSection (时间功能)
-└── FlowEditor (内联编辑) ← 新集成
-    ├── React Components
-    ├── CodeMirror Extensions
-    └── Workspace Patches
-```
-
-## 🔄 Design Patterns
-
-### 已实现的设计模式
-- **单例模式**: 插件实例作为单例
-- **命令模式**: 通过命令系统处理用户操作
-- **观察者模式**: 事件监听和响应
-- **装饰器模式**: CodeMirror 文本装饰
-- **策略模式**: 多种块链接生成策略
-- **组合模式**: React 组件组合 (新增)
-- **适配器模式**: 类型兼容性适配 (新增)
-
-### 模式应用
-- **单例模式**: 确保插件只有一个实例
-- **命令模式**: 实现可撤销的用户操作
-- **观察者模式**: 响应编辑器事件
-- **装饰器模式**: 增强文本显示
-- **策略模式**: 灵活选择块处理方法
-- **组合模式**: 构建复杂 UI 界面
-- **适配器模式**: 处理不同模块间的接口差异
 
 ## 🔀 Control Flow
 
 ### 主要流程
 1. **插件初始化**:
    ```
-   onload() → loadSettings() → setupListeners() → registerCommands()
+   main.ts: onload() → loadSettings() → new FlowEditorManager().initialize() → setupUI() → registerCommands()
    ```
 
-2. **块链接生成**:
+2. **命令执行 (Delegated)**:
    ```
-   handleCommand() → analyzeHeadings() → gen_insert_blocklink() → copyToClipboard()
+   User Action → main.ts (Command Trigger) → delegates to command-handler.handle() → uses other modules (heading-analysis, clipboard-handler)
+   ```
+   
+3. **右键菜单处理 (Delegated)**:
+   ```
+   Right-click Event → main.ts (Event Listener) → delegates to EditorMenu.handleEditorMenu() → delegates to command-handler
    ```
 
-3. **内联编辑流程** (新增):
-   ```
-   setupFlowEditor() → patchWorkspace() → loadFlowCommands() → openFlow()/closeFlow()
-   ```
+## 🧩 Architectural Refactoring Plan (Updated)
 
-### 事件处理
-- **编辑器事件**: 响应用户编辑操作
-- **命令触发**: 处理命令面板操作
-- **右键菜单**: 处理上下文菜单选择
-- **设置变更**: 响应用户设置更改
-- **内联编辑事件**: 处理内联编辑器状态变化 (新增)
-
-## 🧠 Data Models
-
-### 核心数据模型
-- **PluginSettings**: 插件配置
-- **HeadingAnalysisResult**: 标题分析结果
-- **BlockLinkPlusViewPlugin**: 视图插件状态
-- **FlowEditorInfo**: 内联编辑器信息 (新增)
-
-### 状态管理
-- **设置状态**: 用户配置的持久化
-- **编辑器状态**: CodeMirror 状态管理
-- **内联编辑状态**: Flow Editor 状态 (新增)
-- **React 组件状态**: UI 组件状态 (新增)
-
-## 🔌 Interface Contracts
-
-### 公共 API
-- **块链接生成**: 生成和复制块链接
-- **时间章节**: 插入和管理时间章节
-- **内联编辑**: 打开和关闭内联编辑器 (新增)
-
-### 内部接口
-- **设置访问**: 访问和修改设置
-- **编辑器操作**: 操作编辑器内容
-- **分析函数**: 分析文档结构
-- **工具函数**: 通用工具函数
-
-## 🔧 Implementation Patterns
-
-### 代码组织
-- **单文件架构**: 当前主要逻辑在 main.ts
-- **模块化结构**: 正在向模块化架构演进
-- **React 组件**: 用于复杂 UI 渲染 (新增)
-
-### 类型系统
-- **TypeScript 接口**: 定义数据结构
-- **枚举类型**: 表示状态和选项
-- **泛型**: 提高代码复用性
-- **类型断言**: 处理类型兼容性 (新增)
-
-### 错误处理
-- **优雅降级**: 功能失败时的备选方案
-- **用户通知**: 通过 Notice 通知用户
-- **日志记录**: 控制台日志记录
-
-## 🔒 Security Patterns
-
-### 数据安全
-- **本地存储**: 设置存储在本地
-- **无远程通信**: 不发送用户数据
-- **输入验证**: 验证用户输入
-
-### 代码安全
-- **类型安全**: 使用 TypeScript 类型系统
-- **权限限制**: 仅使用必要的 API 权限
-- **依赖管理**: 使用安全的依赖版本
-
-## 🔄 Synchronization Patterns
-
-### 状态同步
-- **设置同步**: 设置变更时更新 UI
-- **视图更新**: 编辑器内容变化时更新视图
-- **React 状态同步**: 组件状态管理 (新增)
-
-### 冲突处理
-- **编辑冲突**: 处理多个编辑操作
-- **状态一致性**: 确保状态一致性
-- **内联编辑冲突**: 处理嵌套编辑器冲突 (新增)
-
-## 🧪 Testing Patterns
-
-### 测试策略
-- **单元测试**: 测试独立函数
-- **集成测试**: 测试组件交互
-- **手动测试**: 用户界面测试
-
-### 测试覆盖
-- **核心功能**: 块链接生成和处理
-- **边缘情况**: 特殊文档结构
-- **用户交互**: 命令和菜单操作
-
-## 📈 Performance Patterns
-
-### 性能优化
-- **延迟加载**: 按需加载组件
-- **缓存**: 缓存计算结果
-- **批处理**: 批量处理操作
-- **React 优化**: 组件渲染优化 (新增)
-
-### 资源管理
-- **内存管理**: 避免内存泄漏
-- **事件清理**: 卸载时清理事件监听
-- **组件销毁**: 正确销毁 React 组件 (新增)
-
-## 🔄 Integration Patterns (新增)
-
-### 模块集成
-- **代码复制**: 从 Basics 插件复制核心功能
-- **路径映射**: 使用 TypeScript 路径映射
-- **类型适配**: 使用类型断言处理兼容性
-- **API 桥接**: 创建适配层连接不同模块
-
-### 组件交互
-- **事件传递**: 通过事件系统通信
-- **状态共享**: 共享关键状态
-- **生命周期管理**: 协调组件生命周期
-- **错误隔离**: 防止错误传播
-
-## 🏭 Factory Patterns
-
-### 对象创建
-- **块链接生成器**: 创建不同类型的块链接
-- **设置构建器**: 构建设置对象
-- **视图插件工厂**: 创建 CodeMirror 视图插件
-- **React 组件工厂**: 创建 UI 组件 (新增)
-
-### 实例化策略
-- **懒加载**: 按需创建实例
-- **配置驱动**: 基于设置创建对象
-- **上下文感知**: 基于上下文创建适当对象
-
-## 🧩 Architectural Refactoring Plan (新增)
-
-### 当前架构挑战
-- **单文件复杂性**: main.ts 过于庞大
-- **耦合度高**: 功能之间紧密耦合
-- **测试困难**: 难以进行单元测试
-- **维护挑战**: 代码修改风险高
+### 当前架构状态
+The architecture is now highly modular. The extraction of the "Flow Editor" logic into its own manager (`FlowEditorManager`) represents a significant step towards the target architecture.
 
 ### 目标架构
-- **模块化**: 按功能划分模块
-- **低耦合**: 模块间通过清晰接口通信
-- **高内聚**: 相关功能集中在一起
-- **可测试**: 支持单元测试
-- **可扩展**: 易于添加新功能
+A fully modular system with low coupling and high cohesion. `main.ts` should only be responsible for wiring together the different components of the plugin.
 
-### 重构策略
-1. **垂直切片**:
-   - 按功能划分代码
-   - 创建模块目录结构
-   - 提取共享类型和接口
+### 下一步重构策略
+The most critical architectural refactoring is complete. Future work will focus on consolidation and quality improvement rather than major restructuring.
 
-2. **接口设计**:
-   - 定义模块间接口
-   - 创建适配层
-   - 确保向后兼容
+1.  **`main.ts` 遗留逻辑清理 (基本完成)**:
+    -   **Status**: Mostly Complete.
+    -   **Action Taken**: All "Flow Editor" logic and related utilities have been successfully extracted into `FlowEditorManager`. Additionally, dead legacy code related to menu handling was identified and removed.
+    -   **Remaining**: Minor opportunities for cleanup may exist, such as extracting settings management, but this is now low priority.
 
-3. **渐进式迁移**:
-   - 逐步移动功能
-   - 保持功能完整性
-   - 持续测试和验证
+2.  **测试体系建设 (Phase 4.3)**:
+    -   **Priority**: High. This is the most critical next step.
+    -   **Action**: Create dedicated unit and integration tests for the new modules (`FlowEditorManager`, `command-handler`, `EditorMenu`, etc.).
+    -   **Goal**: Increase test coverage to ensure stability and prevent regressions, especially after the recent refactoring.
 
-### 模块划分计划
-```
-src/
-├── core/             # 核心插件逻辑
-├── blockLink/        # 块链接功能
-├── timeSection/      # 时间章节功能
-├── inlineEdit/       # 内联编辑功能
-├── settings/         # 设置管理
-├── ui/               # UI 组件
-└── utils/            # 工具函数
-``` 
+3.  **文档更新 (Phase 4.5)**:
+    -   **Priority**: Medium.
+    -   **Action**: Update this document (`systemPatterns.md`) and `techContext.md` to reflect the final architecture.
+    -   **Goal**: Provide a clear and precise guide for future development and maintenance. 
