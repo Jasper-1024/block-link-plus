@@ -68,6 +68,8 @@ const context = await esbuild.context({
 	define: { 
 		'process.env.NODE_ENV': prod ? '"production"' : '"development"' 
 	},
+	tsconfig: "tsconfig.json",
+	ignoreAnnotations: true,
 });
 
 if (prod) {

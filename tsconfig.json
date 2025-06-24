@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "basics/*": ["src/basics/*"],
+      "shared/*": ["src/shared/*"],
+      "css/*": ["src/css/*"],
+      "main": ["main.ts"]
+    },
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",

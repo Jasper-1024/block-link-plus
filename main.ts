@@ -28,6 +28,30 @@ import { assert } from "console";
 import { inflate } from "zlib";
 // import { RangeSet } from "@codemirror/state";
 
+// Inline Edit`
+import { getActiveCM } from "basics/codemirror";
+import { ObsidianEnactor } from "basics/enactor/obsidian";
+import { loadFlowCommands } from "basics/flow/flowCommands";
+import { replaceAllEmbed, replaceAllTables } from "basics/flow/markdownPost";
+import {
+	patchWorkspaceForFlow,
+	patchWorkspaceLeafForFlow,
+} from "basics/flow/patchWorkspaceForFlow";
+import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
+import { Enactor } from "basics/enactor/enactor";
+import { Command } from "basics/types/command";
+
+import i18n from "shared/i18n";
+import t from "shared/i18n";
+import { DropdownComponent} from "obsidian";
+
+// 导入所需的 CSS
+import "css/DefaultVibe.css";
+import "css/Editor/Flow/FlowEditor.css";
+import "css/Editor/Flow/FlowState.css";
+import "css/Obsidian/Mods.css";
+
+
 const MAX_ALIAS_LENGTH = 100;
 
 type HeadingAnalysisResult = {
@@ -94,6 +118,10 @@ interface PluginSettings {
 	daily_note_heading_level: number;
 	enable_time_section_in_menu: boolean;
 	time_section_plain_style: boolean; // Controls whether time sections should be displayed as plain text
+
+	// inline edit
+	editorFlow: boolean;
+	editorFlowStyle: string;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -118,6 +146,9 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	daily_note_heading_level: 2,
 	enable_time_section_in_menu: false,
 	time_section_plain_style: false, // Default to standard heading style
+	// inline edit
+	editorFlow: true,
+	editorFlowStyle: "minimal",
 };
 
 /**
@@ -165,7 +196,7 @@ function formatCurrentTime(format: string): string {
 	const now = new Date();
 	const hours = now.getHours().toString().padStart(2, '0');
 	const minutes = now.getMinutes().toString().padStart(2, '0');
-	
+
 	// 简单的格式替换
 	return format
 		.replace('HH', hours)
@@ -368,11 +399,11 @@ function analyzeHeadings(
 		})!;
 
 		const blockContent = block ? processLineContent(editor.getLine(start_line)) : null;
-		
+
 		// 添加与多行分析类似的逻辑来计算 nearestBeforeStartLevel
 		let nearestBeforeStartLevel = 0;
 		let closestBeforeStartDistance = Infinity;
-		
+
 		fileCache.headings?.forEach((heading) => {
 			const { start, end } = heading.position;
 			// 对于 start.line 在 (0, start_line) 开区间的处理
@@ -385,7 +416,7 @@ function analyzeHeadings(
 				if (distance < closestBeforeStartDistance) {
 					closestBeforeStartDistance = distance;
 					nearestBeforeStartLevel = heading.level;
-					nearestHeadingTitle = heading.heading; 
+					nearestHeadingTitle = heading.heading;
 				}
 			}
 		});
@@ -767,6 +798,33 @@ export default class BlockLinkPlus extends Plugin {
 	viewPlugin: BlockLinkPlusViewPlugin;
 	editorExtensions: Extension[] = [];
 
+	// inline edit
+	public extensions: Extension[];
+	public commands: Command[];
+	public enactor: Enactor;
+	// Public API for external plugin integration
+	public api = {
+		// Flow editor controls
+		openFlowEditor: () => this.openFlow(),
+		closeFlowEditor: () => this.closeFlow(),
+
+		// Settings access
+		getSettings: () => this.settings,
+		updateSettings: async (newSettings: Partial<PluginSettings>) => {
+			this.settings = { ...this.settings, ...newSettings };
+			await this.saveSettings();
+		},
+
+		// Editor utilities
+		getActiveEditor: () => getActiveCM(this),
+
+		// Check if flow editing is enabled
+		isFlowEnabled: () => this.settings.editorFlow,
+
+		// Access to enactor for path operations
+		getEnactor: () => this.enactor
+	};
+
 	async onload() {
 		console.log(`loading ${this.appName}`);
 
@@ -819,11 +877,107 @@ export default class BlockLinkPlus extends Plugin {
 
 		// for reading mode
 		this.registerMarkdownPostProcessor(this.markdownPostProcessor.bind(this));
-		
+
 		// for live preview
 		this.updateViewPlugin();
-		
+
 		// this.refreshExtensions();
+
+		// 初始化 Obsidian enactor
+		this.enactor = new ObsidianEnactor(this);
+		// 加载 Basics 功能
+		this.loadBasics();
+
+		// Register plugin in global scope for external access
+		(window as any).BlockLinkPlus = this;
+
+		if (this.app.plugins) {
+			(this.app.plugins as any).plugins['blocoklnnk-plu-plus'] = this;
+		}
+	}
+
+	// Flow editor control methods
+	openFlow(): void {
+		const cm = getActiveCM(this);
+		if (cm) {
+			const value = cm.state.field(flowEditorInfo, false);
+			const currPosition = cm.state.selection.main;
+			for (const flowEditor of value) {
+				if (
+					flowEditor.from < currPosition.to &&
+					flowEditor.to > currPosition.from
+				) {
+					cm.dispatch({
+						annotations: toggleFlowEditor.of([flowEditor.id, 2]),
+					});
+				}
+			}
+		}
+	}
+
+	closeFlow(): void {
+		const cm = getActiveCM(this);
+		if (cm) {
+			const value = cm.state.field(flowEditorInfo, false);
+			const currPosition = cm.state.selection.main;
+			for (const flowEditor of value) {
+				if (
+					flowEditor.from < currPosition.to &&
+					flowEditor.to > currPosition.from
+				) {
+					cm.dispatch({
+						annotations: toggleFlowEditor.of([flowEditor.id, 0]),
+					});
+				}
+			}
+		}
+	}
+
+	private loadBasics(): void {
+		this.enactor.load();
+
+		if (this.settings.editorFlow) {
+			this.setupFlowEditor();
+			this.reloadExtensions(true);
+		}
+	}
+
+	private setupFlowEditor(): void {
+		// Patch workspace for flow editing
+		patchWorkspaceForFlow(this);
+		patchWorkspaceLeafForFlow(this);
+
+		// Apply CSS classes for flow editing
+		document.body.classList.add("mk-flow-replace");
+		document.body.classList.add("mk-flow-" + this.settings.editorFlowStyle);
+
+		// Register markdown post processor for embedded blocks
+		this.registerMarkdownPostProcessor((element, context) => {
+			this.processEmbeddedBlocks(element);
+			replaceAllTables(this, element, context);
+			replaceAllEmbed(element, context, this, this.app);
+		});
+
+		// Load flow commands
+		loadFlowCommands(this);
+	}
+
+	private processEmbeddedBlocks(element: HTMLElement): void {
+		const embeds = element.querySelectorAll(".internal-embed.markdown-embed");
+		for (let index = 0; index < embeds.length; index++) {
+			const embed = embeds.item(index);
+			if (
+				embed.previousSibling &&
+				embed.previousSibling.textContent?.slice(-1) === "!"
+			) {
+				embed.previousSibling.textContent =
+					embed.previousSibling.textContent.slice(0, -1);
+			}
+		}
+	}
+
+	reloadExtensions(firstLoad: boolean): void {
+		this.enactor.loadExtensions(firstLoad);
 	}
 
 	/**
@@ -833,16 +987,16 @@ export default class BlockLinkPlus extends Plugin {
 	public updateViewPlugin() {
 		// Create regex for both block IDs and time sections if enabled
 		let rule = "(^| )˅[a-zA-Z0-9_]+$";
-		
+
 		if (this.settings.time_section_plain_style) {
 			// Add time section pattern to the regex
 			rule = `(${rule})|(^#{1,6}\\s+\\d{1,2}:\\d{1,2}$)`;
 		}
-		
+
 		this.viewPlugin = createViewPlugin(rule);
 		this.registerEditorExtension([this.viewPlugin]);
 	}
-	
+
 	/**
 	 * Processes markdown elements for rendering.
 	 * Handles special markers and applies custom styling.
@@ -850,7 +1004,7 @@ export default class BlockLinkPlus extends Plugin {
 	 */
 	private markdownPostProcessor(el: HTMLElement) {
 		if (!el.firstChild) return;
-		
+
 		// Process text nodes to handle special markers
 		if (el.firstChild instanceof Node) {
 			let walker = document.createTreeWalker(
@@ -873,7 +1027,7 @@ export default class BlockLinkPlus extends Plugin {
 				);
 			}
 		}
-		
+
 		// Process time section headings if enabled
 		if (this.settings.time_section_plain_style) {
 			const headings = el.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -885,13 +1039,13 @@ export default class BlockLinkPlus extends Plugin {
 			});
 		}
 	}
-	
+
 	// Creates new LinkifyViewPlugins and registers them.
 	// refreshExtensions() {
 	// 	this.viewPlugin = createViewPlugin();
 	// 	this.app.workspace.updateOptions();
 	// }
-	
+
 	private handleEditorMenu(
 		menu: Menu,
 		editor: Editor,
@@ -1112,10 +1266,15 @@ export default class BlockLinkPlus extends Plugin {
 		}
 	}
 
-	onunload() { 
+	onunload() {
 		console.log(`unloading ${this.appName}`);
 		// The register method in addCustomStyles already handles
 		// removing the style element, so we don't need to do it here
+		// Clean up global references
+		delete (window as any).klockLnnkluss
+		if (this.app.plugins) {
+			delete (this.app.plugins as any).plugins['blocoklnnk-plu-plus'];
+		}
 	}
 
 	async loadSettings() {
@@ -1288,24 +1447,24 @@ export default class BlockLinkPlus extends Plugin {
 	) {
 		// Check if the feature is enabled
 		if (!this.settings.enable_time_section) return;
-		
+
 		// Get current file
 		const file: TFile | null = view.file;
 		if (!file) return;
-		
+
 		// Get current formatted time
 		const timeStr = formatCurrentTime(this.settings.time_section_format);
-		
+
 		// Get current cursor position
 		const cursorLine = editor.getCursor().line;
-		
+
 		// Determine heading level
 		let headingLevel = 1;
 		let insertText = "";
-		
+
 		// Check if it is a daily note
 		const isDaily = isDailyNote(file.basename, this.settings.daily_note_pattern);
-		
+
 		if (isDaily) {
 			// Daily note uses fixed level
 			headingLevel = this.settings.daily_note_heading_level;
@@ -1330,17 +1489,17 @@ export default class BlockLinkPlus extends Plugin {
 				}
 			}
 		}
-		
+
 		// Prepare text to insert
 		if (this.settings.insert_heading_level) {
 			insertText = "#".repeat(headingLevel) + " " + timeStr + "\n";
 		} else {
 			insertText = timeStr + "\n";
 		}
-		
+
 		// Insert text at current position
 		editor.replaceRange(insertText, editor.getCursor());
-		
+
 		// Move cursor to the position after inserted text
 		const newPosition = {
 			line: cursorLine + 1,
@@ -1364,16 +1523,16 @@ export default class BlockLinkPlus extends Plugin {
 		if (isChecking) {
 			return this.settings.enable_time_section;
 		}
-		
+
 		// Similar to handleCommand but for time section
 		const file: TFile | null = view.file;
 		if (!file) return false;
-		
+
 		const start_line = editor.getCursor("from").line;
 		const end_line = editor.getCursor("to").line;
 		const fileCache = this.app.metadataCache.getFileCache(file);
 		if (!fileCache) return false;
-		
+
 		let head_analysis = analyzeHeadings(fileCache, editor, start_line, end_line);
 		if (!head_analysis.isValid) {
 			// Even if analysis is invalid, we can still insert time section
@@ -1381,7 +1540,7 @@ export default class BlockLinkPlus extends Plugin {
 		} else {
 			this.handleInsertTimeSection(editor, view, head_analysis);
 		}
-		
+
 		return true;
 	}
 
@@ -1403,12 +1562,12 @@ export default class BlockLinkPlus extends Plugin {
 				padding: 0 !important;
 			}
 		`;
-		
+
 		// Create a style element and append it to the document head
 		const styleEl = document.createElement('style');
 		styleEl.textContent = css;
 		document.head.appendChild(styleEl);
-		
+
 		// Store a reference to remove it on unload
 		this.register(() => styleEl.remove());
 	}
@@ -1585,18 +1744,18 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// 时间章节设置
 		this.addHeading("Time Section").setDesc("Insert time-based headings");
-		
+
 		this.addToggleSetting("enable_time_section")
 			.setName("Enable time section feature");
-		
+
 		this.addToggleSetting("enable_time_section_in_menu")
 			.setName("Show in context menu")
 			.setDesc("If enabled, adds time section option to the right-click menu");
-		
+
 		this.addTextInputSetting("time_section_format", "HH:mm")
 			.setName("Time format")
 			.setDesc("Format for the time section (HH:mm = 24-hour format)");
-		
+
 		this.addToggleSetting("insert_heading_level")
 			.setName("Insert as heading")
 			.setDesc("If enabled, inserts time with heading marks (#), otherwise inserts just the time");
@@ -1611,9 +1770,59 @@ class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addTextInputSetting("daily_note_pattern", "\\d{4}-\\d{1,2}-\\d{1,2}")
 			.setName("Daily note pattern")
 			.setDesc("Regular expression to identify daily note filenames (default: YYYY-MM-DD)");
-		
+
 		this.addSliderSetting("daily_note_heading_level", 1, 6, 1)
 			.setName("Daily note heading level")
 			.setDesc("Heading level to use in daily notes (1-6, corresponds to #-######)");
+
+		// 内联编辑
+		this.addHeading("Embedded Block Editing").setDesc("Settings for inline editing of embedded blocks");
+		// 从 SettingsPanel.ts 中提取的设置
+		this.addToggleSetting("editorFlow")
+			.setName(i18n.settings.editorFlowReplace.name)
+			.setDesc(i18n.settings.editorFlowReplace.desc);
+		// this.addDropdownSetting(
+		// 	//@ts-ignore
+		// 	"editorFlowStyle",
+		// 	["minimal", "seamless"],
+		// 	(option) => {
+		// 		const optionsMap = new Map([
+		// 			["minimal", i18n.settings.editorFlowStyle.minimal],
+		// 			["seamless", i18n.settings.editorFlowStyle.seamless],
+		// 		]);
+		// 		return optionsMap.get(option) || option;
+		// 	}
+		// )
+		// 	.setName(i18n.settings.editorFlowStyle.name)
+		// 	.setDesc(i18n.settings.editorFlowStyle.desc);
+
+		// Embedded editing style
+		new Setting(containerEl)
+			.setName(t.settings.editorFlowStyle.name)
+			.setDesc(t.settings.editorFlowStyle.desc)
+			.addDropdown((dropdown: DropdownComponent) => {
+				dropdown.addOption("minimal", t.settings.editorFlowStyle.minimal);
+				dropdown.addOption("seamless", t.settings.editorFlowStyle.seamless);
+				dropdown
+					.setValue(this.plugin.settings.editorFlowStyle)
+					.onChange(async (value) => {
+						this.plugin.settings.editorFlowStyle = value;
+						this.updateFlowStyleClasses(value);
+						await this.plugin.saveData(this.plugin.settings);
+					});
+			});
+	}
+
+	// 添加 updateFlowStyleClasses 方法
+	private updateFlowStyleClasses(style: string): void {
+		// 移除所有 flow 样式类
+		document.body.classList.remove("mk-flow-minimal", "mk-flow-seamless");
+
+		// 添加选定的样式类
+		if (style === "minimal") {
+			document.body.classList.add("mk-flow-minimal");
+		} else if (style === "seamless") {
+			document.body.classList.add("mk-flow-seamless");
+		}
 	}
 }
