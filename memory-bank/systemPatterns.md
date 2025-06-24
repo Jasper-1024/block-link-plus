@@ -1,166 +1,248 @@
 # σ₂: System Patterns
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-19*
-*Π: DEVELOPMENT | Ω: RESEARCH*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🏛️ Architecture Overview
 
-Block Link Plus 插件采用模块化架构，基于 Obsidian Plugin API 构建，主要分为以下几个核心模块：
+Block Link Plus 是一个 Obsidian 插件，提供增强的块引用功能，现已集成内联编辑能力。系统架构由以下几个主要部分组成：
 
-### Core Architecture Components
+### 核心架构
+- **插件生命周期管理**: 初始化、加载和卸载流程
+- **块链接生成系统**: 创建和管理块链接
+- **多行块处理策略**: 处理多行文本块
+- **时间章节功能**: 时间戳和日记集成
+- **内联编辑功能**: 嵌入块的直接编辑能力 (新集成)
 
+### 架构演进
+当前架构正从单文件结构向模块化系统演进，通过将功能拆分为独立模块，提高代码可维护性和扩展性。
+
+## 🧩 System Components
+
+### 核心组件
+1. **BlockLinkPlus**: 主插件类，管理生命周期和功能集成
+2. **ViewPlugin**: CodeMirror 视图插件，处理文本渲染
+3. **SettingsTab**: 用户设置界面
+4. **BlockLinkGenerator**: 块链接生成逻辑
+5. **FlowEditor**: 内联编辑器组件 (新增)
+
+### 组件关系
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Block Link Plus Plugin                   │
-├─────────────────────────────────────────────────────────────┤
-│  Main Entry (main.ts)                                      │
-│  ├── Plugin Lifecycle Management                           │
-│  ├── Settings Management                                    │
-│  └── Command & Menu Registration                           │
-├─────────────────────────────────────────────────────────────┤
-│  Core Modules                                              │
-│  ├── Block Link Generator                                  │
-│  ├── Multi-line Block Handler                              │
-│  ├── Time Section Manager                                  │
-│  └── ID Generator & Customization                          │
-├─────────────────────────────────────────────────────────────┤
-│  UI Components                                             │
-│  ├── Context Menus                                         │
-│  ├── Settings Panel                                        │
-│  └── CSS Styling (for ˅id rendering)                      │
-├─────────────────────────────────────────────────────────────┤
-│  Enactor Layer                                             │
-│  ├── Editor Interaction                                    │
-│  ├── Clipboard Operations                                  │
-│  └── Document Analysis                                     │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## 🧩 Component Design Patterns
-
-### 1. Plugin Pattern
-- **Main Class**: `BlockLinkPlusPlugin extends Plugin`
-- **Lifecycle**: onload() → settings → commands → unload()
-- **State Management**: Centralized settings with reactive updates
-
-### 2. Command Pattern
-- **Command Registration**: Centralized in main.ts
-- **Command Types**:
-  - Block link creation (regular, embed, URI)
-  - Multi-line block handling
-  - Time section insertion
-- **Context-aware**: Commands adapt based on selection/cursor position
-
-### 3. Strategy Pattern (Block Link Types)
-```typescript
-interface LinkStrategy {
-  generateLink(blockId: string, filePath: string, alias?: string): string;
-}
-
-// Implementations:
-// - RegularLinkStrategy: [[file#^id|alias]]
-// - EmbedLinkStrategy: ![[file#^id]]
-// - URILinkStrategy: obsidian://open?vault=...&file=...#^id
+BlockLinkPlus
+├── ViewPlugin (渲染)
+├── SettingsTab (配置)
+├── BlockLinkGenerator (核心功能)
+├── TimeSection (时间功能)
+└── FlowEditor (内联编辑) ← 新集成
+    ├── React Components
+    ├── CodeMirror Extensions
+    └── Workspace Patches
 ```
 
-### 4. Factory Pattern (Block ID Generation)
-```typescript
-interface BlockIdGenerator {
-  generate(prefix: string, length: number): string;
-}
+## 🔄 Design Patterns
 
-// Supports customizable prefix and random string length (3-7)
+### 已实现的设计模式
+- **单例模式**: 插件实例作为单例
+- **命令模式**: 通过命令系统处理用户操作
+- **观察者模式**: 事件监听和响应
+- **装饰器模式**: CodeMirror 文本装饰
+- **策略模式**: 多种块链接生成策略
+- **组合模式**: React 组件组合 (新增)
+- **适配器模式**: 类型兼容性适配 (新增)
+
+### 模式应用
+- **单例模式**: 确保插件只有一个实例
+- **命令模式**: 实现可撤销的用户操作
+- **观察者模式**: 响应编辑器事件
+- **装饰器模式**: 增强文本显示
+- **策略模式**: 灵活选择块处理方法
+- **组合模式**: 构建复杂 UI 界面
+- **适配器模式**: 处理不同模块间的接口差异
+
+## 🔀 Control Flow
+
+### 主要流程
+1. **插件初始化**:
+   ```
+   onload() → loadSettings() → setupListeners() → registerCommands()
+   ```
+
+2. **块链接生成**:
+   ```
+   handleCommand() → analyzeHeadings() → gen_insert_blocklink() → copyToClipboard()
+   ```
+
+3. **内联编辑流程** (新增):
+   ```
+   setupFlowEditor() → patchWorkspace() → loadFlowCommands() → openFlow()/closeFlow()
+   ```
+
+### 事件处理
+- **编辑器事件**: 响应用户编辑操作
+- **命令触发**: 处理命令面板操作
+- **右键菜单**: 处理上下文菜单选择
+- **设置变更**: 响应用户设置更改
+- **内联编辑事件**: 处理内联编辑器状态变化 (新增)
+
+## 🧠 Data Models
+
+### 核心数据模型
+- **PluginSettings**: 插件配置
+- **HeadingAnalysisResult**: 标题分析结果
+- **BlockLinkPlusViewPlugin**: 视图插件状态
+- **FlowEditorInfo**: 内联编辑器信息 (新增)
+
+### 状态管理
+- **设置状态**: 用户配置的持久化
+- **编辑器状态**: CodeMirror 状态管理
+- **内联编辑状态**: Flow Editor 状态 (新增)
+- **React 组件状态**: UI 组件状态 (新增)
+
+## 🔌 Interface Contracts
+
+### 公共 API
+- **块链接生成**: 生成和复制块链接
+- **时间章节**: 插入和管理时间章节
+- **内联编辑**: 打开和关闭内联编辑器 (新增)
+
+### 内部接口
+- **设置访问**: 访问和修改设置
+- **编辑器操作**: 操作编辑器内容
+- **分析函数**: 分析文档结构
+- **工具函数**: 通用工具函数
+
+## 🔧 Implementation Patterns
+
+### 代码组织
+- **单文件架构**: 当前主要逻辑在 main.ts
+- **模块化结构**: 正在向模块化架构演进
+- **React 组件**: 用于复杂 UI 渲染 (新增)
+
+### 类型系统
+- **TypeScript 接口**: 定义数据结构
+- **枚举类型**: 表示状态和选项
+- **泛型**: 提高代码复用性
+- **类型断言**: 处理类型兼容性 (新增)
+
+### 错误处理
+- **优雅降级**: 功能失败时的备选方案
+- **用户通知**: 通过 Notice 通知用户
+- **日志记录**: 控制台日志记录
+
+## 🔒 Security Patterns
+
+### 数据安全
+- **本地存储**: 设置存储在本地
+- **无远程通信**: 不发送用户数据
+- **输入验证**: 验证用户输入
+
+### 代码安全
+- **类型安全**: 使用 TypeScript 类型系统
+- **权限限制**: 仅使用必要的 API 权限
+- **依赖管理**: 使用安全的依赖版本
+
+## 🔄 Synchronization Patterns
+
+### 状态同步
+- **设置同步**: 设置变更时更新 UI
+- **视图更新**: 编辑器内容变化时更新视图
+- **React 状态同步**: 组件状态管理 (新增)
+
+### 冲突处理
+- **编辑冲突**: 处理多个编辑操作
+- **状态一致性**: 确保状态一致性
+- **内联编辑冲突**: 处理嵌套编辑器冲突 (新增)
+
+## 🧪 Testing Patterns
+
+### 测试策略
+- **单元测试**: 测试独立函数
+- **集成测试**: 测试组件交互
+- **手动测试**: 用户界面测试
+
+### 测试覆盖
+- **核心功能**: 块链接生成和处理
+- **边缘情况**: 特殊文档结构
+- **用户交互**: 命令和菜单操作
+
+## 📈 Performance Patterns
+
+### 性能优化
+- **延迟加载**: 按需加载组件
+- **缓存**: 缓存计算结果
+- **批处理**: 批量处理操作
+- **React 优化**: 组件渲染优化 (新增)
+
+### 资源管理
+- **内存管理**: 避免内存泄漏
+- **事件清理**: 卸载时清理事件监听
+- **组件销毁**: 正确销毁 React 组件 (新增)
+
+## 🔄 Integration Patterns (新增)
+
+### 模块集成
+- **代码复制**: 从 Basics 插件复制核心功能
+- **路径映射**: 使用 TypeScript 路径映射
+- **类型适配**: 使用类型断言处理兼容性
+- **API 桥接**: 创建适配层连接不同模块
+
+### 组件交互
+- **事件传递**: 通过事件系统通信
+- **状态共享**: 共享关键状态
+- **生命周期管理**: 协调组件生命周期
+- **错误隔离**: 防止错误传播
+
+## 🏭 Factory Patterns
+
+### 对象创建
+- **块链接生成器**: 创建不同类型的块链接
+- **设置构建器**: 构建设置对象
+- **视图插件工厂**: 创建 CodeMirror 视图插件
+- **React 组件工厂**: 创建 UI 组件 (新增)
+
+### 实例化策略
+- **懒加载**: 按需创建实例
+- **配置驱动**: 基于设置创建对象
+- **上下文感知**: 基于上下文创建适当对象
+
+## 🧩 Architectural Refactoring Plan (新增)
+
+### 当前架构挑战
+- **单文件复杂性**: main.ts 过于庞大
+- **耦合度高**: 功能之间紧密耦合
+- **测试困难**: 难以进行单元测试
+- **维护挑战**: 代码修改风险高
+
+### 目标架构
+- **模块化**: 按功能划分模块
+- **低耦合**: 模块间通过清晰接口通信
+- **高内聚**: 相关功能集中在一起
+- **可测试**: 支持单元测试
+- **可扩展**: 易于添加新功能
+
+### 重构策略
+1. **垂直切片**:
+   - 按功能划分代码
+   - 创建模块目录结构
+   - 提取共享类型和接口
+
+2. **接口设计**:
+   - 定义模块间接口
+   - 创建适配层
+   - 确保向后兼容
+
+3. **渐进式迁移**:
+   - 逐步移动功能
+   - 保持功能完整性
+   - 持续测试和验证
+
+### 模块划分计划
 ```
-
-### 5. Observer Pattern (Settings)
-- Settings changes trigger UI updates
-- Menu visibility controlled by settings
-- CSS rendering affected by experimental options
-
-## 🔧 Data Flow Architecture
-
-### Block Link Creation Flow
-```
-User Action (Right-click/Command)
-    ↓
-Selection Analysis
-    ↓
-Block Type Detection
-    ├── Single Line → Direct Block ID
-    ├── Multi-line → Heading/Batch Strategy
-    └── Title → Title Block Handling
-    ↓
-ID Generation (Custom Prefix + Random)
-    ↓
-Link Generation (Based on Type & Alias)
-    ↓
-Clipboard Copy + Optional Notification
-```
-
-### Multi-line Block Handling
-```
-Multi-line Selection
-    ↓
-Strategy Decision
-    ├── Heading Strategy
-    │   ├── Insert ## ˅id heading
-    │   ├── Apply custom CSS rendering
-    │   └── Generate [[file#˅id]] link
-    └── Batch Strategy
-        ├── Add ^id to each line
-        ├── Generate multiple [[file#^id]] links
-        └── Copy all links to clipboard
-```
-
-## 🎨 Styling Architecture
-
-### CSS Module Pattern
-- **Base Styles**: styles.css (minimal)
-- **Dynamic Styles**: Injected via plugin for ˅id rendering
-- **Mode-specific**: Different rendering for reading/live preview
-
-### CSS Selectors for ˅id
-```css
-/* Hide ˅ symbol in reading mode */
-.markdown-reading-view .markdown-rendered h1, 
-.markdown-reading-view .markdown-rendered h2,
-.markdown-reading-view .markdown-rendered h3 {
-  /* Custom rendering logic */
-}
-```
-
-## 🔌 Integration Patterns
-
-### Obsidian API Integration
-- **Editor API**: For text manipulation and cursor positioning
-- **Vault API**: For file operations and metadata
-- **Workspace API**: For menu and command integration
-- **MetadataCache**: For heading analysis and document structure
-
-### Plugin Interoperability
-- **Non-conflicting**: Designed to work alongside other block plugins
-- **Standard Compliance**: Uses Obsidian's standard block reference format
-- **Extensible**: Architecture supports future feature additions
-
-## 📊 Performance Considerations
-
-### Optimization Patterns
-- **Lazy Loading**: UI components loaded on demand
-- **Caching**: Document structure analysis cached per file
-- **Batch Operations**: Multi-line blocks processed efficiently
-- **Memory Management**: Proper cleanup in onunload()
-
-## 🧪 Testing Architecture
-
-### Test Structure (test.ts)
-- **Unit Tests**: Individual function testing
-- **Integration Tests**: End-to-end workflows
-- **Mock Objects**: Obsidian API mocking for isolated testing
-- **Edge Cases**: Boundary condition handling
-
-## 🔮 Extensibility Design
-
-### Future-Ready Patterns
-- **Plugin System**: Modular design allows feature additions
-- **Configuration Schema**: Settings system supports new options
-- **Hook Points**: Strategic extension points for customization
-- **API Abstraction**: Internal APIs prepared for external access 
+src/
+├── core/             # 核心插件逻辑
+├── blockLink/        # 块链接功能
+├── timeSection/      # 时间章节功能
+├── inlineEdit/       # 内联编辑功能
+├── settings/         # 设置管理
+├── ui/               # UI 组件
+└── utils/            # 工具函数
+``` 
