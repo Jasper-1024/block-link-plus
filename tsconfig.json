@@ -5,7 +5,7 @@
       "basics/*": ["src/basics/*"],
       "shared/*": ["src/shared/*"],
       "css/*": ["src/css/*"],
-      "main": ["main.ts"]
+      "main": ["src/main.ts"]
     },
     "inlineSourceMap": true,
     "inlineSources": true,

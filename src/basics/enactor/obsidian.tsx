@@ -34,6 +34,7 @@ import { Enactor } from "./enactor";
 const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
   const builder = new RangeSetBuilder<Decoration>();
   const infoFields = state.field(flowEditorInfo, false);
+  if (!infoFields) return builder.finish();
   const values = [] as { start: number; end: number; decoration: Decoration }[];
   for (const info of infoFields) {
     const { from, to, type, expandedState } = info;
@@ -110,7 +111,7 @@ export class ObsidianEnactor implements Enactor {
       BasicDefaultSettings,
       this.plugin.settings
     );
-    this.plugin.commands = this.loadCommands();
+    this.loadCommands();
   }
   loadCommands() {
     this.plugin.addCommand({
@@ -119,7 +120,7 @@ export class ObsidianEnactor implements Enactor {
       callback: () => {
         this.plugin.settings.editorFlow = !this.plugin.settings.editorFlow;
         this.plugin.saveData(this.plugin.settings);
-        this.plugin.reloadExtensions(false);
+        this.plugin.flowEditorManager.reloadExtensions(false);
       },
     });
     return [
@@ -146,19 +147,37 @@ export class ObsidianEnactor implements Enactor {
   }
   uriByString(uri: string, source?: string) {
     if (!uri) return null;
-    if (source) {
-      uri = this.plugin.app.metadataCache.getFirstLinkpathDest(uri, source)?.path;
-      if (!uri) return null;
+
+    let basePath = uri;
+    let subpath: string | undefined;
+
+    if (uri.includes('#')) {
+        const parts = uri.split('#');
+        basePath = parts[0];
+        subpath = '#' + parts.slice(1).join('#');
     }
-    return parseURI(uri);
+
+    if (source) {
+        const file = this.plugin.app.metadataCache.getFirstLinkpathDest(basePath, source);
+        // If the file is not found, we can't proceed.
+        if (!file) return null;
+        basePath = file.path;
+    }
+
+    const finalUri = subpath ? `${basePath}${subpath}` : basePath;
+    return parseURI(finalUri);
   }
   openPath(path: string, source?: HTMLElement) {
     const uri = this.uriByString(path);
+	if (!uri) {
+		new Notice(`File not found: ${path}`);
+		return;
+	}
     openPathInElement(
       this.plugin.app,
       this.plugin.app.workspace.getLeaf(),
       source,
-      null,
+      undefined,
       async (editor) => {
         const leaf = editor.attachLeaf();
         if (this.plugin.app.vault.getAbstractFileByPath(uri.basePath) instanceof TFile) {

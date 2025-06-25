@@ -36,8 +36,14 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
 
   const loadPath = async (force?: boolean) => {
     const div = flowRef.current;
+    if (!div) return;
 
     const path = props.plugin.enactor.uriByString(props.path, props.source);
+    if (!path) {
+        setExistsPas(true);
+        setLoaded(false);
+        return;
+    }
 
     const pathExists = props.plugin.app.vault.getAbstractFileByPath(path.basePath) != null;
     const isFolder = false;
@@ -85,6 +91,7 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
   useEffect(() => {
     const reloadFlow = () => {
       if (
+        flowRef.current &&
         !flowRef.current.hasChildNodes() &&
         props.load &&
         !existsPas
@@ -94,7 +101,7 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
     };
 
     return () => {
-      flowRef.current = null;
+      // flowRef.current = null;
     };
   }, []);
 
