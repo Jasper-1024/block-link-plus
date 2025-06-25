@@ -1,6 +1,6 @@
 # σ₃: Technical Context
-*v1.0 | Created: 2024-12-19 | Updated: {TODAY}*
-*Π: DEVELOPMENT | Ω: EXECUTE*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
+*Π: DEVELOPMENT | Ω: RESEARCH*
 
 ## 🛠️ Technology Stack
 - 🖥️ **Frontend**: Svelte (Obsidian's UI framework), React (for Flow Editor components)
@@ -11,10 +11,10 @@
 - 🧩 **Core Framework**: Obsidian API v1.3.5, CodeMirror 6
 
 ## 🏛️ Architecture Overview
-The plugin uses a modular architecture centered on a lightweight **Orchestrator (`main.ts`)**. This central file delegates all major functionalities to specialized managers and modules, ensuring high cohesion and low coupling.
+The plugin uses a modular architecture centered on a lightweight **Orchestrator (`src/main.ts`)**. This central file delegates all major functionalities to specialized managers and modules, ensuring high cohesion and low coupling.
 
 ### Key Components:
-- **`main.ts` (Orchestrator)**: The main entry point. It handles the plugin lifecycle (`onload`, `onunload`), registers basic commands, and, most importantly, initializes and wires together the various managers and modules.
+- **`src/main.ts` (Orchestrator)**: The main entry point. It handles the plugin lifecycle (`onload`, `onunload`), registers basic commands, and, most importantly, initializes and wires together the various managers and modules.
 - **`FlowEditorManager` (`src/features/flow-editor/`)**: A dedicated manager that encapsulates all logic for the "Flow Editor" and "Basics" features. It is instantiated by `main.ts` and handles its own command registration, workspace patching, and UI management for the flow editor.
 - **`src/features/` (Feature Modules)**: Contains other self-contained modules for specific features like `command-handler` and `time-section`.
 - **`src/ui/` (UI Modules)**: Contains modules responsible for the user interface, such as the settings tab (`SettingsTab.ts`) and editor context menu (`EditorMenu.ts`).
@@ -24,10 +24,10 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 - **Obsidian API**: Core dependency for interacting with the Obsidian environment.
 - **CodeMirror**: Used for editor extensions.
 - **React**: Used by the Flow Editor components.
-- **Internal Modules**: `main.ts` now primarily depends on `FlowEditorManager` and the UI modules. `FlowEditorManager` in turn depends on the `basics` library.
+- **Internal Modules**: `src/main.ts` now primarily depends on `FlowEditorManager` and the UI modules. `FlowEditorManager` in turn depends on the `basics` library.
 
 ## 🧱 Code Structure
-- **`main.ts`**: The orchestrator/core file. (Significantly smaller and cleaner).
+- **`src/main.ts`**: The orchestrator/core file. (Significantly smaller and cleaner).
 - **`src/`**: Contains all source code.
   - **`features/`**: Home for modular features.
     - **`flow-editor/`**: Contains the `FlowEditorManager`.
@@ -42,7 +42,7 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 
 ## 🚀 Refactoring Goals
 - **Modularization**: **Complete**. The goal of breaking down the monolithic `main.ts` has been achieved. All major features are now encapsulated in their own modules or managers.
-- **Clear Interfaces**: **Achieved**. The delegation pattern from `main.ts` to `FlowEditorManager` and other modules provides clear separation.
+- **Clear Interfaces**: **Achieved**. The delegation pattern from `src/main.ts` to `FlowEditorManager` and other modules provides clear separation.
 - **Improved Readability**: **Achieved**. The new directory structure is more logical and easier to navigate.
 - **Increased Maintainability**: **Achieved**. The codebase is now easier to understand and safer to modify.
 
@@ -115,8 +115,8 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 4. **输出生成**: `main.js`, `styles.css`
 
 ### 构建配置
-- **tsconfig.json**: TypeScript 配置
-- **esbuild.config.mjs**: ESBuild 配置
+- **tsconfig.json**: TypeScript 配置，已更新以反映新的文件路径
+- **esbuild.config.mjs**: ESBuild 配置，入口点已更新为 `src/main.ts`
 - **package.json**: 依赖和脚本
 
 ## 🔍 Technical Challenges
@@ -126,11 +126,12 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 - **多行块处理**: 解决了复杂的多行块处理逻辑
 - **CSS 导入问题**: 解决了构建过程中的 CSS 导入错误
 - **设置面板整合**: 修复了设置面板中的类型错误
+- **项目结构优化**: 将 `main.ts` 移至 `src` 目录，实现更清晰的代码组织
 
 ### 当前挑战
-- **代码模块化**: main.ts 过于庞大，需要拆分
 - **类型兼容性**: Basics 插件与 Block Link Plus 的类型兼容
 - **性能优化**: 确保内联编辑不影响性能
+- **构建配置维护**: 确保构建系统正确处理新的文件结构
 
 ### 未来挑战
 - **测试自动化**: 建立现代化测试框架
@@ -185,9 +186,10 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 ## 🧠 Technical Decisions
 
 ### 架构决策
-- **单一入口点**: main.ts 作为主入口
+- **单一入口点**: src/main.ts 作为主入口
 - **功能模块化**: 按功能划分模块
 - **React 集成**: 使用 React 进行复杂 UI 渲染
+- **项目结构优化**: 将所有源代码集中到 src 目录，提高可维护性
 
 ### 技术取舍
 - **性能 vs 功能**: 平衡功能丰富性和性能

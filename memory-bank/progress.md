@@ -1,18 +1,24 @@
 # σ₅: Progress Tracker
-*v1.0 | Created: 2024-12-19 | Updated: {TODAY}*
-*Π: DEVELOPMENT | Ω: EXECUTE*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
+*Π: DEVELOPMENT | Ω: RESEARCH*
 
 ## 📈 Project Status
 
-**Overall Completion**: 90% (核心功能模块化重构已完成，架构稳定)
+**Overall Completion**: 92% (核心功能模块化重构已完成，项目结构优化进行中)
 
 **Current Version**: 1.3.1+ (refactoring-complete)
-**Project Phase**: DEVELOPMENT (Π₃) - Phase 4 Complete
-**Active Mode**: EXECUTE (Ω₄) - Updating Documentation
+**Project Phase**: DEVELOPMENT (Π₃) - Phase 4 Complete, Phase 5 进行中
+**Active Mode**: RESEARCH (Ω₁) - 分析项目结构变更
 
 ### 🏆 Major Milestones
 
-#### ✅ Completed (Refactoring Phase 4)
+#### ✅ Completed (Refactoring Phase 5.1)
+- **项目结构标准化 (Phase 5.1)**
+  - ✅ **将 `main.ts` 移至 `src/main.ts`**: 成功将主入口点从根目录移动到 `src` 目录，符合现代 TypeScript 项目结构标准。
+  - ✅ **更新构建配置**: 修改 `esbuild.config.mjs` 以使用新的入口点路径 `src/main.ts`。
+  - ✅ **修复相关问题**: 修复了 `src/basics/enactor/obsidian.tsx` 和 `src/basics/ui/UINote.tsx` 中的错误。
+  - ✅ **更新文档**: 更新 memory-bank 文档以反映新的项目结构。
+
 - **Flow Editor 封装 (Phase 4.1)**
   - ✅ **创建 `FlowEditorManager`**: 成功将 "Flow Editor" 和 "Basics" 相关的所有逻辑（包括 `enactor`, `commands`, `extensions` 和相关方法）从 `main.ts` 迁移至 `src/features/flow-editor/index.ts`。
   - ✅ **`main.ts` 进一步简化**: `main.ts` 中不再包含任何 Flow Editor 的实现细节，只保留了对 `FlowEditorManager` 的初始化调用。
@@ -28,9 +34,9 @@
   - ✅ **CSS 模块化**: `import` 替代了动态注入。
 
 #### ⏳ Planned (Next Major Phase)
-- **测试体系建设 (Phase 5)**
+- **测试体系建设 (Phase 5.2)**
   - ⏳ 为 `FlowEditorManager`, `command-handler` 等关键模块编写单元和集成测试。
-- **文档完善**
+- **文档完善 (Phase 5.3)**
   - ⏳ 确保所有 memory-bank 文档与当前架构一致。
 
 ## 📋 Feature Development Status
@@ -48,34 +54,34 @@
 ### Quality & Architecture (In Progress)
 | Aspect | Status | Priority | Progress |
 |--------|--------|----------|----------|
-| Code Modularization | 🔄 In Progress | High | 50% |
+| Code Modularization | ✅ Complete | High | 100% |
+| Project Structure | 🔄 In Progress | High | 75% |
 | RIPER5 Integration | ✅ Complete | High | 100% |
 | Test Coverage | ⏳ Planned | Medium | 10% |
-| Documentation | 🔄 In Progress | Medium | 75% |
+| Documentation | 🔄 In Progress | Medium | 85% |
 | Performance Optimization | ⏳ Planned | Low | 5% |
 
 ## 🚧 Current Sprint Status
 
-### Sprint: Flow Editor 重构与 Bug 修复
+### Sprint: 项目结构优化
 **Duration**: Current session
-**Goal**: 封装 Flow Editor 功能，清理 `main.ts`，并确保运行时稳定性。
+**Goal**: 优化项目结构，使其符合现代 TypeScript 项目标准。
 
 #### Tasks Progress
-- [x] **规划 "Flow Editor" 封装** ✅
-- [x] **创建 `FlowEditorManager` 模块** ✅
-- [x] **迁移属性和方法到新模块** ✅
-- [x] **解耦 `loadFlowCommands` 依赖** ✅
-- [x] **重构 `main.ts` 以集成新模块** ✅
-- [x] **调查 `uriByString` 运行时错误** ✅
-- [x] **通过 `enactor` getter 修复运行时错误** ✅
-- [x] **识别并移除 `main.ts` 中的遗留菜单处理代码** ✅
+- [x] **将 `main.ts` 移至 `src/main.ts`** ✅
+- [x] **更新 `esbuild.config.mjs` 入口点** ✅
+- [x] **修复 `src/basics/enactor/obsidian.tsx` 中的错误** ✅
+- [x] **修复 `src/basics/ui/UINote.tsx` 中的错误** ✅
+- [x] **更新 `techContext.md`** ✅
 - [x] **更新 `systemPatterns.md`** ✅
-- [x] **更新 `progress.md`** ✅
+- [x] **更新 `activeContext.md`** ✅
+- [x] **更新 `progress.md`** 🔄
 
 ## 📊 Metrics & KPIs (Updated)
 
 ### Code Quality Metrics
-- **main.ts**: ~385 lines (↓ from 512) - **架构清晰，职责单一**
+- **src/main.ts**: ~385 lines (↓ from 512) - **架构清晰，职责单一**
+- **Project Structure**: 优 (✔ from 良) - **所有源代码现在位于 src 目录**
 - **Code Complexity**: 低 (✔ from 中) - 核心复杂逻辑已全部分散到专用模块中。
 - **Test Coverage**: 低 (↔) - 仍是下一步需要解决的核心问题。
 
@@ -87,6 +93,7 @@
 
 ### Technical Debt
 - **Architecture Debt**: 非常低 (✔ from 中高) - **主要架构债已还清**。
+- **Project Structure Debt**: 低 (✔ from 中) - **通过移动 main.ts 到 src 目录解决**。
 - **Testing Debt**: 高 (↔) - **当前主要技术债务**。
 - **Documentation Debt**: 低 (✔ from 中) - 正在通过本次更新解决。
 - **Dependency Debt**: 低 (依赖保持更新)
@@ -94,13 +101,13 @@
 ## 🎯 Upcoming Milestones
 
 ### 短期里程碑 (Next 1-2 Sprints)
-1. **测试体系初步建立 (Phase 4.3)**
+1. **测试体系初步建立 (Phase 5.2)**
    - Target: 为至少2个核心新模块 (`heading-analysis`, `clipboard-handler`) 提供单元测试。
    - Success Criteria: 测试能够独立运行并通过 CI。
 
-2. **解决 `main.ts` 遗留问题**
+2. **解决 `src/main.ts` 遗留问题**
    - Target: 重构 `load/saveSettings` 等方法。
-   - Success Criteria: 消除 `main.ts` 中的 linting 错误。
+   - Success Criteria: 消除 `src/main.ts` 中的 linting 错误。
 
 ### 中期里程碑 (Next 1-2 Months)
 1. **完成测试覆盖**
@@ -122,7 +129,7 @@
 
 ### Mitigation Strategies
 - **聚焦测试**: 在进行更多重构前，优先建立测试体系。
-- **逐个击破**: 针对 `main.ts` 的遗留问题，逐一进行小型重构。
+- **逐个击破**: 针对 `src/main.ts` 的遗留问题，逐一进行小型重构。
 - **持续集成**: 建立 CI 流程，确保每次提交都经过测试。
 
 ## 📝 Notes & Observations
@@ -134,30 +141,35 @@
 - 🔧 RIPER5 框架提供了清晰的开发模式
 
 ### 改进机会
-- 🧩 代码模块化和可维护性
-- 🧪 测试自动化和CI/CD
-- 📈 性能监控和优化
-- 👥 社区建设和贡献流程
+- 🧩 代码模块化和可维护性已大幅提升
+- 🧪 测试自动化和CI/CD仍需加强
+- 📈 性能监控和优化可进一步改进
+- 👥 社区建设和贡献流程需要完善
 
 ### 学习点
 - Obsidian 插件集成最佳实践
-- TypeScript 类型兼容性处理
-- CSS 模块化和样式管理
+- TypeScript 项目结构标准化
+- 构建系统配置管理
 - 大型代码库重构策略
 
 ## 🔄 最近更新
 
-### {TODAY}
+### 2024-12-20
+- ✅ **将 `main.ts` 移至 `src/main.ts`**: 成功将主入口点移动到 `src` 目录，符合现代 TypeScript 项目结构。
+- ✅ **更新构建配置**: 修改 `esbuild.config.mjs` 以使用新的入口点路径。
+- ✅ **修复相关问题**: 解决了 `src/basics/enactor/obsidian.tsx` 和 `src/basics/ui/UINote.tsx` 中的错误。
+- ✅ **更新 memory-bank 文档**: 更新了 `techContext.md`, `systemPatterns.md`, `activeContext.md` 和 `progress.md`。
+
+### 2024-12-19
 - ✅ **完成 "Flow Editor" 功能封装**: 成功将所有相关逻辑从 `main.ts` 提取到 `FlowEditorManager`。
 - ✅ **修复运行时错误**: 解决了因重构导致的 `uriByString` of `undefined` 错误。
 - ✅ **清理 `main.ts`**: 移除了大量死代码和遗留的菜单处理逻辑。
 - ✅ **更新 `systemPatterns.md` 和 `progress.md`** 以反映最新的架构和进度。
 
-### 2024-12-24
+### 2024-12-18
 - ✅ 成功将核心链接创建逻辑提取到 `link-creation` 模块 (Phase 3.3)
 - ✅ 成功将"时间章节"功能提取到 `time-section` 模块 (Phase 3.2)
 - ✅ 成功集成 Basics 插件的内联编辑功能
 - ✅ 解决了 CSS 导入问题
 - ✅ 修复了设置面板错误
-- ✅ 更新了 Memory Bank 文档
-- 🔄 开始规划代码重构 
+- ✅ 更新了 Memory Bank 文档 
