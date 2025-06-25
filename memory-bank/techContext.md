@@ -24,6 +24,7 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 - **Obsidian API**: Core dependency for interacting with the Obsidian environment.
 - **CodeMirror**: Used for editor extensions.
 - **React**: Used by the Flow Editor components.
+- **Dataview Plugin**: **[New Core Dependency]** Used as the query engine for the `blp-timeline` feature. The plugin will require Dataview to be installed and enabled to use this functionality. We will interact with it via its official API.
 - **Internal Modules**: `src/main.ts` now primarily depends on `FlowEditorManager` and the UI modules. `FlowEditorManager` in turn depends on the `basics` library.
 
 ## 🧱 Code Structure

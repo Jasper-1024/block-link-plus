@@ -12,7 +12,14 @@
 
 ### 🏆 Major Milestones
 
-#### ✅ Completed (Refactoring Phase 5.1)
+#### ✅ Completed (Refactoring Phase 5.1 & New Feature Design)
+- **`blp-timeline` 功能研究与设计 (Phase 6.1)**
+  - ✅ **需求分析与创新**: 完成了对动态、可编辑时间线功能的需求分析和创新方案构想。
+  - ✅ **技术可行性验证**: 确认了在 Obsidian 渲染进程中安全修改文件内容的技术方案。
+  - ✅ **竞品分析**: 分析了 `obsidian-run` 等插件，明确了本插件的差异化优势。
+  - ✅ **功能设计定稿**: 完成了 `blp-timeline` 控制块的 YAML 结构设计和核心工作流。
+  - ✅ **技术选型**: 确定将 `Dataview` 插件作为核心查询引擎依赖。
+
 - **项目结构标准化 (Phase 5.1)**
   - ✅ **将 `main.ts` 移至 `src/main.ts`**: 成功将主入口点从根目录移动到 `src` 目录，符合现代 TypeScript 项目结构标准。
   - ✅ **更新构建配置**: 修改 `esbuild.config.mjs` 以使用新的入口点路径 `src/main.ts`。
@@ -50,6 +57,7 @@
 | URI Links | ✅ Complete | 1.1.0 | External access support |
 | Time Sections | ✅ Complete | 1.3.0 | Journal integration |
 | Inline Editing | ✅ Complete | 1.3.0+ | Basics 插件功能集成 |
+| `blp-timeline` | ⏳ Planned | - | Dynamic, in-note timeline generation |
 
 ### Quality & Architecture (In Progress)
 | Aspect | Status | Priority | Progress |
@@ -74,6 +82,20 @@
 - [x] **修复 `src/basics/ui/UINote.tsx` 中的错误** ✅
 - [x] **更新 `techContext.md`** ✅
 - [x] **更新 `systemPatterns.md`** ✅
+- [x] **更新 `activeContext.md`** ✅
+- [x] **更新 `progress.md`** 🔄
+
+### Sprint: `blp-timeline` 功能设计
+**Duration**: Current session
+**Goal**: 完成 `blp-timeline` 功能的研究、设计和技术选型。
+
+#### Tasks Progress
+- [x] **研究动态内容生成方案** ✅
+- [x] **验证技术可行性** ✅
+- [x] **设计 `blp-timeline` 控制块** ✅
+- [x] **确定 Dataview 依赖** ✅
+- [x] **更新 `systemPatterns.md`** ✅
+- [x] **更新 `techContext.md`** ✅
 - [x] **更新 `activeContext.md`** ✅
 - [x] **更新 `progress.md`** 🔄
 

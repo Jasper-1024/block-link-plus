@@ -3,86 +3,70 @@
 *Π: DEVELOPMENT | Ω: RESEARCH*
 
 ## 🔮 Current Focus
-**项目结构优化**: 将 `main.ts` 移至 `src/main.ts`，优化项目结构，使其符合现代 TypeScript 项目标准。
+**`blp-timeline` 功能规划**: 在完成了对动态内容生成功能的研究、设计和技术验证后，当前的焦点是进入规划阶段，为 `blp-timeline` 的实现制定详细的开发计划。
 
 ## 📎 Context References
 
 ### 📄 Active Files
-- **主要代码文件**:
-  - `src/main.ts` (之前的 `main.ts`) - 核心插件逻辑
-  - `esbuild.config.mjs` - 更新了入口点配置
-  - `tsconfig.json` - 更新了文件路径配置
+- **Memory Bank Files**:
+  - `memory-bank/systemPatterns.md` - 已更新，包含了 `blp-timeline` 的新设计模式。
+  - `memory-bank/techContext.md` - 已更新，将 `Dataview` 添加为核心依赖。
+  - `memory-bank/activeContext.md` - 当前文档。
+  - `memory-bank/progress.md` - 待更新。
 
 ### 💻 Active Code Areas
-- **Build Configuration**: 构建系统配置更新
-- **Project Structure**: 项目结构优化
-- **Path References**: 路径引用更新
+- **新功能设计**: `blp-timeline` 的 YAML 配置结构和工作流。
+- **依赖集成**: 与 `Dataview` 插件 API 的集成策略。
 
 ### 📚 Active Documentation
-- **Memory Bank Files**:
-  - `memory-bank/techContext.md` - 已更新以反映新的文件结构
-  - `memory-bank/systemPatterns.md` - 已更新以反映架构变化
-  - `memory-bank/activeContext.md` - 当前文档
-  - `memory-bank/progress.md` - 待更新
+- **Dataview API Docs**: `https://blacksmithgu.github.io/obsidian-dataview/resources/develop-against-dataview/` - 作为实现该功能的主要技术参考。
+- **相关插件参考**:
+  - `obsidian-run` (`https://github.com/HananoshikaYomaru/obsidian-run`)
+  - `obsidian-dataview-serializer` (`https://github.com/dsebastien/obsidian-dataview-serializer`)
 
 ### 📁 Active Folders
-- **主要目录**:
-  - `/src/` - 现在包含所有源代码，包括主入口点
-  - `/memory-bank/` - RIPER5 内存系统
+- `/memory-bank/` - RIPER5 内存系统。
 
 ### 🔄 Git References
-- **当前提交**: "Refactor project structure by moving main entry point to 'src/main.ts'"
-- **变更文件**:
-  - `esbuild.config.mjs` (更新入口点)
-  - `main.ts` (移除)
-  - `src/main.ts` (新增)
-  - `src/basics/enactor/obsidian.tsx` (修复)
-  - `src/basics/ui/UINote.tsx` (修复)
+- N/A
 
 ### 📏 Active Rules
-- **项目结构规范**: 所有源代码应位于 `src` 目录下
-- **构建规范**: 使用 `esbuild` 构建，入口点为 `src/main.ts`
-- **TypeScript 规范**: 严格模式，使用现代 ES 模块
+- **核心依赖**: `blp-timeline` 功能必须依赖 `Dataview` 插件。
+- **设计模式**: 新功能需遵循 `systemPatterns.md` 中定义的"动态区域"控制块模式。
 
 ## 📡 Context Status
 
 ### 🟢 Active (High Priority)
-- **项目结构优化**: 完成了 `main.ts` 向 `src/main.ts` 的迁移
-- **构建系统更新**: 更新了 `esbuild.config.mjs` 以反映新的入口点
-- **文档更新**: 更新 memory-bank 文档以反映最新变更
+- **技术选型**: 确定使用 Dataview API 作为后端查询引擎。
+- **功能设计**: 完成了 `blp-timeline` 的核心功能设计和 YAML 配置结构。
+- **可行性验证**: 确认了在渲染时安全地修改文件内容的技术方案是可行的。
 
 ### 🟡 Partially Relevant (Medium Priority)  
-- **Bug 修复**: 修复了 `src/basics/enactor/obsidian.tsx` 和 `src/basics/ui/UINote.tsx` 中的问题
-- **类型错误处理**: 确保所有路径引用正确更新
+- **竞品分析**: 分析了 `obsidian-run` 和 `obsidian-dataview-serializer` 的实现，明确了我们方案的差异化优势（渲染时触发）。
 
 ### 🟣 Essential (Core Dependencies)
-- **构建工具**: esbuild 配置对项目结构至关重要
-- **TypeScript 配置**: 确保 tsconfig.json 正确配置
+- **Dataview Plugin API**: 实现 `blp-timeline` 的基石。
 
 ### 🔴 Deprecated (Need Attention)
-- **根目录 `main.ts`**: 已移除，所有引用需要更新到 `src/main.ts`
+- **基于 `viewUtils.js` 的渲染方案**: 原有的纯 `dataviewjs` 渲染方案因无法实现"就地编辑"已被废弃。
 
 ## 🎯 Immediate Next Steps
 
 ### 短期目标
-1. ✅ 将 `main.ts` 移至 `src/main.ts`
-2. ✅ 更新 `esbuild.config.mjs` 以反映新的入口点
-3. ✅ 修复受影响的导入和引用
-4. ✅ 更新 memory-bank 文档
-5. ⏳ 验证构建和运行是否正常
+1. ✅ 完成 `blp-timeline` 的研究和设计阶段。
+2. ✅ 更新所有相关的 memory-bank 文档。
+3. ➡️ **切换到 PLAN 模式**，为 `blp-timeline` 的实现创建详细的步骤和任务清单。
 
 ### 中期目标
-1. 🔄 继续优化项目结构
-2. 🔄 建立测试体系
-3. 🔄 完善文档
+1. 🔄 实现 `blp-timeline` 的核心功能。
+2. 🔄 为新功能编写单元测试和集成测试。
+3. 🔄 发布包含此新功能的插件版本。
 
 ## 🔄 Context Change Triggers
 
 ### 模式转换条件
-- **进入 EXECUTE 模式**: 当需要实施更多项目结构优化时
-- **进入 REVIEW 模式**: 当需要验证重构结果时
+- **进入 PLAN 模式**: 在当前步骤完成后，立即进入 PLAN 模式。
 
 ### 上下文更新事件
-- 项目结构变更
-- 构建系统配置更新
-- 路径引用修复
+- 新功能的设计定稿。
+- 核心技术依赖的确定。
