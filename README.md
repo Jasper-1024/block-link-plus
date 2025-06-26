@@ -95,7 +95,55 @@ Meeting notes...
 Follow-up discussion...
 ```
 
+### Embed Block Editing
+This feature allows you to edit embedded blocks and headings in real-time directly within your notes, without having to navigate to the original file, providing a seamless writing experience.
+
+To enable, go to `Settings -> Block Link Plus`, find the 'Embedded Block Editing' section, and toggle `Enable Embedded Block Editing`. You can also choose between two editing styles:
+- **minimal**: Provides a clearer boundary for the editing area.
+- **seamless**: Makes the embedded block look like a natural part of the current note.
+
+### Timeline
+The `blp-timeline` is a powerful query and aggregation tool. It can automatically fetch sections from your vault (especially daily notes) based on headings, tags, links, and other conditions, and display them in a chronological timeline.
+
+**Workflow:**
+1.  **Record (Produce):** Use the 'Time Section' feature or manually create headings with timestamps in your daily notes (e.g., `#### 10:30 Project Meeting`).
+2.  **Aggregate (Consume):** In any note, create a `blp-timeline` code block and write a YAML configuration to define the aggregation rules. This will generate a dynamic, auto-updating timeline.
+
+**Configuration:**
+Here is an advanced example of the YAML configuration:
+```yaml
+---
+source_folders:
+  - "journal/daily"
+within_days: 7
+sort_order: desc
+heading_level: 4
+embed_format: '!![[]]'
+time_pattern: '(\\d{2}:\\d{2})'
+filters:
+  relation: AND
+  tags:
+    items:
+      - '#meeting'
+      - '#project-A'
+---
+```
+**YAML Options:**
+- `source_folders`: (Required) Specify which folders to search in.
+- `heading_level`: (Optional, default: 4) The heading level (1-6) to fetch.
+- `time_pattern`: (Optional) A regex to extract the time from the heading text. For a heading `#### 14:30 Meeting`, you could use `(\\d{2}:\\d{2})` to match `14:30`.
+- `embed_format`: (Optional, default: `!![[]]`) Defines if the generated link is an embed (`!![[]]`) or a regular link (`![[]]`).
+- `sort_order`: (Optional, default: `desc`) Sort order by date: `asc` (ascending) or `desc` (descending).
+- `within_days`: (Optional) Only include notes from the last N days.
+- `filters`: (Optional) Advanced filters to select sections by `tags` or `links`, with `AND`/`OR` relations.
+
 ## Changelog
+
+### 1.4.0
+- Added **Embed Block Editing** feature for a seamless inline editing experience.
+- Added **Timeline** feature (`blp-timeline`) to dynamically query and aggregate sections from your vault.
+- Migrated project to a standardized structure with source code in the `src` directory.
+- Refactored major components like Flow Editor into separate modules for better maintainability.
 
 ### 1.3.0
 - Added Time Section feature for inserting timestamps as headings
