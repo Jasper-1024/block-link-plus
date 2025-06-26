@@ -1,16 +1,16 @@
 # σ₅: Progress Tracker
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-21*
-*Π: DEVELOPMENT | Ω: REVIEW*
+*Π: DEVELOPMENT | Ω: INNOVATE*
 
 ## 📈 Project Status
 
-**Overall Completion**: 95% (`blp-timeline` 核心功能已实现，待修复一个已知 bug)
+**Overall Completion**: 95% (核心功能已实现，但发现多个严重bug需要修复)
 
 **Current Version**: 1.3.2+ (timeline-implemented)
-**Project Phase**: DEVELOPMENT (Π₃) - Phase 6.2 完成
-**Active Mode**: REVIEW (Ω₅) - 审核 `blp-timeline` 功能实现
+**Project Phase**: DEVELOPMENT (Π₃) - **暂停 `blp-timeline` 的收尾工作，转向关键 Bug 修复**
+**Active Mode**: INNOVATE (Ω₂) - 构思 Flow Editor Bug 的解决方案
 
-### 🏆 Major Milestones
+### �� Major Milestones
 
 #### ✅ Completed (Phase 6.2)
 - **`blp-timeline` 章节级功能实现**
@@ -55,6 +55,8 @@
   - 🔄 **章节级功能开发中**: 正在实现章节内容解析和匹配逻辑
 
 #### ⏳ Planned (Next Major Phase)
+- **Flow Editor Bug 修复 (New Sprint)**
+  - ⏳ 修复内联编辑功能的4个严重bug
 - **测试体系建设 (Phase 5.2)**
   - ⏳ 为 `FlowEditorManager`, `command-handler` 等关键模块编写单元和集成测试。
 - **文档完善 (Phase 5.3)**
@@ -75,7 +77,7 @@
 ### New Features (In Development)
 | Feature | Status | Priority | Progress | Notes |
 |---------|--------|----------|----------|-------|
-| `blp-timeline` | 🔄 In Progress | High | 95% | 核心功能已完成，存在一个已知 bug |
+| `blp-timeline` | 🔄 On Hold | High | 95% | 核心功能已完成，但存在一个已知 bug。已暂停。|
 
 ### Quality & Architecture (In Progress)
 | Aspect | Status | Priority | Progress |
@@ -154,7 +156,17 @@
   - [ ] 文档更新和用户指南编写
 
 #### ⚠️ 已知问题 (Known Issues)
-- **Bug**: 用户报告存在一个尚未定位的 bug，功能可以工作但存在异常。这是下一个 sprint 的首要任务。
+- **`blp-timeline` Bug**: 用户报告存在一个尚未定位的 bug，功能可以工作但存在异常。
+
+- **`Flow Editor` 严重 Bugs (New)**:
+  - **1. 源码模式渲染问题**: `!![[...]]` 在源码模式下被错误地渲染为 Widget，而非纯文本。
+    - **根源**: `flowEditorRangeset` 未区分编辑器模式。
+  - **2. 阅读模式崩溃**: 在阅读模式下点击嵌入块的编辑图标，导致 `posAtDOM` 错误。
+    - **根源**: `replaceAllEmbed` 试图在无编辑器的视图中获取 CodeMirror 实例。
+  - **3. 原生图标丢失**: `![[...]]` 的原生跳转图标被插件的UI替换掉。
+    - **根源**: `replaceAllEmbed` 直接删除了原生图标的 DOM 元素。
+  - **4. 嵌入标题丢失**: `![[笔记A#标题B]]` 形式的嵌入块在可编辑状态下不显示"标题B"。
+    - **根源**: 渲染组件未解析和展示链接中的标题部分。
 
 ### Sprint: 项目结构优化 (已完成)
 **Duration**: Previous session
@@ -244,7 +256,13 @@
 
 ## 🔄 最近更新
 
-### 2024-12-21 (Latest)
+### 2024-12-22 (Current Session)
+- 🔎 **完成 Flow Editor Bug 研究**: 切换到 RESEARCH 模式，对用户报告的3个内联编辑问题和1个新发现问题进行了深入的代码分析。
+- 🎯 **定位根本原因**: 成功将每个问题的根源定位到 `replaceAllEmbed` 和 `flowEditorRangeset` 等具体函数，并确认核心设计缺陷在于未能区分 Obsidian 的不同视图模式。
+- 📝 **更新 Memory Bank**: 在 EXECUTE 模式下，将研究发现和新的修复任务更新到 `activeContext.md` 和 `progress.md`。
+- 💡 **切换至 INNOVATE 模式**: 准备开始设计针对问题3（图标丢失）的解决方案。
+
+### 2024-12-21 (Previous Session)
 - ✅ **完成 `blp-timeline` 核心功能**: 实现了完整的章节级时间线渲染和带有哈希检查的文件写入逻辑。
 - 📝 **更新 `progress.md`**: 全面更新了 `blp-timeline` 的实现状态，标记 Phase 6.2 为已完成。
 - ⚠️ **识别新 Bug**: 确认核心功能已实现，但存在一个 bug 需要在下一阶段修复。

@@ -2,20 +2,18 @@
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
-## 🔮 Current Focus
-当前焦点是完成 `blp-timeline` 功能的**章节级时间线渲染**实现。经过深入分析，发现当前实现仅支持文件级别的查询，但实际需求是**章节级别的时间线聚合**，类似于 `viewUtils.js` 中的 `renderTimeline` 函数。
+## �� Current Focus
+当前焦点转移到**研究和解决 "内联编辑嵌入块" (Flow Editor) 功能相关的多个严重 bug**。我们已经完成了初步研究阶段，并对三个核心问题及一个新增问题有了明确的根本原因分析。
 
 ## 📎 Context References
 - 📄 Active Files: 
-  - `src/features/dataview-timeline/index.ts` (主入口，需要重构渲染部分)
-  - `src/features/dataview-timeline/query-builder.ts` (需要添加章节级查询逻辑)
-  - `src/features/dataview-timeline/region-parser.ts` (完整，支持哈希机制)
-  - `src/features/dataview-timeline/filter-resolver.ts` (完整，过滤器解析)
-  - `c:\Users\ZY\Git\Note\Scripts\viewUtils.js` (参考实现)
+  - `src/basics/flow/markdownPost.tsx` (问题2、3、4的根源)
+  - `src/basics/enactor/obsidian.tsx` (问题1的根源)
+  - `src/features/flow-editor/index.ts` (功能入口和协调器)
 - 💻 Active Code: 
-  - `handleTimeline` (需要从 JSON 调试输出改为章节级渲染)
-  - `executeTimelineQuery` (需要扩展为章节级查询)
-  - `renderTimeline` (参考实现，章节级时间线渲染)
+  - `replaceAllEmbed` (导致问题2、3的核心函数)
+  - `flowEditorRangeset` (导致问题1的核心函数)
+  - `FlowEditorHover` (很可能与问题4相关的React组件)
 - 📚 Active Docs: `progress.md`, `projectbrief.md`
 - 📁 Active Folders: `src/features/dataview-timeline`, `memory-bank`
 - 🔄 Git References: N/A
@@ -23,36 +21,30 @@
 
 ## 📡 Context Status
 - 🟢 **Active**: 
-  - `blp-timeline` 章节级时间线功能开发
-  - Memory Bank 文档全面更新
-  - 基础架构（配置解析、过滤器、动态区域解析）
+  - "内联编辑嵌入块" (Flow Editor) 的 Bug 调查与修复
 - 🟡 **Partially Relevant**: 
-  - 当前的文件级查询逻辑（需要扩展为章节级）
+  - `blp-timeline` 功能的收尾工作 (已暂停)
 - 🟣 **Essential**: 
-  - 实现章节级内容解析和匹配
-  - 生成正确的 `!![[文件名#章节标题]]` 格式
-  - 添加嵌入格式配置项（`!![[]]` vs `![[]]`）
-  - 实现防抖和哈希比较机制
+  - **问题1**: `!![[...]]` 在源码模式下被错误渲染成 Widget。
+  - **问题2**: 阅读模式下点击编辑图标导致 `posAtDOM` 崩溃。
+  - **问题3**: `![[...]]` 的原生跳转图标被移除。
+  - **问题4**: `![[笔记A#标题B]]` 形式的嵌入块在编辑时丢失了标题"标题B"。
 - 🔴 **Deprecated**:
-  - 文件级别的简单链接生成思路
-  - 当前的 JSON 调试输出（将被章节级渲染替代）
+  - 当前的 `blp-timeline` 功能开发焦点。
 
 ## 🎯 Immediate Next Steps
 
 ### 短期目标
-1. ➡️ **扩展 `TimelineConfig` 接口**: 添加章节级配置选项（标题级别、嵌入格式等）
-2. ➡️ **重构 `query-builder.ts`**: 添加章节级查询和内容匹配逻辑
-3. ➡️ **实现章节级渲染**: 在 `index.ts` 中生成正确的嵌入格式
-4. ➡️ **添加文件写入逻辑**: 实现动态区域更新和哈希比较
+1. ➡️ **模式切换**: 进入 **INNOVATE** 模式。
+2. ➡️ **设计解决方案**: 针对 **问题3 (图标被替换)**，构思具体的代码实现方案，包括 DOM 操作和 CSS 调整。
+3. ➡️ **规划后续**: 讨论问题 1, 2, 4 的修复策略。
 
 ### 中期目标
-1. 🔄 **完善配置选项**: 支持标题级别、嵌入格式、时间格式等自定义
-2. 🔄 **性能优化**: 实现 300ms 防抖机制
-3. 🔄 **错误处理**: 完善章节解析的异常处理
-4. 🔄 **测试覆盖**: 为章节级功能编写测试用例
+1. 🔄 **执行修复**: 在 **EXECUTE** 模式下，依次实施对4个问题的修复方案。
+2. 🔄 **代码审查**: 在 **REVIEW** 模式下，验证修复是否引入新问题，并确保代码质量。
+3. 🔄 **回归测试**: 确保修复没有影响到 Flow Editor 的正常功能。
 
 ## 🚨 Critical Insights
-- **需求误解纠正**: 之前理解为文件级链接，实际需求是章节级时间线聚合
-- **参考实现发现**: `viewUtils.js` 的 `renderTimeline` 提供了完整的章节级实现模式
-- **技术架构验证**: 现有的基础设施（配置解析、过滤器、动态区域）完全适用
-- **实现复杂度**: 章节级实现比文件级复杂，需要内容解析和章节匹配逻辑
+- **核心缺陷**: 所有问题都源于插件未能正确区分和处理 Obsidian 的三种视图模式 (源码、实时预览、阅读)。
+- **问题定位**: 已将每个问题的根本原因定位到具体的函数 (`replaceAllEmbed`, `flowEditorRangeset`) 和代码文件。
+- **修复路径**: 解决方案需要围绕"模式感知"来设计，为不同模式提供不同的处理逻辑。
