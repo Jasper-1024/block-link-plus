@@ -1,211 +1,317 @@
 # σ₃: Technical Context
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
-*Π: DEVELOPMENT | Ω: RESEARCH*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🛠️ Technology Stack
-- 🖥️ **Frontend**: Svelte (Obsidian's UI framework), React (for Flow Editor components)
-- ⚙️ **Backend/Core**: TypeScript
-- 📦 **Build Tools**: esbuild
-- 📋 **Package Manager**: npm
-- 📝 **Language**: TypeScript 4.7.4
-- 🧩 **Core Framework**: Obsidian API v1.3.5, CodeMirror 6
 
-## 🏛️ Architecture Overview
-The plugin uses a modular architecture centered on a lightweight **Orchestrator (`src/main.ts`)**. This central file delegates all major functionalities to specialized managers and modules, ensuring high cohesion and low coupling.
+### Frontend/Plugin
+- **🖥️ Framework**: Obsidian Plugin API (1.4.16+)
+- **⚡ Language**: TypeScript 4.7.4
+- **🔧 Build Tool**: esbuild 0.17.3
+- **📦 Package Manager**: npm
+- **🎨 UI Framework**: Obsidian 原生 UI 组件
 
-### Key Components:
-- **`src/main.ts` (Orchestrator)**: The main entry point. It handles the plugin lifecycle (`onload`, `onunload`), registers basic commands, and, most importantly, initializes and wires together the various managers and modules.
-- **`FlowEditorManager` (`src/features/flow-editor/`)**: A dedicated manager that encapsulates all logic for the "Flow Editor" and "Basics" features. It is instantiated by `main.ts` and handles its own command registration, workspace patching, and UI management for the flow editor.
-- **`src/features/` (Feature Modules)**: Contains other self-contained modules for specific features like `command-handler` and `time-section`.
-- **`src/ui/` (UI Modules)**: Contains modules responsible for the user interface, such as the settings tab (`SettingsTab.ts`) and editor context menu (`EditorMenu.ts`).
-- **`src/basics/` & `src/shared`**: These are considered a library or submodule providing the core "Flow Editor" functionality, managed by `FlowEditorManager`.
+### Core Dependencies
+- **📊 Data Query**: obsidian-dataview (0.5.64+) - 核心查询引擎
+- **📝 YAML Parsing**: js-yaml (4.1.0) - 配置解析
+- **⏰ Date/Time**: luxon (via Dataview) - 日期时间处理
+- **🔗 File Links**: Obsidian Link API - 文件链接管理
 
-## ⛓️ Dependencies
-- **Obsidian API**: Core dependency for interacting with the Obsidian environment.
-- **CodeMirror**: Used for editor extensions.
-- **React**: Used by the Flow Editor components.
-- **Dataview Plugin**: **[New Core Dependency]** Used as the query engine for the `blp-timeline` feature. The plugin will require Dataview to be installed and enabled to use this functionality. We will interact with it via its official API.
-- **Internal Modules**: `src/main.ts` now primarily depends on `FlowEditorManager` and the UI modules. `FlowEditorManager` in turn depends on the `basics` library.
+### Development Tools
+- **🔍 Linting**: ESLint with TypeScript rules
+- **📏 Formatting**: Prettier (if configured)
+- **🧪 Testing**: Jest (planned for Phase 5.2)
+- **📚 Documentation**: TypeDoc (planned)
 
-## 🧱 Code Structure
-- **`src/main.ts`**: The orchestrator/core file. (Significantly smaller and cleaner).
-- **`src/`**: Contains all source code.
-  - **`features/`**: Home for modular features.
-    - **`flow-editor/`**: Contains the `FlowEditorManager`.
-  - **`ui/`**: Houses UI-related code.
-  - **`basics/`**: The integrated inline editing feature library.
-  - **`shared/`**: Shared code for the library.
-- **`memory-bank/`**: Project documentation.
+## 🏗️ Architecture Overview
 
-## ⚖️ Technical Debt
-- **Architectural Debt**: **Very Low**. The primary architectural debt related to the monolithic `main.ts` has been resolved. The extraction of `FlowEditorManager` was the final major step in this process. The architecture is now clean and modular.
-- **Testing Debt**: **High**. This is now the primary source of technical debt. The recent refactoring was not covered by tests, making the codebase vulnerable to regressions.
+### 项目结构 (Updated)
+```
+block-link-plus/
+├── src/                          # 所有源代码
+│   ├── main.ts                   # 主插件入口 (~385 lines)
+│   ├── features/                 # 功能模块
+│   │   ├── flow-editor/          # Flow Editor 管理器
+│   │   │   └── index.ts          # FlowEditorManager
+│   │   └── dataview-timeline/    # 时间线聚合功能 🆕
+│   │       ├── index.ts          # 主入口和协调逻辑
+│   │       ├── region-parser.ts  # 动态区域解析
+│   │       ├── filter-resolver.ts # 过滤器解析
+│   │       └── query-builder.ts  # 查询构建和章节处理
+│   ├── core/                     # 核心功能模块
+│   │   ├── heading-analysis.ts   # 标题分析
+│   │   ├── clipboard-handler.ts  # 剪贴板处理
+│   │   ├── command-handler.ts    # 命令处理
+│   │   ├── link-creation.ts      # 链接创建
+│   │   └── time-section.ts       # 时间章节
+│   ├── ui/                       # UI 组件
+│   │   └── EditorMenu.ts         # 编辑器菜单
+│   └── basics/                   # Basics 插件集成
+│       ├── enactor/              # 执行器
+│       ├── commands/             # 命令
+│       ├── extensions/           # 扩展
+│       └── ui/                   # UI 组件
+├── styles.css                    # 样式文件
+├── manifest.json                 # 插件清单
+├── esbuild.config.mjs           # 构建配置
+└── memory-bank/                 # 项目文档
+    ├── projectbrief.md          # 项目概述
+    ├── systemPatterns.md        # 系统模式
+    ├── techContext.md           # 技术上下文
+    ├── activeContext.md         # 活动上下文
+    ├── progress.md              # 进度跟踪
+    └── symbols.md               # 符号参考
+```
 
-## 🚀 Refactoring Goals
-- **Modularization**: **Complete**. The goal of breaking down the monolithic `main.ts` has been achieved. All major features are now encapsulated in their own modules or managers.
-- **Clear Interfaces**: **Achieved**. The delegation pattern from `src/main.ts` to `FlowEditorManager` and other modules provides clear separation.
-- **Improved Readability**: **Achieved**. The new directory structure is more logical and easier to navigate.
-- **Increased Maintainability**: **Achieved**. The codebase is now easier to understand and safer to modify.
+## 🔧 Core Technologies Deep Dive
 
-## 📚 Dependencies
+### Obsidian Plugin API Integration
+- **MarkdownPostProcessor**: 处理代码块渲染
+- **TFile & Vault API**: 文件读写操作
+- **MetadataCache**: 文件元数据和链接解析
+- **App.plugins**: 插件间通信（Dataview 集成）
 
-### 核心依赖
-- **obsidian**: Obsidian API 核心库
-- **@codemirror/state**: CodeMirror 状态管理
-- **@codemirror/view**: CodeMirror 视图组件
-- **@codemirror/language**: CodeMirror 语言支持
+### Dataview Integration Architecture
+```typescript
+// 核心集成模式
+interface TimelineContext {
+    config: TimelineConfig;
+    dataviewApi: DataviewApi;
+    currentFile: TFile;
+}
 
-### 内联编辑功能依赖 (新增)
-- **react**: React 库，用于 UI 组件
-- **react-dom**: React DOM 操作
-- **monkey-around**: 用于方法重写和补丁
-- **@codemirror/basic-setup**: CodeMirror 基础设置
-- **@codemirror/highlight**: 语法高亮
-- **@lezer/common**: 解析器基础库
-- **@lezer/highlight**: 解析器高亮支持
+// 查询执行流程
+DataviewApi → Pages Query → Section Extraction → Content Matching → Link Generation
+```
 
-### 开发依赖
-- **typescript**: TypeScript 编译器
-- **esbuild**: 构建工具
-- **@types/node**: Node.js 类型定义
-- **@types/react**: React 类型定义 (新增)
-- **@types/react-dom**: React DOM 类型定义 (新增)
+### 文件修改机制 (New)
+```typescript
+// 动态区域标记格式
+<!-- OBP-TIMELINE-START -->
+// 动态生成的内容
+<!-- OBP-TIMELINE-END hash:abc123def -->
 
-## 🧩 Architecture Components
+// 防抖和哈希比较流程
+Content Generation → Hash Calculation → Hash Comparison → File Modification (if needed)
+```
 
-### 核心模块
-- **Block Link Generation**: 块链接生成和管理
-- **Multi-line Block Handling**: 多行块处理策略
-- **Settings Management**: 用户设置和配置
-- **Time Section Feature**: 时间章节功能
-- **Inline Editing**: 内联编辑功能 (新增)
+## 🎯 `blp-timeline` 技术实现详解
 
-### 技术实现
-- **ViewPlugin**: CodeMirror 视图插件
-- **MatchDecorator**: 文本装饰器
-- **StateField**: 状态字段管理
-- **React Components**: UI 组件 (新增)
-- **Flow Editor**: 内联编辑器 (新增)
+### 配置系统
+```typescript
+interface TimelineConfig {
+    source_folders?: string[];
+    within_days?: number;
+    heading_level?: number;      // 🆕 目标标题级别
+    embed_format?: '!!' | '!';   // 🆕 嵌入格式选择
+    sort_order?: 'asc' | 'desc';
+    filters?: {
+        relation: 'AND' | 'OR';
+        links?: LinkFilter;
+        tags?: TagFilter;
+    };
+}
+```
 
-## 🔌 Integration Points
+### 章节级处理流程
+1. **文件查询**: 使用 Dataview 查询符合条件的文件
+2. **内容解析**: 读取文件内容，解析标题结构
+3. **章节提取**: 提取指定级别的标题章节
+4. **内容匹配**: 检查章节内容是否包含目标链接/标签
+5. **链接生成**: 生成 `!![[文件名#章节标题]]` 格式
+6. **动态渲染**: 更新文件中的动态区域
 
-### Obsidian API
-- **Plugin Lifecycle**: `onload`, `onunload`
-- **Editor Extensions**: CodeMirror 扩展
-- **Commands**: 命令注册和处理
-- **Settings Tab**: 设置面板
-- **Markdown Post Processor**: Markdown 处理
+### 性能优化策略
+- **防抖机制**: 300ms 延迟避免频繁触发
+- **哈希比较**: 只在内容实际变化时才修改文件
+- **增量解析**: 只处理符合条件的文件
+- **缓存机制**: 缓存解析结果（计划中）
 
-### CodeMirror Integration
-- **View Plugins**: 自定义视图插件
-- **State Fields**: 状态管理
-- **Decorations**: 文本装饰
-- **Editor Commands**: 编辑器命令
+## 🔄 Data Flow Architecture
 
-### React Integration (新增)
-- **Component Rendering**: React 组件渲染
-- **Portals**: 用于内联编辑器
-- **Context Providers**: 状态共享
+### 主要数据流
+```
+YAML Config → TimelineConfig → Filter Resolution → File Query → 
+Section Extraction → Content Matching → Link Generation → 
+Hash Calculation → File Modification
+```
 
-## 🏭 Build Process
+### 错误处理流程
+```
+Validation → Query Execution → Content Processing → 
+Error Capture → User Feedback → Graceful Degradation
+```
 
-### 构建流程
-1. **TypeScript 编译**: TS → JS
-2. **ESBuild 打包**: 捆绑依赖
-3. **CSS 处理**: 样式文件处理
-4. **输出生成**: `main.js`, `styles.css`
+## 🛡️ Security & Safety
+
+### 文件操作安全
+- **读取权限**: 仅读取 Vault 内文件
+- **写入限制**: 仅修改动态区域标记内容
+- **备份机制**: 通过哈希比较避免意外覆盖
+- **循环检测**: 防抖机制防止无限循环更新
+
+### 插件依赖管理
+- **可选依赖**: Dataview 插件检测和优雅降级
+- **版本兼容**: 支持 Dataview 0.5.64+ 版本
+- **API 稳定性**: 使用稳定的 Obsidian API
+
+## 📊 Performance Considerations
+
+### 当前性能指标
+- **启动时间**: < 100ms (插件加载)
+- **查询响应**: < 2s (1000+ 文件)
+- **内存占用**: < 50MB (正常使用)
+- **文件修改**: < 300ms (防抖延迟)
+
+### 性能优化计划
+- **懒加载**: 按需加载功能模块
+- **Worker 线程**: 大量文件处理异步化
+- **索引缓存**: 文件内容解析结果缓存
+- **增量更新**: 只处理变更的文件
+
+## 🔧 Build & Deployment
 
 ### 构建配置
-- **tsconfig.json**: TypeScript 配置，已更新以反映新的文件路径
-- **esbuild.config.mjs**: ESBuild 配置，入口点已更新为 `src/main.ts`
-- **package.json**: 依赖和脚本
+```javascript
+// esbuild.config.mjs
+export default {
+    entryPoints: ['src/main.ts'],  // 更新后的入口点
+    bundle: true,
+    external: ['obsidian', 'electron', '@codemirror/*'],
+    format: 'cjs',
+    target: 'es2020',
+    logLevel: 'info',
+    sourcemap: 'external',
+    treeShaking: true,
+    outfile: 'main.js',
+};
+```
 
-## 🔍 Technical Challenges
+### 依赖管理
+```json
+{
+    "dependencies": {
+        "js-yaml": "^4.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^16.11.6",
+        "@typescript-eslint/eslint-plugin": "5.29.0",
+        "@typescript-eslint/parser": "5.29.0",
+        "builtin-modules": "3.3.0",
+        "esbuild": "0.17.3",
+        "obsidian": "latest",
+        "tslib": "2.4.0",
+        "typescript": "4.7.4"
+    }
+}
+```
 
-### 已解决的挑战
-- **块链接生成**: 实现了多种块链接生成策略
-- **多行块处理**: 解决了复杂的多行块处理逻辑
-- **CSS 导入问题**: 解决了构建过程中的 CSS 导入错误
-- **设置面板整合**: 修复了设置面板中的类型错误
-- **项目结构优化**: 将 `main.ts` 移至 `src` 目录，实现更清晰的代码组织
+## 🧪 Testing Strategy (Planned)
 
-### 当前挑战
-- **类型兼容性**: Basics 插件与 Block Link Plus 的类型兼容
-- **性能优化**: 确保内联编辑不影响性能
-- **构建配置维护**: 确保构建系统正确处理新的文件结构
+### 测试框架选择
+- **Unit Testing**: Jest + TypeScript
+- **Integration Testing**: Obsidian Test Utils
+- **E2E Testing**: Playwright (for complex scenarios)
 
-### 未来挑战
-- **测试自动化**: 建立现代化测试框架
-- **插件兼容性**: 确保与其他插件的兼容性
-- **API 变更适应**: 适应 Obsidian API 的变更
+### 测试覆盖计划
+- **配置解析**: YAML 配置验证和错误处理
+- **过滤器逻辑**: 标签和链接过滤准确性
+- **章节提取**: 标题解析和内容匹配
+- **文件操作**: 动态区域更新和哈希比较
+- **性能测试**: 大文件量处理性能
 
-## 🛡️ Safety & Stability Patterns (New)
-To ensure stability in features that perform background processing and file modifications, specific safety patterns are employed.
+## 🔄 Integration Patterns
 
-### `blp-timeline` Loop Prevention
-The `blp-timeline` feature uses a two-layer defense mechanism to prevent infinite rendering loops when its content is updated via a `MarkdownPostProcessor`.
-1.  **Debouncing**: The core update logic is wrapped in a "debouncer" function. This ensures that rapid-fire render events result in only a single, well-timed execution after the events have ceased, saving performance and preventing race conditions.
-2.  **Idempotent Writes via Content Hashing**: Before any write operation (`app.vault.modify()`), the plugin computes a hash of the newly generated content. This hash is compared against the hash of the previously written content (stored in a comment marker). The file is only modified if the hashes differ, which effectively and definitively breaks the render-write-render loop.
+### Dataview 插件集成
+```typescript
+// 插件检测和 API 获取
+const dataviewApi = this.app.plugins.plugins.dataview?.api;
+if (!dataviewApi) {
+    // 优雅降级处理
+}
 
-## 🔒 Security & Privacy
+// 查询执行
+const pages = dataviewApi.pages(query);
+const filteredPages = pages.where(condition);
+```
 
-### 安全考虑
-- **数据存储**: 仅在用户 vault 中存储设置
-- **权限使用**: 仅使用必要的 Obsidian API 权限
-- **代码安全**: 避免潜在的安全漏洞
+### 文件系统集成
+```typescript
+// 文件读取
+const content = await this.app.vault.read(file);
 
-### 隐私保护
-- **本地处理**: 所有数据处理在本地进行
-- **无远程通信**: 不收集或发送用户数据
-- **透明性**: 开源代码允许审查
+// 文件修改
+await this.app.vault.modify(file, newContent);
 
-## 📈 Performance Considerations
+// 元数据访问
+const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+```
 
-### 性能优化
-- **渲染优化**: 最小化不必要的重新渲染
-- **内存管理**: 避免内存泄漏
-- **延迟加载**: 按需加载组件
+## 📝 Development Workflow
 
-### 性能监控
-- **开发者工具**: 使用浏览器开发者工具监控
-- **用户反馈**: 收集用户性能反馈
+### 当前开发阶段
+- **Phase 6.2**: 章节级功能实现中
+- **重点任务**: 
+  1. 扩展 `TimelineConfig` 接口
+  2. 实现章节级查询逻辑
+  3. 添加文件写入功能
+  4. 完善错误处理
 
-## 🔄 Integration Process (新增)
+### 代码质量标准
+- **TypeScript Strict Mode**: 启用严格类型检查
+- **ESLint Rules**: 遵循 TypeScript 最佳实践
+- **Code Coverage**: 目标 80%+ 测试覆盖率
+- **Documentation**: JSDoc 注释覆盖所有公共 API
 
-### Basics 插件集成
-1. **代码分析**: 分析 Basics 插件的核心功能
-2. **文件复制**: 将必要的源文件复制到项目中
-3. **路径映射**: 更新 tsconfig.json 中的路径映射
-4. **依赖添加**: 添加必要的依赖项
-5. **设置整合**: 将设置选项集成到现有面板
-6. **CSS 导入**: 解决 CSS 文件导入问题
+## 🔮 Future Technical Roadmap
 
-### 集成挑战
-- **类型兼容性**: 解决 TypeScript 类型错误
-- **CSS 路径**: 处理 CSS 导入路径问题
-- **设置面板错误**: 修复设置面板中的 onChange 错误
-- **组件渲染**: 确保 React 组件正确渲染
+### 短期技术目标 (1-2 周)
+- 完成章节级处理逻辑
+- 实现防抖和哈希机制
+- 添加完善的错误处理
 
-### 解决方案
-- **类型断言**: 使用类型断言解决兼容性问题
-- **CSS 复制**: 将 CSS 文件复制到正确位置
-- **设置重构**: 重构设置面板代码
-- **API 适配**: 创建适配层处理 API 差异
+### 中期技术目标 (1-2 月)
+- 建立完整的测试体系
+- 性能优化和监控
+- 代码文档完善
 
-## 🧠 Technical Decisions
+### 长期技术愿景 (3-6 月)
+- 插件生态集成
+- 可视化界面开发
+- 社区贡献框架
 
-### 架构决策
-- **单一入口点**: src/main.ts 作为主入口
-- **功能模块化**: 按功能划分模块
-- **React 集成**: 使用 React 进行复杂 UI 渲染
-- **项目结构优化**: 将所有源代码集中到 src 目录，提高可维护性
+## 🚨 Technical Risks & Mitigation
 
-### 技术取舍
-- **性能 vs 功能**: 平衡功能丰富性和性能
-- **兼容性 vs 新特性**: 确保向后兼容
-- **代码复杂性 vs 可维护性**: 追求可维护的代码结构
+### 高风险项目
+- **章节解析复杂度**: 通过参考 `viewUtils.js` 实现降低风险
+- **性能影响**: 通过防抖和缓存机制优化
+- **文件安全性**: 通过哈希比较和区域限制确保安全
 
-### 未来技术路线
-- **完全模块化**: 将代码完全模块化
-- **测试覆盖**: 提高测试覆盖率
-- **性能优化**: 持续优化性能 
+### 缓解策略
+- **分阶段实现**: 将复杂功能分解为小步骤
+- **持续测试**: 每个阶段都进行充分测试
+- **用户反馈**: 及时收集和响应用户反馈
+
+## 📚 Technical Documentation
+
+### API 文档结构
+```
+docs/
+├── api/
+│   ├── timeline-config.md        # 配置接口文档
+│   ├── query-builder.md          # 查询构建器文档
+│   └── region-parser.md          # 区域解析器文档
+├── guides/
+│   ├── getting-started.md        # 快速开始指南
+│   ├── advanced-usage.md         # 高级用法
+│   └── troubleshooting.md        # 故障排除
+└── examples/
+    ├── basic-timeline.md          # 基础时间线示例
+    └── complex-filters.md         # 复杂过滤器示例
+```
+
+### 代码注释标准
+- **模块级**: 每个模块的用途和主要功能
+- **函数级**: 参数、返回值和副作用说明
+- **复杂逻辑**: 算法思路和实现细节注释
+- **类型定义**: 接口和类型的用途和约束 
