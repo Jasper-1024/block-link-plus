@@ -87,14 +87,16 @@ A new system pattern is introduced to support dynamic, in-note content generatio
 - **Dynamic Region**: A region in the note bounded by HTML comments (`<!-- OBP-TIMELINE-START -->` and `<!-- OBP-TIMELINE-END -->`).
 - **Trigger**: The update process is triggered when the note is rendered (e.g., switching from source mode to reading mode).
 - **Engine**: The feature relies on the Dataview plugin's API for all indexing, caching, and querying operations.
+- **Safety**: A two-layer defense mechanism prevents infinite loops: **Debouncing** manages event frequency, and **Content Hashing** ensures idempotent writes.
 
 ### 工作流程
-1. **渲染触发 (Render Trigger)**: The `MarkdownPostProcessor` detects a `blp-timeline` code block during rendering.
-2. **解析配置 (Parse Config)**: The plugin parses the YAML configuration within the block.
-3. **查询执行 (Execute Query)**: It uses the Dataview API to build and execute a query based on the parsed configuration.
-4. **结果生成 (Generate Results)**: The query results (blocks or list items) are formatted into a list of `!![[...]]` links.
-5. **内容比对 (Content Diffing)**: The newly generated list is compared against the existing content within the dynamic region markers.
-6. **条件写入 (Conditional Write)**: If the content has changed, the plugin uses `app.vault.modify()` to update the content within the markers in the source file, preventing render loops.
+1. **渲染触发 (Render Trigger)**: The `MarkdownPostProcessor` detects a `blp-timeline` code block.
+2. **防抖处理 (Debounce)**: The call to the update logic is wrapped in a "debouncer" function. This ensures that even if multiple render events fire rapidly, the core logic only executes once after a short period of stability (e.g., 300ms).
+3. **解析配置 (Parse Config)**: The plugin parses the YAML configuration within the block.
+4. **查询执行 (Execute Query)**: It uses the Dataview API to build and execute a query based on the parsed configuration.
+5. **结果生成与哈希 (Generate & Hash Results)**: The query results are formatted into a list of `!![[...]]` links. A hash of this new content is computed.
+6. **内容哈希比对 (Content Hash Diffing)**: The new content's hash is compared against the hash stored in the region's end marker (`<!-- OBP-TIMELINE-END hash:a1b2c3... -->`). This is the primary loop prevention mechanism.
+7. **条件写入 (Conditional Write)**: **Only if the hashes do not match**, the plugin uses `app.vault.modify()` to update the content and the new hash value in the end marker. If the hashes match, no write operation occurs, and the process terminates safely.
 
 ### 控制块设计
 ````yaml

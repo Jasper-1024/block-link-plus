@@ -139,6 +139,14 @@ The plugin uses a modular architecture centered on a lightweight **Orchestrator 
 - **插件兼容性**: 确保与其他插件的兼容性
 - **API 变更适应**: 适应 Obsidian API 的变更
 
+## 🛡️ Safety & Stability Patterns (New)
+To ensure stability in features that perform background processing and file modifications, specific safety patterns are employed.
+
+### `blp-timeline` Loop Prevention
+The `blp-timeline` feature uses a two-layer defense mechanism to prevent infinite rendering loops when its content is updated via a `MarkdownPostProcessor`.
+1.  **Debouncing**: The core update logic is wrapped in a "debouncer" function. This ensures that rapid-fire render events result in only a single, well-timed execution after the events have ceased, saving performance and preventing race conditions.
+2.  **Idempotent Writes via Content Hashing**: Before any write operation (`app.vault.modify()`), the plugin computes a hash of the newly generated content. This hash is compared against the hash of the previously written content (stored in a comment marker). The file is only modified if the hashes differ, which effectively and definitively breaks the render-write-render loop.
+
 ## 🔒 Security & Privacy
 
 ### 安全考虑

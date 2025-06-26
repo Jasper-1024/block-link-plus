@@ -33,6 +33,7 @@
 ### 📏 Active Rules
 - **核心依赖**: `blp-timeline` 功能必须依赖 `Dataview` 插件。
 - **设计模式**: 新功能需遵循 `systemPatterns.md` 中定义的"动态区域"控制块模式。
+- **安全机制**: `blp-timeline` 的实现必须采用"防抖"和"内容哈希"作为防无限循环的安全机制。
 
 ## 📡 Context Status
 
@@ -40,6 +41,7 @@
 - **技术选型**: 确定使用 Dataview API 作为后端查询引擎。
 - **功能设计**: 完成了 `blp-timeline` 的核心功能设计和 YAML 配置结构。
 - **可行性验证**: 确认了在渲染时安全地修改文件内容的技术方案是可行的。
+- **安全机制设计**: 最终确定了采用"防抖"和"内容哈希"作为防止无限循环的方案。
 
 ### 🟡 Partially Relevant (Medium Priority)  
 - **竞品分析**: 分析了 `obsidian-run` 和 `obsidian-dataview-serializer` 的实现，明确了我们方案的差异化优势（渲染时触发）。
