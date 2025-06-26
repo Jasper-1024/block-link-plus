@@ -18,7 +18,7 @@ const getCMFromElement = (
   if (!dom.hasClass("cm-editor")) {
     return;
   }
-  let rcm: EditorView;
+  let rcm: EditorView | undefined;
   app.workspace.iterateLeaves((leaf) => {
     //@ts-ignore
     const cm = leaf.view.editor?.cm as EditorView;
@@ -36,6 +36,7 @@ export const replaceAllTables = (
   ctx: MarkdownPostProcessorContext
 ) => {
   el.querySelectorAll("p").forEach((element) => {
+    if (!element.textContent || !element.parentElement) return;
     for (const match of element.textContent.matchAll(
       /(?:!\[!\[|!!\[\[)([^\]]+)\]\]/g
     )) {
@@ -109,29 +110,31 @@ export const replaceAllEmbed = (
         toolbar.prepend(nodes[i]);
         const div = toolbar.createDiv("mk-floweditor-selector");
         const reactEl = createRoot(div);
-        const cm: EditorView = getCMFromElement(el, app);
-        const pos = cm?.posAtDOM(dom);
-        const index = [
-          ...Array.from(dom.parentElement?.childNodes ?? []),
-        ].indexOf(dom);
-        if (index == -1) return;
-        const nextDom = dom.parentElement.childNodes[index];
-        const endPos = cm?.posAtDOM(nextDom);
+        const cm: EditorView | undefined = getCMFromElement(el, app);
+        if (cm) {
+          if (!dom.parentElement) return;
+          const pos = cm.posAtDOM(dom);
+          const index = [
+            ...Array.from(dom.parentElement.childNodes),
+          ].indexOf(dom);
+          if (index == -1) return;
+          const nextDom = dom.parentElement.childNodes[index];
+          const endPos = cm.posAtDOM(nextDom as HTMLElement);
 
-        //   const flowType = cm.state.field(flowTypeStateField, false);
-        if (ctx.sourcePath)
-          reactEl.render(
-            <FlowEditorHover
-              app={app}
-              toggle={true}
-              path={ctx.sourcePath}
-              toggleState={false}
-              view={cm}
-              pos={{ from: pos + 3, to: endPos - 3 }}
-              plugin={plugin}
-              dom={dom}
-            ></FlowEditorHover>
-          );
+          if (ctx.sourcePath && pos !== null && endPos !== null)
+            reactEl.render(
+              <FlowEditorHover
+                app={app}
+                toggle={true}
+                path={ctx.sourcePath}
+                toggleState={false}
+                view={cm}
+                pos={{ from: pos + 3, to: endPos - 3 }}
+                plugin={plugin}
+                dom={dom}
+              ></FlowEditorHover>
+            );
+        }
       }
     }
   });

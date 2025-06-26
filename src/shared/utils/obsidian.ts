@@ -24,18 +24,20 @@ export const getLineRangeFromRef = (
   }
   const heading = headings?.find((f) => f.heading.replace("#", " ") == ref);
 
-  if (heading) {
+  if (headings && heading) {
     const index = headings.findIndex((f) => f.heading == heading.heading);
     const level = headings[index]?.level;
     const nextIndex = headings.findIndex(
       (f, i) => i > index && f.level <= level
     );
 
-    const start = heading.position.start.line + 2;
+    const start = heading.position.start.line + 1;
     if (index < headings.length - 1 && nextIndex != -1) {
       return [start, headings[nextIndex].position.end.line];
     }
-    return [start, sections[sections.length - 1].position.end.line + 1];
+    if (sections) {
+      return [start, sections[sections.length - 1].position.end.line + 1];
+    }
   }
   return [undefined, undefined];
 };
