@@ -29,6 +29,7 @@ import { markdownPostProcessor } from './ui/MarkdownPost';
 import * as TimeSection from './features/time-section';
 import * as CommandHandler from './features/command-handler';
 import * as EditorMenu from './ui/EditorMenu';
+import { handleTimeline } from './features/dataview-timeline';
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -81,6 +82,11 @@ export default class BlockLinkPlus extends Plugin {
 				"editor-menu",
 				(menu, editor, view) => EditorMenu.handleEditorMenu(this, menu, editor, view)
 			)
+		);
+
+		// Register post-processor for blp-timeline blocks
+		this.registerMarkdownCodeBlockProcessor('blp-timeline', (source, el, ctx) =>
+			handleTimeline(this, source, el, ctx)
 		);
 
 		this.addCommand({
