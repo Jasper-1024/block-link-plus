@@ -105,8 +105,9 @@ export const replaceAllEmbed = (
 
     for (let i = 0; i < nodes.length; i++) {
       if (nodes[i].parentNode === dom) {
-        dom.removeChild(nodes[i]);
-        const div = dom.createDiv("mk-floweditor-selector");
+        const toolbar = dom.createDiv("blp-embed-toolbar");
+        toolbar.prepend(nodes[i]);
+        const div = toolbar.createDiv("mk-floweditor-selector");
         const reactEl = createRoot(div);
         const cm: EditorView = getCMFromElement(el, app);
         const pos = cm?.posAtDOM(dom);
