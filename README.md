@@ -110,22 +110,60 @@ The `blp-timeline` is a powerful query and aggregation tool. It can automaticall
 2.  **Aggregate (Consume):** In any note, create a `blp-timeline` code block and write a YAML configuration to define the aggregation rules. This will generate a dynamic, auto-updating timeline.
 
 **Configuration:**
-Here is an advanced example of the YAML configuration:
+Here is an advanced example of the YAML configuration that showcases all available options:
 ```yaml
 ---
+# === Basic Configuration ===
+# Folders to search for notes.
 source_folders:
   - "journal/daily"
-within_days: 7
+  - "meeting_notes/"
+
+# Only include notes from the last 30 days.
+within_days: 30
+
+# Sort order for notes: 'asc' for oldest first, 'desc' for newest first.
 sort_order: desc
-heading_level: 4
-embed_format: '!![[]]'
+
+# === Section Matching ===
+# The heading level to look for (1-6).
+heading_level: 4 
+
+# (Optional) A regex to extract a time from the heading for sorting within a day.
+# This example matches "14:30" in "#### 14:30 Project Update".
 time_pattern: '(\\d{2}:\\d{2})'
+
+# === Output Formatting ===
+# '!![[]]' for embedded content, '![[]]' for a simple link reference.
+embed_format: '!![[]]'
+
+# === Advanced Filtering ===
+# How to combine the 'links' and 'tags' filter blocks. Can be 'AND' or 'OR'.
 filters:
   relation: AND
-  tags:
+
+  # Filter by links. 'relation' can be 'AND' or 'OR'.
+  links:
+    relation: OR
     items:
-      - '#meeting'
-      - '#project-A'
+      - "[[Project A]]"
+      - "[[Internal Meeting]]"
+    # If true, automatically includes sections that link to the current note.
+    link_to_current_file: true
+  
+  # Filter by tags. 'relation' can be 'AND' or 'OR'.
+  tags:
+    relation: AND
+    items:
+      - '#status/review'
+      - '#important'
+    
+    # (Optional) Also pull tags from a frontmatter key.
+    from_frontmatter:
+      key: "project_tags"
+      # (Optional) You can exclude certain tags from the frontmatter source.
+      exclude:
+        - "archive"
 ---
 ```
 **YAML Options:**
@@ -135,7 +173,10 @@ filters:
 - `embed_format`: (Optional, default: `!![[]]`) Defines if the generated link is an embed (`!![[]]`) or a regular link (`![[]]`).
 - `sort_order`: (Optional, default: `desc`) Sort order by date: `asc` (ascending) or `desc` (descending).
 - `within_days`: (Optional) Only include notes from the last N days.
-- `filters`: (Optional) Advanced filters to select sections by `tags` or `links`, with `AND`/`OR` relations.
+- `filters`: (Optional) A container for advanced filters.
+  - `relation`: Defines how `links` and `tags` blocks are combined (`AND` or `OR`).
+  - `links`: Filter sections based on links. Contains `relation`, `items`, and `link_to_current_file`.
+  - `tags`: Filter sections based on tags. Contains `relation`, `items`, and an optional `from_frontmatter` object to pull tags from YAML frontmatter.
 
 ## Changelog
 

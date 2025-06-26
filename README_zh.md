@@ -106,22 +106,60 @@ Block ID = 前缀-随机字符
 2.  **聚合 (消费):** 在任何笔记页面，创建一个 `blp-timeline` 代码块，通过书写 `YAML` 配置来定义聚合规则。这将生成一个动态、自动更新的时间线。
 
 **配置:**
-以下是一个高级 `YAML` 配置示例:
+以下是一个展示所有可用选项的高级 `YAML` 配置示例:
 ```yaml
 ---
+# === 基础配置 ===
+# 要搜索笔记的文件夹
 source_folders:
   - "journal/daily"
-within_days: 7
+  - "meeting_notes/"
+
+# 只包含最近 30 天内的笔记
+within_days: 30
+
+# 笔记的排序顺序: 'asc' (旧的在前), 'desc' (新的在前)
 sort_order: desc
-heading_level: 4
-embed_format: '!![[]]'
+
+# === 章节匹配 ===
+# 要查找的标题级别 (1-6)
+heading_level: 4 
+
+# (可选) 用于从标题中提取时间以在一天内排序的正则表达式
+# 此示例匹配 "#### 14:30 项目更新" 中的 "14:30"
 time_pattern: '(\\d{2}:\\d{2})'
+
+# === 输出格式 ===
+# '!![[]]' 表示嵌入内容, '![[]]' 表示简单的链接引用
+embed_format: '!![[]]'
+
+# === 高级过滤 ===
+# 如何组合 'links' 和 'tags' 过滤块，可以是 'AND' 或 'OR'
 filters:
   relation: AND
-  tags:
+
+  # 按链接过滤。'relation' 可以是 'AND' 或 'OR'
+  links:
+    relation: OR
     items:
-      - '#meeting'
-      - '#project-A'
+      - "[[项目A]]"
+      - "[[内部会议]]"
+    # 如果为 true, 自动包含链接到当前笔记的章节
+    link_to_current_file: true
+  
+  # 按标签过滤。'relation' 可以是 'AND' 或 'OR'
+  tags:
+    relation: AND
+    items:
+      - '#status/review'
+      - '#important'
+    
+    # (可选) 同时从 frontmatter 的键中提取标签
+    from_frontmatter:
+      key: "project_tags"
+      # (可选) 您可以从 frontmatter 源中排除某些标签
+      exclude:
+        - "archive"
 ---
 ```
 **YAML 选项:**
@@ -131,7 +169,10 @@ filters:
 - `embed_format`: (可选, 默认: `!![[]]`) 定义最终生成的链接是嵌入形式 (`!![[]]`) 还是普通链接 (`![[]]`)。
 - `sort_order`: (可选, 默认: `desc`) 按日期先后顺序 (`asc`) 或倒序 (`desc`) 排列。
 - `within_days`: (可选) 只包含最近N天内的笔记。
-- `filters`: (可选) 高级过滤器，可以根据 `tags` (标签) 或 `links` (链接) 来筛选章节，并可以设置 `AND` / `OR` 关系。
+- `filters`: (可选) 用于高级过滤的容器。
+  - `relation`: 定义 `links` 和 `tags` 块如何组合 (`AND` 或 `OR`)。
+  - `links`: 根据链接过滤章节。包含 `relation`, `items`, 和 `link_to_current_file`。
+  - `tags`: 根据标签过滤章节。包含 `relation`, `items`, 和一个可选的 `from_frontmatter` 对象，用于从 YAML frontmatter 中提取标签。
 
 ## 更新日志
 
