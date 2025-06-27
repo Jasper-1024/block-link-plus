@@ -24,19 +24,19 @@ export const parseURI = (uri: string): URI => {
           if (refTypeChar === '^') return 'context';
           if (refTypeChar === '*') return 'frame';
           if (refTypeChar === ';') return 'action';
-          return null
+          return undefined
         }
         if (refTypeChar === '^') return 'block';
         return 'heading';
       };
     
-      let space: string | null = null;
-      let path: string | null = null;
-      let alias: string | null = null;
-      let reference: string | null = null;
-      let refType: PathRefTypes= null;
-      let query: { [key: string]: string } | null = null;
-      let scheme: string | null = 'vault';
+      let space: string | undefined = undefined;
+      let path: string | undefined = undefined;
+      let alias: string | undefined = undefined;
+      let reference: string | undefined = undefined;
+      let refType: PathRefTypes | undefined = undefined;
+      let query: { [key: string]: string } | undefined = undefined;
+      let scheme = 'vault';
     
       if (fullPath.indexOf('://') != -1) {
       scheme = uri.slice(0, uri.indexOf('://'))
@@ -76,6 +76,11 @@ export const parseURI = (uri: string): URI => {
         uri = uri.slice(0, queryIndex);
       }
     
+      if (lastPipeIndex !== -1 && lastPipeIndex > lastSlashIndex) {
+        alias = uri.slice(lastPipeIndex + 1);
+        uri = uri.slice(0, lastPipeIndex);
+      }
+      
       if (lastHashIndex !== -1 && lastHashIndex > lastSlashIndex) {
         if (lastHashIndex == lastSlashIndex+1) {
           trailSlash = true
@@ -89,10 +94,6 @@ export const parseURI = (uri: string): URI => {
         }
       }
     
-      if (lastPipeIndex !== -1 && lastPipeIndex > lastSlashIndex) {
-        alias = uri.slice(lastPipeIndex + 1);
-        uri = uri.slice(0, lastPipeIndex);
-      }
       if (uri.charAt(uri.length - 1) == '/') {
         trailSlash = true
       }
@@ -100,14 +101,14 @@ export const parseURI = (uri: string): URI => {
       return {
     basePath: removeTrailingSlashFromFolder(`${space ? `${scheme}://${space}/${path != '/' ? path : ''}` : path}`),
 
-        authority: space,
+        authority: space ?? '',
         fullPath,
         scheme,
         path: removeTrailingSlashFromFolder(uri),
         alias: alias,
         ref: reference,
         refType: refType,
-        refStr: refType ? refTypeChar+reference : reference,
+        refStr: refType && reference ? refTypeChar+reference : reference,
         query: query,
         trailSlash 
       };
@@ -135,14 +136,14 @@ export const uriForFolder = (path: string) : URI => {
   return {
     basePath: path,
     fullPath: path,
-    authority: null,
+    authority: '',
     path,
     scheme: 'vault',
-    alias: null,
-    ref: null,
-    refStr: null,
-    refType: null,
-    query: null,
+    alias: undefined,
+    ref: undefined,
+    refStr: undefined,
+    refType: undefined,
+    query: undefined,
     trailSlash: true
   };
 }
