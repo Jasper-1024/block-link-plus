@@ -1,16 +1,23 @@
 # σ₅: Progress Tracker
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-21*
-*Π: DEVELOPMENT | Ω: INNOVATE*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 📈 Project Status
 
-**Overall Completion**: 95% (核心功能已实现，但发现多个严重bug需要修复)
+**Overall Completion**: 98% (Flow Editor 的 3/4 关键 bug 已修复)
 
-**Current Version**: 1.3.2+ (timeline-implemented)
-**Project Phase**: DEVELOPMENT (Π₃) - **暂停 `blp-timeline` 的收尾工作，转向关键 Bug 修复**
-**Active Mode**: INNOVATE (Ω₂) - 构思 Flow Editor Bug 的解决方案
+**Current Version**: 1.3.2+ (bugfix-sprint)
+**Project Phase**: DEVELOPMENT (Π₃) - **Flow Editor Bug 修复中**
+**Active Mode**: EXECUTE (Ω₄) - 更新文档，准备解决最后一个 bug
 
-### �� Major Milestones
+###  Major Milestones
+
+#### 🔄 In Progress (New Sprint: Flow Editor Bug 修复)
+- ✅ **问题 3 已解决**: 原生跳转图标丢失问题。
+- ✅ **问题 2 已解决 (本轮修复)**: 阅读模式下点击编辑图标导致崩溃。
+- ✅ **问题 4 已解决**: 可编辑时嵌入块的标题不显示。
+- ✅ **新增 Bug 已解决 (本轮修复)**: 带别名的块链接 (`...|alias]]`) 解析错误。
+- ⏳ **问题 1 待解决**: `!![[...]]` 在源码模式下被错误渲染。
 
 #### ✅ Completed (Phase 6.2)
 - **`blp-timeline` 章节级功能实现**
@@ -77,7 +84,7 @@
 ### New Features (In Development)
 | Feature | Status | Priority | Progress | Notes |
 |---------|--------|----------|----------|-------|
-| `blp-timeline` | 🔄 On Hold | High | 95% | 核心功能已完成，但存在一个已知 bug。已暂停。|
+| `blp-timeline` | 🔄 On Hold | High | 95% | 核心功能已完成。已暂停，待 Flow Editor bug 修复完毕。|
 
 ### Quality & Architecture (In Progress)
 | Aspect | Status | Priority | Progress |
@@ -158,15 +165,13 @@
 #### ⚠️ 已知问题 (Known Issues)
 - **`blp-timeline` Bug**: 用户报告存在一个尚未定位的 bug，功能可以工作但存在异常。
 
-- **`Flow Editor` 严重 Bugs (New)**:
-  - **1. 源码模式渲染问题**: `!![[...]]` 在源码模式下被错误地渲染为 Widget，而非纯文本。
+- **`Flow Editor` 严重 Bugs (1 Remaining)**:
+  - **1. 源码模式渲染问题 (待解决)**: `!![[...]]` 在源码模式下被错误地渲染为 Widget，而非纯文本。
     - **根源**: `flowEditorRangeset` 未区分编辑器模式。
-  - **2. 阅读模式崩溃**: 在阅读模式下点击嵌入块的编辑图标，导致 `posAtDOM` 错误。
-    - **根源**: `replaceAllEmbed` 试图在无编辑器的视图中获取 CodeMirror 实例。
-  - **3. 原生图标丢失**: `![[...]]` 的原生跳转图标被插件的UI替换掉。
-    - **根源**: `replaceAllEmbed` 直接删除了原生图标的 DOM 元素。
-  - **4. 嵌入标题丢失**: `![[笔记A#标题B]]` 形式的嵌入块在可编辑状态下不显示"标题B"。
-    - **根源**: 渲染组件未解析和展示链接中的标题部分。
+  - **2. 阅读模式崩溃 (已解决)**
+  - **3. 原生图标丢失 (已解决)**
+  - **4. 嵌入标题丢失 (已解决)**
+  - **5. 别名链接解析 (已解决)**: 带别名的块链接解析错误。
 
 ### Sprint: 项目结构优化 (已完成)
 **Duration**: Previous session
@@ -254,13 +259,14 @@
 - **参考实现分析的重要性**
 - **哈希在防止渲染循环中的关键作用**
 
-## 🔄 最近更新
+## 最近更新
 
 ### 2024-12-22 (Current Session)
-- 🔎 **完成 Flow Editor Bug 研究**: 切换到 RESEARCH 模式，对用户报告的3个内联编辑问题和1个新发现问题进行了深入的代码分析。
-- 🎯 **定位根本原因**: 成功将每个问题的根源定位到 `replaceAllEmbed` 和 `flowEditorRangeset` 等具体函数，并确认核心设计缺陷在于未能区分 Obsidian 的不同视图模式。
-- 📝 **更新 Memory Bank**: 在 EXECUTE 模式下，将研究发现和新的修复任务更新到 `activeContext.md` 和 `progress.md`。
-- 💡 **切换至 INNOVATE 模式**: 准备开始设计针对问题3（图标丢失）的解决方案。
+- 📝 **创建修复日志**: 新建 `flow_editor_fixes_log.md` 详细记录 bug 修复过程。
+- ✅ **解决问题 4**: 遵从用户思路，通过修改 `getLineRangeFromRef` 让标题引用包含其标题行。
+- ✅ **解决问题 2 & 3**: 通过修改 DOM 操作和添加模式检查，修复了图标丢失和阅读模式崩溃的问题。
+- ✅ **修复所有相关 Linter 错误**，增强了代码的健壮性。
+- 🎯 **明确下一目标**: 准备开始解决最后一个 bug：问题1。
 
 ### 2024-12-21 (Previous Session)
 - ✅ **完成 `blp-timeline` 核心功能**: 实现了完整的章节级时间线渲染和带有哈希检查的文件写入逻辑。
