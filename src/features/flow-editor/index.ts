@@ -4,7 +4,7 @@
 import BlockLinkPlus from "main";
 import { Enactor } from "basics/enactor/enactor";
 import { ObsidianEnactor } from "basics/enactor/obsidian";
-import { MarkdownView } from "obsidian";
+import { MarkdownView, editorLivePreviewField } from "obsidian";
 import {
 	patchWorkspaceForFlow,
 	patchWorkspaceLeafForFlow,
@@ -44,10 +44,20 @@ export class FlowEditorManager {
 		// Register markdown post processor for embedded blocks
 		this.plugin.registerMarkdownPostProcessor((element, context) => {
 			const view = this.plugin.app.workspace.activeLeaf?.view;
-			if (view instanceof MarkdownView) {
-				if (view.getMode() === "preview") {
-					return;
-				}
+
+			if (!(view instanceof MarkdownView && view.editor)) {
+				return;
+			}
+
+			// First defense: exit early for reading mode.
+			if (view.getMode() === 'preview') {
+				return;
+			}
+
+			// Second, more precise defense: exit if not in live preview.
+			const isLivePreview = view.editor.cm.state.field(editorLivePreviewField, false);
+			if (!isLivePreview) {
+				return;
 			}
 
 			this.processEmbeddedBlocks(element);
