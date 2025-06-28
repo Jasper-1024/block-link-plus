@@ -7,6 +7,59 @@
 
 ---
 
+## 问题 6: 嵌入块标题引用解析失败 (已解决)
+
+- **Bug 描述**: 对于 `!![[block#17 21]]` 这样的标题引用，插件无法正确解析，会渲染整个文件而不是指定的标题内容范围。而 `!![[block#b1|x]]` 这样的块引用则工作正常。
+- **根本原因分析**:
+  - **核心问题**: Obsidian 在生成标题链接时会自动将特殊字符进行转换，如 `:` 替换为空格 ` `
+  - **具体表现**: 标题 `17:21` 在链接中变成 `!![[file#17 21]]`
+  - **失败环节**: 插件使用的自定义标题匹配逻辑无法处理这种字符转换
+  - **代码位置**: `src/shared/utils/obsidian.ts` 中的 `getLineRangeFromRef` 函数
+  - **旧逻辑问题**: 
+    ```typescript
+    const heading = headings?.find((f) => f.heading.replace("#", " ") == ref);
+    ```
+    这种简单的字符串匹配无法处理 Obsidian 的复杂字符转换规则
+- **解决方案**:
+  - **采用官方API**: 使用 Obsidian 官方的 `resolveSubpath(cache, ref)` API
+  - **API优势**:
+    - 官方维护，自动处理所有字符转换规则
+    - 支持块引用和标题引用的统一处理
+    - 返回标准化的 `HeadingSubpathResult` 或 `BlockSubpathResult` 对象
+    - 自动处理各种边界情况和特殊字符
+  - **新实现**:
+    ```typescript
+    const resolved = resolveSubpath(cache, ref) as HeadingSubpathResult | BlockSubpathResult | null;
+    if (!resolved) return [undefined, undefined];
+
+    if (resolved.type === "block") {
+      const { position } = resolved.block as BlockCache;
+      return [position.start.line + 1, position.end.line + 1];
+    }
+
+    if (resolved.type === "heading") {
+      const { current: heading, next } = resolved as HeadingSubpathResult;
+      const start = heading.position.start.line + 1;
+      const end = next
+        ? next.position.start.line
+        : getLastContentLineFromCache(cache) + 1;
+      return [start, end];
+    }
+    ```
+- **修改的文件**:
+  - `src/shared/utils/obsidian.ts` (完全重写 `getLineRangeFromRef` 函数)
+- **技术收获**:
+  - 深入理解了 Obsidian 的链接生成机制和字符转换规则
+  - 学会了优先使用官方API而非自定义解析的最佳实践
+  - 了解了 `resolveSubpath` 作为处理引用的标准方法
+- **测试验证**:
+  - ✅ `!![[block#b1|x]]` - 块引用继续正常工作
+  - ✅ `!![[block#17 21]]` - 标题引用现在正确解析
+  - ✅ `!![[block#^blockid]]` - 块ID引用正常工作
+  - ✅ 各种特殊字符的标题引用都能正确处理
+
+---
+
 ## 问题 3: 原生跳转图标丢失 (已解决)
 
 - **Bug 描述**: `![[...]]` 嵌入块右上角原生的"跳转到笔记"图标被插件的"编辑"图标替换，导致用户无法快速跳转。
@@ -111,8 +164,9 @@
 
 ---
 
-## 全部问题解决状态总结 (2024-12-23)
+## 全部问题解决状态总结 (2024-12-26)
 
+✅ **问题 6**: 嵌入块标题引用解析失败 - 已解决  
 ✅ **问题 2**: 阅读模式下点击编辑图标导致崩溃 - 已解决  
 ✅ **问题 3**: 原生跳转图标丢失 - 已解决  
 ✅ **问题 4**: 可编辑时嵌入块的标题不显示 - 已解决  

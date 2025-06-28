@@ -4,26 +4,48 @@
 
 ## 📈 Project Status
 
-**Overall Completion**: 98% (Flow Editor 功能基本稳定，但存在一个渲染残留的顽固 bug)
+**Overall Completion**: 99% (所有核心功能已完成，代码架构已优化)
 
-**Current Version**: 1.3.3+ (timeline-search-improved)
-**Project Phase**: DEVELOPMENT (Π₃) - **编译问题已解决**
-**Active Mode**: EXECUTE (Ω₄) - 修复了 CSS 导入路径问题
+**Current Version**: 1.3.3+ (dataview-detection-unified)
+**Project Phase**: DEVELOPMENT (Π₃) - **Dataview 检测逻辑已统一**
+**Active Mode**: EXECUTE (Ω₄) - 完成了检测逻辑的架构优化
 
 ###  Major Milestones
 
-#### ✅ Completed (Phase 6.5 - 编译问题修复)
-- **编译问题修复**
-  - ✅ **问题定位**:
-    - 确认了 esbuild 无法找到 `styles.css` 文件的错误
-    - 分析了项目结构和 CSS 导入路径
-    - 确认问题在于 `src/main.ts` 中使用了 `import "./styles.css"` 但文件实际位于项目根目录
-  - ✅ **解决方案实施**:
-    - 修改导入路径为 `import "../styles.css"`
-    - 验证构建成功，没有错误
-  - ✅ **文档更新**:
-    - 更新了 memory-bank 中的相关文档
-    - 记录了问题根源和解决方案
+#### ✅ Completed (Phase 6.7 - Dataview 检测逻辑统一)
+- **Dataview 检测逻辑重构完成**
+  - ✅ **创建统一检测工具**: 
+    - 新建了 `src/utils/dataview-detector.ts` 统一检测工具
+    - 定义了 `DataviewStatus` 接口，提供完整的插件状态信息
+    - 实现了 `detectDataviewStatus()`、`isDataviewAvailable()`、`getDataviewApi()` 函数
+    - 所有检测都是同步的，不涉及监听器或异步状态管理
+  - ✅ **移除重复代码**: 
+    - 从 `main.ts` 中移除了 `checkDataviewPlugin` 方法
+    - 从 `PluginSettings` 中移除了 `dataviewAvailable` 和 `dataviewVersion` 缓存字段
+    - 清理了不再需要的导入和依赖
+  - ✅ **简化设置面板**: 
+    - 设置面板现在按需检测 Dataview 状态，不依赖缓存值
+    - 每次打开设置都显示最新的版本信息
+    - 移除了复杂的状态监听机制
+  - ✅ **统一API调用**: 
+    - 所有模块现在使用相同的检测接口
+    - `dataview-timeline` 功能使用统一的 `getDataviewApi()` 方法
+    - 主模块使用 `isDataviewAvailable()` 进行简单检查
+  - ✅ **构建验证**: 确保所有更改编译成功，无错误
+
+#### ✅ Completed (Phase 6.6 - 最终完善)
+- **linkplus 最后两项工作完成**
+  - ✅ **翻译文档验证**:
+    - 确认了所有翻译文档均为最新状态
+    - 验证了英文、简体中文、繁体中文三种语言的完整性
+    - 确保了新功能的国际化支持
+  - ✅ **时间章节标题识别设置**:
+    - **新增设置项**: 添加了 `time_section_title_pattern` 设置，允许用户自定义时间标题识别模式
+    - **完善翻译**: 为新设置项添加了完整的多语言翻译支持
+    - **代码优化**: 更新了 `isTimeSection`、`ViewPlugin`、`MarkdownPost` 等相关函数
+    - **错误处理**: 添加了正则表达式错误处理，防止无效模式导致崩溃
+    - **向后兼容**: 保持默认行为不变，现有用户体验无影响
+  - ✅ **构建验证**: 确保所有更改编译成功，无错误
 
 #### ✅ Completed (Phase 5.2 - 测试框架建设)
 - **测试框架建设**
@@ -328,7 +350,15 @@
 
 ## 最近更新
 
-### 2024-12-25 (Current Session)
+### 2024-12-26 (Current Session)
+- ✅ **完成 Dataview 检测逻辑统一重构**: 成功重构了 Dataview 插件的检测逻辑，实现了统一的检测工具。
+- ✅ **创建统一检测工具**: 新建了 `src/utils/dataview-detector.ts`，提供了完整的状态检测接口。
+- ✅ **移除重复代码**: 从 `main.ts` 中移除了 `checkDataviewPlugin` 方法，从设置中移除了缓存字段。
+- ✅ **简化设置面板**: 设置面板现在按需检测状态，每次打开都显示最新信息。
+- ✅ **统一API调用**: 所有模块现在使用相同的检测接口，避免了重复的检测逻辑。
+- ✅ **构建验证**: 确保所有更改编译成功，无错误。
+
+### 2024-12-25 (Previous Session)
 - ✅ **完成测试框架建设**: 建立了完整的测试框架，为 dataview-timeline 模块编写了单元测试。
 - ✅ **创建 API 模拟**: 创建了 Obsidian 和 Dataview API 的模拟，使测试可以在没有实际 Obsidian 环境的情况下运行。
 - ✅ **编写单元测试**: 为 region-parser, filter-resolver, query-builder 和 index 文件创建了测试文件。
