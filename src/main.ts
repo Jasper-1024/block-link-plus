@@ -1,15 +1,17 @@
 import {
 	Plugin,
+	Notice
 } from "obsidian";
 
 import { Extension } from "@codemirror/state";
+
 import {
 	PluginSettings,
 	DEFAULT_SETTINGS,
 	BlockLinkPlusViewPlugin
 } from './types';
 
-// import { RangeSet } from "@codemirror/state";
+import { getAPI } from "obsidian-dataview";
 
 // Inline Edit`
 import { getActiveCM } from "basics/codemirror";
@@ -21,22 +23,22 @@ import "css/DefaultVibe.css";
 import "css/Editor/Flow/FlowEditor.css";
 import "css/Editor/Flow/FlowState.css";
 import "css/Obsidian/Mods.css";
-import "./css/custom-styles.css";
+import "css/custom-styles.css";
 
-import { BlockLinkPlusSettingsTab } from './ui/SettingsTab';
-import { createViewPlugin } from './ui/ViewPlugin';
-import { markdownPostProcessor } from './ui/MarkdownPost';
-import * as TimeSection from './features/time-section';
-import * as CommandHandler from './features/command-handler';
-import * as EditorMenu from './ui/EditorMenu';
-import { handleTimeline } from './features/dataview-timeline';
+import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
+import { createViewPlugin } from 'ui/ViewPlugin';
+import { markdownPostProcessor } from 'ui/MarkdownPost';
+import * as TimeSection from 'features/time-section';
+import * as CommandHandler from 'features/command-handler';
+import * as EditorMenu from 'ui/EditorMenu';
+import { handleTimeline } from 'features/dataview-timeline';
 
 const MAX_ALIAS_LENGTH = 100;
 
 // all plugin need extends Plugin
 export default class BlockLinkPlus extends Plugin {
-	appName = this.manifest.name;
 	settings: PluginSettings;
+	appName = "Block Link Plus";
 	viewPlugin: BlockLinkPlusViewPlugin;
 	editorExtensions: Extension[] = [];
 	flowEditorManager: FlowEditorManager;
@@ -68,6 +70,39 @@ export default class BlockLinkPlus extends Plugin {
 		getEnactor: () => this.flowEditorManager.enactor
 	};
 
+	/**
+	 * check if dataview plugin is available
+	 * @returns true if dataview plugin is available
+	 */
+	checkDataviewPlugin(): boolean {
+		const api = getAPI();
+		this.settings.dataviewAvailable = api !== null;
+		this.settings.dataviewVersion = api?.version?.current || null;
+
+		// 如果 Timeline 功能已启用但 Dataview 不可用，显示通知
+		if (this.settings.enableTimeline && !this.settings.dataviewAvailable) {
+			new Notice("Block Link Plus: Timeline 功能需要 Dataview 插件支持，请安装并启用 Dataview 插件。");
+		}
+
+		return this.settings.dataviewAvailable;
+	}
+
+	/**
+	 * Update the view plugin
+	 */
+	public updateViewPlugin() {
+		// Create regex for both block IDs and time sections if enabled
+		let rule = "(^| )˅[a-zA-Z0-9_]+$";
+
+		if (this.settings.time_section_plain_style) {
+			// Add time section pattern to the regex
+			rule = `(${rule})|(^#{1,6}\\s+\\d{1,2}:\\d{1,2}$)`;
+		}
+
+		this.viewPlugin = createViewPlugin(rule);
+		this.registerEditorExtension([this.viewPlugin]);
+	}
+
 	async onload() {
 		console.log(`loading ${this.appName}`);
 
@@ -75,6 +110,9 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
+
+		// 检查 Dataview 插件
+		this.checkDataviewPlugin();
 
 		// Register right click menu
 		this.registerEvent(
@@ -85,9 +123,15 @@ export default class BlockLinkPlus extends Plugin {
 		);
 
 		// Register post-processor for blp-timeline blocks
-		this.registerMarkdownCodeBlockProcessor('blp-timeline', (source, el, ctx) =>
-			handleTimeline(this, source, el, ctx)
-		);
+		// run when setting enableTimeline is true
+		this.registerMarkdownCodeBlockProcessor('blp-timeline', (source, el, ctx) => {
+			if (this.settings.enableTimeline && this.settings.dataviewAvailable) {
+				handleTimeline(this, source, el, ctx);
+			} else {
+				el.empty();
+				el.createEl("pre", { text: "Timeline feature is disabled or Dataview plugin is not available." });
+			}
+		});
 
 		this.addCommand({
 			id: "copy-link-to-block",
@@ -152,22 +196,5 @@ export default class BlockLinkPlus extends Plugin {
 		// Update view plugin after saving settings
 		// This ensures that the plugin is updated whenever settings are changed
 		this.updateViewPlugin();
-	}
-
-	/**
-	 * Updates the view plugin with the current settings.
-	 * This should be called whenever settings that affect the display are changed.
-	 */
-	public updateViewPlugin() {
-		// Create regex for both block IDs and time sections if enabled
-		let rule = "(^| )˅[a-zA-Z0-9_]+$";
-
-		if (this.settings.time_section_plain_style) {
-			// Add time section pattern to the regex
-			rule = `(${rule})|(^#{1,6}\\s+\\d{1,2}:\\d{1,2}$)`;
-		}
-
-		this.viewPlugin = createViewPlugin(rule);
-		this.registerEditorExtension([this.viewPlugin]);
 	}
 }

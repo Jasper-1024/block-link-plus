@@ -14,6 +14,7 @@ import {
 import { executeTimelineQuery, extractTimeSections } from "./query-builder";
 import { DataviewApi, Link } from "obsidian-dataview";
 import { resolveTags, resolveLinks } from "./filter-resolver";
+import { getAPI } from "obsidian-dataview";
 
 const TIMELINE_START_MARKER = "%% blp-timeline-start %%";
 const TIMELINE_END_MARKER = "%% blp-timeline-end %%";
@@ -274,7 +275,8 @@ export async function handleTimeline(
     el.setText("Timeline content is managed directly in the editor.");
     
     try {
-        const dataviewApi = plugin.app.plugins.plugins.dataview?.api;
+        // 使用 getAPI() 获取 Dataview API
+        const dataviewApi = getAPI();
         if (!dataviewApi) {
             // Still render errors in the preview pane
             el.empty();
@@ -282,14 +284,22 @@ export async function handleTimeline(
             return;
         }
 
-        const config = yaml.load(source) as TimelineConfig;
+        // 解析代码块配置
+        const blockConfig = yaml.load(source) as Partial<TimelineConfig>;
 
-        // --- Set Defaults ---
-        config.sort_order = config.sort_order ?? 'desc';
-        config.heading_level = config.heading_level ?? 4;
-        config.embed_format = config.embed_format ?? '!![[]]';
-
-        // --- Validation (omitted for brevity, assume it's here) ---
+        // 创建完整配置，合并默认值和代码块配置
+        const config: TimelineConfig = {
+            // 从插件设置中获取默认值
+            sort_order: plugin.settings.timelineDefaultSortOrder,
+            heading_level: plugin.settings.timelineDefaultHeadingLevel,
+            embed_format: plugin.settings.timelineDefaultEmbedFormat,
+            
+            // 覆盖代码块中指定的值
+            ...blockConfig,
+            
+            // 确保 app 属性存在
+            app: plugin.app
+        };
 
         // Find the file
         const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);

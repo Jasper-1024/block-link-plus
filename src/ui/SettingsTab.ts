@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, DropdownComponent } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, DropdownComponent, Notice } from "obsidian";
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings } from "../types";
 import BlockLinkPlus from "main";
@@ -205,26 +205,54 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName("Daily note heading level")
 			.setDesc("Heading level to use in daily notes (1-6, corresponds to #-######)");
 
+		// Timeline 功能设置
+		this.addHeading("Timeline Feature").setDesc("Settings for the blp-timeline code block functionality");
+		
+		// 显示 Dataview 插件状态
+		const dataviewStatus = this.containerEl.createEl("div", {
+			cls: this.plugin.settings.dataviewAvailable ? "setting-item-description" : "setting-item-description mod-warning"
+		});
+		
+		dataviewStatus.createEl("span", {
+			text: this.plugin.settings.dataviewAvailable 
+				? `✅ Dataview plugin is installed and enabled (v${this.plugin.settings.dataviewVersion || 'unknown'})` 
+				: "❌ Dataview plugin is not installed or not enabled. Timeline feature will not work.",
+		});
+		
+		this.addToggleSetting("enableTimeline", async (value) => {
+			if (value && !this.plugin.settings.dataviewAvailable) {
+				new Notice("Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin.");
+			}
+		})
+			.setName("Enable Timeline feature")
+			.setDesc("Enable the blp-timeline code block functionality. Requires Dataview plugin.");
+		
+		this.addSliderSetting("timelineDefaultHeadingLevel", 1, 6, 1)
+			.setName("Default heading level")
+			.setDesc("Default heading level to use for timeline sections (1-6). Can be overridden in code block.");
+		
+		this.addDropdownSetting(
+			"timelineDefaultEmbedFormat",
+			["!![[]]", "![[]]"],
+			(option) => option === "!![[]]" ? "Expanded embed (!![[]])" : "Collapsed embed (![[]])"
+		)
+			.setName("Default embed format")
+			.setDesc("Default format for embedded timeline links. Can be overridden in code block.");
+		
+		this.addDropdownSetting(
+			"timelineDefaultSortOrder",
+			["asc", "desc"],
+			(option) => option === "asc" ? "Ascending (oldest first)" : "Descending (newest first)"
+		)
+			.setName("Default sort order")
+			.setDesc("Default sort order for timeline entries. Can be overridden in code block.");
+
 		// 内联编辑
 		this.addHeading("Embedded Block Editing").setDesc("Settings for inline editing of embedded blocks");
 		// 从 SettingsPanel.ts 中提取的设置
 		this.addToggleSetting("editorFlow")
 			.setName(t.settings.editorFlowReplace.name)
 			.setDesc(t.settings.editorFlowReplace.desc);
-		// this.addDropdownSetting(
-		// 	//@ts-ignore
-		// 	"editorFlowStyle",
-		// 	["minimal", "seamless"],
-		// 	(option) => {
-		// 		const optionsMap = new Map([
-		// 			["minimal", i18n.settings.editorFlowStyle.minimal],
-		// 			["seamless", i18n.settings.editorFlowStyle.seamless],
-		// 		]);
-		// 		return optionsMap.get(option) || option;
-		// 	}
-		// )
-		// 	.setName(i18n.settings.editorFlowStyle.name)
-		// 	.setDesc(i18n.settings.editorFlowStyle.desc);
 
 		// Embedded editing style
 		new Setting(containerEl)

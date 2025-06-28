@@ -90,6 +90,14 @@ export interface PluginSettings {
 	enable_time_section_in_menu: boolean;
 	time_section_plain_style: boolean; // Controls whether time sections should be displayed as plain text
 
+	// Timeline Feature
+	enableTimeline: boolean;
+	dataviewAvailable: boolean;
+	dataviewVersion: string | null;
+	timelineDefaultHeadingLevel: number;
+	timelineDefaultEmbedFormat: '!![[]]' | '![[]]';
+	timelineDefaultSortOrder: 'asc' | 'desc';
+
 	// inline edit
 	editorFlow: boolean;
 	editorFlowStyle: string;
@@ -117,6 +125,15 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	daily_note_heading_level: 2,
 	enable_time_section_in_menu: false,
 	time_section_plain_style: false, // Default to standard heading style
+	
+	// Timeline Feature
+	enableTimeline: true,
+	dataviewAvailable: false,
+	dataviewVersion: null,
+	timelineDefaultHeadingLevel: 4,
+	timelineDefaultEmbedFormat: '!![[]]',
+	timelineDefaultSortOrder: 'desc',
+	
 	// inline edit
 	editorFlow: true,
 	editorFlowStyle: "minimal",
