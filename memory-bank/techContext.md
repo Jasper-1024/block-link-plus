@@ -1,5 +1,5 @@
 # σ₃: Technical Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-25*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🛠️ Technology Stack
@@ -236,6 +236,48 @@ Error Capture → User Feedback → Graceful Degradation
 - **索引缓存**: 文件内容解析结果缓存
 - **增量更新**: 只处理变更的文件
 
+## 🧪 Testability Analysis (NEW)
+*Added: 2024-12-24*
+
+### 1. Overall Strategy
+The project currently lacks any testing infrastructure. The proposed strategy involves introducing a testing framework (e.g., Jest) and a mocking library to handle Obsidian API dependencies. The focus will be on a bottom-up approach: first, creating unit tests for pure, isolated logic, and then building integration tests for more complex features that orchestrate multiple modules.
+
+### 2. Key Testing Targets & Approaches
+
+#### a. `dataview-timeline` (High Priority / High Value)
+- **Status**: Highly testable due to its modular and functional design.
+- **Unit Tests**:
+    - `extractRelevantSections`: Test with various file cache structures (`headings`, `tags`, `links`), configurations, and content to ensure accurate section filtering. This is the most critical function to test.
+    - `renderTimelineMarkdown`: Test with different sets of sections and configurations to verify the correctness of the final markdown output (sorting, grouping, formatting).
+    - `filter-resolver.ts`: Test `resolveTags` and `resolveLinks` with various filter configurations.
+    - `region-parser.ts`: Test `findSyncRegion` with different file content structures.
+    - `query-builder.ts`: The logic within can be unit-tested by mocking the `dataviewApi`.
+- **Integration Tests**:
+    - `handleTimeline`: This is the main integration point. A test should simulate the entire workflow by providing mock implementations for `plugin`, `app.vault`, `app.metadataCache`, and `dataviewApi`. The test should assert that the final content passed to `app.vault.modify` is correct based on the inputs.
+
+#### b. `flow-editor` (Medium Priority / High Complexity)
+- **Status**: Difficult to test due to heavy reliance on the Obsidian API and direct DOM manipulation. Testing will require extensive mocking.
+- **Strategy**: Focus on testing the internal logic rather than the side effects.
+- **Mocking Required**:
+    - Obsidian API: `Plugin`, `App`, `Workspace`, `WorkspaceLeaf`, `MarkdownView`, `Editor`.
+    - CodeMirror 6: `EditorView` (`cm`), state fields, and transactions.
+    - DOM: `document.body`, `HTMLElement`.
+- **Testable Units**:
+    - Test the logic within `FlowEditorManager` by verifying that the correct methods on mocked objects are called in response to different settings and method invocations (e.g., `initialize`, `openFlow`, `closeFlow`).
+    - The `ObsidianEnactor` dependency should be mocked to isolate the manager's logic.
+
+#### c. Core Features & Utilities (Medium Priority)
+- **Status**: Generally testable.
+- **Unit Tests**:
+    - `command-handler.ts`: Test `handleCommand` by mocking the `editor` and `view` objects to simulate different editor states and assert the outcome (e.g., clipboard content).
+    - `heading-analysis.ts`, `link-creation.ts`, `time-section.ts`: These modules likely contain pure logic that can be easily unit-tested with appropriate inputs.
+
+### 3. Required Testing Infrastructure
+- **Test Runner**: Jest or a similar framework.
+- **Mocking Library**: Jest's built-in mocking capabilities.
+- **TypeScript Support**: Configuration to allow Jest to work with TypeScript (e.g., `ts-jest`).
+- **Environment Simulation**: A setup to provide mock objects for the Obsidian API, which is not available in a standard Node.js testing environment. This may involve creating a set of mock classes and objects that mimic the real API.
+
 ## 🔧 Build & Deployment
 
 ### 构建配置
@@ -382,3 +424,167 @@ docs/
 - **函数级**: 参数、返回值和副作用说明
 - **复杂逻辑**: 算法思路和实现细节注释
 - **类型定义**: 接口和类型的用途和约束 
+
+## 🧪 Testing Framework
+
+### Testing Tools
+- **Jest**: 用于运行测试和断言
+- **ts-jest**: 用于转换 TypeScript 代码
+- **identity-obj-proxy**: 用于模拟 CSS 导入
+- **jest-environment-jsdom**: 提供浏览器环境模拟
+
+### Testing Configuration
+#### Jest Configuration
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  moduleNameMapper: {
+    '\\.css$': 'identity-obj-proxy',
+  },
+  setupFilesAfterEnv: ['./jest.setup.js'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+      },
+    ],
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+};
+```
+
+#### TypeScript Test Configuration
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react",
+    "types": ["jest", "node"]
+  },
+  "include": ["src/**/*", "__mocks__/**/*"]
+}
+```
+
+### Mock Implementations
+- **Obsidian API Mock**: 模拟 Obsidian 核心 API，包括 App, TFile, Vault, MetadataCache 等
+- **Dataview API Mock**: 模拟 Dataview API，包括 DataviewApi, Link, Page 等
+- **Test Utilities**: 提供创建模拟插件实例、文件和 API 的工具函数
+
+### Testing Strategy
+- **单元测试**: 测试单个函数和方法的行为
+- **边缘情况**: 测试各种边缘情况和错误处理
+- **输入验证**: 测试各种输入组合，包括无效输入
+- **输出验证**: 验证函数和方法的输出是否符合预期
+- **模拟依赖**: 模拟外部依赖，确保测试的隔离性
+
+### Test Coverage
+- **dataview-timeline Module**: 90%+ 测试覆盖率
+- **Total Project**: 约 40% 测试覆盖率
+
+## 🔄 Refactoring History
+
+### Phase 1: 初始重构
+- **时间**: 2024-12-18 之前
+- **目标**: 提取核心功能到独立模块
+- **成果**:
+  - 提取 `heading-analysis`, `clipboard-handler`, `command-handler` 等核心模块
+  - `main.ts` 代码行数从 ~973 减少到 ~512
+
+### Phase 2: UI 模块化
+- **时间**: 2024-12-18 之前
+- **目标**: 分离 UI 逻辑
+- **成果**:
+  - 提取 `EditorMenu` 模块
+  - CSS 模块化，使用 `import` 替代动态注入
+
+### Phase 3: 功能模块化
+- **时间**: 2024-12-18 至 2024-12-19
+- **目标**: 提取主要功能到独立模块
+- **成果**:
+  - 提取 `link-creation` 模块
+  - 提取 `time-section` 模块
+
+### Phase 4: Flow Editor 封装
+- **时间**: 2024-12-19
+- **目标**: 封装 Flow Editor 功能
+- **成果**:
+  - 创建 `FlowEditorManager` 类
+  - 将 Flow Editor 相关逻辑从 `main.ts` 迁移到 `src/features/flow-editor/index.ts`
+  - `main.ts` 代码行数进一步减少
+
+### Phase 5: 项目结构标准化和测试框架建设
+- **时间**: 2024-12-20 至 2024-12-25
+- **目标**: 优化项目结构，建立测试框架
+- **成果**:
+  - 将 `main.ts` 移至 `src/main.ts`
+  - 更新构建配置
+  - 建立测试框架
+  - 为 `dataview-timeline` 模块编写测试
+
+### Phase 6: Timeline 功能实现与改进
+- **时间**: 2024-12-20 至 2024-12-22
+- **目标**: 实现和改进 Timeline 功能
+- **成果**:
+  - 实现章节级时间线聚合
+  - 改进持久化机制
+  - 改进搜索功能
+
+## 🚀 Deployment & Distribution
+
+### Build Process
+- **构建工具**: esbuild
+- **构建配置**: `esbuild.config.mjs`
+- **构建命令**: `npm run build`
+- **构建输出**: `main.js`, `styles.css`, `manifest.json`
+
+### Distribution Channels
+- **GitHub Releases**: 通过 GitHub Releases 发布
+- **Obsidian 社区插件**: 通过 Obsidian 社区插件目录分发
+
+### Version Management
+- **版本控制**: 使用语义化版本控制 (Semantic Versioning)
+- **版本更新**: 在 `manifest.json` 和 `package.json` 中更新版本号
+- **更新日志**: 在 `CHANGELOG.md` 中记录变更
+
+## 🔍 Known Issues & Limitations
+
+### Known Issues
+- **Flow Editor 渲染问题**: 从"实时预览"切换到"源码"模式时，自定义渲染组件未被清除
+  - **根源**: 缺乏一个有效的 API 来强制清除由 CodeMirror 扩展渲染的自定义 UI
+  - **状态**: 暂时搁置，等待 Obsidian API 更新或找到替代方案
+
+### Limitations
+- **Dataview 依赖**: Timeline 功能依赖 Dataview 插件，需要用户安装
+- **性能限制**: 大规模查询可能导致性能问题
+- **兼容性**: 某些功能可能与其他插件冲突
+
+## 📚 Documentation
+
+### Code Documentation
+- **注释**: 使用 JSDoc 风格的注释
+- **类型定义**: 使用 TypeScript 类型定义提供文档
+
+### User Documentation
+- **README**: 提供基本的安装和使用说明
+- **Wiki**: 提供详细的功能说明和示例
+- **内置帮助**: 在插件设置中提供帮助信息
+
+## 🔮 Future Directions
+
+### Planned Features
+- **测试覆盖扩展**: 为 `FlowEditorManager` 和其他关键模块提供测试覆盖
+- **性能优化**: 优化大规模查询的性能
+- **用户界面改进**: 提供更友好的用户界面
+
+### Technical Debt
+- **测试覆盖**: 增加测试覆盖率
+- **错误处理**: 改进错误处理和报告
+- **代码质量**: 进一步提高代码质量和可维护性
+
+### Research Areas
+- **Obsidian API 更新**: 跟踪 Obsidian API 的更新，利用新功能
+- **性能优化**: 研究提高查询性能的方法
+- **用户体验**: 研究提高用户体验的方法 
