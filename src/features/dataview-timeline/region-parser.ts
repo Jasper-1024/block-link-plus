@@ -1,5 +1,5 @@
-export const REGION_START_MARKER_PREFIX = "<!-- blp-timeline-start";
-export const REGION_END_MARKER = "<!-- blp-timeline-end -->";
+export const REGION_START_MARKER_PREFIX = "%% blp-timeline-start";
+export const REGION_END_MARKER = "%% blp-timeline-end %%";
 
 export interface DynamicRegion {
     regionStartLine: number;

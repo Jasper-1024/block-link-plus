@@ -15,45 +15,9 @@ import { executeTimelineQuery, extractTimeSections } from "./query-builder";
 import { DataviewApi, Link } from "obsidian-dataview";
 import { resolveTags, resolveLinks } from "./filter-resolver";
 import { getDataviewApi } from "../../utils/dataview-detector";
+import crypto from "crypto";
 
-const TIMELINE_START_MARKER = "%% blp-timeline-start %%";
-const TIMELINE_END_MARKER = "%% blp-timeline-end %%";
-
-/**
- * Finds the timeline sync region in a file's content.
- * @param fileContent The full content of the file.
- * @param codeBlockEndLine The line where the timeline code block definition ends.
- * @returns An object describing the found region.
- */
-function findSyncRegion(fileContent: string, codeBlockEndLine: number) {
-    const lines = fileContent.split('\n');
-    const region = {
-        regionExists: false,
-        startLine: -1,
-        endLine: -1,
-        existingLines: [] as string[],
-    };
-
-    let foundStart = false;
-    for (let i = codeBlockEndLine + 1; i < lines.length; i++) {
-        if (lines[i].trim() === TIMELINE_START_MARKER) {
-            region.startLine = i;
-            foundStart = true;
-        } else if (foundStart && lines[i].trim() === TIMELINE_END_MARKER) {
-            region.endLine = i;
-            region.regionExists = true;
-            // Extract the content between the markers
-            region.existingLines = lines.slice(region.startLine + 1, region.endLine);
-            return region;
-        }
-    }
-    // Reset if only start or end is found, to prevent partial matches
-    if (!region.regionExists) {
-        region.startLine = -1;
-        region.endLine = -1;
-    }
-    return region;
-}
+const TIMELINE_END_MARKER = REGION_END_MARKER;
 
 /**
  * Parses a line of markdown link to generate a stable key (filepath#heading).
@@ -437,10 +401,11 @@ export async function handleTimeline(
         const codeBlockEndLine = sectionInfo.lineEnd;
 
         // --- Phase 3.2: Read and parse existing region ---
-        const region = findSyncRegion(fileContent, codeBlockEndLine);
+        const region = findDynamicRegion(fileContent, codeBlockEndLine);
         const userModificationsMap = new Map<string, string>();
-        if (region.regionExists) {
-            for (const line of region.existingLines) {
+        if (region) {
+            const existingLines = region.currentContent.split('\n').filter(line => line.trim());
+            for (const line of existingLines) {
                 const key = parseLinkLineForKey(line);
                 if (key) {
                     userModificationsMap.set(key, line);
@@ -471,21 +436,30 @@ export async function handleTimeline(
             }
         }
 
-        // --- Phase 3.5: Write new content back to file ---
+        // --- Phase 3.5: Calculate hash and check for changes ---
         const newContentBlock = newContentLines.join('\n');
+        const newContentHash = crypto.createHash('md5').update(newContentBlock).digest('hex');
+        
+        // Check if content has changed by comparing hashes
+        if (region?.existingHash === newContentHash) {
+            return; // Content unchanged, skip file modification
+        }
+
+        // --- Phase 3.6: Write new content back to file ---
         const originalLines = fileContent.split('\n');
+        const newStartMarker = `${REGION_START_MARKER_PREFIX} data-hash="${newContentHash}" %%`;
 
         let newFileContent: string;
-        if (region.regionExists) {
+        if (region) {
             // Region exists, replace its content
-            const beforeRegion = originalLines.slice(0, region.startLine + 1).join('\n');
-            const afterRegion = originalLines.slice(region.endLine).join('\n');
-            newFileContent = `${beforeRegion}\n${newContentBlock}\n${afterRegion}`;
+            const beforeRegion = originalLines.slice(0, region.regionStartLine).join('\n');
+            const afterRegion = originalLines.slice(region.regionEndLine + 1).join('\n');
+            newFileContent = `${beforeRegion}\n${newStartMarker}\n${newContentBlock}\n${TIMELINE_END_MARKER}${afterRegion ? `\n${afterRegion}`: ''}`;
         } else {
             // No region, create a new one after the code block
             const beforeRegion = originalLines.slice(0, codeBlockEndLine + 1).join('\n');
             const afterRegion = originalLines.slice(codeBlockEndLine + 1).join('\n');
-            newFileContent = `${beforeRegion}\n${TIMELINE_START_MARKER}\n${newContentBlock}\n${TIMELINE_END_MARKER}${afterRegion ? `\n${afterRegion}`: ''}`;
+            newFileContent = `${beforeRegion}\n${newStartMarker}\n${newContentBlock}\n${TIMELINE_END_MARKER}${afterRegion ? `\n${afterRegion}`: ''}`;
         }
 
         // Only write if content has actually changed
