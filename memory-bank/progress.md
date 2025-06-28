@@ -1,16 +1,26 @@
 # σ₅: Progress Tracker
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-23*
-*Π: DEVELOPMENT | Ω: REVIEW*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 📈 Project Status
 
-**Overall Completion**: 95% (Flow Editor 功能基本稳定，但存在一个渲染残留的顽固 bug)
+**Overall Completion**: 96% (Flow Editor 功能基本稳定，但存在一个渲染残留的顽固 bug)
 
-**Current Version**: 1.3.2+ (bugfix-sprint-completed)
-**Project Phase**: DEVELOPMENT (Π₃) - **Flow Editor Bug 调查已归档**
-**Active Mode**: REVIEW (Ω₅) - 正在全面更新项目文档
+**Current Version**: 1.3.3+ (timeline-search-improved)
+**Project Phase**: DEVELOPMENT (Π₃) - **Timeline 搜索功能改进已完成**
+**Active Mode**: EXECUTE (Ω₄) - 实现了精确章节匹配逻辑
 
 ###  Major Milestones
+
+#### ✅ Completed (Phase 6.4 - Timeline Search Improvement)
+- **`blp-timeline` 搜索功能改进**
+  - ✅ **问题定位**: 确认了"搜索结果返回整个文件而非精确章节"的 bug。
+  - ✅ **方案设计**: 设计了混合策略，保留 Dataview 的高效文件级筛选，同时增加章节级精确匹配。
+  - ✅ **实现精确章节匹配**: 
+    - **新增 `extractRelevantSections` 函数**: 替代原有的 `extractTimeSections` 调用。
+    - **章节范围确定**: 实现了基于标题级别的章节范围确定逻辑。
+    - **交叉验证**: 检查章节范围内是否包含目标标签或链接。
+  - ✅ **保留原有功能**: 保留了时间模式过滤等原有功能。
 
 #### 🔄 In Progress (New Sprint: Flow Editor Bug 修复)
 - ✅ **问题 3 已解决**: 原生跳转图标丢失问题。
@@ -20,11 +30,16 @@
 - ⚠️ **问题 1 暂时搁置**: `!![[...]]` 渲染残留问题。
   - **详情**: 经过深入调查，确认问题在于缺乏有效的 API 来强制刷新模式切换后的视图。具体调查过程已记录在 `flow_editor_fixes_log.md`。
 
-#### ✅ Completed (Phase 6.2)
-- **`blp-timeline` 章节级功能实现**
-  - ✅ **核心功能完成**: 成功实现了完整的章节级时间线聚合功能，包括配置解析、章节提取、Markdown 渲染和文件写入。
-  - ✅ **哈希防循环**: 实现了基于内容哈希的防无限循环机制，确保了文件写入的稳定性和性能。
-  - ✅ **动态区域处理**: 能够正确创建和更新 `blp-timeline` 的动态内容区域。
+#### ✅ Completed (Phase 6.3 - Timeline Persistence Refactor)
+- **`blp-timeline` 持久化重构**:
+  - ✅ **问题根源定位**: 确认了用户对 `timeline` 动态渲染结果的手动修改 (如 `!` -> `!!`) 会在刷新时被覆盖的问题。
+  - ✅ **架构决策**: 决定放弃"动态渲染"模式，采用"源文件同步"的最佳实践。
+  - ✅ **实现源文件同步**:
+    - **引入 `%%` 标记**: 使用 `%% blp-timeline-start %%` 和 `%% blp-timeline-end %%` 来界定由 `timeline` 管理的持久化区域。
+    - **重构 `handleTimeline`**: 核心处理器被完全重构为"读取-合并-写回"逻辑。
+    - **保留用户修改**: 新逻辑会读取区域内的现有链接，缓存用户的修改（如 `!!` 和别名），并在生成新列表时智能地保留这些修改。
+    - **移除哈希机制**: 删除了不再需要的、基于哈希的缓存和防循环机制。
+  - ✅ **问题解决**: 彻底解决了 `blp-timeline` 更新时会覆盖用户手动修改的问题，提升了功能的健壮性和可预测性。
 
 #### ✅ Completed (Refactoring Phase 5.1 & New Feature Design)
 - **`blp-timeline` 功能研究与设计 (Phase 6.1)**
@@ -159,12 +174,12 @@
 
 - [ ] **Phase 6.2.5: 测试与优化** ⏳
   - [ ] 创建测试用例验证章节级功能
-  - [ ] **定位并修复已知的 bug**
+  - [x] **定位并修复已知的 bug**
   - [ ] 性能优化和边界情况处理
   - [ ] 文档更新和用户指南编写
 
 #### ⚠️ 已知问题 (Known Issues)
-- **`blp-timeline` Bug**: 用户报告存在一个尚未定位的 bug，功能可以工作但存在异常。
+- **`blp-timeline` Bug**: ~~用户报告存在一个尚未定位的 bug，功能可以工作但存在异常。~~ (已在此次重构中解决)
 
 - **`Flow Editor` 严重 Bugs (1 Remaining)**:
   - **1. 模式切换时渲染状态残留 (暂时搁置)**: 从"实时预览"切换到"源码"模式时，自定义渲染组件未被清除。

@@ -1,5 +1,5 @@
 # σ₃: Technical Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-24*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🛠️ Technology Stack
@@ -86,13 +86,14 @@ DataviewApi → Pages Query → Section Extraction → Content Matching → Link
 
 ### 文件修改机制 (New)
 ```typescript
-// 动态区域标记格式
-<!-- OBP-TIMELINE-START -->
+// 同步区域标记格式
+%% blp-timeline-start %%
 // 动态生成的内容
-<!-- OBP-TIMELINE-END hash:abc123def -->
+%% blp-timeline-end %%
 
-// 防抖和哈希比较流程
-Content Generation → Hash Calculation → Hash Comparison → File Modification (if needed)
+// "读取-合并-写回" 流程
+File Read → Parse Existing Content → Cache User Modifications → 
+Query Execution → Intelligent Merge → Conditional File Write
 ```
 
 ## 🎯 `blp-timeline` 技术实现详解
@@ -113,27 +114,93 @@ interface TimelineConfig {
 }
 ```
 
+### 精确章节匹配实现 (🆕)
+```typescript
+function extractRelevantSections(
+    file: TFile,
+    context: TimelineContext,
+    resolvedTags: string[],
+    resolvedLinks: Link[]
+): { file: TFile; heading: HeadingCache }[] {
+    // 1. 获取文件缓存
+    const fileCache = app.metadataCache.getFileCache(file);
+    
+    // 2. 筛选符合级别的标题
+    const candidateHeadings = fileCache.headings.filter(
+        (h) => h.level === config.heading_level
+    );
+    
+    // 3. 应用时间模式过滤（如果有）
+    // ...
+    
+    // 4. 获取文件中的所有标签和链接
+    const allTagsInFile = fileCache.tags || [];
+    const allLinksInFile = fileCache.links || [];
+    
+    // 5. 创建快速查找集合
+    const targetTags = new Set(resolvedTags);
+    const targetLinkPaths = new Set(resolvedLinks.map(link => link.path));
+    
+    // 6. 核心匹配逻辑：遍历每个候选标题
+    for (const heading of filteredHeadings) {
+        // 6.1 确定章节范围
+        const startLine = heading.position.start.line;
+        let endLine = Infinity; // 默认到文件末尾
+        
+        // 6.2 查找下一个同级或更高级标题
+        for (const nextHeading of fileCache.headings) {
+            if (nextHeading.position.start.line > startLine && 
+                nextHeading.level <= heading.level) {
+                endLine = nextHeading.position.start.line;
+                break;
+            }
+        }
+        
+        // 6.3 检查此章节是否包含目标标签或链接
+        const containsTargetTag = allTagsInFile.some(tag => 
+            targetTags.has(tag.tag) && 
+            tag.position.start.line >= startLine && 
+            tag.position.start.line < endLine
+        );
+        
+        const containsTargetLink = allLinksInFile.some(link => 
+            targetLinkPaths.has(link.link) && 
+            link.position.start.line >= startLine && 
+            link.position.start.line < endLine
+        );
+        
+        // 6.4 如果包含目标元素，添加到有效章节
+        if (containsTargetTag || containsTargetLink) {
+            validSections.push({ file, heading });
+        }
+    }
+    
+    return validSections;
+}
+```
+
 ### 章节级处理流程
-1. **文件查询**: 使用 Dataview 查询符合条件的文件
-2. **内容解析**: 读取文件内容，解析标题结构
-3. **章节提取**: 提取指定级别的标题章节
-4. **内容匹配**: 检查章节内容是否包含目标链接/标签
-5. **链接生成**: 生成 `!![[文件名#章节标题]]` 格式
-6. **动态渲染**: 更新文件中的动态区域
+1. **文件查询**: 使用 Dataview 查询符合条件的文件。
+2. **读取同步区**: `findSyncRegion` 查找 `%%...%%` 标记并读取内容。
+3. **缓存用户修改**: 解析同步区内容，将用户修改（如 `!!`）存入 Map。
+4. **精确章节匹配** (🆕): `extractRelevantSections` 只提取包含目标标签或链接的章节。
+5. **智能合并**: 遍历查询结果，结合缓存中的用户修改，生成最终的链接列表。
+6. **条件写回**: `app.vault.modify` 将新内容写回文件内的同步区域。
 
 ### 性能优化策略
-- **防抖机制**: 300ms 延迟避免频繁触发
-- **哈希比较**: 只在内容实际变化时才修改文件
-- **增量解析**: 只处理符合条件的文件
-- **缓存机制**: 缓存解析结果（计划中）
+- **条件写入**: 只有在内容实际变化时才修改文件，避免不必要的 I/O。
+- **高效解析**: 使用优化的字符串和正则表达式操作来解析链接。
+- **增量解析**: 只处理符合条件的文件。
+- **集合查询** (🆕): 使用 `Set` 数据结构进行 O(1) 复杂度的快速查找。
+- **早期退出** (🆕): 在找到匹配项后立即返回，避免不必要的迭代。
 
 ## 🔄 Data Flow Architecture
 
-### 主要数据流
+### 主要数据流 (更新)
 ```
 YAML Config → TimelineConfig → Filter Resolution → File Query → 
-Section Extraction → Content Matching → Link Generation → 
-Hash Calculation → File Modification
+(Read Existing Sync Region & Cache Mods) →
+精确章节匹配 → Intelligent Merge → Conditional File Modification
 ```
 
 ### 错误处理流程
@@ -146,9 +213,9 @@ Error Capture → User Feedback → Graceful Degradation
 
 ### 文件操作安全
 - **读取权限**: 仅读取 Vault 内文件
-- **写入限制**: 仅修改动态区域标记内容
-- **备份机制**: 通过哈希比较避免意外覆盖
-- **循环检测**: 防抖机制防止无限循环更新
+- **写入限制**: 仅修改 `%%...%%` 同步区域内的内容
+- **备份机制**: ~~通过哈希比较避免意外覆盖~~ (已移除, 新机制通过智能合并保留用户编辑)
+- **循环检测**: 不再依赖防抖，通过条件写入避免无限循环。
 
 ### 插件依赖管理
 - **可选依赖**: Dataview 插件检测和优雅降级
@@ -161,7 +228,7 @@ Error Capture → User Feedback → Graceful Degradation
 - **启动时间**: < 100ms (插件加载)
 - **查询响应**: < 2s (1000+ 文件)
 - **内存占用**: < 50MB (正常使用)
-- **文件修改**: < 300ms (防抖延迟)
+- **文件修改**: 仅在内容变更时发生
 
 ### 性能优化计划
 - **懒加载**: 按需加载功能模块

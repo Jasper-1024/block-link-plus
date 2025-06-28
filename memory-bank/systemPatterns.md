@@ -78,25 +78,30 @@ graph TD
    Right-click Event → src/main.ts (Event Listener) → delegates to EditorMenu.handleEditorMenu() → delegates to command-handler
    ```
 
-## 🧩 New System Pattern: `blp-timeline` Dynamic Region
+## 🧩 System Pattern: Source File Sync for Dynamic Blocks
 
-A new system pattern is introduced to support dynamic, in-note content generation. This pattern leverages a "control block" to manage a specific region within the same Markdown file.
+To support dynamic, in-note content generation while preserving user edits, the `blp-timeline` feature has been refactored to use a **Source File Sync** pattern. This approach moves away from transient, rendered HTML towards a persistent, Markdown-based solution.
 
 ### 概念
-- **Control Block (`blp-timeline`)**: A YAML-based code block where users declaratively define a query.
-- **Dynamic Region**: A region in the note bounded by HTML comments (`<!-- OBP-TIMELINE-START -->` and `<!-- OBP-TIMELINE-END -->`).
-- **Trigger**: The update process is triggered when the note is rendered (e.g., switching from source mode to reading mode).
-- **Engine**: The feature relies on the Dataview plugin's API for all indexing, caching, and querying operations.
-- **Safety**: A two-layer defense mechanism prevents infinite loops: **Debouncing** manages event frequency, and **Content Hashing** ensures idempotent writes.
+- **Control Block (`blp-timeline`)**: A YAML-based code block where users declaratively define a query. This remains the user's primary point of interaction.
+- **Sync Region**: A region in the note bounded by invisible Markdown comments (`%% blp-timeline-start %%` and `%% blp-timeline-end %%`). All generated content is written inside this region as plain Markdown.
+- **Trigger**: The update process is triggered when the note containing the block is rendered.
+- **Engine**: The feature continues to rely on the Dataview plugin's API for all indexing, caching, and querying operations.
+- **Persistence Mechanism**: User modifications (like changing `![[]]` to `!![[]]` or adding aliases) are preserved via a "read-merge-write" cycle, not a hash comparison.
 
 ### 工作流程
 1. **渲染触发 (Render Trigger)**: The `MarkdownPostProcessor` detects a `blp-timeline` code block.
-2. **防抖处理 (Debounce)**: The call to the update logic is wrapped in a "debouncer" function. This ensures that even if multiple render events fire rapidly, the core logic only executes once after a short period of stability (e.g., 300ms).
-3. **解析配置 (Parse Config)**: The plugin parses the YAML configuration within the block.
-4. **查询执行 (Execute Query)**: It uses the Dataview API to build and execute a query based on the parsed configuration.
-5. **结果生成与哈希 (Generate & Hash Results)**: The query results are formatted into a list of `!![[...]]` links. A hash of this new content is computed.
-6. **内容哈希比对 (Content Hash Diffing)**: The new content's hash is compared against the hash stored in the region's end marker (`<!-- OBP-TIMELINE-END hash:a1b2c3... -->`). This is the primary loop prevention mechanism.
-7. **条件写入 (Conditional Write)**: **Only if the hashes do not match**, the plugin uses `app.vault.modify()` to update the content and the new hash value in the end marker. If the hashes match, no write operation occurs, and the process terminates safely.
+2. **查找同步区域 (Find Sync Region)**: The `findSyncRegion` helper function scans the document below the control block for the `%%...%%` markers.
+3. **缓存用户修改 (Cache User Modifications)**:
+   - If a sync region is found, its contents (a list of Markdown links) are read into memory.
+   - Each line is parsed by `parseLinkLineForKey` to create a stable key (e.g., `filepath#heading`).
+   - A `Map` is populated, mapping the stable key to the full, user-modified line (e.g., `{'path#heading': '!![[path#heading|alias]]'}`).
+4. **查询执行 (Execute Query)**: The plugin uses the Dataview API to execute the query defined in the control block, fetching the "master list" of sections that should be in the timeline.
+5. **智能合并 (Intelligent Merge)**: The plugin iterates through the "master list" from the query. For each item:
+   - It generates the stable key.
+   - If the key exists in the modification `Map`, the user's modified version is used.
+   - If the key does not exist, it's a new item, and a default Markdown link is generated based on the `embed_format` config.
+6. **条件写入 (Conditional Write)**: The newly merged list of links is compiled into a single text block. This block is written back to the source file, replacing the old content inside the `%%...%%` markers. The file is only modified if the new content differs from the old, preventing unnecessary writes.
 
 ### 控制块设计
 ````yaml
