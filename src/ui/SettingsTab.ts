@@ -97,7 +97,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		// title
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Block link Plus" });
+		containerEl.createEl("h2", { text: t.settings.pluginTitle });
 
 		this.addDropdownSetting(
 			//@ts-ignore
@@ -105,22 +105,20 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			["0", "1", "2"],
 			(option) => {
 				const optionsSet = new Map([
-					["0", "Default"],
-					["1", "Add new heading"],
-					["2", "Add multi block"],
+					["0", t.settings.multiLineHandle.options.default],
+					["1", t.settings.multiLineHandle.options.addHeading],
+					["2", t.settings.multiLineHandle.options.addMultiBlock],
 				]);
 				return optionsSet.get(option) || "Unknown";
 			}
 		)
-			.setName("Multi-line block behavior")
-			.setDesc(
-				"Define how multi-line selections generate block ids. 'Default' treats them as a single line."
-			);
+			.setName(t.settings.multiLineHandle.name)
+			.setDesc(t.settings.multiLineHandle.desc);
 
 		// Block link	
-		this.addHeading("Block link").setDesc("Link: [[file#block_id]]");
-		this.addToggleSetting("enable_right_click_block").setName("Enable block link in right click menu");
-		this.addToggleSetting("enable_block_notification").setName("Show notification when block link is copied");
+		this.addHeading(t.settings.blockLink.title).setDesc(t.settings.blockLink.desc);
+		this.addToggleSetting("enable_right_click_block").setName(t.settings.blockLink.enableRightClick.name);
+		this.addToggleSetting("enable_block_notification").setName(t.settings.blockLink.enableNotification.name);
 
 		this.addDropdownSetting(
 			//@ts-ignore
@@ -128,85 +126,82 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			["0", "1", "2", "3"],
 			(option) => {
 				const optionsSet = new Map([
-					["0", "No alias"],
-					["1", "First X chars"],
-					["2", "Parent heading"],
-					["3", "Selected text"]
+					["0", t.settings.blockLink.aliasStyle.options.noAlias],
+					["1", t.settings.blockLink.aliasStyle.options.firstChars],
+					["2", t.settings.blockLink.aliasStyle.options.parentHeading],
+					["3", t.settings.blockLink.aliasStyle.options.selectedText]
 				]);
 				return optionsSet.get(option) || "Unknown";
 			}
 		)
-			.setName("Alias style")
-			.setDesc(
-				"Choose how to generate aliases for block links." +
-				"For heading blocks, alias will always be the heading text unless 'No alias' is selected."
-			);
+			.setName(t.settings.blockLink.aliasStyle.name)
+			.setDesc(t.settings.blockLink.aliasStyle.desc);
 
 		this.addSliderSetting("alias_length", 1, 100, 1)
-			.setName("Alias length")
-			.setDesc("Set the length of the alias (1-100). Only used when alias style is 'First X chars'.");
+			.setName(t.settings.blockLink.aliasLength.name)
+			.setDesc(t.settings.blockLink.aliasLength.desc);
 
 		this.addToggleSetting("heading_id_newline")
-			.setName("Experimental: Heading block ID style")
-			.setDesc("Place block ID in new line when selecting a single heading line only");
+			.setName(t.settings.blockLink.headingIdNewline.name)
+			.setDesc(t.settings.blockLink.headingIdNewline.desc);
 
 		// Embed link
-		this.addHeading("Embed link").setDesc("Link: ![[file#block_id]]");
-		this.addToggleSetting("enable_right_click_embed").setName("Enable embed link in right click menu");
-		this.addToggleSetting("enable_embed_notification").setName("Show notification when embed link is copied");
+		this.addHeading(t.settings.embedLink.title).setDesc(t.settings.embedLink.desc);
+		this.addToggleSetting("enable_right_click_embed").setName(t.settings.embedLink.enableRightClick.name);
+		this.addToggleSetting("enable_embed_notification").setName(t.settings.embedLink.enableNotification.name);
 
 		// Obsidian URI
-		this.addHeading("Obsidian URI link").setDesc("Link: obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId} ");
-		this.addToggleSetting("enable_right_click_url").setName("Enable Obsidian URI link in right click menu");
-		this.addToggleSetting("enable_url_notification").setName("Show notification when URI link is copied");
+		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);
+		this.addToggleSetting("enable_right_click_url").setName(t.settings.obsidianUri.enableRightClick.name);
+		this.addToggleSetting("enable_url_notification").setName(t.settings.obsidianUri.enableNotification.name);
 
 		// block id
-		this.addHeading("Block Id").setDesc("Custom block_id");
+		this.addHeading(t.settings.blockId.title).setDesc(t.settings.blockId.desc);
 		this.addSliderSetting("id_length", 3, 7, 1)
-			.setName("Max block id Length")
-			.setDesc("Set the maximum number of characters for a block id.");
+			.setName(t.settings.blockId.maxLength.name)
+			.setDesc(t.settings.blockId.maxLength.desc);
 
-		this.addToggleSetting("enble_prefix").setName("Custom id prefix");
+		this.addToggleSetting("enble_prefix").setName(t.settings.blockId.enablePrefix.name);
 
 		this.addTextInputSetting("id_prefix", "")
-			.setName("Block id prefix")
-			.setDesc("Block id will be: prefix-random_str");
+			.setName(t.settings.blockId.prefix.name)
+			.setDesc(t.settings.blockId.prefix.desc);
 
 		// 时间章节设置
-		this.addHeading("Time Section").setDesc("Insert time-based headings");
+		this.addHeading(t.settings.timeSection.title).setDesc(t.settings.timeSection.desc);
 
 		this.addToggleSetting("enable_time_section")
-			.setName("Enable time section feature");
+			.setName(t.settings.timeSection.enable.name);
 
 		this.addToggleSetting("enable_time_section_in_menu")
-			.setName("Show in context menu")
-			.setDesc("If enabled, adds time section option to the right-click menu");
+			.setName(t.settings.timeSection.enableInMenu.name)
+			.setDesc(t.settings.timeSection.enableInMenu.desc);
 
 		this.addTextInputSetting("time_section_format", "HH:mm")
-			.setName("Time format")
-			.setDesc("Format for the time section (HH:mm = 24-hour format)");
+			.setName(t.settings.timeSection.timeFormat.name)
+			.setDesc(t.settings.timeSection.timeFormat.desc);
 
 		this.addToggleSetting("insert_heading_level")
-			.setName("Insert as heading")
-			.setDesc("If enabled, inserts time with heading marks (#), otherwise inserts just the time");
+			.setName(t.settings.timeSection.insertAsHeading.name)
+			.setDesc(t.settings.timeSection.insertAsHeading.desc);
 
 		this.addToggleSetting("time_section_plain_style", (value) => {
 			// Update view plugin when setting changes
 			this.plugin.updateViewPlugin();
 		})
-			.setName("Plain text style in preview")
-			.setDesc("If enabled, time sections will appear as plain text in preview mode, even when inserted as headings");
+			.setName(t.settings.timeSection.plainStyle.name)
+			.setDesc(t.settings.timeSection.plainStyle.desc);
 
 		this.addTextInputSetting("daily_note_pattern", "\\d{4}-\\d{1,2}-\\d{1,2}")
-			.setName("Daily note pattern")
-			.setDesc("Regular expression to identify daily note filenames (default: YYYY-MM-DD)");
+			.setName(t.settings.timeSection.dailyNotePattern.name)
+			.setDesc(t.settings.timeSection.dailyNotePattern.desc);
 
 		this.addSliderSetting("daily_note_heading_level", 1, 6, 1)
-			.setName("Daily note heading level")
-			.setDesc("Heading level to use in daily notes (1-6, corresponds to #-######)");
+			.setName(t.settings.timeSection.headingLevel.name)
+			.setDesc(t.settings.timeSection.headingLevel.desc);
 
 		// Timeline 功能设置
-		this.addHeading("Timeline Feature").setDesc("Settings for the blp-timeline code block functionality");
+		this.addHeading(t.settings.timeline.title).setDesc(t.settings.timeline.desc);
 		
 		// 显示 Dataview 插件状态
 		const dataviewStatus = this.containerEl.createEl("div", {
@@ -215,40 +210,40 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		
 		dataviewStatus.createEl("span", {
 			text: this.plugin.settings.dataviewAvailable 
-				? `✅ Dataview plugin is installed and enabled (v${this.plugin.settings.dataviewVersion || 'unknown'})` 
-				: "❌ Dataview plugin is not installed or not enabled. Timeline feature will not work.",
+				? t.settings.timeline.dataviewStatus.available.replace('${version}', this.plugin.settings.dataviewVersion || 'unknown')
+				: t.settings.timeline.dataviewStatus.unavailable,
 		});
 		
 		this.addToggleSetting("enableTimeline", async (value) => {
 			if (value && !this.plugin.settings.dataviewAvailable) {
-				new Notice("Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin.");
+				new Notice(t.notices.timelineRequiresDataview);
 			}
 		})
-			.setName("Enable Timeline feature")
-			.setDesc("Enable the blp-timeline code block functionality. Requires Dataview plugin.");
+			.setName(t.settings.timeline.enable.name)
+			.setDesc(t.settings.timeline.enable.desc);
 		
 		this.addSliderSetting("timelineDefaultHeadingLevel", 1, 6, 1)
-			.setName("Default heading level")
-			.setDesc("Default heading level to use for timeline sections (1-6). Can be overridden in code block.");
+			.setName(t.settings.timeline.defaultHeadingLevel.name)
+			.setDesc(t.settings.timeline.defaultHeadingLevel.desc);
 		
 		this.addDropdownSetting(
 			"timelineDefaultEmbedFormat",
 			["!![[]]", "![[]]"],
-			(option) => option === "!![[]]" ? "Expanded embed (!![[]])" : "Collapsed embed (![[]])"
+			(option) => option === "!![[]]" ? t.settings.timeline.defaultEmbedFormat.options.expanded : t.settings.timeline.defaultEmbedFormat.options.collapsed
 		)
-			.setName("Default embed format")
-			.setDesc("Default format for embedded timeline links. Can be overridden in code block.");
+			.setName(t.settings.timeline.defaultEmbedFormat.name)
+			.setDesc(t.settings.timeline.defaultEmbedFormat.desc);
 		
 		this.addDropdownSetting(
 			"timelineDefaultSortOrder",
 			["asc", "desc"],
-			(option) => option === "asc" ? "Ascending (oldest first)" : "Descending (newest first)"
+			(option) => option === "asc" ? t.settings.timeline.defaultSortOrder.options.ascending : t.settings.timeline.defaultSortOrder.options.descending
 		)
-			.setName("Default sort order")
-			.setDesc("Default sort order for timeline entries. Can be overridden in code block.");
+			.setName(t.settings.timeline.defaultSortOrder.name)
+			.setDesc(t.settings.timeline.defaultSortOrder.desc);
 
 		// 内联编辑
-		this.addHeading("Embedded Block Editing").setDesc("Settings for inline editing of embedded blocks");
+		this.addHeading(t.settings.sectionFlow).setDesc(t.settings.embeddedBlockDesc);
 		// 从 SettingsPanel.ts 中提取的设置
 		this.addToggleSetting("editorFlow")
 			.setName(t.settings.editorFlowReplace.name)
