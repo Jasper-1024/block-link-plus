@@ -196,6 +196,28 @@ function renderDebugOutput(
 }
 
 /**
+ * Get the basenames of the links
+ * @param pathsSet The set of link paths
+ * @returns The set of link basenames
+ * 
+ * eg: 
+ * input: ['/path/to/file.md', '/path/to/file2.md']
+ * output: ['file', 'file2']
+ */
+function getBasenamesWithRegex(pathsSet: Set<string>): Set<string> {
+    const basenames = new Set<string>();
+    const regex = /([^/]+?)(?:\.md)?$/; 
+    
+    for (const path of pathsSet) {
+      const match = path.match(regex);
+      if (match && match[1]) {
+        basenames.add(match[1]);
+      }
+    }
+    return basenames;
+  }
+
+/**
  * Extracts only the sections that contain the specified tags or links.
  * @param file The file to extract sections from.
  * @param context The timeline context.
@@ -278,9 +300,10 @@ function extractRelevantSections(
             tag.position.start.line < endLine
         );
         
+        const targetLinkBasenames = getBasenamesWithRegex(targetLinkPaths)
         // Check if this section contains any of the target links
         const containsTargetLink = allLinksInFile.some(link => 
-            (targetLinkPaths.has(link.link) || targetLinkPaths.has(link.link + '.md')) &&
+            (targetLinkBasenames.has(link.link)) &&
             link.position.start.line >= startLine && 
             link.position.start.line < endLine
         );
