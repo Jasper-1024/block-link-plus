@@ -1,42 +1,39 @@
 # σ₄: Active Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-25*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-26*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🔮 Current Focus
-**当前焦点**: 测试框架建设 (Phase 5.2)
+**当前焦点**: 修复编译问题 (Phase 6.5)
 **状态**: ✅ 已完成
 
-已成功建立完整的测试框架，为 `dataview-timeline` 模块编写了全面的单元测试。测试覆盖了模块的所有关键功能，包括区域解析、过滤器解析、查询构建和执行、以及渲染逻辑。所有 36 个测试用例全部通过，表明测试框架稳定可靠。
+已成功解决 `obsidian-block-link-plus` 插件的编译问题。问题出在 CSS 导入路径错误，导致 esbuild 无法找到 `styles.css` 文件。通过修改导入路径从 `"./styles.css"` 到 `"../styles.css"`，成功解决了问题。
 
 ### 核心成就
-- 成功模拟了 Obsidian 和 Dataview API，使测试可以在没有实际 Obsidian 环境的情况下运行
-- 为 `dataview-timeline` 模块的所有关键文件创建了测试文件
-- 测试覆盖了各种边缘情况和错误处理，提高了代码的健壮性
-- 所有测试用例全部通过，表明测试框架稳定可靠
+- 成功定位并修复了 CSS 导入路径错误
+- 解决了 esbuild 编译失败的问题
+- 确保了插件可以正常构建和使用
 
 ### 下一步
-- 扩展测试覆盖范围，为 `FlowEditorManager` 和其他关键模块提供测试覆盖
-- 添加集成测试，测试模块间的交互
-- 完善测试文档，方便其他开发者理解和扩展测试
+- 继续监控插件运行状态，确保没有其他编译或运行时问题
+- 考虑对构建过程进行优化，提高构建效率和可靠性
 
 ## 📎 Context References
 
 ### 📄 Active Files
-- `jest.config.js` - Jest 配置文件
-- `tsconfig.test.json` - 测试专用的 TypeScript 配置
-- `jest.setup.js` - Jest 全局设置和模拟
-- `__mocks__/obsidian.ts` - Obsidian API 模拟
-- `__mocks__/obsidian-dataview.ts` - Dataview API 模拟
-- `src/features/dataview-timeline/__tests__/region-parser.test.ts` - 区域解析测试
-- `src/features/dataview-timeline/__tests__/filter-resolver.test.ts` - 过滤器解析测试
-- `src/features/dataview-timeline/__tests__/query-builder.test.ts` - 查询构建测试
-- `src/features/dataview-timeline/__tests__/index.test.ts` - 核心功能和渲染逻辑测试
+- `src/main.ts` - 主入口文件，包含 CSS 导入语句
+- `esbuild.config.mjs` - esbuild 配置文件
+- `styles.css` - 插件的样式文件
+- `memory-bank/activeContext.md` - 当前活动上下文
+- `memory-bank/progress.md` - 项目进度跟踪
 
 ### 💻 Active Code
-- `src/features/dataview-timeline/region-parser.ts` - 区域解析模块
-- `src/features/dataview-timeline/filter-resolver.ts` - 过滤器解析模块
-- `src/features/dataview-timeline/query-builder.ts` - 查询构建模块
-- `src/features/dataview-timeline/index.ts` - 核心功能和渲染逻辑
+```typescript
+// 修改前
+import "./styles.css";
+
+// 修改后
+import "../styles.css";
+```
 
 ### 📚 Active Docs
 - `memory-bank/progress.md` - 项目进度跟踪
@@ -45,89 +42,69 @@
 - `memory-bank/projectbrief.md` - 项目简介
 
 ### 📁 Active Folders
-- `plugs/.obsidian/plugins/obsidian-block-link-plus/src/features/dataview-timeline/__tests__` - 测试目录
-- `plugs/.obsidian/plugins/obsidian-block-link-plus/__mocks__` - 模拟目录
+- `plugs/.obsidian/plugins/obsidian-block-link-plus/src` - 源代码目录
+- `plugs/.obsidian/plugins/obsidian-block-link-plus` - 插件根目录
 
 ### 🔄 Git References
 - `HEAD` - 当前分支头部
 - `main` - 主分支
 
 ### 📏 Active Rules
-- 测试命名约定: `*.test.ts` 或 `*.spec.ts`
-- 测试文件结构: 每个测试文件对应一个源文件
-- 测试覆盖率: 关键功能应达到 90%+ 的测试覆盖率
-- 模拟策略: 尽可能模拟外部依赖，减少测试的复杂性
-- 测试隔离: 每个测试应该是独立的，不依赖于其他测试的状态
+- CSS 导入路径应该使用相对于当前文件的路径
+- esbuild 配置应该正确处理 CSS 文件
+- 项目结构应该遵循现代 TypeScript 项目结构标准
 
 ## 📡 Context Status
 
 ### 🟢 Active
+- 修复编译问题 (Phase 6.5)
 - 测试框架建设 (Phase 5.2)
-- `dataview-timeline` 模块测试
 
 ### 🟡 Partially Relevant
 - Flow Editor Bug 修复 (暂时搁置)
 - `blp-timeline` 功能 (已完成)
 
 ### 🟣 Essential
-- Jest 和 TypeScript 集成
-- Obsidian API 模拟
-- Dataview API 模拟
-- 测试工具函数
+- 项目构建配置
+- CSS 导入处理
+- 文件路径管理
 
 ### 🔴 Deprecated
-- 旧的手动测试方法
-- 未使用的测试框架配置选项
+- 旧的 CSS 导入方式
 
 ## 🧠 思考与决策
 
-### 测试框架选择
-选择 Jest 作为测试框架是基于以下考虑:
-- **TypeScript 支持**: Jest 通过 ts-jest 预处理器提供了良好的 TypeScript 支持
-- **模拟能力**: Jest 提供了强大的模拟功能，适合模拟复杂的 Obsidian API
-- **快照测试**: Jest 的快照测试功能适合测试渲染输出
-- **并行执行**: Jest 可以并行执行测试，提高测试效率
-- **社区支持**: Jest 有活跃的社区和丰富的文档
+### 编译问题根源分析
+问题出在 CSS 导入路径错误。在 `src/main.ts` 文件中，使用了 `import "./styles.css"`，这意味着 esbuild 会在 `src` 目录中查找 `styles.css` 文件。然而，`styles.css` 文件实际上位于项目的根目录中，而不是 `src` 目录中。
 
-### API 模拟策略
-为了有效地测试插件，我们需要模拟 Obsidian API 和 Dataview API。我们采用了以下策略:
-- **最小化模拟**: 只模拟测试中实际使用的 API 部分
-- **行为模拟**: 模拟 API 的行为，而不是实现细节
-- **状态管理**: 提供辅助方法来管理模拟对象的状态
-- **可扩展性**: 设计模拟对象，使其易于扩展以支持更多的测试场景
+### 解决方案选择
+考虑了两种可能的解决方案：
+1. **将 `styles.css` 文件复制到 `src` 目录中**
+   - 优点：不需要修改导入语句
+   - 缺点：引入文件冗余，增加维护难度
+2. **修改导入路径为 `"../styles.css"`**
+   - 优点：直接引用现有文件，不引入冗余
+   - 缺点：需要修改代码
 
-### 测试覆盖策略
-我们的测试覆盖策略包括:
-- **单元测试**: 测试单个函数和方法的行为
-- **边缘情况**: 测试各种边缘情况和错误处理
-- **输入验证**: 测试各种输入组合，包括无效输入
-- **输出验证**: 验证函数和方法的输出是否符合预期
-- **模拟依赖**: 模拟外部依赖，确保测试的隔离性
+最终选择了第二种方案，因为它更加简洁，不引入文件冗余，符合 DRY 原则。
+
+### 构建工具考虑
+esbuild 的工作方式是基于入口文件（在这里是 `src/main.ts`）的相对路径来解析导入。因此，当我们将主入口文件移动到 `src` 目录时，需要相应地调整所有相对导入路径。
 
 ## 📝 Notes & Observations
 
 ### 成功因素
-- 🎯 成功建立了测试框架，为 dataview-timeline 模块提供了全面的测试覆盖
-- 🏗️ 成功模拟了 Obsidian 和 Dataview API，使测试可以在没有实际 Obsidian 环境的情况下运行
-- 📚 测试覆盖了各种边缘情况和错误处理，提高了代码的健壮性
-- 🔧 所有 36 个测试用例全部通过，表明测试框架稳定可靠
-- 🔍 测试发现并修复了潜在的问题，提高了代码质量
+- 🎯 成功定位了问题根源：CSS 导入路径错误
+- 🏗️ 采用了简洁的解决方案：修改导入路径
+- 📚 验证了解决方案的有效性：成功构建插件
 
 ### 挑战与解决方案
-- **挑战**: 模拟复杂的 Obsidian API
-  **解决方案**: 采用最小化模拟策略，只模拟测试中实际使用的 API 部分
-- **挑战**: 处理 TypeScript 类型错误
-  **解决方案**: 创建专用的 `tsconfig.test.json` 配置文件，调整类型检查选项
-- **挑战**: 模拟 Dataview API 的查询功能
-  **解决方案**: 实现了一个简化的 DataviewApi 类，支持基本的查询和过滤操作
-- **挑战**: 测试文件路径解析
-  **解决方案**: 在模拟对象中实现了路径解析逻辑，确保测试中的路径处理与实际环境一致
+- **挑战**: 定位 esbuild 错误的确切原因
+  **解决方案**: 通过分析错误信息和项目结构，确认了问题在于导入路径
+- **挑战**: 确定最佳解决方案
+  **解决方案**: 评估了多种方案，选择了最简洁的解决方案
 
 ### 学习点
-- Jest 和 TypeScript 集成的最佳实践
-- 模拟复杂 API 的策略和技巧
-- 单元测试的结构和组织
-- 测试边缘情况和错误处理的重要性
-- **模拟对象的设计与实现**
-- **测试驱动开发的价值**
-- **测试框架配置的复杂性**
+- esbuild 如何解析导入路径
+- 项目结构调整后需要相应调整导入路径
+- 在移动源文件时需要考虑所有相关依赖
