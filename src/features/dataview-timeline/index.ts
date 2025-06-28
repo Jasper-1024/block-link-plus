@@ -79,6 +79,7 @@ export interface TimelineConfig {
     heading_level?: number;
     embed_format?: '!![[]]' | '![[]]';
     time_pattern?: string;
+    debug?: boolean;
     filters?: {
         relation: 'AND' | 'OR';
         links?: {
@@ -157,6 +158,77 @@ function renderTimelineMarkdown(
     }
 
     return markdown.trim();
+}
+
+/**
+ * Renders debug output showing the parsed configuration and search results
+ * @param config The timeline configuration
+ * @param resolvedTags The resolved tags for filtering
+ * @param resolvedLinks The resolved links for filtering
+ * @param pages The dataview query results
+ * @param allSections The extracted sections
+ * @returns A formatted debug output string
+ */
+function renderDebugOutput(
+    config: TimelineConfig,
+    resolvedTags: string[],
+    resolvedLinks: Link[],
+    pages: any,
+    allSections: { file: TFile; heading: HeadingCache }[]
+): string {
+    const debugInfo = {
+        parsedConfig: {
+            source_folders: config.source_folders,
+            within_days: config.within_days,
+            sort_order: config.sort_order,
+            heading_level: config.heading_level,
+            embed_format: config.embed_format,
+            time_pattern: config.time_pattern,
+            debug: config.debug,
+            filters: config.filters
+        },
+        resolvedFilters: {
+            tags: resolvedTags,
+            links: resolvedLinks.map(link => ({
+                path: link.path,
+                type: link.type || 'file'
+            }))
+        },
+        dataviewQueryResults: {
+            totalPages: pages.length || pages.values?.length || 0,
+            pages: (pages.values || pages).slice(0, 10).map((page: any) => ({
+                path: page.file?.path,
+                name: page.file?.name,
+                tags: page.file?.tags,
+                cday: page.file?.cday?.toString(),
+                outlinks: page.file?.outlinks?.slice(0, 5).map((link: any) => link.path)
+            }))
+        },
+        extractedSections: {
+            totalSections: allSections.length,
+            sections: allSections.slice(0, 20).map(section => ({
+                file: {
+                    path: section.file.path,
+                    name: section.file.name,
+                    basename: section.file.basename
+                },
+                heading: {
+                    text: section.heading.heading,
+                    level: section.heading.level,
+                    line: section.heading.position.start.line
+                }
+            }))
+        },
+        filteringStats: {
+            candidateFiles: pages.length || pages.values?.length || 0,
+            sectionsAfterExtraction: allSections.length,
+            filterEfficiency: `${allSections.length}/${pages.length || pages.values?.length || 0} sections extracted`
+        }
+    };
+
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(debugInfo, null, 2);
+    return pre.outerHTML;
 }
 
 /**
@@ -244,7 +316,7 @@ function extractRelevantSections(
         
         // Check if this section contains any of the target links
         const containsTargetLink = allLinksInFile.some(link => 
-            targetLinkPaths.has(link.link) && 
+            (targetLinkPaths.has(link.link) || targetLinkPaths.has(link.link + '.md')) &&
             link.position.start.line >= startLine && 
             link.position.start.line < endLine
         );
@@ -314,25 +386,6 @@ export async function handleTimeline(
             app: plugin.app
         };
 
-        const fileContent = await plugin.app.vault.read(file);
-        const sectionInfo = ctx.getSectionInfo(el);
-        if (!sectionInfo) {
-            return; // Exit silently
-        }
-        const codeBlockEndLine = sectionInfo.lineEnd;
-
-        // --- Phase 3.2: Read and parse existing region ---
-        const region = findSyncRegion(fileContent, codeBlockEndLine);
-        const userModificationsMap = new Map<string, string>();
-        if (region.regionExists) {
-            for (const line of region.existingLines) {
-                const key = parseLinkLineForKey(line);
-                if (key) {
-                    userModificationsMap.set(key, line);
-                }
-            }
-        }
-
         // --- Phase 3.3: Execute query ---
         const resolvedTags = resolveTags(context);
         const resolvedLinks = resolveLinks(context);
@@ -353,6 +406,44 @@ export async function handleTimeline(
                     // Replace extractTimeSections with our new function that only returns relevant sections
                     const sections = extractRelevantSections(pageFile, context, resolvedTags, resolvedLinks);
                     allSections.push(...sections);
+                }
+            }
+        }
+
+        // Check if debug mode is enabled
+        if (config.debug) {
+            // Render debug output in preview pane
+            el.empty();
+            el.createEl("h3", { text: "🐛 Timeline Debug Output" });
+            
+            const debugOutput = renderDebugOutput(
+                config,
+                resolvedTags,
+                resolvedLinks,
+                pages,
+                allSections
+            );
+            
+            const debugContainer = el.createEl("div");
+            debugContainer.innerHTML = debugOutput;
+            return; // Exit early in debug mode
+        }
+
+        const fileContent = await plugin.app.vault.read(file);
+        const sectionInfo = ctx.getSectionInfo(el);
+        if (!sectionInfo) {
+            return; // Exit silently
+        }
+        const codeBlockEndLine = sectionInfo.lineEnd;
+
+        // --- Phase 3.2: Read and parse existing region ---
+        const region = findSyncRegion(fileContent, codeBlockEndLine);
+        const userModificationsMap = new Map<string, string>();
+        if (region.regionExists) {
+            for (const line of region.existingLines) {
+                const key = parseLinkLineForKey(line);
+                if (key) {
+                    userModificationsMap.set(key, line);
                 }
             }
         }

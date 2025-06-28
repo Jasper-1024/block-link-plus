@@ -72,7 +72,7 @@ export function resolveLinks(context: TimelineContext): Link[] {
 
     // Add link to current file if configured
     if (config.filters?.links?.link_to_current_file) {
-        allLinkPaths.push(currentFile.path);
+        allLinkPaths.push(currentFile.basename);
     }
 
     // De-duplicate paths first to avoid creating redundant Link objects
