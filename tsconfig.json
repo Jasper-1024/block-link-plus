@@ -5,6 +5,10 @@
       "basics/*": ["src/basics/*"],
       "shared/*": ["src/shared/*"],
       "css/*": ["src/css/*"],
+      "ui/*": ["src/ui/*"],
+      "features/*": ["src/features/*"],
+      "utils/*": ["src/utils/*"],
+      "types/*": ["src/types/*"],
       "main": ["src/main.ts"]
     },
     "inlineSourceMap": true,
