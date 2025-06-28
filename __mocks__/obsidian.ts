@@ -69,13 +69,19 @@ export class TFile {
     size: number;
   };
 
-  constructor(path: string) {
-    this.path = path;
-    const parts = path.split('/');
-    this.name = parts[parts.length - 1];
-    const nameParts = this.name.split('.');
-    this.extension = nameParts.pop() || '';
-    this.basename = nameParts.join('.');
+  constructor(path?: string) {
+    this.path = path || '';
+    if (path) {
+      const parts = path.split('/');
+      this.name = parts[parts.length - 1];
+      const nameParts = this.name.split('.');
+      this.extension = nameParts.pop() || '';
+      this.basename = nameParts.join('.');
+    } else {
+      this.name = '';
+      this.extension = '';
+      this.basename = '';
+    }
     this.stat = {
       ctime: Date.now(),
       mtime: Date.now(),

@@ -2,6 +2,7 @@
  * Dataview API 模拟
  * 这个文件模拟了 Dataview API 中常用的类和接口，用于测试
  */
+import { App } from 'obsidian';
 
 // Link 类型定义
 export interface Link {
@@ -70,6 +71,7 @@ export interface Page {
     name: string;
     basename: string;
     extension: string;
+    frontmatter?: any;
   };
   tags: string[];
   links: Link[];
@@ -79,9 +81,18 @@ export interface Page {
 // Dataview API 类
 export class DataviewApi {
   private _pagesList: Page[] = [];
+  app: App;
+  luxon: any = {
+    DateTime: {
+      now: () => ({
+        minus: (obj: any) => new Date(Date.now() - (obj.days || 0) * 24 * 60 * 60 * 1000)
+      })
+    }
+  };
 
   constructor(pages: Page[] = []) {
     this._pagesList = pages;
+    this.app = null as any;
   }
 
   // 为测试添加页面
@@ -133,5 +144,24 @@ export class DataviewApi {
       year: 365 * 24 * 60 * 60 * 1000
     };
     return amount * (units[unit] || 0);
+  }
+
+  // 链接相关方法
+  fileLink(path: string, display?: string): Link {
+    return {
+      path,
+      display,
+      type: 'file',
+      embed: false
+    };
+  }
+
+  // 查询方法
+  query(queryString: string): { successful: boolean; value: any; error?: string } {
+    // 在测试中，我们通常会模拟这个方法的返回值
+    return {
+      successful: true,
+      value: this._pagesList
+    };
   }
 } 
