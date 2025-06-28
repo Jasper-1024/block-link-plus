@@ -14,7 +14,7 @@ import {
 import { executeTimelineQuery, extractTimeSections } from "./query-builder";
 import { DataviewApi, Link } from "obsidian-dataview";
 import { resolveTags, resolveLinks } from "./filter-resolver";
-import { getAPI } from "obsidian-dataview";
+import { getDataviewApi } from "../../utils/dataview-detector";
 
 const TIMELINE_START_MARKER = "%% blp-timeline-start %%";
 const TIMELINE_END_MARKER = "%% blp-timeline-end %%";
@@ -275,8 +275,8 @@ export async function handleTimeline(
     el.setText("Timeline content is managed directly in the editor.");
     
     try {
-        // 使用 getAPI() 获取 Dataview API
-        const dataviewApi = getAPI();
+        // 使用统一的检测逻辑获取 Dataview API
+        const dataviewApi = getDataviewApi();
         if (!dataviewApi) {
             // Still render errors in the preview pane
             el.empty();

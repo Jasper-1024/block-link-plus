@@ -34,11 +34,16 @@ export function formatCurrentTime(format: string): string {
 		.replace('mm', minutes);
 }
 
-export function isTimeSection(text: string, format: string = "HH:mm"): boolean {
-	// Heading pattern: #+ HH:mm
-	// This regex matches strings like "## 19:19" or "# 09:05"
-	const regex = new RegExp(`^(#{1,6})\\s+(\\d{1,2}:\\d{1,2})$`);
-	return regex.test(text);
+export function isTimeSection(text: string, pattern: string = "\\d{1,2}:\\d{1,2}"): boolean {
+	// Heading pattern: #+ {pattern}
+	// This regex matches strings like "## 19:19" or "# 09:05" based on the provided pattern
+	try {
+		const regex = new RegExp(`^(#{1,6})\\s+(${pattern})$`);
+		return regex.test(text);
+	} catch (e) {
+		console.error("Invalid regex pattern for time section:", e);
+		return false;
+	}
 }
 
 export function isDailyNote(fileName: string, pattern: string): boolean {

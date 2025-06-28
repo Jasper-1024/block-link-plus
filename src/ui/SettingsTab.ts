@@ -2,6 +2,7 @@ import { App, Plugin, PluginSettingTab, Setting, DropdownComponent, Notice } fro
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings } from "../types";
 import BlockLinkPlus from "main";
+import { detectDataviewStatus } from "../utils/dataview-detector";
 
 export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	plugin: BlockLinkPlus;
@@ -95,8 +96,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 	display(): void {
 		const { containerEl } = this;
-		// title
+
 		containerEl.empty();
+
+		// title
 		containerEl.createEl("h2", { text: t.settings.pluginTitle });
 
 		this.addDropdownSetting(
@@ -181,6 +184,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.timeSection.timeFormat.name)
 			.setDesc(t.settings.timeSection.timeFormat.desc);
 
+		this.addTextInputSetting("time_section_title_pattern", "\\d{1,2}:\\d{1,2}")
+			.setName(t.settings.timeSection.titlePattern.name)
+			.setDesc(t.settings.timeSection.titlePattern.desc);
+
 		this.addToggleSetting("insert_heading_level")
 			.setName(t.settings.timeSection.insertAsHeading.name)
 			.setDesc(t.settings.timeSection.insertAsHeading.desc);
@@ -203,19 +210,20 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// Timeline 功能设置
 		this.addHeading(t.settings.timeline.title).setDesc(t.settings.timeline.desc);
 		
-		// 显示 Dataview 插件状态
-		const dataviewStatus = this.containerEl.createEl("div", {
-			cls: this.plugin.settings.dataviewAvailable ? "setting-item-description" : "setting-item-description mod-warning"
+		// 显示 Dataview 插件状态 - 按需检测，不使用缓存
+		const dataviewStatus = detectDataviewStatus();
+		const statusEl = this.containerEl.createEl("div", {
+			cls: dataviewStatus.functioning ? "setting-item-description" : "setting-item-description mod-warning"
 		});
 		
-		dataviewStatus.createEl("span", {
-			text: this.plugin.settings.dataviewAvailable 
-				? t.settings.timeline.dataviewStatus.available.replace('${version}', this.plugin.settings.dataviewVersion || 'unknown')
+		statusEl.createEl("span", {
+			text: dataviewStatus.functioning 
+				? t.settings.timeline.dataviewStatus.available.replace('${version}', dataviewStatus.version || 'unknown')
 				: t.settings.timeline.dataviewStatus.unavailable,
 		});
 		
 		this.addToggleSetting("enableTimeline", async (value) => {
-			if (value && !this.plugin.settings.dataviewAvailable) {
+			if (value && !dataviewStatus.functioning) {
 				new Notice(t.notices.timelineRequiresDataview);
 			}
 		})

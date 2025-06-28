@@ -32,6 +32,7 @@ import * as TimeSection from 'features/time-section';
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
+import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -71,35 +72,19 @@ export default class BlockLinkPlus extends Plugin {
 	};
 
 	/**
-	 * check if dataview plugin is available
-	 * @returns true if dataview plugin is available
-	 */
-	checkDataviewPlugin(): boolean {
-		const api = getAPI();
-		this.settings.dataviewAvailable = api !== null;
-		this.settings.dataviewVersion = api?.version?.current || null;
-
-		// 如果 Timeline 功能已启用但 Dataview 不可用，显示通知
-		if (this.settings.enableTimeline && !this.settings.dataviewAvailable) {
-			new Notice("Block Link Plus: Timeline 功能需要 Dataview 插件支持，请安装并启用 Dataview 插件。");
-		}
-
-		return this.settings.dataviewAvailable;
-	}
-
-	/**
 	 * Update the view plugin
 	 */
 	public updateViewPlugin() {
 		// Create regex for both block IDs and time sections if enabled
 		let rule = "(^| )˅[a-zA-Z0-9_]+$";
+		const timePattern = this.settings.time_section_title_pattern || "\\d{1,2}:\\d{1,2}";
 
 		if (this.settings.time_section_plain_style) {
-			// Add time section pattern to the regex
-			rule = `(${rule})|(^#{1,6}\\s+\\d{1,2}:\\d{1,2}$)`;
+			// Add time section pattern to the regex using the configurable pattern
+			rule = `(${rule})|(^#{1,6}\\s+${timePattern}$)`;
 		}
 
-		this.viewPlugin = createViewPlugin(rule);
+		this.viewPlugin = createViewPlugin(rule, timePattern);
 		this.registerEditorExtension([this.viewPlugin]);
 	}
 
@@ -110,9 +95,6 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
-
-		// 检查 Dataview 插件
-		this.checkDataviewPlugin();
 
 		// Register right click menu
 		this.registerEvent(
@@ -125,11 +107,15 @@ export default class BlockLinkPlus extends Plugin {
 		// Register post-processor for blp-timeline blocks
 		// run when setting enableTimeline is true
 		this.registerMarkdownCodeBlockProcessor('blp-timeline', (source, el, ctx) => {
-			if (this.settings.enableTimeline && this.settings.dataviewAvailable) {
+			if (this.settings.enableTimeline && isDataviewAvailable()) {
 				handleTimeline(this, source, el, ctx);
 			} else {
 				el.empty();
-				el.createEl("pre", { text: "Timeline feature is disabled or Dataview plugin is not available." });
+				if (!this.settings.enableTimeline) {
+					el.createEl("pre", { text: "Timeline feature is disabled." });
+				} else {
+					el.createEl("pre", { text: "Timeline feature requires Dataview plugin." });
+				}
 			}
 		});
 

@@ -143,6 +143,10 @@ class T {
             name: "Time format",
             desc: "Format for the time block (HH:mm = 24-hour format)"
           },
+          titlePattern: {
+            name: "Title recognition pattern",
+            desc: "Regular expression pattern to recognize time headings (default: \\d{1,2}:\\d{1,2} for HH:mm format)"
+          },
           insertAsHeading: {
             name: "Insert as heading",
             desc: "If enabled, inserts time with heading marks (#), otherwise inserts just the time"
@@ -406,6 +410,10 @@ class T {
             name: "时间格式",
             desc: "时间区块标题的格式(HH:mm = 24小时格式)"
           },
+          titlePattern: {
+            name: "标题识别模式",
+            desc: "用于识别时间标题的正则表达式模式(默认: \\d{1,2}:\\d{1,2} for HH:mm格式)"
+          },
           insertAsHeading: {
             name: "作为标题插入",
             desc: "如果启用，使用标题标记（#）插入时间，否则只插入时间"
@@ -668,6 +676,10 @@ class T {
           timeFormat: {
             name: "時間格式",
             desc: "時間區塊的格式(HH:mm = 24小時格式)"
+          },
+          titlePattern: {
+            name: "標題識別模式",
+            desc: "用於識別時間標題的正則表達式模式(預設: \\d{1,2}:\\d{1,2} for HH:mm格式)"
           },
           insertAsHeading: {
             name: "作為標題插入",

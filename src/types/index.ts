@@ -84,6 +84,7 @@ export interface PluginSettings {
 	// Time Section
 	enable_time_section: boolean;
 	time_section_format: string;
+	time_section_title_pattern: string;
 	daily_note_pattern: string;
 	insert_heading_level: boolean;
 	daily_note_heading_level: number;
@@ -92,8 +93,6 @@ export interface PluginSettings {
 
 	// Timeline Feature
 	enableTimeline: boolean;
-	dataviewAvailable: boolean;
-	dataviewVersion: string | null;
 	timelineDefaultHeadingLevel: number;
 	timelineDefaultEmbedFormat: '!![[]]' | '![[]]';
 	timelineDefaultSortOrder: 'asc' | 'desc';
@@ -120,6 +119,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	// Time Section
 	enable_time_section: true,
 	time_section_format: "HH:mm",
+	time_section_title_pattern: "\\d{1,2}:\\d{1,2}",
 	daily_note_pattern: "\\d{4}-\\d{1,2}-\\d{1,2}",
 	insert_heading_level: true,
 	daily_note_heading_level: 2,
@@ -128,8 +128,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	
 	// Timeline Feature
 	enableTimeline: true,
-	dataviewAvailable: false,
-	dataviewVersion: null,
 	timelineDefaultHeadingLevel: 4,
 	timelineDefaultEmbedFormat: '!![[]]',
 	timelineDefaultSortOrder: 'desc',
