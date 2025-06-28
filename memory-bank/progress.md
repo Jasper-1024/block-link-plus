@@ -1,151 +1,76 @@
 # σ₅: Progress Tracker
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-26*
-*Π: DEVELOPMENT | Ω: EXECUTE*
+*v1.0 | Created: 2023-11-15 | Updated: 2023-11-18*
+*Π: 🏗️DEVELOPMENT | Ω: ⚙️EXECUTE*
 
 ## 📈 Project Status
+Completion: 85%
 
-**Overall Completion**: 99% (所有核心功能已完成，代码架构已优化)
+## 🎯 Milestones
 
-**Current Version**: 1.3.3+ (dataview-detection-unified)
-**Project Phase**: DEVELOPMENT (Π₃) - **Dataview 检测逻辑已统一**
-**Active Mode**: EXECUTE (Ω₄) - 完成了检测逻辑的架构优化
+### ✅ Core Block Link Functionality
+- [x] 基本块链接复制功能
+- [x] 多行文本块支持
+- [x] 自定义 Block ID
+- [x] 块链接别名类型
 
-###  Major Milestones
+### ✅ Enhanced Features
+- [x] 时间章节功能
+- [x] 内联编辑嵌入块
+- [x] Timeline 基础功能实现
 
-#### ✅ Completed (Phase 6.7 - Dataview 检测逻辑统一)
-- **Dataview 检测逻辑重构完成**
-  - ✅ **创建统一检测工具**: 
-    - 新建了 `src/utils/dataview-detector.ts` 统一检测工具
-    - 定义了 `DataviewStatus` 接口，提供完整的插件状态信息
-    - 实现了 `detectDataviewStatus()`、`isDataviewAvailable()`、`getDataviewApi()` 函数
-    - 所有检测都是同步的，不涉及监听器或异步状态管理
-  - ✅ **移除重复代码**: 
-    - 从 `main.ts` 中移除了 `checkDataviewPlugin` 方法
-    - 从 `PluginSettings` 中移除了 `dataviewAvailable` 和 `dataviewVersion` 缓存字段
-    - 清理了不再需要的导入和依赖
-  - ✅ **简化设置面板**: 
-    - 设置面板现在按需检测 Dataview 状态，不依赖缓存值
-    - 每次打开设置都显示最新的版本信息
-    - 移除了复杂的状态监听机制
-  - ✅ **统一API调用**: 
-    - 所有模块现在使用相同的检测接口
-    - `dataview-timeline` 功能使用统一的 `getDataviewApi()` 方法
-    - 主模块使用 `isDataviewAvailable()` 进行简单检查
-  - ✅ **构建验证**: 确保所有更改编译成功，无错误
+### ✅ Timeline Output Format Improvements
+- [x] 实现文件路径分组
+- [x] 添加文件链接作为入口点
+- [x] 添加文件组之间的分隔符
+- [x] 添加内容行之间的空行
+- [x] 实现用户自定义嵌入链接的保留
+- [x] 添加基于哈希的优化，防止不必要的更新
+- [x] 更新英文和中文文档
 
-#### ✅ Completed (Phase 6.6 - 最终完善)
-- **linkplus 最后两项工作完成**
-  - ✅ **翻译文档验证**:
-    - 确认了所有翻译文档均为最新状态
-    - 验证了英文、简体中文、繁体中文三种语言的完整性
-    - 确保了新功能的国际化支持
-  - ✅ **时间章节标题识别设置**:
-    - **新增设置项**: 添加了 `time_section_title_pattern` 设置，允许用户自定义时间标题识别模式
-    - **完善翻译**: 为新设置项添加了完整的多语言翻译支持
-    - **代码优化**: 更新了 `isTimeSection`、`ViewPlugin`、`MarkdownPost` 等相关函数
-    - **错误处理**: 添加了正则表达式错误处理，防止无效模式导致崩溃
-    - **向后兼容**: 保持默认行为不变，现有用户体验无影响
-  - ✅ **构建验证**: 确保所有更改编译成功，无错误
+### 🚧 Documentation & Refinement
+- [x] 更新 README.md 和 README_zh.md
+- [x] 更新 activeContext.md
+- [x] 更新 progress.md
+- [ ] 收集用户反馈
+- [ ] 基于反馈进行优化
 
-#### ✅ Completed (Phase 5.2 - 测试框架建设)
-- **测试框架建设**
-  - ✅ **环境准备与依赖安装**:
-    - 添加了核心测试依赖：Jest, ts-jest, @types/jest
-    - 添加了 identity-obj-proxy 用于处理 CSS 导入
-    - 添加了 jest-environment-jsdom 用于模拟浏览器环境
-  - ✅ **配置文件创建**:
-    - 创建了 `jest.config.js` 配置 TypeScript 转换、模块映射和测试环境
-    - 创建了 `tsconfig.test.json` 专用于测试的 TypeScript 配置
-    - 创建了 `jest.setup.js` 用于全局设置和模拟
-  - ✅ **Obsidian API 模拟框架**:
-    - 创建了 `__mocks__/obsidian.ts` 模拟 Obsidian 核心 API
-    - 创建了 `__mocks__/obsidian-dataview.ts` 模拟 Dataview API
-  - ✅ **测试工具函数**:
-    - 创建了用于创建模拟插件实例的工具函数
-    - 创建了用于创建模拟文件和元数据的工具函数
-    - 创建了用于创建模拟 Dataview API 的工具函数
-  - ✅ **数据视图时间线模块测试**:
-    - 为 `region-parser.ts` 创建了测试文件
-    - 为 `filter-resolver.ts` 创建了测试文件
-    - 为 `query-builder.ts` 创建了测试文件
-    - 为 `index.ts` 创建了测试文件
-    - 所有 36 个测试用例全部通过
-  - ✅ **测试覆盖率**:
-    - `dataview-timeline` 模块测试覆盖率达到 90%+
-    - 测试覆盖了各种边缘情况和错误处理
+## 📊 Timeline Output Format Implementation
+**完成日期:** 2023-11-18
+**状态:** ✅ 已完成
 
-#### ✅ Completed (Phase 6.4 - Timeline Search Improvement)
-- **`blp-timeline` 搜索功能改进**
-  - ✅ **问题定位**: 确认了"搜索结果返回整个文件而非精确章节"的 bug。
-  - ✅ **方案设计**: 设计了混合策略，保留 Dataview 的高效文件级筛选，同时增加章节级精确匹配。
-  - ✅ **实现精确章节匹配**: 
-    - **新增 `extractRelevantSections` 函数**: 替代原有的 `extractTimeSections` 调用。
-    - **章节范围确定**: 实现了基于标题级别的章节范围确定逻辑。
-    - **交叉验证**: 检查章节范围内是否包含目标标签或链接。
-  - ✅ **保留原有功能**: 保留了时间模式过滤等原有功能。
+### 实施步骤:
+1. ✅ 分析现有 Timeline 输出格式的问题
+2. ✅ 设计新的输出格式，提高可读性和组织性
+3. ✅ 修改 `src/features/dataview-timeline/index.ts` 文件实现新格式
+4. ✅ 添加文件链接作为每个文件组的入口点
+5. ✅ 实现文件组之间的分隔符
+6. ✅ 添加内容行之间的空行
+7. ✅ 实现用户自定义嵌入链接的保留功能
+8. ✅ 添加基于哈希的优化，防止不必要的文件更新
+9. ✅ 创建测试文件验证新格式
+10. ✅ 更新英文和中文文档，添加新格式示例
 
-#### 🔄 In Progress (New Sprint: Flow Editor Bug 修复)
-- ✅ **问题 3 已解决**: 原生跳转图标丢失问题。
-- ✅ **问题 2 已解决 (本轮修复)**: 阅读模式下点击编辑图标导致崩溃。
-- ✅ **问题 4 已解决**: 可编辑时嵌入块的标题不显示。
-- ✅ **新增 Bug 已解决 (本轮修复)**: 带别名的块链接 (`...|alias]]`) 解析错误。
-- ⚠️ **问题 1 暂时搁置**: `!![[...]]` 渲染残留问题。
-  - **详情**: 经过深入调查，确认问题在于缺乏有效的 API 来强制刷新模式切换后的视图。具体调查过程已记录在 `flow_editor_fixes_log.md`。
+### 技术细节:
+- 使用正则表达式识别现有的 Timeline 块
+- 实现哈希比较机制，避免不必要的更新
+- 通过解析现有嵌入链接保留用户自定义修改
+- 优化文件路径分组算法，提高效率
 
-#### ✅ Completed (Phase 6.3 - Timeline Persistence Refactor)
-- **`blp-timeline` 持久化重构**:
-  - ✅ **问题根源定位**: 确认了用户对 `timeline` 动态渲染结果的手动修改 (如 `!` -> `!!`) 会在刷新时被覆盖的问题。
-  - ✅ **架构决策**: 决定放弃"动态渲染"模式，采用"源文件同步"的最佳实践。
-  - ✅ **实现源文件同步**:
-    - **引入 `%%` 标记**: 使用 `%% blp-timeline-start %%` 和 `%% blp-timeline-end %%` 来界定由 `timeline` 管理的持久化区域。
-    - **重构 `handleTimeline`**: 核心处理器被完全重构为"读取-合并-写回"逻辑。
-    - **保留用户修改**: 新逻辑会读取区域内的现有链接，缓存用户的修改（如 `!!` 和别名），并在生成新列表时智能地保留这些修改。
-    - **移除哈希机制**: 删除了不再需要的、基于哈希的缓存和防循环机制。
-  - ✅ **问题解决**: 彻底解决了 `blp-timeline` 更新时会覆盖用户手动修改的问题，提升了功能的健壮性和可预测性。
+### 遇到的挑战:
+- 确保向后兼容性，不破坏现有用户的 Timeline 块
+- 在保留用户自定义修改的同时实现新格式
+- 优化性能，避免大型库中的不必要更新
 
-#### ✅ Completed (Refactoring Phase 5.1 & New Feature Design)
-- **`blp-timeline` 功能研究与设计 (Phase 6.1)**
-  - ✅ **需求分析与创新**: 完成了对动态、可编辑时间线功能的需求分析和创新方案构想。
-  - ✅ **技术可行性验证**: 确认了在 Obsidian 渲染进程中安全修改文件内容的技术方案。
-  - ✅ **竞品分析**: 分析了 `obsidian-run` 等插件，明确了本插件的差异化优势。
-  - ✅ **功能设计定稿**: 完成了 `blp-timeline` 控制块的 YAML 结构设计和核心工作流。
-  - ✅ **技术选型**: 确定将 `Dataview` 插件作为核心查询引擎依赖。
-  - ✅ **安全机制终稿**: 最终确定采用"防抖"和"内容哈希"结合的方案作为防循环机制。
+## 📝 下一步计划
+1. 收集用户对新 Timeline 输出格式的反馈
+2. 基于反馈进行优化和调整
+3. 考虑添加更多的自定义选项，如自定义分隔符
+4. 探索更多高级过滤功能，如正则表达式匹配
 
-- **项目结构标准化 (Phase 5.1)**
-  - ✅ **将 `main.ts` 移至 `src/main.ts`**: 成功将主入口点从根目录移动到 `src` 目录，符合现代 TypeScript 项目结构标准。
-  - ✅ **更新构建配置**: 修改 `esbuild.config.mjs` 以使用新的入口点路径 `src/main.ts`。
-  - ✅ **修复相关问题**: 修复了 `src/basics/enactor/obsidian.tsx` 和 `src/basics/ui/UINote.tsx` 中的错误。
-  - ✅ **更新文档**: 更新 memory-bank 文档以反映新的项目结构。
-
-- **Flow Editor 封装 (Phase 4.1)**
-  - ✅ **创建 `FlowEditorManager`**: 成功将 "Flow Editor" 和 "Basics" 相关的所有逻辑（包括 `enactor`, `commands`, `extensions` 和相关方法）从 `main.ts` 迁移至 `src/features/flow-editor/index.ts`。
-  - ✅ **`main.ts` 进一步简化**: `main.ts` 中不再包含任何 Flow Editor 的实现细节，只保留了对 `FlowEditorManager` 的初始化调用。
-  - ✅ **运行时 Bug 修复**: 成功定位并修复了因重构导致的 `uriByString` 运行时错误，通过在 `main.ts` 中添加 `enactor` getter 兼容了底层模块的依赖。
-  - ✅ **遗留代码清理**: 移除了 `main.ts` 中与菜单处理相关的死代码和重复逻辑，解决了潜在的 linter 错误。
-
-- **核心模块化 (Pre-Phase 4.1)**
-  - ✅ **提取 `heading-analysis`**, **`clipboard-handler`**, **`command-handler`** 等核心模块。
-  - ✅ **`main.ts` 初步简化**: 代码行数从 ~973 减少到 ~512。
-
-- **UI 模块化 (Pre-Phase 4.2)**
-  - ✅ **提取 `EditorMenu` 模块**: 右键菜单逻辑已完全分离。
-  - ✅ **CSS 模块化**: `import` 替代了动态注入。
-
-#### 🔄 In Progress (Current Phase 6.2)
-- **`blp-timeline` 章节级功能实现**
-  - ✅ **基础架构完成**: 配置解析、过滤器解析、动态区域解析已完全实现
-  - ✅ **文件级查询完成**: `executeTimelineQuery` 能够正确返回符合条件的文件
-  - ⚠️ **需求理解纠正**: 发现实际需求是章节级时间线聚合，而非文件级链接
-  - 🔄 **章节级功能开发中**: 正在实现章节内容解析和匹配逻辑
-
-#### ⏳ Planned (Next Major Phase)
-- **Flow Editor Bug 修复 (New Sprint)**
-  - ⏳ 修复内联编辑功能的剩余严重bug
-- **测试体系扩展 (Phase 5.3)**
-  - ⏳ 为 `FlowEditorManager`, `command-handler` 等关键模块编写单元和集成测试。
-- **文档完善 (Phase 5.4)**
-  - ⏳ 确保所有 memory-bank 文档与当前架构一致。
+## 📌 待解决问题
+- 考虑在大型库中进一步优化 Timeline 查询性能
+- 探索更多的可视化选项，如时间线视图
+- 考虑添加导出功能，将 Timeline 结果导出为其他格式
 
 ## 📋 Feature Development Status
 
@@ -177,7 +102,35 @@
 
 ## 🚧 Current Sprint Status
 
-### 🎯 Current Sprint: Timeline Debug 功能实现
+### 🎯 Current Sprint: Timeline 输出格式改进
+
+**📅 Sprint 开始**: 2024-06-28  
+**🎯 Sprint 目标**: 改进 Timeline 输出格式，提高可读性和组织性
+
+#### ✅ 已完成任务
+1. **格式需求分析** (2024-06-28)
+   - 确定新格式需要包含文件链接作为入口
+   - 文件之间需要用 `---` 分隔
+   - 每个内容行之间需要有空行
+   - 保留用户对嵌入链接的自定义修改
+
+2. **代码实现** (2024-06-28)
+   - 修改 `handleTimeline()` 函数中的内容生成逻辑
+   - 实现按文件分组的格式化输出
+   - 确保保留用户对嵌入链接的修改
+   - 添加文件链接、分隔符和空行
+
+3. **文档更新** (2024-06-28)
+   - 更新 `timeline-debug-example.md` 文档，添加新格式说明
+   - 创建 `timeline-format-test.md` 测试文件
+   - 更新版本号至 1.5.3
+
+4. **测试验证** (2024-06-28)
+   - 验证新格式的正确实现
+   - 确认用户修改保留功能正常工作
+   - 确认哈希机制正常工作
+
+### 🎯 Previous Sprint: Timeline Debug 功能实现
 
 **📅 Sprint 开始**: 2024-12-26  
 **🎯 Sprint 目标**: 为 timeline 功能添加 debug 模式，帮助调查筛选问题

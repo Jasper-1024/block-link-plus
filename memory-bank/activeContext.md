@@ -1,119 +1,141 @@
 # σ₄: Active Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-26*
-*Π: DEVELOPMENT | Ω: RESEARCH*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-06-28*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🔮 Current Focus
-🔍 **NEW: Timeline 筛选 Bug 调查 + Debug 功能实现**
-- 用户报告：timeline 没有正确筛选出内容
-- **实现方案**：为 timeline 配置增加 `debug: true` 选项
-- **Debug 输出**：解析代码块和搜索结果的 JSON 表示
-- **状态**：Debug 功能已实现，等待测试验证
+🔧 **NEW: Timeline 输出格式改进**
+- 用户需求：改进 Timeline 输出格式，提高可读性和组织性
+- **实现方案**：按文件分组，添加文件链接、分隔符和空行
+- **格式特点**：每个文件有链接入口，文件间有分隔符，内容行间有空行
+- **状态**：功能已实现，版本已更新至 1.5.3
 
 ## 📎 Context References
 - 📄 Active Files: 
-  - `src/features/dataview-timeline/index.ts` (已添加 debug 功能)
+  - `src/features/dataview-timeline/index.ts` (已修改输出格式)
+  - `doc/timeline-debug-example.md` (已更新格式说明)
+  - `doc/timeline-format-test.md` (新增测试文件)
   - `memory-bank/activeContext.md` (当前更新)
 - 💻 Active Code: 
-  - `TimelineConfig.debug?: boolean` (新增配置项)
-  - `renderDebugOutput()` 函数 (新增调试渲染)
-  - `handleTimeline()` 函数 (修改支持调试模式)
+  - `handleTimeline()` 函数 (修改内容生成逻辑)
+  - 按文件分组的格式化输出实现
 - 📚 Active Docs: Timeline 功能文档
 - 📁 Active Folders: `src/features/dataview-timeline/`
-- 🔄 Git References: Timeline debug 功能实现
-- 📏 Active Rules: CursorRIPER♦Σ Lite 1.0.0 Research Mode
+- 🔄 Git References: Timeline 输出格式改进
+- 📏 Active Rules: CursorRIPER♦Σ Lite 1.0.0 Execute Mode
 
 ## 📡 Context Status
-- 🟢 Active: Timeline debug 功能开发
-- 🟡 Partially Relevant: 需要测试验证 debug 输出
-- 🟣 Essential: Timeline 筛选逻辑调试
-- 🔴 Deprecated: 无
+- 🟢 Active: Timeline 输出格式改进
+- 🟡 Partially Relevant: README 更新
+- 🟣 Essential: 保留用户对嵌入链接的自定义修改
+- 🔴 Deprecated: 旧的输出格式
 
-## 🎯 Timeline Debug 功能实现
+## 🎯 Timeline 输出格式改进
 
-### 1. **配置扩展**
-- **新增字段**：`debug?: boolean` 在 `TimelineConfig` 接口
-- **使用方式**：在 blp-timeline 代码块中添加 `debug: true`
-- **默认行为**：debug 为 false 时正常处理时间线
+### 1. **新格式要求**
+- **文件链接入口**：每个文件组以 `[[文件路径]]` 作为入口
+- **分隔符**：文件组之间用 `---` 分隔
+- **空行**：每个内容行之间添加空行
+- **用户修改保留**：保留用户对嵌入链接的自定义修改
 
-### 2. **Debug 输出内容**
-```json
-{
-  "parsedConfig": {
-    "source_folders": ["..."],
-    "within_days": 30,
-    "sort_order": "desc",
-    "heading_level": 4,
-    "embed_format": "!![[]]",
-    "time_pattern": "...",
-    "debug": true,
-    "filters": { ... }
-  },
-  "resolvedFilters": {
-    "tags": ["#tag1", "#tag2"],
-    "links": [{"path": "/path/to/file.md", "type": "file"}]
-  },
-  "dataviewQueryResults": {
-    "totalPages": 10,
-    "pages": [{"path": "...", "name": "...", "tags": [...]}]
-  },
-  "extractedSections": {
-    "totalSections": 5,
-    "sections": [{"file": {...}, "heading": {...}}]
-  },
-  "filteringStats": {
-    "candidateFiles": 10,
-    "sectionsAfterExtraction": 5,
-    "filterEfficiency": "5/10 sections extracted"
-  }
-}
+### 2. **新格式示例**
+```
+%% blp-timeline-start data-hash="..." %%
+[[文件路径1]]
+
+![[文件路径1#标题1]]
+
+![[文件路径1#标题2]]
+
+---
+[[文件路径2]]
+
+![[文件路径2#标题1]]
+%% blp-timeline-end %%
 ```
 
-### 3. **实现特点**
-- **预览模式渲染**：Debug 输出显示在预览面板
-- **结构化信息**：包含配置解析、筛选器解析、查询结果、提取结果
-- **统计信息**：显示筛选效率和数据流转情况
-- **限制输出**：防止过大的 JSON (页面限制10个，sections限制20个)
+### 3. **实现方案**
+- **按文件分组**：使用 `groupedByFile` 对象按文件路径分组
+- **排序**：按照 `config.sort_order` 对文件组进行排序
+- **格式化输出**：生成包含文件链接、分隔符和空行的格式化内容
+- **保留用户修改**：使用 `userModificationsMap` 保留用户对嵌入链接的修改
 
-### 4. **调试流程**
-1. **配置解析**：显示最终合并的配置
-2. **筛选器解析**：显示 tags 和 links 的解析结果
-3. **Dataview 查询**：显示查询返回的页面数据
-4. **Section 提取**：显示从页面中提取的相关 sections
-5. **统计分析**：显示筛选效率和数据转换情况
+### 4. **兼容性考虑**
+- **哈希计算**：确保新格式与哈希机制兼容
+- **用户修改**：只保留对嵌入链接的修改，文件链接和分隔符使用默认格式
+- **向后兼容**：首次运行时会更新所有现有 Timeline 区域，后续运行正常
 
 ## 🔧 技术实现细节
 
-### Debug 模式检测
+### 按文件分组
 ```typescript
-if (config.debug) {
-    // Render debug output in preview pane
-    el.empty();
-    el.createEl("h3", { text: "🐛 Timeline Debug Output" });
-    
-    const debugOutput = renderDebugOutput(/*...*/);
-    const debugContainer = el.createEl("div");
-    debugContainer.innerHTML = debugOutput;
-    return; // Exit early in debug mode
+// 1. 按文件路径对章节进行分组
+const groupedByFile: Record<string, { file: TFile; headings: HeadingCache[] }> = {};
+for (const section of allSections) {
+    if (!groupedByFile[section.file.path]) {
+        groupedByFile[section.file.path] = {
+            file: section.file,
+            headings: [],
+        };
+    }
+    groupedByFile[section.file.path].headings.push(section.heading);
 }
 ```
 
-### JSON 输出结构
-- **parsedConfig**: 完整的配置对象
-- **resolvedFilters**: 解析后的筛选器
-- **dataviewQueryResults**: Dataview 查询原始结果
-- **extractedSections**: 提取的相关 sections
-- **filteringStats**: 筛选统计信息
+### 格式化输出
+```typescript
+// 3. 生成格式化的内容
+const newContentLines: string[] = [];
+let isFirstGroup = true;
+
+for (const group of sortedGroups) {
+    // 添加分隔符（除了第一个组）
+    if (!isFirstGroup) {
+        newContentLines.push("---");
+        newContentLines.push("");
+    } else {
+        isFirstGroup = false;
+    }
+    
+    // 添加文件链接
+    newContentLines.push(`[[${group.file.path}]]`);
+    newContentLines.push("");
+    
+    // 排序并添加章节嵌入
+    const sortedHeadings = group.headings.sort(
+        (a, b) => a.position.start.line - b.position.start.line
+    );
+    
+    for (let i = 0; i < sortedHeadings.length; i++) {
+        const heading = sortedHeadings[i];
+        const key = `${group.file.path}#${heading.heading}`;
+        if (userModificationsMap.has(key)) {
+            newContentLines.push(userModificationsMap.get(key)!);
+        } else {
+            const embedLink =
+                config.embed_format === "!![[]]"
+                    ? `!![[${group.file.path}#${heading.heading}]]`
+                    : `![[${group.file.path}#${heading.heading}]]`;
+            newContentLines.push(embedLink);
+        }
+        
+        // 在每个嵌入链接后添加空行（除了最后一个）
+        if (i < sortedHeadings.length - 1) {
+            newContentLines.push("");
+        }
+    }
+}
+```
 
 ## 📝 下一步行动
-1. 🧪 测试 debug 功能是否正常工作
-2. 🔍 使用 debug 输出分析筛选问题
-3. 🐛 根据 debug 信息定位筛选 bug
-4. 🔧 修复发现的问题
-5. 📋 更新相关文档
+1. ✅ 更新版本号至 1.5.3
+2. ✅ 更新文档说明新格式
+3. ✅ 创建测试文件验证功能
+4. 📋 更新 README 文件
+5. 🔍 收集用户反馈
 
 ## 📊 开发进度
-- **配置扩展**：✅ 完成
-- **Debug 渲染函数**：✅ 完成  
-- **主处理逻辑修改**：✅ 完成
-- **测试验证**：⏳ 待进行
-- **Bug 修复**：⏳ 待分析
+- **格式需求分析**：✅ 完成
+- **代码实现**：✅ 完成  
+- **文档更新**：✅ 完成
+- **测试验证**：✅ 完成
+- **版本更新**：✅ 完成

@@ -178,7 +178,57 @@ filters:
   - `links`: Filter sections based on links. Contains `relation`, `items`, and `link_to_current_file`.
   - `tags`: Filter sections based on tags. Contains `relation`, `items`, and an optional `from_frontmatter` object to pull tags from YAML frontmatter.
 
+**Output Format:**
+From version 1.5.3, Timeline's output format has been improved for better readability and organization:
+
+```
+%% blp-timeline-start data-hash="..." %%
+[[file1]]
+
+![[file1#heading1]]
+
+![[file1#heading2]]
+
+---
+[[file2]]
+
+![[file2#heading1]]
+%% blp-timeline-end %%
+```
+
+Key features of the new format:
+- Each file has a regular link as an entry point
+- Files are separated by `---` dividers
+- Each content line has empty lines between them
+- User customizations to embedded links are preserved
+
+**Debug Mode:**
+For troubleshooting, you can add `debug: true` to your timeline configuration to see detailed information about the query process:
+
+```yaml
+debug: true
+source_folders: ["Daily Notes"]
+heading_level: 4
+```
+
+This will display a JSON output with parsed configuration, resolved filters, query results, and filtering statistics.
+
 ## Changelog
+
+### 1.5.3
+- Improved **Timeline** output format for better readability and organization
+- Added file links as entry points for each file group
+- Added separators between file groups and empty lines between content
+- Preserved user customizations to embedded links
+- Updated documentation with new format examples
+- Fixed link matching issues in Timeline filtering
+
+### 1.5.0
+- Added **Debug Mode** to Timeline feature for troubleshooting filtering issues
+- Fixed section extraction in Timeline to properly match links
+- Improved Timeline filtering accuracy with basename matching
+- Added hash-based optimization to prevent unnecessary file updates
+- Fixed various edge cases in Timeline functionality
 
 ### 1.4.0
 - Added **Embed Block Editing** feature for a seamless inline editing experience.
