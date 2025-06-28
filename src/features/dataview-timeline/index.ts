@@ -444,18 +444,67 @@ export async function handleTimeline(
             return a.heading.position.start.line - b.heading.position.start.line;
         });
 
-        const newContentLines: string[] = [];
+        // 1. 按文件路径对章节进行分组
+        const groupedByFile: Record<string, { file: TFile; headings: HeadingCache[] }> = {};
         for (const section of allSections) {
-            const key = `${section.file.path}#${section.heading.heading}`;
-            if (userModificationsMap.has(key)) {
-                newContentLines.push(userModificationsMap.get(key)!);
+            if (!groupedByFile[section.file.path]) {
+                groupedByFile[section.file.path] = {
+                    file: section.file,
+                    headings: [],
+                };
+            }
+            groupedByFile[section.file.path].headings.push(section.heading);
+        }
+
+        // 2. 对文件组进行排序
+        const sortedGroups = Object.values(groupedByFile).sort((a, b) => {
+            if (config.sort_order === "asc") {
+                return a.file.name.localeCompare(b.file.name);
             } else {
-                // This is a new item, create a default link
-                const embedLink =
-                config.embed_format === "!![[]]"
-                    ? `!![[${section.file.path}#${section.heading.heading}]]`
-                    : `![[${section.file.path}#${section.heading.heading}]]`;
-                newContentLines.push(embedLink);
+                return b.file.name.localeCompare(a.file.name);
+            }
+        });
+
+        // 3. 生成格式化的内容
+        const newContentLines: string[] = [];
+        let isFirstGroup = true;
+
+        for (const group of sortedGroups) {
+            // 添加分隔符（除了第一个组）
+            if (!isFirstGroup) {
+                newContentLines.push("");
+                newContentLines.push("---");
+                newContentLines.push("");
+            } else {
+                isFirstGroup = false;
+            }
+            
+            // 添加文件链接
+            newContentLines.push(`[[${group.file.path}]]`);
+            newContentLines.push("");
+            
+            // 排序并添加章节嵌入
+            const sortedHeadings = group.headings.sort(
+                (a, b) => a.position.start.line - b.position.start.line
+            );
+            
+            for (let i = 0; i < sortedHeadings.length; i++) {
+                const heading = sortedHeadings[i];
+                const key = `${group.file.path}#${heading.heading}`;
+                if (userModificationsMap.has(key)) {
+                    newContentLines.push(userModificationsMap.get(key)!);
+                } else {
+                    const embedLink =
+                        config.embed_format === "!![[]]"
+                            ? `!![[${group.file.path}#${heading.heading}]]`
+                            : `![[${group.file.path}#${heading.heading}]]`;
+                    newContentLines.push(embedLink);
+                }
+                
+                // 在每个嵌入链接后添加空行（除了最后一个）
+                if (i < sortedHeadings.length - 1) {
+                    newContentLines.push("");
+                }
             }
         }
 
