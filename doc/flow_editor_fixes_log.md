@@ -164,6 +164,104 @@
 
 ---
 
+## 问题 7: Timeline 调试功能缺失 (已解决)
+
+- **Bug 描述**: Timeline 功能在出现过滤问题时，用户无法获得详细的调试信息来分析配置解析、查询结果、过滤统计等关键数据，导致问题排查困难。
+- **根本原因分析**:
+  - **核心问题**: Timeline 功能缺少调试模式，无法输出中间处理步骤的详细信息
+  - **具体表现**: 用户只能看到最终的 Timeline 结果，无法了解：
+    - 解析后的配置参数
+    - Dataview 查询返回的页面数据
+    - 标签和链接的解析结果
+    - 各个过滤步骤的统计信息
+  - **代码位置**: `src/features/dataview-timeline/index.ts` 中的 `handleTimeline` 函数
+  - **缺失功能**: 调试输出机制和相关配置选项
+- **解决方案**:
+  - **配置扩展**: 在 `TimelineConfig` 接口中添加 `debug?: boolean` 字段
+  - **调试渲染函数**: 实现 `renderDebugOutput()` 函数，生成结构化的 JSON 调试信息
+  - **调试信息内容**:
+    - `parsedConfig`: 最终合并后的配置
+    - `resolvedFilters`: 处理后的标签和链接
+    - `dataviewQueryResults`: 查询返回的页面
+    - `extractedSections`: 提取的相关标题
+    - `filteringStats`: 过滤效率统计
+  - **主处理逻辑修改**: 更新 `handleTimeline()` 函数支持调试模式
+- **修改的文件**:
+  - `src/features/dataview-timeline/index.ts` (添加调试功能)
+  - `timeline-debug-example.md` (创建使用指南)
+- **技术特性**:
+  - 调试输出在预览面板中渲染，便于查看
+  - 设置数据限制防止输出过多内容（10个页面，20个章节）
+  - 信息以 JSON 格式结构化，便于分析
+  - 提供从配置解析到最终结果的完整调试链
+- **使用方法**:
+  ```yaml
+  debug: true
+  source_folders: ["daily-notes"]
+  filters:
+    tags:
+      items: ["meeting", "project"]
+  ```
+- **测试验证**:
+  - ✅ 调试模式正确显示配置解析结果
+  - ✅ 查询结果和过滤统计准确显示
+  - ✅ JSON 格式输出便于分析
+  - ✅ 调试模式下跳过正常 Timeline 处理
+
+---
+
+## 问题 8: Timeline 哈希机制缺失导致性能问题 (已解决)
+
+- **Bug 描述**: Timeline 功能缺少哈希机制，即使内容没有变化也会执行不必要的文件写入操作，导致性能浪费和频繁的文件修改通知。
+- **根本原因分析**:
+  - **核心问题**: Timeline 功能使用了已弃用的 `findSyncRegion()` 函数，该函数不支持哈希比较
+  - **具体表现**: 
+    - 每次处理 Timeline 都会重写文件，即使内容完全相同
+    - 增加了不必要的文件系统负载
+    - 用户会收到频繁的文件修改通知
+    - 影响插件响应性能
+  - **代码位置**: `src/features/dataview-timeline/index.ts` 中的区域处理逻辑
+  - **技术债务**: 缺少 `crypto` 模块导入和哈希计算逻辑
+- **解决方案**:
+  - **函数替换**: 将 `findSyncRegion()` 替换为 `findDynamicRegion()`，后者支持哈希机制
+  - **哈希计算**: 使用 MD5 算法计算新内容的哈希值
+  - **智能比较**: 通过比较现有哈希和新哈希来判断内容是否变化
+  - **标记格式升级**: Timeline 标记格式包含 `data-hash` 属性
+  - **条件写入**: 仅在内容确实发生变化时才执行文件写入
+- **核心修改**:
+  ```typescript
+  // 新增导入
+  import crypto from "crypto";
+  import { findDynamicRegion } from "./region-parser";
+  
+  // 哈希计算和比较逻辑
+  const newContentHash = crypto.createHash('md5').update(newContentBlock).digest('hex');
+  if (region?.existingHash === newContentHash) {
+      return; // 内容未变化，跳过文件修改
+  }
+  
+  // 新标记格式
+  const newStartMarker = `${REGION_START_MARKER_PREFIX} data-hash="${newContentHash}" %%`;
+  ```
+- **修改的文件**:
+  - `src/features/dataview-timeline/index.ts` (完整哈希机制实现)
+- **性能优化成果**:
+  - **避免重复写入**: 通过哈希比较防止不必要的文件操作
+  - **文件系统负载**: 显著降低文件写入频率
+  - **用户体验**: 减少文件修改通知，提升插件响应性
+  - **数据一致性**: 保持 Timeline 内容的准确性
+- **向后兼容性**:
+  - 支持旧格式标记的平滑过渡
+  - 新旧格式可以共存
+  - 首次运行时自动升级到新格式
+- **构建验证**:
+  - ✅ 无编译错误
+  - ✅ 清理旧函数后代码整洁
+  - ✅ TypeScript 类型使用正确
+  - ✅ 与现有代码架构无缝集成
+
+---
+
 ## 全部问题解决状态总结 (2024-12-26)
 
 ✅ **问题 6**: 嵌入块标题引用解析失败 - 已解决  
@@ -172,6 +270,8 @@
 ✅ **问题 4**: 可编辑时嵌入块的标题不显示 - 已解决  
 ✅ **问题 2 (扩展)**: `!![[...]]` 在阅读模式下导致崩溃 - 已解决  
 ✅ **问题 5**: 带别名的块链接解析失败 - 已解决  
+✅ **问题 7**: Timeline 调试功能缺失 - 已解决  
+✅ **问题 8**: Timeline 哈希机制缺失导致性能问题 - 已解决  
 ⚠️ **问题 1**: 模式切换时渲染状态残留 - **暂时搁置**
 
-**Flow Editor 功能基本稳定，除一个已知的渲染残留问题外，其余 Bug 均已修复。** 
+**Flow Editor 和 Timeline 功能已基本稳定，8个主要问题已解决，仅剩1个已知的渲染残留问题暂时搁置。** 

@@ -1,89 +1,119 @@
 # σ₄: Active Context
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-26*
-*Π: DEVELOPMENT | Ω: EXECUTE*
+*Π: DEVELOPMENT | Ω: RESEARCH*
 
 ## 🔮 Current Focus
-✅ **SOLVED: Block Link Plus 嵌入块编辑功能 Bug 调查完成**
-- 用户报告：`!![[block#b1|x]]` 正常渲染 #b1 范围，但 `!![[block#17 21]]` 渲染整个文件
-- **根本原因发现**：Obsidian 生成标题链接时将 `:` 等特殊字符替换为空格 (` `)
-- **解决方案**：使用官方 `resolveSubpath` API 替代自定义解析逻辑
+🔍 **NEW: Timeline 筛选 Bug 调查 + Debug 功能实现**
+- 用户报告：timeline 没有正确筛选出内容
+- **实现方案**：为 timeline 配置增加 `debug: true` 选项
+- **Debug 输出**：解析代码块和搜索结果的 JSON 表示
+- **状态**：Debug 功能已实现，等待测试验证
 
 ## 📎 Context References
 - 📄 Active Files: 
-  - `src/shared/utils/obsidian.ts` (已更新使用 resolveSubpath API)
-  - `doc/flow_editor_fixes_log.md` (需要更新bug记录)
-- 💻 Active Code: 新的 `getLineRangeFromRef` 实现
-- 📚 Active Docs: Obsidian TypeScript API 文档 - resolveSubpath
-- 📁 Active Folders: `src/shared/utils/`
-- 🔄 Git References: Bug修复相关代码
-- 📏 Active Rules: CursorRIPER♦Σ Lite 1.0.0 Execute Mode
+  - `src/features/dataview-timeline/index.ts` (已添加 debug 功能)
+  - `memory-bank/activeContext.md` (当前更新)
+- 💻 Active Code: 
+  - `TimelineConfig.debug?: boolean` (新增配置项)
+  - `renderDebugOutput()` 函数 (新增调试渲染)
+  - `handleTimeline()` 函数 (修改支持调试模式)
+- 📚 Active Docs: Timeline 功能文档
+- 📁 Active Folders: `src/features/dataview-timeline/`
+- 🔄 Git References: Timeline debug 功能实现
+- 📏 Active Rules: CursorRIPER♦Σ Lite 1.0.0 Research Mode
 
 ## 📡 Context Status
-- 🟢 Active: Bug 已解决，需要更新文档
-- 🟡 Partially Relevant: 调试打印代码可以清理
-- 🟣 Essential: 官方 API 使用方案
-- 🔴 Deprecated: 旧的自定义解析逻辑
+- 🟢 Active: Timeline debug 功能开发
+- 🟡 Partially Relevant: 需要测试验证 debug 输出
+- 🟣 Essential: Timeline 筛选逻辑调试
+- 🔴 Deprecated: 无
 
-## 🎯 关键发现 (Bug 解决)
+## 🎯 Timeline Debug 功能实现
 
-### 1. **根本原因确认**
-- **问题核心**：Obsidian 标题链接生成机制
-- **具体表现**：`17:21` 标题 → `!![[file#17 21]]` (冒号变空格)
-- **失败环节**：自定义的标题匹配逻辑无法处理字符替换
+### 1. **配置扩展**
+- **新增字段**：`debug?: boolean` 在 `TimelineConfig` 接口
+- **使用方式**：在 blp-timeline 代码块中添加 `debug: true`
+- **默认行为**：debug 为 false 时正常处理时间线
 
-### 2. **解决方案实施**
-- **采用官方API**：`resolveSubpath(cache, ref)`
-- **API优势**：
-  - 官方维护，处理所有字符转换规则
-  - 支持块引用和标题引用
-  - 返回标准化的结果对象
-  - 自动处理边界情况
-
-### 3. **新实现特点**
-```typescript
-const resolved = resolveSubpath(cache, ref) as HeadingSubpathResult | BlockSubpathResult | null;
-if (!resolved) return [undefined, undefined];
-
-if (resolved.type === "block") {
-  const { position } = resolved.block as BlockCache;
-  return [position.start.line + 1, position.end.line + 1];
-}
-
-if (resolved.type === "heading") {
-  const { current: heading, next } = resolved as HeadingSubpathResult;
-  const start = heading.position.start.line + 1;
-  const end = next
-    ? next.position.start.line
-    : getLastContentLineFromCache(cache) + 1;
-  return [start, end];
+### 2. **Debug 输出内容**
+```json
+{
+  "parsedConfig": {
+    "source_folders": ["..."],
+    "within_days": 30,
+    "sort_order": "desc",
+    "heading_level": 4,
+    "embed_format": "!![[]]",
+    "time_pattern": "...",
+    "debug": true,
+    "filters": { ... }
+  },
+  "resolvedFilters": {
+    "tags": ["#tag1", "#tag2"],
+    "links": [{"path": "/path/to/file.md", "type": "file"}]
+  },
+  "dataviewQueryResults": {
+    "totalPages": 10,
+    "pages": [{"path": "...", "name": "...", "tags": [...]}]
+  },
+  "extractedSections": {
+    "totalSections": 5,
+    "sections": [{"file": {...}, "heading": {...}}]
+  },
+  "filteringStats": {
+    "candidateFiles": 10,
+    "sectionsAfterExtraction": 5,
+    "filterEfficiency": "5/10 sections extracted"
+  }
 }
 ```
 
-### 4. **测试验证**
-- ✅ `!![[block#b1|x]]` - 块引用正常
-- ✅ `!![[block#17 21]]` - 标题引用修复
-- ✅ `!![[block#^blockid]]` - 块ID引用正常
+### 3. **实现特点**
+- **预览模式渲染**：Debug 输出显示在预览面板
+- **结构化信息**：包含配置解析、筛选器解析、查询结果、提取结果
+- **统计信息**：显示筛选效率和数据流转情况
+- **限制输出**：防止过大的 JSON (页面限制10个，sections限制20个)
 
-## 🔧 技术收获
+### 4. **调试流程**
+1. **配置解析**：显示最终合并的配置
+2. **筛选器解析**：显示 tags 和 links 的解析结果
+3. **Dataview 查询**：显示查询返回的页面数据
+4. **Section 提取**：显示从页面中提取的相关 sections
+5. **统计分析**：显示筛选效率和数据转换情况
 
-### 字符转换规则
-- Obsidian 标题链接：`标题:内容` → `标题 内容`
-- 其他特殊字符也可能被转换
-- 官方API已处理所有转换规则
+## 🔧 技术实现细节
 
-### API使用最佳实践
-- 优先使用官方API而非自定义解析
-- `resolveSubpath` 是处理引用的标准方法
-- 类型检查确保正确处理不同引用类型
+### Debug 模式检测
+```typescript
+if (config.debug) {
+    // Render debug output in preview pane
+    el.empty();
+    el.createEl("h3", { text: "🐛 Timeline Debug Output" });
+    
+    const debugOutput = renderDebugOutput(/*...*/);
+    const debugContainer = el.createEl("div");
+    debugContainer.innerHTML = debugOutput;
+    return; // Exit early in debug mode
+}
+```
+
+### JSON 输出结构
+- **parsedConfig**: 完整的配置对象
+- **resolvedFilters**: 解析后的筛选器
+- **dataviewQueryResults**: Dataview 查询原始结果
+- **extractedSections**: 提取的相关 sections
+- **filteringStats**: 筛选统计信息
 
 ## 📝 下一步行动
-1. ✅ 问题已解决
-2. 🔄 更新 flow_editor_fixes_log.md
-3. 🧹 清理调试打印代码（可选）
-4. 📋 验证其他相关功能正常
+1. 🧪 测试 debug 功能是否正常工作
+2. 🔍 使用 debug 输出分析筛选问题
+3. 🐛 根据 debug 信息定位筛选 bug
+4. 🔧 修复发现的问题
+5. 📋 更新相关文档
 
-## 📊 Bug 调查总结
-- **调查时长**：从发现到解决
-- **关键突破**：理解 Obsidian 字符转换机制
-- **最终方案**：官方 API 替代自定义逻辑
-- **技术价值**：深入理解 Obsidian 内部机制
+## 📊 开发进度
+- **配置扩展**：✅ 完成
+- **Debug 渲染函数**：✅ 完成  
+- **主处理逻辑修改**：✅ 完成
+- **测试验证**：⏳ 待进行
+- **Bug 修复**：⏳ 待分析
