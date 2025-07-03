@@ -1,5 +1,16 @@
 import { App, HeadingCache, resolveSubpath, HeadingSubpathResult, BlockSubpathResult, BlockCache, CachedMetadata } from 'obsidian';
 
+
+/**
+ * get multiline block id from input string
+ * @param inputStr 
+ * @returns 
+ */
+function getMultilineBlockId(inputStr: string): string | null {
+  const matchResult = inputStr.match(/^\^([a-z0-9]+)-\1$/);
+  return matchResult ? `^${matchResult[1]}` : null;
+}
+
 /**
  * 从 CachedMetadata 中获取文件最后一个内容块的结束行号。
  *
@@ -60,11 +71,20 @@ export const getLineRangeFromRef = (
   const cache = app.metadataCache.getCache(path);
   if (!cache) return [undefined, undefined];
 
+
   const resolved = resolveSubpath(cache, ref) as HeadingSubpathResult | BlockSubpathResult | null;
   if (!resolved) return [undefined, undefined];
 
   if (resolved.type === "block") {
+    const multilineBlockId = getMultilineBlockId(ref);
     const { position } = resolved.block as BlockCache;
+    if (multilineBlockId) {
+      const startBlock = resolveSubpath(cache, multilineBlockId) as HeadingSubpathResult | BlockSubpathResult | null;
+      if (startBlock && startBlock.type === "block") {
+        return [startBlock.block.position.start.line + 1, position.end.line + 1];
+      }
+    }
+
     return [position.start.line + 1, position.end.line + 1];
   }
 
