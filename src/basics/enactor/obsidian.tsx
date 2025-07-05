@@ -80,6 +80,37 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
           });
         }
       }
+    } else if (
+      expandedState == FlowEditorState.Open &&
+      type == FlowEditorLinkType.ReadOnlyEmbed
+    ) {
+      if (
+        !(
+          (state.selection.main.from == from - 3 &&
+            state.selection.main.to == to + 2) ||
+          (state.selection.main.from >= from - 2 &&
+            state.selection.main.to <= to + 1)
+        )
+      ) {
+        values.push({
+          start: from - 3,
+          end: from - 2,
+          decoration: flowEditorSelector(info, plugin),
+        });
+        if (lineFix) {
+          values.push({
+            start: from - 2,
+            end: to + 2,
+            decoration: flowEditorWidgetDecoration(info, plugin),
+          });
+        } else {
+          values.push({
+            start: from - 2,
+            end: to + 2,
+            decoration: flowEditorDecoration(info, plugin),
+          });
+        }
+      }
     }
   }
   values.sort(compareByField("start", true));

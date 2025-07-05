@@ -1,6 +1,6 @@
 # σ₅: Progress Tracker
-*v1.0 | Created: 2023-11-15 | Updated: 2023-11-18*
-*Π: 🏗️DEVELOPMENT | Ω: ⚙️EXECUTE*
+*v5.0 | Created: 2024-12-19 | Updated: 2024-12-20*
+*Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 📈 Project Status
 Completion: 85%
@@ -378,4 +378,49 @@ Completion: 85%
 - ✅ 成功集成 Basics 插件的内联编辑功能
 - ✅ 解决了 CSS 导入问题
 - ✅ 修复了设置面板错误
-- ✅ 更新了 Memory Bank 文档 
+- ✅ 更新了 Memory Bank 文档
+
+## ✅ Completed Tasks
+- [x] 实现了只读多行块嵌入功能 (`![[file#^id-id]]`)
+- [x] 修复了正则表达式无限循环问题
+- [x] 修复了文件路径解析问题
+- [x] 解决了双重渲染问题
+- [x] 修复了 TypeScript 类型错误
+- [x] 修复了编辑图标定位问题（采用方案一）
+- [x] 解决了多行块初始化问题（采用方案二）- 失败
+- [x] 实施了完整的多行块渲染解决方案
+
+## 🔄 Recent Changes
+- 2024-12-20: 创建了多行块检测工具函数
+- 2024-12-20: 修改 replaceAllEmbed 以跳过多行块
+- 2024-12-20: 实现 replaceMultilineBlocks 专门处理多行块
+- 2024-12-20: 集成到 Post Processor 流程中
+
+## 🎯 Implementation Details
+### 多行块渲染完整解决方案
+- **问题根源**: 
+  - Obsidian 将 `![[file#^id-id]]` 作为普通嵌入渲染（只显示单行）
+  - 我们的 CodeMirror 装饰器虽然识别了多行块，但没有机会初始化
+  - Post Processor 只为已渲染的原生嵌入添加图标
+  
+- **解决方案**:
+  1. 创建多行块检测函数 `isMultilineBlockRef`
+  2. 修改 `replaceAllEmbed` 跳过多行块
+  3. 实现 `replaceMultilineBlocks` 专门处理多行块
+  4. 替换 Obsidian 的单行渲染为我们的多行渲染
+  5. 主动触发 `flowTypeStateField` 初始化
+
+### 技术实现要点
+- 检测模式：`#^([a-z0-9]+)-\1$`
+- 使用 `UINote` 组件替换原生渲染
+- 通过 `portalTypeAnnotation.of("doc")` 触发初始化
+- 保持与现有功能的兼容性
+
+## 🐛 Known Issues
+- [ ] 编辑图标可能向上偏移一行（问题 2 待修复）
+- [ ] 可能需要进一步的样式调整以完全匹配原生 Obsidian 嵌入外观
+
+## 📋 Next Steps
+- [ ] 测试多行块渲染是否正常工作
+- [ ] 修复编辑图标位置偏移问题
+- [ ] 优化性能和用户体验 

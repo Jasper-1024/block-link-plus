@@ -41,6 +41,7 @@ export enum FlowEditorLinkType {
   Link = 0,
   Embed = 1,
   EmbedClosed = 2,
+  ReadOnlyEmbed = 3,
 }
 
 export interface FlowEditorInfo {
@@ -67,7 +68,8 @@ export const preloadFlowEditor = EditorState.transactionFilter.of(
         ...value
           .filter((f) => f.expandedState == 1)
           .map((f) => {
-            if (tr.state.field(flowTypeStateField, false) == "doc") {
+            if (tr.state.field(flowTypeStateField, false) == "doc" || 
+                f.type == FlowEditorLinkType.ReadOnlyEmbed) {
               return {
                 annotations: toggleFlowEditor.of([f.id, 2]),
               };
@@ -131,6 +133,38 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
       newValues.push(info);
     }
 
+    const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
+    
+    for (const match of str.matchAll(/(?<!!)!\[\[([^\]]+)\]\]/g)) {
+      const link = match[1];
+      if (multiLineBlockRegex.test(link) && match.index !== undefined) {
+        const existingLinks = previous.filter((f) => f.link == link);
+        const offset = usedContainers.filter((f) => f == link).length;
+        const existingInfo = existingLinks[offset];
+        const id = existingInfo ? existingInfo.id : genId();
+        usedContainers.push(link);
+        const info = {
+          id: id,
+          link: match[1],
+          from: match.index + 3,
+          to: match.index + 3 + match[1].length,
+          type: FlowEditorLinkType.ReadOnlyEmbed,
+          height: existingInfo
+            ? tr.annotation(cacheFlowEditorHeight)?.[0] == id &&
+              tr.annotation(cacheFlowEditorHeight)?.[1] != 0
+              ? tr.annotation(cacheFlowEditorHeight)?.[1] ?? -1
+              : existingInfo.height
+            : -1,
+          expandedState: existingInfo
+            ? tr.annotation(toggleFlowEditor)?.[0] == id
+              ? reverseExpandedState(existingInfo.expandedState)
+              : existingInfo.expandedState
+            : 1,
+        };
+        newValues.push(info);
+      }
+    }
+
     newValues.sort(compareByField("from", true));
     return newValues;
   },
@@ -159,6 +193,9 @@ class FlowEditorWidget extends WidgetType {
       const infoField = view.state.field(editorInfoField, false);
       const file = infoField.file;
 
+      const isReadOnly = this.info.type === FlowEditorLinkType.ReadOnlyEmbed;
+      console.log(`Rendering widget for ${this.info.link}, type=${this.info.type}, isReadOnly=${isReadOnly}`);
+
       this.root = createRoot(div);
       this.root.render(
         <UINote
@@ -166,6 +203,7 @@ class FlowEditorWidget extends WidgetType {
           plugin={this.plugin}
           path={this.info.link}
           source={file.path}
+          isReadOnly={isReadOnly}
         ></UINote>
       );
     }
@@ -200,6 +238,9 @@ export class FlowEditorSelector extends WidgetType {
       const infoField = view.state.field(editorInfoField, false);
       const file = infoField.file;
 
+      // For ReadOnlyEmbed, toggleState should be false (no ! prefix to remove)
+      const toggleState = this.info.type === FlowEditorLinkType.ReadOnlyEmbed ? false : true;
+
       reactEl.render(
         <FlowEditorHover
           app={this.plugin.app}
@@ -207,7 +248,7 @@ export class FlowEditorSelector extends WidgetType {
           toggle={true}
           path={this.info.link}
           source={file?.path}
-          toggleState={true}
+          toggleState={toggleState}
           view={view}
           pos={{ from: this.info.from, to: this.info.to }}
           dom={div}

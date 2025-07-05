@@ -1,6 +1,12 @@
 import BlockLinkPlus from "main";
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import i18n from "shared/i18n";
+import { TFile, MarkdownRenderer } from "obsidian";
+import { getLineRangeFromRef } from "shared/utils/obsidian";
+import { createRoot } from "react-dom/client";
+import { FlowEditorHover } from "basics/flow/FlowEditorHover";
+import { EditorView } from "@codemirror/view";
+import { FlowEditorInfo } from "basics/codemirror/flowEditor";
 
 const removeLeadingSlash = (path: string) =>
   path.charAt(0) == "/" ? path.substring(1) : path;
@@ -27,6 +33,9 @@ export interface NoteViewProps {
   properties?: Record<string, any>;
   classname?: string;
   forceNote?: boolean;
+  isReadOnly?: boolean;
+  view?: EditorView;
+  info?: FlowEditorInfo;
 }
 
 export const UINote = forwardRef((props: NoteViewProps, ref) => {
@@ -37,6 +46,59 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
   const loadPath = async (force?: boolean) => {
     const div = flowRef.current;
     if (!div) return;
+
+    // Handle read-only mode
+    if (props.isReadOnly) {
+      // Create wrapper container similar to Obsidian's native embeds
+      div.classList.add("internal-embed", "markdown-embed", "blp-readonly-embed");
+      
+      // Create content container first
+      const contentDiv = div.createDiv("markdown-embed-content");
+      
+      // Resolve the path using enactor
+      const uri = props.plugin.enactor.uriByString(props.path, props.source);
+
+      if (!uri) {
+        contentDiv.innerHTML = `Failed to resolve path: ${props.path}`;
+        return;
+      }
+
+      // Get file content
+      const file = props.plugin.app.vault.getAbstractFileByPath(uri.basePath);
+
+      if (!file || !(file instanceof TFile)) {
+        contentDiv.innerHTML = `File not found: ${uri.basePath}`;
+        return;
+      }
+
+      // Get line range for the block
+      const lineRange = getLineRangeFromRef(uri.basePath, uri.refStr, props.plugin.app);
+      
+      if (!lineRange[0] || !lineRange[1]) {
+        contentDiv.innerHTML = `Block not found: ${uri.refStr}`;
+        return;
+      }
+
+      // Read file content
+      const content = await props.plugin.app.vault.read(file);
+      const lines = content.split('\n');
+      const blockContent = lines.slice(lineRange[0] - 1, lineRange[1]).join('\n');
+
+      // Render content
+      await MarkdownRenderer.renderMarkdown(
+        blockContent,
+        contentDiv,
+        uri.basePath,
+        props.plugin
+      );
+
+      // Remove the edit icon creation - it's now handled by flowEditorSelector
+      // Make the container position relative so absolute positioning works
+      div.style.position = "relative";
+
+      setLoaded(true);
+      return;
+    }
 
     const path = props.plugin.enactor.uriByString(props.path, props.source);
     if (!path) {

@@ -17,14 +17,31 @@ export const FlowEditorHover = (props: {
   dom?: HTMLElement;
 }) => {
   const toggleFlow = () => {
+    console.log("FlowEditorHover clicked", { 
+      toggleState: props.toggleState, 
+      dom: props.dom,
+      pos: props.pos 
+    });
+    
+    if (!props.dom) {
+      console.error("No DOM element provided to FlowEditorHover");
+      return;
+    }
+    
     const domPos = props.view.posAtDOM(props.dom);
+    console.log("DOM position:", domPos);
+    
     const line = props.view.state.doc.lineAt(domPos);
     const pos = line.from;
+    console.log("Line position:", pos, "Line content:", line.text);
+    
     if (props.toggleState) {
+      console.log("Removing ! at position:", pos);
       props.view.dispatch({
         changes: { from: pos, to: pos + 1 },
       });
     } else {
+      console.log("Adding ! at position:", pos);
       props.view.dispatch({
         changes: {
           from: pos,
