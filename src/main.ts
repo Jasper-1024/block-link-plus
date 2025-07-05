@@ -163,10 +163,6 @@ export default class BlockLinkPlus extends Plugin {
 
 		// Register plugin in global scope for external access
 		(window as any).BlockLinkPlus = this;
-
-		if (this.app.plugins) {
-			(this.app.plugins as any).plugins['blocoklnnk-plu-plus'] = this;
-		}
 	}
 
 	async loadSettings() {
