@@ -38,7 +38,7 @@ export const replaceAllTables = (
   el.querySelectorAll("p").forEach((element) => {
     if (!element.textContent || !element.parentElement) return;
     for (const match of element.textContent.matchAll(
-      /(?:!\[!\[|!!\[\[)([^\]]+)\]\]/g
+      /!!\[\[([^\]]+)\]\]/g
     )) {
       const link = match[1];
       element.style.display = "none";

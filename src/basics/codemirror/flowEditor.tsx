@@ -103,7 +103,7 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
     };
 
     // Only process embed links, not regular [[xxx]] links
-    for (const match of str.matchAll(/(?:!\[!\[|!!\[\[)([^\]]+)\]\]/g)) {
+    for (const match of str.matchAll(/!!\[\[([^\]]+)\]\]/g)) {
       const link = match[1];
       const existingLinks = previous.filter((f) => f.link == link);
       const offset = usedContainers.filter((f) => f == link).length;
