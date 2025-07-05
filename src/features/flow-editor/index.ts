@@ -10,7 +10,6 @@ import {
 	patchWorkspaceLeafForFlow,
 } from "basics/flow/patchWorkspaceForFlow";
 import { replaceAllEmbed, replaceAllTables } from "basics/flow/markdownPost";
-import { loadFlowCommands } from "basics/flow/flowCommands";
 import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
@@ -64,13 +63,6 @@ export class FlowEditorManager {
 			replaceAllTables(this.plugin, element, context);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
 		});
-
-		// Load flow commands
-		loadFlowCommands(
-			this.plugin.addCommand.bind(this.plugin),
-			this.openFlow.bind(this),
-			this.closeFlow.bind(this)
-		);
 	}
 
     private processEmbeddedBlocks(element: HTMLElement): void {
