@@ -77,7 +77,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
         const filePath = parts[0];
         const blockId = parts[1];
 
-
         if (filePath && blockId) {
           // Check if this is same-file navigation or cross-file navigation
           const currentLeaf = props.plugin.app.workspace.activeLeaf;
@@ -114,7 +113,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
           }
 
           // Cross-file navigation - use openLinkText for proper block reference handling
-
           try {
             // Use Obsidian's native openLinkText for proper block reference handling
             await props.plugin.app.workspace.openLinkText(
@@ -122,7 +120,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
               props.source || "",
               false
             );
-
 
             // For multi-line blocks, apply additional selection after navigation
             setTimeout(async () => {
@@ -133,7 +130,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
                 const formattedRef = blockId.startsWith('#') ? blockId : `#${blockId}`;
                 const lineRange = getLineRangeFromRef(filePath + ".md", formattedRef, props.plugin.app);
 
-
                 if (lineRange[0] && lineRange[1]) {
                   const startLine = lineRange[0] - 1;
                   const endLine = lineRange[1] - 1;
@@ -143,13 +139,13 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
                   editor.focus();
                   editor.setSelection(from, to);
                   editor.scrollIntoView({ from, to }, true);
-
                 }
               }
             }, 100);
 
             return;
           } catch (error) {
+            console.error("Read mode navigation failed:", error);
 
             // Fallback to basic file opening
             const uri = props.plugin.enactor.uriByString(props.path, props.source);
@@ -174,7 +170,7 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
             if (lineRange[0] && lineRange[1] && leaf.view?.editor) {
               const editor = leaf.view.editor;
               const startLine = lineRange[0] - 1;
-              const endLine = lineRange[1] - 1; 
+              const endLine = lineRange[1] - 1;
 
               // Get cursor positions for the line range
               const from = { line: startLine, ch: 0 };
@@ -182,7 +178,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
 
               editor.setSelection(from, to);
               editor.scrollIntoView({ from, to }, true);
-
             }
           }
         }
