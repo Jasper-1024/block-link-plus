@@ -3,11 +3,94 @@
 *Π: 🏗️DEVELOPMENT | Ω: 🔎REVIEW*
 
 ## 🔮 Current Focus
-**Block Link Plus 多行块和可编辑嵌入功能开发 - Phase 1-3 全面完成**
+**多行块双重渲染问题已解决 - 编辑图标消失新问题待修复**
 
-当前项目已完成两大核心功能的完整实现：
-1. **多行块功能**: 支持生成 `^xyz-xyz` 格式的真正多行块ID
-2. **可编辑嵌入功能**: 支持生成 `!![[]]` 格式的可编辑嵌入链接
+## 🎯 已完成：双重渲染问题解决 ✅
+
+### 📊 问题分析结果（已验证正确）
+**问题根源**: `src/basics/enactor/obsidian.tsx` 装饰器选择条件错误
+**错误逻辑**: `condition2 = state.selection.main.from >= from - 2 && state.selection.main.to <= to + 1`
+**修正逻辑**: `condition2 = state.selection.main.from >= from - 3 && state.selection.main.to <= to + 2`
+
+### 🔍 根本原因确认
+1. **选择条件逻辑错误**:
+   - 链接格式：`![[content]]`
+   - `from - 3` 指向 `!` 的位置（正确的整行开始）
+   - `from - 2` 指向 `[` 的位置（错误的位置）
+
+2. **双重渲染机制**:
+   - **默认状态**：只有Obsidian原生渲染（正确）
+   - **光标在链接行**：condition2失效 → 装饰器错误激活 → 双重渲染
+   - **修复后**：condition2正确 → 装饰器被正确阻止 → 无双重渲染
+
+### 🎯 解决效果验证
+- ✅ **默认状态**：只有原生渲染，效果正确
+- ✅ **光标在第3行**：装饰器被正确阻止，无双重渲染
+- ✅ **用户确认**："草, 真是这个原因" - 问题根源分析完全正确
+
+## ⚠️ 新发现问题：编辑图标消失
+
+### 📋 问题描述
+- **现象**：修复双重渲染后，右上角的编辑图标消失了
+- **分析**：可能是因为修正了选择条件，影响了编辑图标的显示逻辑
+- **状态**：新bug，需要在下一个对话中修复
+
+### 🔄 下一步行动
+1. 分析编辑图标消失的原因
+2. 修复图标显示逻辑
+3. 确保双重渲染修复不被影响
+
+## 🎯 重要发现 - 多行块渲染位置错误的根本原因
+
+### 📊 问题分析结果
+**问题位置**: `src/basics/codemirror/flowEditor.tsx` 第 155 行
+**错误代码**: `from: match.index + 3`
+**应该是**: `from: match.index`
+
+### 🔍 详细分析
+1. **位置计算错误**:
+   - 正则表达式 `/(?<!!)!\[\[([^\]]+)\]\]/g` 匹配 `![[...]]` 
+   - `match.index` 是整个匹配的开始位置（`!` 的位置）
+   - 当前使用 `match.index + 3` 指向 `[[` 之后的位置
+   - 但装饰器应用时使用 `from - 3` 作为开始位置，导致位置不匹配
+
+2. **装饰器应用逻辑**:
+   - 在 `obsidian.tsx` 中：`start: from - 3, end: to + 2`
+   - 这意味着装饰器期望 `from` 指向链接内容的开始
+   - 但实际应该指向 `!` 的位置
+
+3. **lineFix 决定装饰器类型**:
+   - `lineFix = true` → 使用 `flowEditorWidgetDecoration` (block: true)
+   - `lineFix = false` → 使用 `flowEditorDecoration` (block: false)
+   - 当位置计算错误时，可能影响 `lineFix` 的判断
+
+### 🎯 解决方案
+1. **修正位置计算**:
+   ```typescript
+   // 当前错误的计算
+   from: match.index + 3,
+   to: match.index + 3 + match[1].length,
+   
+   // 应该改为
+   from: match.index,
+   to: match.index + match[0].length,
+   ```
+
+2. **或者修正装饰器应用逻辑**:
+   - 保持当前的 `from` 计算方式
+   - 修改装饰器应用中的位置计算
+
+### 📋 验证方法
+用户观察到的现象完全符合这个分析：
+- 单行块：Obsidian 原生处理，位置正确
+- 多行块：插件处理，位置计算错误导致渲染位置偏移
+
+### 🔄 对比分析
+- **`!![[]]` 格式**: `from: match.index + 4` (正确)
+- **`![[]]` 多行块**: `from: match.index + 3` (错误)
+- **应该统一**: 都使用 `match.index` 作为起始位置
+
+这个发现解释了为什么多行块渲染位置不正确，问题的根源在于位置计算逻辑的不一致性。
 
 ## 📎 Context References
 - 📄 Active Files: 
