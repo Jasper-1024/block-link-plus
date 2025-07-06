@@ -50,9 +50,32 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
     // Handle read-only mode
     if (props.isReadOnly) {
       // Create wrapper container similar to Obsidian's native embeds
-      div.classList.add("internal-embed", "markdown-embed", "blp-readonly-embed");
+      div.classList.add("internal-embed", "markdown-embed");
       
-      // Create content container first
+      // Create a positioning container for the icon
+      const iconWrapper = div.createDiv("mk-floweditor-selector");
+      
+      // Add edit icon using FlowEditorHover
+      const iconRoot = createRoot(iconWrapper);
+      
+      // Use the view passed from parent
+      if (props.view && props.info) {
+        iconRoot.render(
+          <FlowEditorHover
+            app={props.plugin.app}
+            plugin={props.plugin}
+            toggle={true}
+            path={props.path}
+            source={props.source}
+            toggleState={false}
+            view={props.view}
+            pos={{ from: props.info.from, to: props.info.to }}
+            dom={div}
+          />
+        );
+      }
+      
+      // Create content container
       const contentDiv = div.createDiv("markdown-embed-content");
       
       // Resolve the path using enactor
@@ -91,10 +114,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
         uri.basePath,
         props.plugin
       );
-
-      // Remove the edit icon creation - it's now handled by flowEditorSelector
-      // Make the container position relative so absolute positioning works
-      div.style.position = "relative";
 
       setLoaded(true);
       return;

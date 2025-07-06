@@ -9,7 +9,7 @@ import {
 	patchWorkspaceForFlow,
 	patchWorkspaceLeafForFlow,
 } from "basics/flow/patchWorkspaceForFlow";
-import { replaceAllEmbed, replaceAllTables, replaceMultilineBlocks } from "basics/flow/markdownPost";
+import { replaceAllEmbed, replaceAllTables } from "basics/flow/markdownPost";
 import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
@@ -62,8 +62,6 @@ export class FlowEditorManager {
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
-			// Process multiline blocks after other embeds
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
 	}
 

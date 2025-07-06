@@ -232,6 +232,17 @@ div:not(.mk-flowspace-editor) >
   visibility: visible;
 }
 
+/* Position fix for read-only embed edit icon */
+.internal-embed.markdown-embed {
+  position: relative;
+}
+
+.internal-embed.markdown-embed .mk-floweditor-selector {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
 .mk-floweditor-selector {
   --icon-size: 14px;
   position: absolute;

@@ -5,8 +5,6 @@ import BlockLinkPlus from "main";
 import { App, MarkdownPostProcessorContext } from "obsidian";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { isMultilineBlockRef, getEmbedHref } from "shared/utils/multiline-block";
-import { portalTypeAnnotation } from "basics/codemirror/flowStateFields";
 
 const getCMFromElement = (
   el: HTMLElement,
@@ -104,12 +102,6 @@ export const replaceAllEmbed = (
   app: App
 ) => {
   replaceMarkdownForEmbeds(el, async (dom) => {
-    // Skip if this is a multiline block embed
-    const href = getEmbedHref(dom);
-    if (isMultilineBlockRef(href)) {
-      return; // Let replaceMultilineBlocks handle this
-    }
-    
     const nodes = dom.querySelectorAll(".markdown-embed-link");
 
     for (let i = 0; i < nodes.length; i++) {
@@ -144,58 +136,6 @@ export const replaceAllEmbed = (
             );
         }
       }
-    }
-  });
-};
-
-export const replaceMultilineBlocks = (
-  el: HTMLElement,
-  ctx: MarkdownPostProcessorContext,
-  plugin: BlockLinkPlus,
-  app: App
-) => {
-  // Find all embed elements
-  const embeds = el.querySelectorAll(".internal-embed.markdown-embed");
-  
-  embeds.forEach((embed) => {
-    const href = getEmbedHref(embed);
-    
-    // Only process multiline block references
-    if (!isMultilineBlockRef(href)) {
-      return;
-    }
-    
-    // Get parent element for replacement
-    const parent = embed.parentElement;
-    if (!parent) return;
-    
-    // Hide the original embed
-    (embed as HTMLElement).style.display = "none";
-    
-    // Create a container for our custom render
-    const container = parent.createDiv("mk-multiline-block-embed");
-    
-    // Render our UINote component
-    const reactRoot = createRoot(container);
-    reactRoot.render(
-      <UINote
-        load={true}
-        plugin={plugin}
-        path={href}
-        source={ctx.sourcePath}
-        isReadOnly={true}
-      />
-    );
-    
-    // Get CodeMirror instance and trigger initialization
-    const cm = getCMFromElement(el, app);
-    if (cm) {
-      // Trigger the state change to ensure proper initialization
-      setTimeout(() => {
-        cm.dispatch({
-          annotations: portalTypeAnnotation.of("doc")
-        });
-      }, 100); // Small delay to ensure DOM is ready
     }
   });
 };

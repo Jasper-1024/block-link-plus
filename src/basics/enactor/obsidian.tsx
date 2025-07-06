@@ -92,20 +92,15 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
             state.selection.main.to <= to + 1)
         )
       ) {
-        values.push({
-          start: from - 3,
-          end: from - 2,
-          decoration: flowEditorSelector(info, plugin),
-        });
         if (lineFix) {
           values.push({
-            start: from - 2,
+            start: from - 3,
             end: to + 2,
             decoration: flowEditorWidgetDecoration(info, plugin),
           });
         } else {
           values.push({
-            start: from - 2,
+            start: from - 3,
             end: to + 2,
             decoration: flowEditorDecoration(info, plugin),
           });

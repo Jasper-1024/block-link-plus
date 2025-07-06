@@ -68,8 +68,7 @@ export const preloadFlowEditor = EditorState.transactionFilter.of(
         ...value
           .filter((f) => f.expandedState == 1)
           .map((f) => {
-            if (tr.state.field(flowTypeStateField, false) == "doc" || 
-                f.type == FlowEditorLinkType.ReadOnlyEmbed) {
+            if (tr.state.field(flowTypeStateField, false) == "doc") {
               return {
                 annotations: toggleFlowEditor.of([f.id, 2]),
               };
@@ -152,7 +151,7 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
           height: existingInfo
             ? tr.annotation(cacheFlowEditorHeight)?.[0] == id &&
               tr.annotation(cacheFlowEditorHeight)?.[1] != 0
-              ? tr.annotation(cacheFlowEditorHeight)?.[1] ?? -1
+              ? tr.annotation(cacheFlowEditorHeight)?.[1] || -1
               : existingInfo.height
             : -1,
           expandedState: existingInfo
@@ -191,10 +190,12 @@ class FlowEditorWidget extends WidgetType {
     div.style.setProperty("height", this.info.height + "px");
     if (this.info.link && view.state.field(editorInfoField, false)) {
       const infoField = view.state.field(editorInfoField, false);
+      if (!infoField) return div;
+      
       const file = infoField.file;
+      if (!file) return div;
 
       const isReadOnly = this.info.type === FlowEditorLinkType.ReadOnlyEmbed;
-      console.log(`Rendering widget for ${this.info.link}, type=${this.info.type}, isReadOnly=${isReadOnly}`);
 
       this.root = createRoot(div);
       this.root.render(
@@ -204,6 +205,8 @@ class FlowEditorWidget extends WidgetType {
           path={this.info.link}
           source={file.path}
           isReadOnly={isReadOnly}
+          view={view}
+          info={this.info}
         ></UINote>
       );
     }
@@ -236,10 +239,9 @@ export class FlowEditorSelector extends WidgetType {
     const reactEl = createRoot(div);
     if (this.info.link && view.state.field(editorInfoField, false)) {
       const infoField = view.state.field(editorInfoField, false);
+      if (!infoField) return div;
+      
       const file = infoField.file;
-
-      // For ReadOnlyEmbed, toggleState should be false (no ! prefix to remove)
-      const toggleState = this.info.type === FlowEditorLinkType.ReadOnlyEmbed ? false : true;
 
       reactEl.render(
         <FlowEditorHover
@@ -248,7 +250,7 @@ export class FlowEditorSelector extends WidgetType {
           toggle={true}
           path={this.info.link}
           source={file?.path}
-          toggleState={toggleState}
+          toggleState={true}
           view={view}
           pos={{ from: this.info.from, to: this.info.to }}
           dom={div}
