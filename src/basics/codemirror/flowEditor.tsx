@@ -143,11 +143,14 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
         const id = existingInfo ? existingInfo.id : genId();
         usedContainers.push(link);
         const cachedHeight = tr.annotation(cacheFlowEditorHeight);
-        const height = existingInfo
-          ? cachedHeight?.[0] == id && cachedHeight?.[1] != 0
-            ? (cachedHeight[1] || -1)
-            : existingInfo.height
-          : -1;
+        let height = -1;
+        if (existingInfo) {
+          if (cachedHeight && cachedHeight[0] == id && cachedHeight[1] != 0) {
+            height = cachedHeight[1];
+          } else {
+            height = existingInfo.height;
+          }
+        }
         
         const info: FlowEditorInfo = {
           id: id,
@@ -435,19 +438,21 @@ export const flowEditorSelector = (
 export const flowEditorDecoration = (
   info: FlowEditorInfo,
   plugin: BlockLinkPlus
-) =>
-  Decoration.replace({
+) => {
+  return Decoration.replace({
     widget: new FlowEditorWidget(info, plugin),
     inclusive: true,
     block: false,
   });
+};
 
 export const flowEditorWidgetDecoration = (
   info: FlowEditorInfo,
   plugin: BlockLinkPlus
-) =>
-  Decoration.widget({
+) => {
+  return Decoration.replace({
     widget: new FlowEditorWidget(info, plugin),
     inclusiveStart: true,
     block: true,
   });
+};

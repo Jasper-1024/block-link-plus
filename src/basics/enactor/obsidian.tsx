@@ -84,14 +84,12 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
       expandedState == FlowEditorState.Open &&
       type == FlowEditorLinkType.ReadOnlyEmbed
     ) {
-      if (
-        !(
-          (state.selection.main.from == from - 3 &&
-            state.selection.main.to == to + 2) ||
-          (state.selection.main.from >= from - 2 &&
-            state.selection.main.to <= to + 1)
-        )
-      ) {
+
+      const condition1 = state.selection.main.from == from - 3 && state.selection.main.to == to + 2;
+      const condition2 = state.selection.main.from >= from - 3 && state.selection.main.to <= to + 2;
+      const shouldSkip = condition1 || condition2;
+      
+      if (!shouldSkip) {
         if (lineFix) {
           values.push({
             start: from - 3,
