@@ -105,12 +105,13 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addDropdownSetting(
 			//@ts-ignore
 			"mult_line_handle",
-			["0", "1", "2"],
+			["0", "1", "2", "3"],
 			(option) => {
 				const optionsSet = new Map([
 					["0", t.settings.multiLineHandle.options.default],
 					["1", t.settings.multiLineHandle.options.addHeading],
 					["2", t.settings.multiLineHandle.options.addMultiBlock],
+					["3", t.settings.multiLineHandle.options.addMultilineBlock],
 				]);
 				return optionsSet.get(option) || "Unknown";
 			}
@@ -152,6 +153,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addHeading(t.settings.embedLink.title).setDesc(t.settings.embedLink.desc);
 		this.addToggleSetting("enable_right_click_embed").setName(t.settings.embedLink.enableRightClick.name);
 		this.addToggleSetting("enable_embed_notification").setName(t.settings.embedLink.enableNotification.name);
+
+		// Editable embed link
+		this.addHeading(t.settings.editableEmbedLink.title).setDesc(t.settings.editableEmbedLink.desc);
+		this.addToggleSetting("enable_right_click_editable_embed").setName(t.settings.editableEmbedLink.enableRightClick.name);
+		this.addToggleSetting("enable_editable_embed_notification").setName(t.settings.editableEmbedLink.enableNotification.name);
 
 		// Obsidian URI
 		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);

@@ -45,7 +45,8 @@ class T {
           options: {
             default: "Default",
             addHeading: "Add new heading", 
-            addMultiBlock: "Add multi block"
+            addMultiBlock: "Add multi block",
+            addMultilineBlock: "Add multiline block"
           }
         },
 
@@ -91,6 +92,20 @@ class T {
           },
           enableNotification: {
             name: "Show notification when embed link is copied", 
+            desc: ""
+          }
+        },
+
+        // Editable embed link section
+        editableEmbedLink: {
+          title: "Editable embed link", 
+          desc: "Link: !![[file#block_id]]",
+          enableRightClick: {
+            name: "Enable editable embed link in right click menu",
+            desc: ""
+          },
+          enableNotification: {
+            name: "Show notification when editable embed link is copied",
             desc: ""
           }
         },
@@ -312,7 +327,8 @@ class T {
           options: {
             default: "默认",
             addHeading: "添加新标题", 
-            addMultiBlock: "添加多块"
+            addMultiBlock: "添加多块",
+            addMultilineBlock: "添加多行块"
           }
         },
 
@@ -358,6 +374,20 @@ class T {
           },
           enableNotification: {
             name: "复制嵌入链接时显示通知", 
+            desc: ""
+          }
+        },
+
+        // 可编辑嵌入链接部分
+        editableEmbedLink: {
+          title: "可编辑嵌入链接",
+          desc: "链接格式：!![[文件#块id]]",
+          enableRightClick: {
+            name: "在右键菜单中启用可编辑嵌入链接",
+            desc: ""
+          },
+          enableNotification: {
+            name: "复制可编辑嵌入链接时显示通知",
             desc: ""
           }
         },
@@ -579,7 +609,8 @@ class T {
           options: {
             default: "預設",
             addHeading: "新增新標題", 
-            addMultiBlock: "新增多區塊"
+            addMultiBlock: "新增多區塊",
+            addMultilineBlock: "新增多行區塊"
           }
         },
 
@@ -625,6 +656,20 @@ class T {
           },
           enableNotification: {
             name: "複製嵌入連結時顯示通知", 
+            desc: ""
+          }
+        },
+
+        // 可編輯嵌入連結部分
+        editableEmbedLink: {
+          title: "可編輯嵌入連結",
+          desc: "連結格式：!![[檔案#區塊_id]]",
+          enableRightClick: {
+            name: "在右鍵選單中啟用可編輯嵌入連結",
+            desc: ""
+          },
+          enableNotification: {
+            name: "複製可編輯嵌入連結時顯示通知",
             desc: ""
           }
         },

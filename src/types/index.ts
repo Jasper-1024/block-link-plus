@@ -49,6 +49,7 @@ export const enum MultLineHandle {
 	oneline, // as one line handle
 	heading, // add new heading, if select text contain not heading
 	multblock, // add new block, if select text contain not block
+	multilineblock, // add multiline block with ^xyz-xyz format
 }
 
 export const enum BlockLinkAliasType {
@@ -72,6 +73,7 @@ export interface PluginSettings {
 	alias_type: BlockLinkAliasType;
 	enable_right_click_block: boolean;
 	enable_right_click_embed: boolean;
+	enable_right_click_editable_embed: boolean;
 	enable_right_click_url: boolean;
 	alias_length: number;
 	enble_prefix: boolean;
@@ -80,6 +82,7 @@ export interface PluginSettings {
 	heading_id_newline: boolean;
 	enable_block_notification: boolean;
 	enable_embed_notification: boolean;
+	enable_editable_embed_notification: boolean;
 	enable_url_notification: boolean;
 	// Time Section
 	enable_time_section: boolean;
@@ -107,6 +110,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	alias_type: BlockLinkAliasType.Default, // no alias
 	enable_right_click_block: true,
 	enable_right_click_embed: true,
+	enable_right_click_editable_embed: true,
 	enable_right_click_url: false,
 	alias_length: 20,
 	enble_prefix: false, // no prefix
@@ -115,6 +119,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	heading_id_newline: false,
 	enable_block_notification: true,
 	enable_embed_notification: true,
+	enable_editable_embed_notification: true,
 	enable_url_notification: true,
 	// Time Section
 	enable_time_section: true,

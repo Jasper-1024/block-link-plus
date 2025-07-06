@@ -184,4 +184,38 @@ export function gen_insert_blocklink_multline_block(
 	}
 
 	return links;
+}
+
+/**
+ * Generates and inserts a multiline block link with ^xyz-xyz format.
+ *
+ * @param editor - The editor instance.
+ * @param settings - The plugin settings.
+ * @returns The generated multiline block ID in ^xyz-xyz format.
+ */
+export function gen_insert_blocklink_multiline_block(
+	editor: Editor,
+	settings: PluginSettings
+): string {
+	// Generate random ID without prefix, using id_length setting
+	const id = generateRandomId("", settings.id_length);
+
+	const start_line = editor.getCursor("from").line;
+	const end_line = editor.getCursor("to").line;
+
+	// Insert ^xyz at the end of first line
+	const firstLineEnd = editor.getLine(start_line).length;
+	editor.replaceRange(` ^${id}`, {
+		line: start_line,
+		ch: firstLineEnd
+	});
+
+	// Insert ^xyz-xyz on a new line after the last line
+	const lastLineEnd = editor.getLine(end_line).length;
+	editor.replaceRange(`\n^${id}-${id}`, {
+		line: end_line,
+		ch: lastLineEnd
+	});
+
+	return `^${id}-${id}`;
 } 

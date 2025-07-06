@@ -17,7 +17,8 @@ export function copyToClipboard(
     links: string | string[],
     isEmbed: boolean,
     alias?: string | string[],
-    isUrl: boolean = false
+    isUrl: boolean = false,
+    isEditableEmbed: boolean = false
 ) {
     const linksArray = typeof links === "string" ? [links] : links;
     const aliasArray = typeof alias === "string" ? [alias] : alias;
@@ -28,7 +29,16 @@ export function copyToClipboard(
             if (isUrl) {
                 return `${_gene_obsidian_url(app, file, link)}${addNewLine}`;
             }
-            return `${isEmbed ? "!" : ""}${app.fileManager.generateMarkdownLink(
+            
+            // Handle different embed formats
+            let embedPrefix = "";
+            if (isEditableEmbed) {
+                embedPrefix = "!!";
+            } else if (isEmbed) {
+                embedPrefix = "!";
+            }
+            
+            return `${embedPrefix}${app.fileManager.generateMarkdownLink(
                 file,
                 "",
                 "#" + link,
@@ -42,9 +52,11 @@ export function copyToClipboard(
     // Show notification based on settings
     if (isUrl && settings.enable_url_notification) {
         new Notice("Obsidian URI copied to clipboard");
+    } else if (isEditableEmbed && settings.enable_editable_embed_notification) {
+        new Notice("Editable embed link copied to clipboard");
     } else if (isEmbed && settings.enable_embed_notification) {
         new Notice("Block embed link copied to clipboard");
-    } else if (!isEmbed && !isUrl && settings.enable_block_notification) {
+    } else if (!isEmbed && !isUrl && !isEditableEmbed && settings.enable_block_notification) {
         new Notice("Block link copied to clipboard");
     }
 }
