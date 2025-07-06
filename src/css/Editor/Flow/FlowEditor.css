@@ -243,6 +243,13 @@ div:not(.mk-flowspace-editor) >
   top: 8px;
 }
 
+/* Ensure the menu inside selector is properly styled */
+.internal-embed.markdown-embed .mk-floweditor-selector .mk-flowblock-menu {
+  margin-bottom: 0;
+  padding: 2px;
+  gap: 4px;
+}
+
 .mk-floweditor-selector {
   --icon-size: 14px;
   position: absolute;

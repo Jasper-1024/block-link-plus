@@ -9,29 +9,29 @@ import {
 	patchWorkspaceForFlow,
 	patchWorkspaceLeafForFlow,
 } from "basics/flow/patchWorkspaceForFlow";
-import { replaceAllEmbed, replaceAllTables } from "basics/flow/markdownPost";
+import { replaceAllEmbed, replaceAllTables, replaceMultilineBlocks } from "basics/flow/markdownPost";
 import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
 export class FlowEditorManager {
-    private plugin: BlockLinkPlus;
-    public enactor: Enactor;
+	private plugin: BlockLinkPlus;
+	public enactor: Enactor;
 
-    constructor(plugin: BlockLinkPlus) {
-        this.plugin = plugin;
-        this.enactor = new ObsidianEnactor(this.plugin);
-    }
+	constructor(plugin: BlockLinkPlus) {
+		this.plugin = plugin;
+		this.enactor = new ObsidianEnactor(this.plugin);
+	}
 
-    public initialize() {
-        this.enactor.load();
+	public initialize() {
+		this.enactor.load();
 
 		if (this.plugin.settings.editorFlow) {
 			this.setupFlowEditor();
 			this.reloadExtensions(true);
 		}
-    }
+	}
 
-    private setupFlowEditor(): void {
+	private setupFlowEditor(): void {
 		// Patch workspace for flow editing
 		patchWorkspaceForFlow(this.plugin);
 		patchWorkspaceLeafForFlow(this.plugin);
@@ -40,10 +40,9 @@ export class FlowEditorManager {
 		document.body.classList.add("mk-flow-replace");
 		document.body.classList.add("mk-flow-" + this.plugin.settings.editorFlowStyle);
 
-		// Register markdown post processor for embedded blocks
+		// live preview mode only
 		this.plugin.registerMarkdownPostProcessor((element, context) => {
 			const view = this.plugin.app.workspace.activeLeaf?.view;
-
 			if (!(view instanceof MarkdownView && view.editor)) {
 				return;
 			}
@@ -59,13 +58,33 @@ export class FlowEditorManager {
 				return;
 			}
 
+			console.log("live preview mode");
+
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
+			// replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
+		});
+
+		// read mode only
+		this.plugin.registerMarkdownPostProcessor((element, context) => {
+			const view = this.plugin.app.workspace.activeLeaf?.view;
+			if (!(view instanceof MarkdownView && view.editor)) {
+				return;
+			}
+			// only read mode
+			if (view.getMode() !== 'preview') {
+				return;
+			}
+
+			console.log("read mode");
+
+			this.processEmbeddedBlocks(element);
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
 	}
 
-    private processEmbeddedBlocks(element: HTMLElement): void {
+	private processEmbeddedBlocks(element: HTMLElement): void {
 		const embeds = element.querySelectorAll(".internal-embed.markdown-embed");
 		for (let index = 0; index < embeds.length; index++) {
 			const embed = embeds.item(index) as HTMLElement;
@@ -79,11 +98,11 @@ export class FlowEditorManager {
 		}
 	}
 
-    public reloadExtensions(firstLoad: boolean): void {
+	public reloadExtensions(firstLoad: boolean): void {
 		(this.enactor as ObsidianEnactor).loadExtensions(firstLoad);
 	}
 
-    public openFlow(): void {
+	public openFlow(): void {
 		const cm = getActiveCM(this.plugin);
 		if (cm) {
 			const value = cm.state.field(flowEditorInfo, false);

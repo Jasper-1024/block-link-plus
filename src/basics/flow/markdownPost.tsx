@@ -102,6 +102,16 @@ export const replaceAllEmbed = (
   app: App
 ) => {
   replaceMarkdownForEmbeds(el, async (dom) => {
+    // Check if this is a multi-line block embed
+    const embedLink = dom.getAttribute('src');
+    if (embedLink) {
+      const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
+      if (multiLineBlockRegex.test(embedLink)) {
+        // Skip processing for multi-line block embeds
+        return;
+      }
+    }
+    
     const nodes = dom.querySelectorAll(".markdown-embed-link");
 
     for (let i = 0; i < nodes.length; i++) {
@@ -137,5 +147,53 @@ export const replaceAllEmbed = (
         }
       }
     }
+  });
+};
+
+export const replaceMultilineBlocks = (
+  el: HTMLElement,
+  ctx: MarkdownPostProcessorContext,
+  plugin: BlockLinkPlus,
+  app: App
+) => {
+  replaceMarkdownForEmbeds(el, async (dom) => {
+    // Check if this is a multi-line block embed
+    const embedLink = dom.getAttribute('src');
+    if (!embedLink) return;
+    
+    const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
+    if (!multiLineBlockRegex.test(embedLink)) {
+      // Not a multi-line block, skip
+      return;
+    }
+    
+    // Check if already processed by CodeMirror decorator
+    if (dom.querySelector('.mk-flowspace-editor')) {
+      // Already processed, skip
+      return;
+    }
+    
+    // Hide the native rendering
+    const nativeContent = dom.querySelector('.markdown-embed-content');
+    if (nativeContent) {
+      (nativeContent as HTMLElement).style.display = 'none';
+    }
+    
+    // Create container for our custom rendering
+    const container = dom.createDiv('mk-multiline-block-container');
+    const reactEl = createRoot(container);
+    
+    // Extract the link text from src attribute
+    const linkText = embedLink.replace(/^.*\//, ''); // Remove path if present
+    
+    reactEl.render(
+      <UINote
+        load={true}
+        plugin={plugin}
+        path={linkText}
+        source={ctx.sourcePath}
+        isReadOnly={true}
+      ></UINote>
+    );
   });
 };
