@@ -59,57 +59,138 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
 
       // Create content container first
       const contentDiv = div.createDiv("markdown-embed-content");
-      
+
       // Create internal link icon (similar to Obsidian native)
       const linkIconContainer = contentDiv.createDiv("markdown-embed-link");
       linkIconContainer.setAttribute("aria-label", "Open link");
-      
+
       // Add link icon SVG
       linkIconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
-      
+
       // Add click handler for link with proper multi-line highlighting
       linkIconContainer.addEventListener("click", async (e) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Parse the path to get file and block ID
         const parts = props.path.split('#');
         const filePath = parts[0];
         const blockId = parts[1];
-        
+
+
         if (filePath && blockId) {
-          // Get the line range for multi-line blocks
-          const uri = props.plugin.enactor.uriByString(props.path, props.source);
-          if (!uri) return;
-          
-          const file = props.plugin.app.metadataCache.getFirstLinkpathDest(filePath, props.source || "");
-          if (!file) return;
-          
-          const lineRange = getLineRangeFromRef(file.path, blockId ? `#${blockId}` : undefined, props.plugin.app);
-          
-          // Open the file and navigate to the block with proper highlighting
-          const leaf = props.plugin.app.workspace.getLeaf(false);
-          await leaf.openFile(file);
-          
-          // Apply highlighting if we have a valid range
-          if (lineRange[0] && lineRange[1] && leaf.view?.editor) {
-            const editor = leaf.view.editor;
-            const startLine = lineRange[0] - 1;
-            const endLine = lineRange[1] - 1;
-            
-            // Get cursor positions for the line range
-            const from = { line: startLine, ch: 0 };
-            const to = { line: endLine, ch: editor.getLine(endLine).length };
-            
-            editor.setSelection(from, to);
-            editor.scrollIntoView({ from, to }, true);
+          // Check if this is same-file navigation or cross-file navigation
+          const currentLeaf = props.plugin.app.workspace.activeLeaf;
+          const currentFile = currentLeaf?.view?.file;
+          const isSameFileNavigation = currentFile && (
+            currentFile.name.replace('.md', '') === filePath ||
+            currentFile.path === filePath + '.md' ||
+            currentFile.path === filePath ||
+            (currentFile as any).basename === filePath
+          );
+
+          if (isSameFileNavigation) {
+            // Same file navigation - use direct custom implementation for multi-line highlighting
+            const editor = currentLeaf?.view?.editor;
+            if (editor) {
+              // Fix blockId format - add # prefix for getLineRangeFromRef  
+              const formattedRef = blockId.startsWith('#') ? blockId : `#${blockId}`;
+              const lineRange = getLineRangeFromRef(currentFile.path, formattedRef, props.plugin.app);
+
+              if (lineRange[0] && lineRange[1]) {
+                const startLine = lineRange[0] - 1;
+                const endLine = lineRange[1] - 1;
+                const from = { line: startLine, ch: 0 };
+                const to = { line: endLine, ch: editor.getLine(endLine).length };
+
+                // Apply selection with enhanced focus
+                editor.focus();
+                editor.setSelection(from, to);
+                editor.scrollIntoView({ from, to }, true);
+
+                return;
+              }
+            }
+          }
+
+          // Cross-file navigation - use openLinkText for proper block reference handling
+
+          try {
+            // Use Obsidian's native openLinkText for proper block reference handling
+            await props.plugin.app.workspace.openLinkText(
+              props.path,
+              props.source || "",
+              false
+            );
+
+
+            // For multi-line blocks, apply additional selection after navigation
+            setTimeout(async () => {
+              const activeLeaf = props.plugin.app.workspace.activeLeaf;
+              const editor = activeLeaf?.view?.editor;
+
+              if (editor) {
+                const formattedRef = blockId.startsWith('#') ? blockId : `#${blockId}`;
+                const lineRange = getLineRangeFromRef(filePath + ".md", formattedRef, props.plugin.app);
+
+
+                if (lineRange[0] && lineRange[1]) {
+                  const startLine = lineRange[0] - 1;
+                  const endLine = lineRange[1] - 1;
+                  const from = { line: startLine, ch: 0 };
+                  const to = { line: endLine, ch: editor.getLine(endLine).length };
+
+                  editor.focus();
+                  editor.setSelection(from, to);
+                  editor.scrollIntoView({ from, to }, true);
+
+                }
+              }
+            }, 100);
+
+            return;
+          } catch (error) {
+
+            // Fallback to basic file opening
+            const uri = props.plugin.enactor.uriByString(props.path, props.source);
+
+            if (!uri) {
+              return;
+            }
+
+            const file = props.plugin.app.metadataCache.getFirstLinkpathDest(filePath, props.source || "");
+
+            if (!file) {
+              return;
+            }
+
+            const lineRange = getLineRangeFromRef(file.path, blockId ? `#${blockId}` : undefined, props.plugin.app);
+
+            // Open the file and navigate to the block with proper highlighting
+            const leaf = props.plugin.app.workspace.getLeaf(false);
+            await leaf.openFile(file);
+
+            // Apply highlighting if we have a valid range
+            if (lineRange[0] && lineRange[1] && leaf.view?.editor) {
+              const editor = leaf.view.editor;
+              const startLine = lineRange[0] - 1;
+              const endLine = lineRange[1] - 1; 
+
+              // Get cursor positions for the line range
+              const from = { line: startLine, ch: 0 };
+              const to = { line: endLine, ch: editor.getLine(endLine).length };
+
+              editor.setSelection(from, to);
+              editor.scrollIntoView({ from, to }, true);
+
+            }
           }
         }
       });
-      
+
       // NOTE: Edit icon creation moved to FlowEditorWidget to avoid CodeMirror event management issues
       // The edit icon will be created externally and positioned relative to this widget
-      
+
       // Resolve the path using enactor
       const uri = props.plugin.enactor.uriByString(props.path, props.source);
 
@@ -128,7 +209,7 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
 
       // Get line range for the block
       const lineRange = getLineRangeFromRef(uri.basePath, uri.refStr, props.plugin.app);
-      
+
       if (!lineRange[0] || !lineRange[1]) {
         contentDiv.innerHTML = `Block not found: ${uri.refStr}`;
         return;
@@ -153,9 +234,9 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
 
     const path = props.plugin.enactor.uriByString(props.path, props.source);
     if (!path) {
-        setExistsPas(true);
-        setLoaded(false);
-        return;
+      setExistsPas(true);
+      setLoaded(false);
+      return;
     }
 
     const pathExists = props.plugin.app.vault.getAbstractFileByPath(path.basePath) != null;
@@ -164,8 +245,8 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
       isFolder && props.forceNote
         ? path.basePath
         : pathExists
-        ? path.fullPath
-        : null;
+          ? path.fullPath
+          : null;
 
     if (!filePath) {
       if (!force) {

@@ -58,8 +58,6 @@ export class FlowEditorManager {
 				return;
 			}
 
-			console.log("live preview mode");
-
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
 			// replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
@@ -76,8 +74,6 @@ export class FlowEditorManager {
 			if (view.getMode() !== 'preview') {
 				return;
 			}
-
-			console.log("read mode");
 
 			this.processEmbeddedBlocks(element);
 			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
