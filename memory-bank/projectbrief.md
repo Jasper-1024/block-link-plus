@@ -3,7 +3,7 @@
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🏆 Overview
-Block Link Plus 是一个功能强大的 Obsidian 插件，专注于增强块级链接和内容聚合功能。当前正在开发 `blp-timeline` 功能，这是一个**章节级时间线聚合器**，能够从多个文件中提取符合条件的时间章节，并以嵌入链接的形式动态生成时间线视图。
+Block Link Plus 是一个功能强大的 Obsidian 插件，专注于增强块级链接和内容聚合功能。**Flow Editor多行块功能已完全成熟**，支持 `![[file#^xyz-xyz]]` 格式的完整渲染，实现了阅读模式和Live Preview模式的一致性体验。插件还包含完整的 `blp-timeline` 章节级时间线聚合器功能。
 
 ## 📋 Requirements
 
