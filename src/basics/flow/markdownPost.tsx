@@ -179,6 +179,12 @@ export const replaceMultilineBlocks = (
       (nativeContent as HTMLElement).style.display = 'none';
     }
     
+    // Hide the native link icon
+    const nativeLink = dom.querySelector('.markdown-embed-link');
+    if (nativeLink) {
+      (nativeLink as HTMLElement).style.display = 'none';
+    }
+    
     // Create container for our custom rendering
     const container = dom.createDiv('mk-multiline-block-container');
     const reactEl = createRoot(container);

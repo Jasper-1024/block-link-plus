@@ -80,491 +80,66 @@
 - **单元测试**: 测试单个函数和方法
 - **模拟**: 模拟 Obsidian 和 Dataview API
 - **覆盖率**: 关键模块达到 90%+ 的测试覆盖率
-# σ₃: Technical Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-12-25*
-*Π: DEVELOPMENT | Ω: EXECUTE*
 
-## 🛠️ Technology Stack
+## 🧠 Technical Decisions & Rationales
 
-### Frontend/Plugin
-- **🖥️ Framework**: Obsidian Plugin API (1.4.16+)
-- **⚡ Language**: TypeScript 4.7.4
-- **🔧 Build Tool**: esbuild 0.17.3
-- **📦 Package Manager**: npm
-- **🎨 UI Framework**: Obsidian 原生 UI 组件
+### 📝 多行块渲染系统设计
+**背景**: 需要实现 `![[file#^xyz-xyz]]` 格式的只读多行块渲染功能。
 
-### Core Dependencies
-- **📊 Data Query**: obsidian-dataview (0.5.64+) - 核心查询引擎
-- **📝 YAML Parsing**: js-yaml (4.1.0) - 配置解析
-- **⏰ Date/Time**: luxon (via Dataview) - 日期时间处理
-- **🔗 File Links**: Obsidian Link API - 文件链接管理
+**问题**: 出现了 CodeMirror 装饰器和 Markdown 后处理器的双重渲染冲突。
 
-### Development Tools
-- **🔍 Linting**: ESLint with TypeScript rules
-- **📏 Formatting**: Prettier (if configured)
-- **🧪 Testing**: Jest (planned for Phase 5.2)
-- **📚 Documentation**: TypeDoc (planned)
+**技术分析**:
+1. **渲染系统差异**:
+   - CodeMirror 装饰器：适合编辑器中的实时渲染
+   - Markdown 后处理器：适合处理已存在的 DOM 元素
+   - 两者同时处理相同内容导致冲突
 
-## 🏗️ Architecture Overview
+2. **`!![[` vs `![[` 的处理差异**:
+   - `!![[`：只由 CodeMirror 装饰器处理，无 Obsidian 原生支持
+   - `![[`：有 Obsidian 原生支持，导致三重处理（原生、装饰器、后处理器）
 
-### 项目结构 (Updated)
-```
-block-link-plus/
-├── src/                          # 所有源代码
-│   ├── main.ts                   # 主插件入口 (~385 lines)
-│   ├── features/                 # 功能模块
-│   │   ├── flow-editor/          # Flow Editor 管理器
-│   │   │   └── index.ts          # FlowEditorManager
-│   │   └── dataview-timeline/    # 时间线聚合功能 🆕
-│   │       ├── index.ts          # 主入口和协调逻辑
-│   │       ├── region-parser.ts  # 动态区域解析
-│   │       ├── filter-resolver.ts # 过滤器解析
-│   │       └── query-builder.ts  # 查询构建和章节处理
-│   ├── core/                     # 核心功能模块
-│   │   ├── heading-analysis.ts   # 标题分析
-│   │   ├── clipboard-handler.ts  # 剪贴板处理
-│   │   ├── command-handler.ts    # 命令处理
-│   │   ├── link-creation.ts      # 链接创建
-│   │   └── time-section.ts       # 时间章节
-│   ├── ui/                       # UI 组件
-│   │   └── EditorMenu.ts         # 编辑器菜单
-│   └── basics/                   # Basics 插件集成
-│       ├── enactor/              # 执行器
-│       ├── commands/             # 命令
-│       ├── extensions/           # 扩展
-│       └── ui/                   # UI 组件
-├── styles.css                    # 样式文件
-├── manifest.json                 # 插件清单
-├── esbuild.config.mjs           # 构建配置
-└── memory-bank/                 # 项目文档
-    ├── projectbrief.md          # 项目概述
-    ├── systemPatterns.md        # 系统模式
-    ├── techContext.md           # 技术上下文
-    ├── activeContext.md         # 活动上下文
-    ├── progress.md              # 进度跟踪
-    └── symbols.md               # 符号参考
-```
+3. **装饰器系统限制**:
+   - `ReadOnlyEmbed` 类型不能使用独立的 `flowEditorSelector` 装饰器
+   - 原因未明，但添加后会导致渲染异常（只有光标在该行时才渲染）
+   - 必须在 `FlowEditorWidget` 内部处理所有逻辑
 
-## 🔧 Core Technologies Deep Dive
+**设计决策**:
+1. **统一渲染策略**: 需要明确区分不同模式下的渲染职责
+2. **移除冲突**: 考虑移除 `replaceMultilineBlocks` 函数
+3. **CSS 定位修复**: 通过专门的 CSS 规则解决定位问题
 
-### Obsidian Plugin API Integration
-- **MarkdownPostProcessor**: 处理代码块渲染
-- **TFile & Vault API**: 文件读写操作
-- **MetadataCache**: 文件元数据和链接解析
-- **App.plugins**: 插件间通信（Dataview 集成）
-
-### Dataview Integration Architecture
+**技术细节**:
 ```typescript
-// 核心集成模式
-interface TimelineContext {
-    config: TimelineConfig;
-    dataviewApi: DataviewApi;
-    currentFile: TFile;
-}
+// 多行块格式检测
+const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
 
-// 查询执行流程
-DataviewApi → Pages Query → Section Extraction → Content Matching → Link Generation
-```
-
-### 文件修改机制 (New)
-```typescript
-// 同步区域标记格式
-%% blp-timeline-start %%
-// 动态生成的内容
-%% blp-timeline-end %%
-
-// "读取-合并-写回" 流程
-File Read → Parse Existing Content → Cache User Modifications → 
-Query Execution → Intelligent Merge → Conditional File Write
-```
-
-## 🎯 `blp-timeline` 技术实现详解
-
-### 配置系统
-```typescript
-interface TimelineConfig {
-    source_folders?: string[];
-    within_days?: number;
-    heading_level?: number;      // 🆕 目标标题级别
-    embed_format?: '!!' | '!';   // 🆕 嵌入格式选择
-    sort_order?: 'asc' | 'desc';
-    filters?: {
-        relation: 'AND' | 'OR';
-        links?: LinkFilter;
-        tags?: TagFilter;
-    };
+// 避免匹配 !![[
+for (const match of str.matchAll(/(?<!!)!\[\[([^\]]+)\]\]/g)) {
+  if (multiLineBlockRegex.test(link)) {
+    // 处理多行块
+  }
 }
 ```
 
-### 精确章节匹配实现 (🆕)
-```typescript
-function extractRelevantSections(
-    file: TFile,
-    context: TimelineContext,
-    resolvedTags: string[],
-    resolvedLinks: Link[]
-): { file: TFile; heading: HeadingCache }[] {
-    // 1. 获取文件缓存
-    const fileCache = app.metadataCache.getFileCache(file);
-    
-    // 2. 筛选符合级别的标题
-    const candidateHeadings = fileCache.headings.filter(
-        (h) => h.level === config.heading_level
-    );
-    
-    // 3. 应用时间模式过滤（如果有）
-    // ...
-    
-    // 4. 获取文件中的所有标签和链接
-    const allTagsInFile = fileCache.tags || [];
-    const allLinksInFile = fileCache.links || [];
-    
-    // 5. 创建快速查找集合
-    const targetTags = new Set(resolvedTags);
-    const targetLinkPaths = new Set(resolvedLinks.map(link => link.path));
-    
-    // 6. 核心匹配逻辑：遍历每个候选标题
-    for (const heading of filteredHeadings) {
-        // 6.1 确定章节范围
-        const startLine = heading.position.start.line;
-        let endLine = Infinity; // 默认到文件末尾
-        
-        // 6.2 查找下一个同级或更高级标题
-        for (const nextHeading of fileCache.headings) {
-            if (nextHeading.position.start.line > startLine && 
-                nextHeading.level <= heading.level) {
-                endLine = nextHeading.position.start.line;
-                break;
-            }
-        }
-        
-        // 6.3 检查此章节是否包含目标标签或链接
-        const containsTargetTag = allTagsInFile.some(tag => 
-            targetTags.has(tag.tag) && 
-            tag.position.start.line >= startLine && 
-            tag.position.start.line < endLine
-        );
-        
-        const containsTargetLink = allLinksInFile.some(link => 
-            targetLinkPaths.has(link.link) && 
-            link.position.start.line >= startLine && 
-            link.position.start.line < endLine
-        );
-        
-        // 6.4 如果包含目标元素，添加到有效章节
-        if (containsTargetTag || containsTargetLink) {
-            validSections.push({ file, heading });
-        }
-    }
-    
-    return validSections;
-}
-```
+**状态**: 问题已定位，解决方案设计中。
 
-### 章节级处理流程
-1. **文件查询**: 使用 Dataview 查询符合条件的文件。
-2. **读取同步区**: `findSyncRegion` 查找 `%%...%%` 标记并读取内容。
-3. **缓存用户修改**: 解析同步区内容，将用户修改（如 `!!`）存入 Map。
-4. **精确章节匹配** (🆕): `extractRelevantSections` 只提取包含目标标签或链接的章节。
-5. **智能合并**: 遍历查询结果，结合缓存中的用户修改，生成最终的链接列表。
-6. **条件写回**: `app.vault.modify` 将新内容写回文件内的同步区域。
+### 📝 CSS 导入策略
+**背景**: 在将主入口文件 `main.ts` 移动到 `src` 目录后，CSS 导入路径需要调整。
 
-### 性能优化策略
-- **条件写入**: 只有在内容实际变化时才修改文件，避免不必要的 I/O。
-- **高效解析**: 使用优化的字符串和正则表达式操作来解析链接。
-- **增量解析**: 只处理符合条件的文件。
-- **集合查询** (🆕): 使用 `Set` 数据结构进行 O(1) 复杂度的快速查找。
-- **早期退出** (🆕): 在找到匹配项后立即返回，避免不必要的迭代。
+**决策**: 修改 CSS 导入路径从 `"./styles.css"` 到 `"../styles.css"`。
 
-## 🔄 Data Flow Architecture
+**理由**:
+1. **文件位置**: `styles.css` 文件位于项目根目录，而不是 `src` 目录。
+2. **esbuild 行为**: esbuild 基于入口文件位置解析相对导入。
+3. **简洁性**: 直接引用现有文件，不引入冗余。
+4. **DRY 原则**: 避免在多个位置维护相同的文件。
 
-### 主要数据流 (更新)
-```
-YAML Config → TimelineConfig → Filter Resolution → File Query → 
-(Read Existing Sync Region & Cache Mods) →
-精确章节匹配 → Intelligent Merge → Conditional File Modification
-```
+**替代方案**:
+1. **将 `styles.css` 移动到 `src` 目录**: 这样可以保持导入语句不变，但会改变项目结构。
+2. **使用 esbuild 插件**: 可以通过自定义插件修改导入路径，但会增加配置复杂性。
+3. **使用绝对路径**: 可以使用绝对路径导入，但可能导致可移植性问题。
 
-### 错误处理流程
-```
-Validation → Query Execution → Content Processing → 
-Error Capture → User Feedback → Graceful Degradation
-```
-
-## 🛡️ Security & Safety
-
-### 文件操作安全
-- **读取权限**: 仅读取 Vault 内文件
-- **写入限制**: 仅修改 `%%...%%` 同步区域内的内容
-- **备份机制**: ~~通过哈希比较避免意外覆盖~~ (已移除, 新机制通过智能合并保留用户编辑)
-- **循环检测**: 不再依赖防抖，通过条件写入避免无限循环。
-
-### 插件依赖管理
-- **可选依赖**: Dataview 插件检测和优雅降级
-- **版本兼容**: 支持 Dataview 0.5.64+ 版本
-- **API 稳定性**: 使用稳定的 Obsidian API
-
-## 📊 Performance Considerations
-
-### 当前性能指标
-- **启动时间**: < 100ms (插件加载)
-- **查询响应**: < 2s (1000+ 文件)
-- **内存占用**: < 50MB (正常使用)
-- **文件修改**: 仅在内容变更时发生
-
-### 性能优化计划
-- **懒加载**: 按需加载功能模块
-- **Worker 线程**: 大量文件处理异步化
-- **索引缓存**: 文件内容解析结果缓存
-- **增量更新**: 只处理变更的文件
-
-## 🧪 Testability Analysis (NEW)
-*Added: 2024-12-24*
-
-### 1. Overall Strategy
-The project currently lacks any testing infrastructure. The proposed strategy involves introducing a testing framework (e.g., Jest) and a mocking library to handle Obsidian API dependencies. The focus will be on a bottom-up approach: first, creating unit tests for pure, isolated logic, and then building integration tests for more complex features that orchestrate multiple modules.
-
-### 2. Key Testing Targets & Approaches
-
-#### a. `dataview-timeline` (High Priority / High Value)
-- **Status**: Highly testable due to its modular and functional design.
-- **Unit Tests**:
-    - `extractRelevantSections`: Test with various file cache structures (`headings`, `tags`, `links`), configurations, and content to ensure accurate section filtering. This is the most critical function to test.
-    - `renderTimelineMarkdown`: Test with different sets of sections and configurations to verify the correctness of the final markdown output (sorting, grouping, formatting).
-    - `filter-resolver.ts`: Test `resolveTags` and `resolveLinks` with various filter configurations.
-    - `region-parser.ts`: Test `findSyncRegion` with different file content structures.
-    - `query-builder.ts`: The logic within can be unit-tested by mocking the `dataviewApi`.
-- **Integration Tests**:
-    - `handleTimeline`: This is the main integration point. A test should simulate the entire workflow by providing mock implementations for `plugin`, `app.vault`, `app.metadataCache`, and `dataviewApi`. The test should assert that the final content passed to `app.vault.modify` is correct based on the inputs.
-
-#### b. `flow-editor` (Medium Priority / High Complexity)
-- **Status**: Difficult to test due to heavy reliance on the Obsidian API and direct DOM manipulation. Testing will require extensive mocking.
-- **Strategy**: Focus on testing the internal logic rather than the side effects.
-- **Mocking Required**:
-    - Obsidian API: `Plugin`, `App`, `Workspace`, `WorkspaceLeaf`, `MarkdownView`, `Editor`.
-    - CodeMirror 6: `EditorView` (`cm`), state fields, and transactions.
-    - DOM: `document.body`, `HTMLElement`.
-- **Testable Units**:
-    - Test the logic within `FlowEditorManager` by verifying that the correct methods on mocked objects are called in response to different settings and method invocations (e.g., `initialize`, `openFlow`, `closeFlow`).
-    - The `ObsidianEnactor` dependency should be mocked to isolate the manager's logic.
-
-#### c. Core Features & Utilities (Medium Priority)
-- **Status**: Generally testable.
-- **Unit Tests**:
-    - `command-handler.ts`: Test `handleCommand` by mocking the `editor` and `view` objects to simulate different editor states and assert the outcome (e.g., clipboard content).
-    - `heading-analysis.ts`, `link-creation.ts`, `time-section.ts`: These modules likely contain pure logic that can be easily unit-tested with appropriate inputs.
-
-### 3. Required Testing Infrastructure
-- **Test Runner**: Jest or a similar framework.
-- **Mocking Library**: Jest's built-in mocking capabilities.
-- **TypeScript Support**: Configuration to allow Jest to work with TypeScript (e.g., `ts-jest`).
-- **Environment Simulation**: A setup to provide mock objects for the Obsidian API, which is not available in a standard Node.js testing environment. This may involve creating a set of mock classes and objects that mimic the real API.
-
-## 🔧 Build & Deployment
-
-### 构建配置
-```javascript
-// esbuild.config.mjs
-export default {
-    entryPoints: ['src/main.ts'],  // 更新后的入口点
-    bundle: true,
-    external: ['obsidian', 'electron', '@codemirror/*'],
-    format: 'cjs',
-    target: 'es2020',
-    logLevel: 'info',
-    sourcemap: 'external',
-    treeShaking: true,
-    outfile: 'main.js',
-};
-```
-
-### 依赖管理
-```json
-{
-    "dependencies": {
-        "js-yaml": "^4.1.0"
-    },
-    "devDependencies": {
-        "@types/node": "^16.11.6",
-        "@typescript-eslint/eslint-plugin": "5.29.0",
-        "@typescript-eslint/parser": "5.29.0",
-        "builtin-modules": "3.3.0",
-        "esbuild": "0.17.3",
-        "obsidian": "latest",
-        "tslib": "2.4.0",
-        "typescript": "4.7.4"
-    }
-}
-```
-
-## 🧪 Testing Strategy (Planned)
-
-### 测试框架选择
-- **Unit Testing**: Jest + TypeScript
-- **Integration Testing**: Obsidian Test Utils
-- **E2E Testing**: Playwright (for complex scenarios)
-
-### 测试覆盖计划
-- **配置解析**: YAML 配置验证和错误处理
-- **过滤器逻辑**: 标签和链接过滤准确性
-- **章节提取**: 标题解析和内容匹配
-- **文件操作**: 动态区域更新和哈希比较
-- **性能测试**: 大文件量处理性能
-
-## 🔄 Integration Patterns
-
-### Dataview 插件集成
-```typescript
-// 插件检测和 API 获取
-const dataviewApi = this.app.plugins.plugins.dataview?.api;
-if (!dataviewApi) {
-    // 优雅降级处理
-}
-
-// 查询执行
-const pages = dataviewApi.pages(query);
-const filteredPages = pages.where(condition);
-```
-
-### 文件系统集成
-```typescript
-// 文件读取
-const content = await this.app.vault.read(file);
-
-// 文件修改
-await this.app.vault.modify(file, newContent);
-
-// 元数据访问
-const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
-```
-
-## 📝 Development Workflow
-
-### 当前开发阶段
-- **Phase 6.2**: 章节级功能实现中
-- **重点任务**: 
-  1. 扩展 `TimelineConfig` 接口
-  2. 实现章节级查询逻辑
-  3. 添加文件写入功能
-  4. 完善错误处理
-
-### 代码质量标准
-- **TypeScript Strict Mode**: 启用严格类型检查
-- **ESLint Rules**: 遵循 TypeScript 最佳实践
-- **Code Coverage**: 目标 80%+ 测试覆盖率
-- **Documentation**: JSDoc 注释覆盖所有公共 API
-
-## 🔮 Future Technical Roadmap
-
-### 短期技术目标 (1-2 周)
-- 完成章节级处理逻辑
-- 实现防抖和哈希机制
-- 添加完善的错误处理
-
-### 中期技术目标 (1-2 月)
-- 建立完整的测试体系
-- 性能优化和监控
-- 代码文档完善
-
-### 长期技术愿景 (3-6 月)
-- 插件生态集成
-- 可视化界面开发
-- 社区贡献框架
-
-## 🚨 Technical Risks & Mitigation
-
-### 高风险项目
-- **章节解析复杂度**: 通过参考 `viewUtils.js` 实现降低风险
-- **性能影响**: 通过防抖和缓存机制优化
-- **文件安全性**: 通过哈希比较和区域限制确保安全
-
-### 缓解策略
-- **分阶段实现**: 将复杂功能分解为小步骤
-- **持续测试**: 每个阶段都进行充分测试
-- **用户反馈**: 及时收集和响应用户反馈
-
-## 📚 Technical Documentation
-
-### API 文档结构
-```
-docs/
-├── api/
-│   ├── timeline-config.md        # 配置接口文档
-│   ├── query-builder.md          # 查询构建器文档
-│   └── region-parser.md          # 区域解析器文档
-├── guides/
-│   ├── getting-started.md        # 快速开始指南
-│   ├── advanced-usage.md         # 高级用法
-│   └── troubleshooting.md        # 故障排除
-└── examples/
-    ├── basic-timeline.md          # 基础时间线示例
-    └── complex-filters.md         # 复杂过滤器示例
-```
-
-### 代码注释标准
-- **模块级**: 每个模块的用途和主要功能
-- **函数级**: 参数、返回值和副作用说明
-- **复杂逻辑**: 算法思路和实现细节注释
-- **类型定义**: 接口和类型的用途和约束 
-
-## 🧪 Testing Framework
-
-### Testing Tools
-- **Jest**: 用于运行测试和断言
-- **ts-jest**: 用于转换 TypeScript 代码
-- **identity-obj-proxy**: 用于模拟 CSS 导入
-- **jest-environment-jsdom**: 提供浏览器环境模拟
-
-### Testing Configuration
-#### Jest Configuration
-```javascript
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'jsdom',
-  moduleNameMapper: {
-    '\\.css$': 'identity-obj-proxy',
-  },
-  setupFilesAfterEnv: ['./jest.setup.js'],
-  transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        tsconfig: 'tsconfig.test.json',
-      },
-    ],
-  },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-};
-```
-
-#### TypeScript Test Configuration
-```json
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "jsx": "react",
-    "types": ["jest", "node"]
-  },
-  "include": ["src/**/*", "__mocks__/**/*"]
-}
-```
-
-### Mock Implementations
-- **Obsidian API Mock**: 模拟 Obsidian 核心 API，包括 App, TFile, Vault, MetadataCache 等
-- **Dataview API Mock**: 模拟 Dataview API，包括 DataviewApi, Link, Page 等
-- **Test Utilities**: 提供创建模拟插件实例、文件和 API 的工具函数
-
-### Testing Strategy
-- **单元测试**: 测试单个函数和方法的行为
-- **边缘情况**: 测试各种边缘情况和错误处理
-- **输入验证**: 测试各种输入组合，包括无效输入
-- **输出验证**: 验证函数和方法的输出是否符合预期
-- **模拟依赖**: 模拟外部依赖，确保测试的隔离性
-
-### Test Coverage
-- **dataview-timeline Module**: 90%+ 测试覆盖率
-- **Total Project**: 约 40% 测试覆盖率
+**结论**: 选择修改导入路径为相对路径 `"../styles.css"` 是最简单、最直接的解决方案，符合项目的简洁性原则。
 
 ## 🔄 Refactoring History
 
@@ -700,6 +275,46 @@ module.exports = {
 - **防抖**: 防止频繁操作导致性能问题
 
 ## 🧠 Technical Decisions & Rationales
+
+### 📝 多行块渲染系统设计
+**背景**: 需要实现 `![[file#^xyz-xyz]]` 格式的只读多行块渲染功能。
+
+**问题**: 出现了 CodeMirror 装饰器和 Markdown 后处理器的双重渲染冲突。
+
+**技术分析**:
+1. **渲染系统差异**:
+   - CodeMirror 装饰器：适合编辑器中的实时渲染
+   - Markdown 后处理器：适合处理已存在的 DOM 元素
+   - 两者同时处理相同内容导致冲突
+
+2. **`!![[` vs `![[` 的处理差异**:
+   - `!![[`：只由 CodeMirror 装饰器处理，无 Obsidian 原生支持
+   - `![[`：有 Obsidian 原生支持，导致三重处理（原生、装饰器、后处理器）
+
+3. **装饰器系统限制**:
+   - `ReadOnlyEmbed` 类型不能使用独立的 `flowEditorSelector` 装饰器
+   - 原因未明，但添加后会导致渲染异常（只有光标在该行时才渲染）
+   - 必须在 `FlowEditorWidget` 内部处理所有逻辑
+
+**设计决策**:
+1. **统一渲染策略**: 需要明确区分不同模式下的渲染职责
+2. **移除冲突**: 考虑移除 `replaceMultilineBlocks` 函数
+3. **CSS 定位修复**: 通过专门的 CSS 规则解决定位问题
+
+**技术细节**:
+```typescript
+// 多行块格式检测
+const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
+
+// 避免匹配 !![[
+for (const match of str.matchAll(/(?<!!)!\[\[([^\]]+)\]\]/g)) {
+  if (multiLineBlockRegex.test(link)) {
+    // 处理多行块
+  }
+}
+```
+
+**状态**: 问题已定位，解决方案设计中。
 
 ### 📝 CSS 导入策略
 **背景**: 在将主入口文件 `main.ts` 移动到 `src` 目录后，CSS 导入路径需要调整。

@@ -237,17 +237,33 @@ div:not(.mk-flowspace-editor) >
   position: relative;
 }
 
-.internal-embed.markdown-embed .mk-floweditor-selector {
-  position: absolute;
-  right: 8px;
-  top: 8px;
+/* Style for internal link icon (similar to Obsidian native) */
+.markdown-embed-content {
+  position: relative;
 }
 
-/* Ensure the menu inside selector is properly styled */
-.internal-embed.markdown-embed .mk-floweditor-selector .mk-flowblock-menu {
-  margin-bottom: 0;
-  padding: 2px;
-  gap: 4px;
+.markdown-embed-link {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--background-primary);
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  z-index: 1;
+}
+
+.markdown-embed-link:hover {
+  opacity: 1;
+  background: var(--background-modifier-hover);
+}
+
+.markdown-embed-link svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
 }
 
 .mk-floweditor-selector {
@@ -258,6 +274,28 @@ div:not(.mk-flowspace-editor) >
   z-index: var(--layer-popover);
   display: flex;
   visibility: hidden;
+}
+
+/* External edit icon for multi-line blocks */
+.mk-floweditor-selector.mk-external-icon {
+  /* Position will be set dynamically by JavaScript */
+  position: absolute;
+  z-index: var(--layer-popover);
+  display: flex;
+  visibility: hidden;
+  /* Ensure icon is above other elements */
+  pointer-events: auto;
+}
+
+/* Ensure external icon is interactive */
+.mk-floweditor-selector.mk-external-icon .mk-flowblock-menu {
+  pointer-events: auto;
+}
+
+/* Show external icon on hover */
+.mk-floweditor-container:hover + .mk-external-icon,
+.mk-external-icon:hover {
+  visibility: visible !important;
 }
 
 .mk-flowblock-menu {

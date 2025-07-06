@@ -266,7 +266,150 @@
 
 ---
 
-## 全部问题解决状态总结 (2024-12-26)
+## 问题 10: 多行块渲染混乱问题 (分析中)
+
+- **Bug 描述**: 实现 `![[file#^xyz-xyz]]` 只读多行块渲染时出现严重混乱：
+  - 当光标在第 15 行时，出现两个不同的多行块渲染
+  - 一个与光标有关（层叠结构，只有跳转链接），一个与光标无关（有编辑图标和跳转链接）
+  - 阅读模式下首次显示多行块，重新打开文件后变成单行块
+
+- **根本原因分析**:
+  - **双重渲染问题**：
+    - CodeMirror 装饰器通过 `flowEditorInfo` StateField 检测并渲染
+    - Markdown 后处理器 `replaceMultilineBlocks` 也在处理相同的嵌入
+    - 两个系统同时工作导致重复渲染
+  
+  - **为什么 `!![[` 没有这个问题**：
+    - `!![[` 只由 CodeMirror 装饰器处理
+    - `replaceAllTables` 处理的是 `<p>` 元素中的文本，不是已渲染的嵌入
+    - Obsidian 原生不支持 `!![[`，所以没有原生渲染需要处理
+  
+  - **Obsidian 原生支持问题**：
+    - Obsidian 原生不完全支持多行块格式 `#^xyz-xyz`
+    - 它会查找 `^xyz-xyz` 但找不到（实际块 ID 是 `^xyz`）
+    - 导致只显示结束块的单行内容
+  
+  - **设计冲突**：
+    - CodeMirror 装饰器适合处理编辑器中的实时渲染
+    - Markdown 后处理器适合处理已存在的 DOM 元素
+    - 当前实现没有正确区分这两种情况
+
+- **解决方案建议**:
+  1. 移除 `replaceMultilineBlocks` 函数，避免与 CodeMirror 装饰器冲突
+  2. 改进 `replaceAllEmbed` 中的多行块检测
+  3. 创建专门的阅读模式处理器
+  4. 考虑预处理多行块引用，转换为 Obsidian 能理解的格式
+
+- **技术发现**：
+  - 多行块格式使用 `#^xyz-xyz`（xyz 是相同的字母数字组合）
+  - `getLineRangeFromRef` 函数已支持解析多行块引用
+  - CodeMirror 装饰器和 Markdown 后处理器不应同时处理相同内容
+
+- **状态**: ⚠️ **分析中** - 已定位问题根源，待实施解决方案
+
+---
+
+## 问题 12: 实时预览模式下多行块图标位置差异 (非Bug - 设计特性)
+
+- **现象描述**: 在实时预览模式下，只读多行块 `![[file#^xyz-xyz]]` 和可编辑块 `!![[file#^xyz-xyz]]` 的图标位置存在差异。
+- **表现形式**:
+  - 可编辑块：图标显示在第5行右上角
+  - 只读多行块：图标显示在第4-5行之间
+- **技术原因**:
+  - 这是 Obsidian 原生的块级嵌入渲染机制
+  - 使用 `block: true` 的 widget 装饰器，作为块级元素插入
+  - 与 Obsidian 原生单行块嵌入使用相同的渲染格式
+- **结论**: 这是正常的设计行为，不是bug
+
+---
+
+## 问题 13: 多行块缺少内部跳转图标 (已解决)
+
+- **问题描述**: Obsidian 原生的块嵌入在块内部有一个跳转到原位置的图标，但我们的多行块将跳转功能放在了右上角的弹出菜单中。
+- **差异对比**:
+  - Obsidian 原生块：跳转图标在嵌入内容内部（`.markdown-embed-link` 元素）
+  - 插件多行块：跳转图标在右上角弹出菜单中
+- **技术分析**:
+  - Obsidian 使用 `.markdown-embed-link` 元素作为内部跳转链接
+  - 插件的 `replaceAllEmbed` 函数会处理这个元素，但特意跳过了多行块
+  - `UINote` 组件自己实现了跳转功能，但放在了右上角菜单中
+- **当前实现的问题**:
+  1. **位置不一致**：跳转图标应该在内容右上角，而不是弹出菜单中
+  2. **跳转后高亮不正确**：使用 `openLinkText` 只会高亮单行，而不是整个多行块范围
+- **解决方案**:
+  1. 将跳转图标从弹出菜单移到内容区域的右上角
+  2. 使用 `openPath` 而不是 `openLinkText`，以正确高亮多行范围
+  3. `getLineRangeFromRef` 函数已经正确支持多行块范围计算
+- **实施的修改**:
+  - **UINote.tsx**: 重构 DOM 结构，将跳转图标移到 `markdown-embed-content` 内部
+  - **跳转逻辑**: 使用 Editor API 的 `setSelection` 方法实现多行高亮
+  - **CSS 样式**: 添加 `.markdown-embed-link` 样式，定位在内容右上角
+- **修改的文件**:
+  - `src/basics/ui/UINote.tsx` (重构跳转图标位置和逻辑)
+  - `src/css/Editor/Flow/FlowEditor.css` (添加内部跳转图标样式)
+- **测试要点**:
+  - ✅ 跳转图标显示在内容右上角
+  - ✅ 点击后跳转到源文件
+  - ✅ 高亮整个多行块范围（从 ^xyz 到 ^xyz-xyz）
+  - ✅ 编辑图标保留在 hover 弹出菜单中
+- **状态**: ✅ **已解决**
+
+---
+
+## 问题 15: Live Preview下多行块双层嵌套问题 (已解决)
+
+- **问题描述**: 在Live Preview模式下，多行块出现视觉上的"两层"效果，弹出菜单显示异常。
+- **问题表现**:
+  - 多行块看起来有双层容器
+  - 弹出的编辑图标菜单显示不正常
+  - 阅读模式下鼠标悬停出现小原点（附带解决）
+- **根本原因分析**:
+  - **双重嵌套的 `mk-flowblock-menu`**：
+    - UINote 组件创建了 `mk-flowblock-menu` 容器
+    - FlowEditorHover 组件又返回了 `mk-flowblock-menu` 元素
+    - 导致嵌套结构：`mk-flowblock-menu > div > mk-flowblock-menu`
+  - **DOM 结构问题**:
+    ```html
+    <div class="mk-floweditor-selector">
+      <div class="mk-flowblock-menu">          <!-- UINote 创建 -->
+        <div>                                  <!-- createRoot 容器 -->
+          <div class="mk-flowblock-menu">      <!-- FlowEditorHover 创建 -->
+            <button class="mk-toolbar-button">
+          </div>
+        </div>
+      </div>
+    </div>
+    ```
+- **调试过程**:
+  - 添加详细的控制台日志追踪 DOM 创建过程
+  - 发现 FlowEditorWidget 和 UINote 的执行流程
+  - 通过 DOM 检查器确认了双重嵌套结构
+- **解决方案**: 采用方案1 - 移除 UINote 中的 mk-flowblock-menu 容器
+  - **修改前**:
+    ```typescript
+    const iconContainer = iconWrapper.createDiv("mk-flowblock-menu");
+    const editIconRoot = createRoot(iconContainer);
+    ```
+  - **修改后**:
+    ```typescript
+    const editIconRoot = createRoot(iconWrapper);
+    ```
+- **修改的文件**:
+  - `src/basics/ui/UINote.tsx` (移除重复的容器创建)
+- **解决效果**:
+  - ✅ 消除了 Live Preview 下的双层视觉效果
+  - ✅ 弹出菜单显示正常
+  - ✅ 意外解决了阅读模式下鼠标悬停小原点问题
+  - ✅ 保持了所有原有功能
+- **技术收获**:
+  - 理解了 React createRoot 与 DOM 容器的交互
+  - 学会了通过调试日志追踪复杂的 DOM 创建流程
+  - 认识到组件嵌套时容器管理的重要性
+- **状态**: ✅ **已解决**
+
+---
+
+## 全部问题解决状态总结 (2024-12-28)
 
 ✅ **问题 6**: 嵌入块标题引用解析失败 - 已解决  
 ✅ **问题 2**: 阅读模式下点击编辑图标导致崩溃 - 已解决  
@@ -276,6 +419,11 @@
 ✅ **问题 5**: 带别名的块链接解析失败 - 已解决  
 ✅ **问题 7**: Timeline 调试功能缺失 - 已解决  
 ✅ **问题 8**: Timeline 哈希机制缺失导致性能问题 - 已解决  
+✅ **问题 9**: 正则表达式匹配问题 - 已解决
 ⚠️ **问题 1**: 模式切换时渲染状态残留 - **暂时搁置**
+⚠️ **问题 10**: 多行块渲染混乱问题 - **分析中**
+⚠️ **问题 12**: 实时预览模式下多行块图标位置差异 - **非Bug - 设计特性**
+✅ **问题 13**: 多行块缺少内部跳转图标 - 已解决
+✅ **问题 15**: Live Preview下多行块双层嵌套问题 - 已解决
 
-**Flow Editor 和 Timeline 功能已基本稳定，8个主要问题已解决，仅剩1个已知的渲染残留问题暂时搁置。** 
+**Flow Editor 功能进入新的调试阶段，发现了多行块实现的根本设计冲突。** 

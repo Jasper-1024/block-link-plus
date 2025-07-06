@@ -51,51 +51,24 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
     if (props.isReadOnly) {
       // Check if we're already inside a markdown-embed container
       const isAlreadyInEmbed = div.closest('.markdown-embed') !== null;
-      
+
       if (!isAlreadyInEmbed) {
         // Only add these classes if we're not already in an embed
         div.classList.add("internal-embed", "markdown-embed");
       }
+
+      // Create content container first
+      const contentDiv = div.createDiv("markdown-embed-content");
       
-      // Create a positioning container for the icon
-      const iconWrapper = div.createDiv("mk-floweditor-selector");
-      
-      // Create a flex container for multiple icons
-      const iconContainer = iconWrapper.createDiv("mk-flowblock-menu");
-      
-      // Add edit icon using FlowEditorHover
-      const editIconRoot = createRoot(iconContainer.createDiv());
-      
-      // Use the view passed from parent
-      if (props.view && props.info) {
-        editIconRoot.render(
-          <FlowEditorHover
-            app={props.plugin.app}
-            plugin={props.plugin}
-            toggle={true}
-            path={props.path}
-            source={props.source}
-            toggleState={false}
-            view={props.view}
-            pos={{ from: props.info.from, to: props.info.to }}
-            dom={div}
-          />
-        );
-      }
-      
-      // Add link icon for jumping to source
-      const linkButton = iconContainer.createEl("button", {
-        cls: "mk-toolbar-button",
-        attr: {
-          "aria-label": "Open link"
-        }
-      });
+      // Create internal link icon (similar to Obsidian native)
+      const linkIconContainer = contentDiv.createDiv("markdown-embed-link");
+      linkIconContainer.setAttribute("aria-label", "Open link");
       
       // Add link icon SVG
-      linkButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
+      linkIconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
       
-      // Add click handler for link
-      linkButton.addEventListener("click", (e) => {
+      // Add click handler for link with proper multi-line highlighting
+      linkIconContainer.addEventListener("click", async (e) => {
         e.stopPropagation();
         e.preventDefault();
         
@@ -105,14 +78,37 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
         const blockId = parts[1];
         
         if (filePath && blockId) {
-          // Open the file and navigate to the block
-          const linkText = `${filePath}#${blockId}`;
-          props.plugin.app.workspace.openLinkText(linkText, props.source || "", false);
+          // Get the line range for multi-line blocks
+          const uri = props.plugin.enactor.uriByString(props.path, props.source);
+          if (!uri) return;
+          
+          const file = props.plugin.app.metadataCache.getFirstLinkpathDest(filePath, props.source || "");
+          if (!file) return;
+          
+          const lineRange = getLineRangeFromRef(file.path, blockId ? `#${blockId}` : undefined, props.plugin.app);
+          
+          // Open the file and navigate to the block with proper highlighting
+          const leaf = props.plugin.app.workspace.getLeaf(false);
+          await leaf.openFile(file);
+          
+          // Apply highlighting if we have a valid range
+          if (lineRange[0] && lineRange[1] && leaf.view?.editor) {
+            const editor = leaf.view.editor;
+            const startLine = lineRange[0] - 1;
+            const endLine = lineRange[1] - 1;
+            
+            // Get cursor positions for the line range
+            const from = { line: startLine, ch: 0 };
+            const to = { line: endLine, ch: editor.getLine(endLine).length };
+            
+            editor.setSelection(from, to);
+            editor.scrollIntoView({ from, to }, true);
+          }
         }
       });
       
-      // Create content container
-      const contentDiv = div.createDiv("markdown-embed-content");
+      // NOTE: Edit icon creation moved to FlowEditorWidget to avoid CodeMirror event management issues
+      // The edit icon will be created externally and positioned relative to this widget
       
       // Resolve the path using enactor
       const uri = props.plugin.enactor.uriByString(props.path, props.source);
