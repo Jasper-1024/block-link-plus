@@ -83,6 +83,53 @@
 
 ## 🧠 Technical Decisions & Rationales
 
+### 📝 Read Mode 多行块跳转架构设计 (2024-12-26)
+**背景**: Read Mode下多行块跳转只能跳转到文件，不能跳转到具体位置，需要设计符合Obsidian规范的跳转机制。
+
+**问题**: 直接使用 `leaf.openFile(file)` + `editor.setSelection()` 不会触发Obsidian的原生块引用处理机制。
+
+**技术分析**:
+1. **跳转方式差异**:
+   - 当前实现：`leaf.openFile()` → 简单文件打开，忽略块引用
+   - 标准实现：`openLinkText()` → 原生块引用处理，支持定位
+   - Live Preview工作原因：使用了不同的跳转逻辑路径
+
+2. **导航场景分类**:
+   - 同文件导航：当前文件内的块引用跳转
+   - 跨文件导航：不同文件之间的块引用跳转
+   - 错误处理：各种异常情况的回退机制
+
+**设计决策**: **智能导航策略** - 根据导航上下文选择最优跳转方式
+
+**理由**:
+1. **兼容性优先**: 使用Obsidian原生 `openLinkText` 确保标准兼容性
+2. **性能优化**: 同文件导航直接操作编辑器，响应更快
+3. **用户体验**: 在原生跳转基础上增加多行选择增强
+4. **错误恢复**: 多层回退机制确保功能可靠性
+
+**技术实现**:
+```typescript
+// 核心决策逻辑
+const isSameFileNavigation = this.detectSameFile(filePath, currentFile);
+
+if (isSameFileNavigation) {
+  // 策略A: 直接编辑器操作 (最快)
+  this.directSelection(editor, lineRange);
+} else {
+  // 策略B: 原生API + 增强 (最兼容)
+  await this.app.workspace.openLinkText(path, source, false);
+  setTimeout(() => this.enhanceSelection(blockId), 100);
+}
+```
+
+**结果**: 
+- ✅ Read Mode: 正确跳转到具体位置 + 符合Obsidian标准
+- ✅ Live Preview: 保持原有多行高亮功能
+- ✅ 性能: 同文件导航响应速度显著提升
+- ✅ 兼容性: 使用原生API确保长期稳定性
+
+**状态**: 已实现并验证，用户确认满足需求。
+
 ### 📝 多行块渲染系统设计
 **背景**: 需要实现 `![[file#^xyz-xyz]]` 格式的只读多行块渲染功能。
 

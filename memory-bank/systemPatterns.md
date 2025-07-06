@@ -196,6 +196,30 @@ sequenceDiagram
     UI->>User: 显示结果
 ```
 
+### 多行块跳转流程 (Read Mode)
+```mermaid
+sequenceDiagram
+    participant User
+    participant UINote
+    participant NavigationLogic
+    participant ObsidianAPI
+    participant Editor
+    
+    User->>UINote: 点击跳转图标
+    UINote->>NavigationLogic: 解析路径和块ID
+    NavigationLogic->>NavigationLogic: 判断同文件/跨文件导航
+    
+    alt 同文件导航
+        NavigationLogic->>Editor: 直接应用多行选择
+        Editor->>User: 即时跳转+高亮
+    else 跨文件导航
+        NavigationLogic->>ObsidianAPI: openLinkText(块引用)
+        ObsidianAPI->>Editor: 原生块引用跳转
+        NavigationLogic->>Editor: 延迟应用多行选择增强
+        Editor->>User: 标准跳转+定位
+    end
+```
+
 ### 时间线生成流程
 ```mermaid
 sequenceDiagram
@@ -247,6 +271,41 @@ export class DataviewTimelineModule {
   // 模块方法
   public async generateTimeline(config: TimelineConfig): Promise<void> {
     // 实现时间线生成逻辑
+  }
+}
+```
+
+### 智能导航模式 (2024-12-26新增)
+根据导航上下文自动选择最优的跳转策略，提供一致的用户体验。
+
+```typescript
+// 智能导航模式示例
+export class SmartNavigationPattern {
+  async navigate(path: string, source: string, context: NavigationContext): Promise<void> {
+    const { filePath, blockId } = this.parsePath(path);
+    
+    // 策略选择
+    if (this.isSameFileNavigation(filePath, context)) {
+      // 策略A: 直接编辑器操作
+      await this.directEditorNavigation(blockId, context.editor);
+    } else {
+      // 策略B: 原生API + 增强
+      await this.enhancedNativeNavigation(path, source, blockId);
+    }
+  }
+  
+  private async directEditorNavigation(blockId: string, editor: Editor): Promise<void> {
+    const lineRange = this.getLineRange(blockId);
+    editor.setSelection(lineRange.from, lineRange.to);
+    editor.scrollIntoView(lineRange, true);
+  }
+  
+  private async enhancedNativeNavigation(path: string, source: string, blockId: string): Promise<void> {
+    // 使用原生API确保兼容性
+    await this.app.workspace.openLinkText(path, source, false);
+    
+    // 延迟增强用户体验
+    setTimeout(() => this.applyEnhancement(blockId), 100);
   }
 }
 ```
@@ -687,21 +746,4 @@ export class TimelineManager {
 ### 测试扩展点
 测试扩展点的功能。
 
-```typescript
-// 测试扩展点示例
-test('应该正确应用扩展', async () => {
-  const manager = new TimelineManager();
-  
-  // 注册测试扩展
-  manager.registerExtension({
-    name: 'test-extension',
-    process: (sections) => sections.map(s => ({ ...s, processed: true }))
-  });
-  
-  const sections = [{ title: 'Test' }];
-  const result = await manager.processTimeline(sections);
-  
-  // 验证结果
-  expect(result).toEqual([{ title: 'Test', processed: true }]);
-});
-``` 
+```
