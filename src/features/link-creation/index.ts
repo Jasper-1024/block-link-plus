@@ -213,7 +213,7 @@ export function gen_insert_blocklink_multiline_block(
 	if (isEmptyOrWhitespace) {
 		// Insert hidden placeholder content + block ID for empty/whitespace lines
 		// Using Obsidian comment syntax %% %% which is invisible in Live Preview/Reading Mode
-		editor.replaceRange(`%% %% ^${id}`, {
+		editor.replaceRange(`%% %% ^${id}\n`, {
 			line: start_line,
 			ch: firstLineEnd
 		});
