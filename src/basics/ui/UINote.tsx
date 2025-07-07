@@ -215,14 +215,12 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
       const lines = content.split('\n');
       const blockContent = lines.slice(lineRange[0] - 1, lineRange[1]).join('\n');
 
-      // Render content
-      await MarkdownRenderer.renderMarkdown(
-        blockContent,
-        contentDiv,
-        uri.basePath,
-        props.plugin
-      );
-
+      // 使用统一的enactor.openPath渲染，传递只读配置
+      props.plugin.enactor.openPath(uri.fullPath, contentDiv, { 
+        readOnly: true,
+        hideGutter: true,
+        hideToolbar: true
+      });
       setLoaded(true);
       return;
     }

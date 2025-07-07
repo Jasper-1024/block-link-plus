@@ -1,0 +1,117 @@
+/* 只读编辑器样式 */
+.blp-readonly-editor {
+  position: relative;
+}
+
+/* 禁用编辑器的光标和选择 */
+.blp-readonly-editor .cm-content {
+  cursor: default !important;
+  user-select: text !important;
+}
+
+/* 隐藏光标 */
+.blp-readonly-editor .cm-cursor {
+  display: none !important;
+}
+
+/* 禁用编辑器焦点样式 */
+.blp-readonly-editor.cm-focused {
+  outline: none !important;
+}
+
+/* 隐藏行号（如果配置要求） */
+.blp-readonly-editor .cm-gutters {
+  border-right: none !important;
+}
+
+/* 只读编辑器的选择样式 */
+.blp-readonly-editor .cm-selectionBackground {
+  background-color: rgba(180, 213, 255, 0.3) !important;
+}
+
+/* 确保只读内容仍然可以被选中复制 */
+.blp-readonly-editor .cm-content[contenteditable="false"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* =================================================================
+   方案2: CSS全局拦截策略 - 多行块只读控制
+   ================================================================= */
+
+/* 精确控制多行块容器内的所有编辑器 */
+.mk-multiline-block-container .cm-content {
+  /* 禁用所有编辑交互 */
+  pointer-events: none !important;
+  /* 保持文本选择能力 */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  /* 移除编辑状态的视觉提示 */
+  cursor: default !important;
+}
+
+/* 禁用多行块内所有编辑器的光标显示 */
+.mk-multiline-block-container .cm-cursor {
+  display: none !important;
+}
+
+/* 禁用多行块内编辑器的焦点样式 */
+.mk-multiline-block-container .cm-editor.cm-focused {
+  outline: none !important;
+}
+
+/* 确保多行块内的文本仍然可以被选择 */
+.mk-multiline-block-container .cm-content::selection {
+  background-color: rgba(180, 213, 255, 0.3) !important;
+}
+
+/* 创新: 透明覆盖层阻止编辑操作 */
+.mk-multiline-block-container .cm-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 1000;
+  pointer-events: auto; /* 拦截所有指针事件 */
+}
+
+/* 重要: 保持嵌套的非多行块引用的交互能力 */
+.mk-multiline-block-container .internal-embed:not(.mk-multiline-block-container .mk-multiline-block-container *) {
+  pointer-events: auto !important;
+}
+
+/* 保持嵌套块的工具栏交互能力 */
+.mk-multiline-block-container .blp-embed-toolbar,
+.mk-multiline-block-container .mk-floweditor-selector,
+.mk-multiline-block-container .markdown-embed-link {
+  pointer-events: auto !important;
+}
+
+/* 确保单行块引用在多行块内仍然可以交互 */
+.mk-multiline-block-container .internal-embed[data-type="block"]:not([src*="-"]) {
+  pointer-events: auto !important;
+}
+
+/* 调试辅助: 为多行块容器添加视觉标识 */
+.mk-multiline-block-container {
+  position: relative;
+}
+
+.mk-multiline-block-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  /* 可选: 添加微妙的边框用于调试 */
+  /* border: 1px dashed rgba(255, 0, 0, 0.1); */
+} 

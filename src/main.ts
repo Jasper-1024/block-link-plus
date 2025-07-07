@@ -24,6 +24,7 @@ import "css/Editor/Flow/FlowEditor.css";
 import "css/Editor/Flow/FlowState.css";
 import "css/Obsidian/Mods.css";
 import "css/custom-styles.css";
+import "css/readonly-editor.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
