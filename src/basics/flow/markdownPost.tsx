@@ -111,7 +111,7 @@ export const replaceAllEmbed = (
         return;
       }
     }
-    
+
     const nodes = dom.querySelectorAll(".markdown-embed-link");
 
     for (let i = 0; i < nodes.length; i++) {
@@ -130,8 +130,7 @@ export const replaceAllEmbed = (
           if (index == -1) return;
           const nextDom = dom.parentElement.childNodes[index];
           const endPos = cm.posAtDOM(nextDom as HTMLElement);
-
-          if (ctx.sourcePath && pos !== null && endPos !== null)
+          if (ctx.sourcePath && pos !== null && endPos !== null) {
             reactEl.render(
               <FlowEditorHover
                 app={app}
@@ -144,6 +143,7 @@ export const replaceAllEmbed = (
                 dom={dom}
               ></FlowEditorHover>
             );
+          }
         }
       }
     }
@@ -157,82 +157,109 @@ export const replaceMultilineBlocks = (
   app: App,
   showEditIcon: boolean = false
 ) => {
+
   replaceMarkdownForEmbeds(el, async (dom) => {
     // Check if this is a multi-line block embed
     const embedLink = dom.getAttribute('src');
     if (!embedLink) return;
-    
+
     const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
     if (!multiLineBlockRegex.test(embedLink)) {
       // Not a multi-line block, skip
       return;
     }
-    
+
     // Check if already processed by CodeMirror decorator
     if (dom.querySelector('.mk-flowspace-editor')) {
       // Already processed, skip
       return;
     }
-    
+
     // Hide the native rendering
     const nativeContent = dom.querySelector('.markdown-embed-content');
     if (nativeContent) {
       (nativeContent as HTMLElement).style.display = 'none';
     }
-    
+
     // Handle the native link icon
     const nativeLink = dom.querySelector('.markdown-embed-link');
-    
+
     // Create container for our custom rendering
     const container = dom.createDiv('mk-multiline-block-container');
-    
-    // Create edit icon if in Live Preview mode
-    if (showEditIcon && nativeLink) {
-      
-      // Hide the native link
-      (nativeLink as HTMLElement).style.display = 'none';
-      
-      // Create toolbar similar to replaceAllEmbed
-      const toolbar = dom.createDiv("blp-embed-toolbar");
-      toolbar.prepend(nativeLink.cloneNode(true)); // Clone the native link
-      const div = toolbar.createDiv("mk-floweditor-selector");
-      const reactEl = createRoot(div);
-      
-      const cm: EditorView | undefined = getCMFromElement(el, app);
-      if (cm) {
-        
-        if (!dom.parentElement) return;
-        const pos = cm.posAtDOM(dom);
-        const index = [...Array.from(dom.parentElement.childNodes)].indexOf(dom);
-        if (index == -1) return;
-        const nextDom = dom.parentElement.childNodes[index];
-        const endPos = cm.posAtDOM(nextDom as HTMLElement);
 
-        if (ctx.sourcePath && pos !== null && endPos !== null) {
-          reactEl.render(
-            <FlowEditorHover
-              app={app}
-              toggle={true}
-              path={ctx.sourcePath}
-              toggleState={false}
-              view={cm}
-              pos={{ from: pos + 3, to: endPos - 3 }}
-              plugin={plugin}
-              dom={dom}
-            />
-          );
+    // Add click handler for Live Preview mode to trigger link editing
+    if (showEditIcon) {
+
+      container.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        const cm: EditorView | undefined = getCMFromElement(el, app);
+        if (cm) {
+          // Calculate the document position for the multiline block
+          const pos = cm.posAtDOM(dom);
+          if (pos !== null) {
+            // Set cursor to the beginning of the link text
+            const linkStart = pos + 3; // Skip "![[" 
+            const linkEnd = pos + 3 + embedLink.length; // End of the link
+
+
+            // Set selection to the link range to trigger Obsidian's native link editing
+            cm.dispatch({
+              selection: { anchor: linkStart, head: linkEnd },
+              scrollIntoView: true
+            });
+
+            // Focus the editor to ensure the selection is visible
+            cm.focus();
+          }
         }
-      } 
+      });
+
+      // Create edit icon if in Live Preview mode
+      if (nativeLink) {
+        // Hide the native link
+        (nativeLink as HTMLElement).style.display = 'none';
+
+        // Create toolbar similar to replaceAllEmbed
+        const toolbar = dom.createDiv("blp-embed-toolbar");
+        toolbar.prepend(nativeLink.cloneNode(true)); // Clone the native link
+        const div = toolbar.createDiv("mk-floweditor-selector");
+        const reactEl = createRoot(div);
+
+        const cm: EditorView | undefined = getCMFromElement(el, app);
+        if (cm) {
+          if (!dom.parentElement) return;
+          const pos = cm.posAtDOM(dom);
+          const index = [...Array.from(dom.parentElement.childNodes)].indexOf(dom);
+          if (index == -1) return;
+          const nextDom = dom.parentElement.childNodes[index + 1] || dom.parentElement.childNodes[index];
+          const endPos = cm.posAtDOM(nextDom as HTMLElement);
+
+          if (ctx.sourcePath && pos !== null && endPos !== null) {
+            reactEl.render(
+              <FlowEditorHover
+                app={app}
+                toggle={true}
+                path={ctx.sourcePath}
+                toggleState={false}
+                view={cm}
+                pos={{ from: pos + 3, to: endPos - 3 }}
+                plugin={plugin}
+                dom={dom}
+              />
+            );
+          }
+        }
+      }
     } else if (nativeLink) {
       // In Read Mode, just hide the native link
       (nativeLink as HTMLElement).style.display = 'none';
     }
-    
+
     const reactEl = createRoot(container);
-    
+
     // Extract the link text from src attribute
     const linkText = embedLink.replace(/^.*\//, ''); // Remove path if present
-    
     reactEl.render(
       <UINote
         load={true}
