@@ -203,12 +203,27 @@ export function gen_insert_blocklink_multiline_block(
 	const start_line = editor.getCursor("from").line;
 	const end_line = editor.getCursor("to").line;
 
-	// Insert ^xyz at the end of first line
-	const firstLineEnd = editor.getLine(start_line).length;
-	editor.replaceRange(` ^${id}`, {
-		line: start_line,
-		ch: firstLineEnd
-	});
+	// Get the first line content
+	const firstLineContent = editor.getLine(start_line);
+	const firstLineEnd = firstLineContent.length;
+	
+	// Check if the line is empty or contains only whitespace
+	const isEmptyOrWhitespace = firstLineContent.trim().length === 0;
+	
+	if (isEmptyOrWhitespace) {
+		// Insert hidden placeholder content + block ID for empty/whitespace lines
+		// Using Obsidian comment syntax %% %% which is invisible in Live Preview/Reading Mode
+		editor.replaceRange(`%% %% ^${id}`, {
+			line: start_line,
+			ch: firstLineEnd
+		});
+	} else {
+		// Insert ^xyz at the end of first line (existing behavior)
+		editor.replaceRange(` ^${id}`, {
+			line: start_line,
+			ch: firstLineEnd
+		});
+	}
 
 	// Insert ^xyz-xyz on a new line after the last line
 	const lastLineEnd = editor.getLine(end_line).length;
