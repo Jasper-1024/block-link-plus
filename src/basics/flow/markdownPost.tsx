@@ -154,7 +154,8 @@ export const replaceMultilineBlocks = (
   el: HTMLElement,
   ctx: MarkdownPostProcessorContext,
   plugin: BlockLinkPlus,
-  app: App
+  app: App,
+  showEditIcon: boolean = false
 ) => {
   replaceMarkdownForEmbeds(el, async (dom) => {
     // Check if this is a multi-line block embed
@@ -179,14 +180,54 @@ export const replaceMultilineBlocks = (
       (nativeContent as HTMLElement).style.display = 'none';
     }
     
-    // Hide the native link icon
+    // Handle the native link icon
     const nativeLink = dom.querySelector('.markdown-embed-link');
-    if (nativeLink) {
-      (nativeLink as HTMLElement).style.display = 'none';
-    }
     
     // Create container for our custom rendering
     const container = dom.createDiv('mk-multiline-block-container');
+    
+    // Create edit icon if in Live Preview mode
+    if (showEditIcon && nativeLink) {
+      
+      // Hide the native link
+      (nativeLink as HTMLElement).style.display = 'none';
+      
+      // Create toolbar similar to replaceAllEmbed
+      const toolbar = dom.createDiv("blp-embed-toolbar");
+      toolbar.prepend(nativeLink.cloneNode(true)); // Clone the native link
+      const div = toolbar.createDiv("mk-floweditor-selector");
+      const reactEl = createRoot(div);
+      
+      const cm: EditorView | undefined = getCMFromElement(el, app);
+      if (cm) {
+        
+        if (!dom.parentElement) return;
+        const pos = cm.posAtDOM(dom);
+        const index = [...Array.from(dom.parentElement.childNodes)].indexOf(dom);
+        if (index == -1) return;
+        const nextDom = dom.parentElement.childNodes[index];
+        const endPos = cm.posAtDOM(nextDom as HTMLElement);
+
+        if (ctx.sourcePath && pos !== null && endPos !== null) {
+          reactEl.render(
+            <FlowEditorHover
+              app={app}
+              toggle={true}
+              path={ctx.sourcePath}
+              toggleState={false}
+              view={cm}
+              pos={{ from: pos + 3, to: endPos - 3 }}
+              plugin={plugin}
+              dom={dom}
+            />
+          );
+        }
+      } 
+    } else if (nativeLink) {
+      // In Read Mode, just hide the native link
+      (nativeLink as HTMLElement).style.display = 'none';
+    }
+    
     const reactEl = createRoot(container);
     
     // Extract the link text from src attribute
@@ -199,7 +240,7 @@ export const replaceMultilineBlocks = (
         path={linkText}
         source={ctx.sourcePath}
         isReadOnly={true}
-      ></UINote>
+      />
     );
   });
 };

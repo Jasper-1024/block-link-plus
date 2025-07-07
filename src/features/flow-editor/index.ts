@@ -60,7 +60,7 @@ export class FlowEditorManager {
 
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, true);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
 		});
 
@@ -76,7 +76,7 @@ export class FlowEditorManager {
 			}
 
 			this.processEmbeddedBlocks(element);
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
 		});
 	}
 
