@@ -3,162 +3,204 @@
 *Π: DEVELOPMENT | Ω: RESEARCH*
 
 ## 🔮 Current Focus
-**✅ 多行块只读问题完整解决 - 技术方案总结**
+**✅ Live Preview模式切换Bug完美解决 - 多行块渲染稳定性重大突破**
 
 ### 🎯 **最终状态**
-- ✅ **多行块嵌套渲染**：正常工作
-- ✅ **行号隐藏**：已成功
-- ✅ **只读模式**：完全生效
-- ✅ **RangeError错误**：已修复
-- ✅ **用户体验**：完全符合预期
+- ✅ **Live Preview → Reading Mode → Live Preview**: 多行块渲染完全稳定
+- ✅ **模式切换无缝**: 所有模式间切换不再导致渲染丢失
+- ✅ **多源链接提取**: 支持多种属性源的链接信息获取
+- ✅ **重复处理防护**: 智能检查避免重复渲染
+- ✅ **用户体验完美**: 模式切换流畅，功能一致
 
 ### 🏆 **技术方案总结**
 
-#### **成功方案：CSS全局拦截策略**
-经过深入研究和多次迭代，最终采用纯CSS解决方案：
+#### **核心Bug分析**
+- **现象**: Live Preview → Reading Mode → Live Preview 导致多行块渲染丢失
+- **根本原因**: 模式切换时，DOM结构变化导致渲染逻辑失效
+- **技术挑战**: 需要适配不同模式下的DOM结构差异
 
-```css
-/* 核心：精确控制多行块容器内的所有编辑器 */
-.mk-multiline-block-container .cm-content {
-  pointer-events: none !important;
-  user-select: text !important;
-  cursor: default !important;
+#### **解决方案：增强型嵌入处理架构**
+
+```typescript
+// 核心改进：直接处理嵌入元素
+export const replaceMultilineBlocks = (
+  el: HTMLElement,
+  ctx: MarkdownPostProcessorContext,
+  plugin: BlockLinkPlus,
+  app: App,
+  showEditIcon: boolean = false
+) => {
+  // 关键：直接处理Reading Mode下的嵌入元素
+  if (el.classList.contains('internal-embed') && el.classList.contains('markdown-embed')) {
+    processMultilineEmbed(el, ctx, plugin, app, showEditIcon);
+    return;
+  }
+
+  // 原有逻辑：处理其他情况
+  replaceMarkdownForEmbeds(el, async (dom) => {
+    processMultilineEmbed(dom, ctx, plugin, app, showEditIcon);
+  });
+};
+```
+
+#### **技术创新点**
+
+**1. 统一处理函数**
+```typescript
+function processMultilineEmbed(
+  dom: HTMLElement,
+  ctx: MarkdownPostProcessorContext,
+  plugin: BlockLinkPlus,
+  app: App,
+  showEditIcon: boolean
+) {
+  // 统一的多行嵌入处理逻辑
+  // 避免代码重复，提高维护性
+}
+```
+
+**2. 多源链接提取策略**
+```typescript
+// 创新：支持多种属性源的链接信息获取
+let embedLink = dom.getAttribute('src');
+const altText = dom.getAttribute('alt');
+
+// 回退机制1：从alt属性恢复
+if (!embedLink && altText) {
+  const match = altText.match(/(.+?)\s*>\s*(.+)/);
+  if (match) {
+    embedLink = match[1].trim() + '#' + match[2].trim();
+  }
 }
 
-/* 创新：透明覆盖层阻止编辑操作 */
-.mk-multiline-block-container .cm-content::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: transparent;
-  z-index: 1000;
-  pointer-events: auto;
+// 回退机制2：data属性
+if (!embedLink) {
+  const dataHref = dom.getAttribute('data-href');
+  if (dataHref) embedLink = dataHref;
 }
 
-/* 最终修复：阻止容器级别的点击事件 */
-.mk-multiline-block-container {
-  pointer-events: none !important;
+// 回退机制3：aria-label
+if (!embedLink) {
+  const ariaLabel = dom.getAttribute('aria-label');
+  if (ariaLabel && ariaLabel.includes('#^')) {
+    embedLink = ariaLabel;
+  }
 }
+```
 
-/* 智能例外：保持必要的交互能力 */
-.mk-multiline-block-container .blp-embed-toolbar {
-  pointer-events: auto !important;
+**3. 智能重复处理检查**
+```typescript
+// 防止重复处理的智能检查
+const existingContainer = dom.querySelector('.mk-multiline-block-container');
+if (existingContainer) {
+  const hasFlowEditor = existingContainer.querySelector('.mk-flowspace-editor');
+  const hasContent = hasFlowEditor && hasFlowEditor.querySelector('.mk-floweditor');
+  
+  if (hasContent) {
+    return; // 已有内容，跳过
+  } else {
+    existingContainer.remove(); // 移除空容器，重新创建
+  }
 }
+```
+
+**4. Reading Mode优化**
+```typescript
+// 在 replaceMarkdownForEmbeds 中增强Reading Mode处理
+export const replaceMarkdownForEmbeds = (
+  el: HTMLElement,
+  callback: (dom: HTMLElement) => void
+) => {
+  // 关键：直接处理Reading Mode嵌入元素
+  if (el.classList.contains('internal-embed') && el.classList.contains('markdown-embed')) {
+    callback(el);
+    return;
+  }
+  
+  // 原有异步处理逻辑...
+};
 ```
 
 ### 🔬 **技术发现历程**
 
-#### **阶段1：问题定位** (Research Mode)
-- **发现**: 多行块 `![[file#^xyz-xyz]]` 内嵌套块无法渲染
-- **根因**: 静态渲染器 vs 完整编辑器的架构差异
-- **决策**: 统一使用 `enactor.openPath()` 架构
+#### **问题定位过程**
+1. **现象观察**: 用户报告模式切换后多行块渲染丢失
+2. **DOM结构分析**: 发现不同模式下DOM结构差异
+3. **渲染路径追踪**: 识别出处理逻辑在模式切换时失效
+4. **根因定位**: 确定为DOM元素识别和处理逻辑问题
 
-#### **阶段2：架构统一** (Execute Mode)  
-- **实施**: 方案A - 统一渲染路径架构
-- **成果**: 嵌套块成功渲染
-- **新问题**: 多行块变成可编辑、显示行号、RangeError
-
-#### **阶段3：深度诊断** (Research Mode)
-- **技术发现**: `EditorView.editable.of(false)` 不控制DOM的 `contentEditable`
-- **根本原因**: StateEffect只设置内部facet，不影响实际编辑能力
-- **关键洞察**: 需要直接操作DOM而非依赖CodeMirror内部机制
-
-#### **阶段4：方案创新** (Innovate Mode)
-- **设计**: 4个不同技术路径的解决方案
-- **选择**: 方案2 - CSS全局拦截策略
-- **优势**: 简洁、高效、稳定、易维护
-
-#### **阶段5：最终修复** (Execute Mode)
-- **实施**: CSS全局拦截策略
-- **发现**: RangeError由事件冒泡触发
-- **完善**: 添加容器级别的事件阻止
+#### **解决方案演进**
+1. **初步修复**: 增强DOM元素识别逻辑
+2. **深度优化**: 引入多源链接提取机制
+3. **完善防护**: 添加重复处理检查
+4. **最终完善**: 统一处理函数和Reading Mode优化
 
 ### 💡 **核心技术洞察**
 
-#### **1. CodeMirror 6 机制理解**
-```typescript
-// 错误假设
-EditorView.editable.of(false) → 禁用DOM编辑
+#### **1. 模式切换的DOM变化规律**
+- **Live Preview**: 元素可能需要异步处理
+- **Reading Mode**: 元素直接作为 `internal-embed` 处理
+- **关键**: 需要在函数入口处进行模式检测和分发
 
-// 实际情况  
-EditorView.editable.of(false) → 只设置内部状态
-contentElement.contentEditable = 'false' → 真正禁用编辑
-```
+#### **2. 多源数据提取的重要性**
+- 不同模式下，链接信息可能存储在不同属性中
+- 需要建立完整的回退机制确保数据可靠性
+- 属性优先级：src > alt > data-href > aria-label
 
-#### **2. 嵌套编辑器处理**
-- 多行块包含多个独立的编辑器实例
-- 每个嵌套层都需要单独禁用
-- CSS选择器可以一次性处理所有层级
+#### **3. 防御性编程的价值**
+- 重复处理检查避免了资源浪费
+- 容器状态检查确保功能正确性
+- 错误恢复机制提高系统稳定性
 
-#### **3. 事件处理机制**
-- `pointer-events: none` 在内容层面生效
-- 但事件仍然冒泡到容器层
-- 需要在容器级别完全阻止事件处理
+### 📊 **修复效果对比**
 
-### 📊 **方案对比结果**
+| 场景 | 修复前 | 修复后 | 改进程度 |
+|------|--------|--------|----------|
+| **Live Preview启动** | ✅ 正常 | ✅ 正常 | 保持 |
+| **切换到Reading Mode** | ✅ 正常 | ✅ 正常 | 保持 |
+| **切换回Live Preview** | ❌ 渲染丢失 | ✅ 完全正常 | 🚀 重大改进 |
+| **多次模式切换** | ❌ 不稳定 | ✅ 完全稳定 | 🚀 重大改进 |
+| **链接信息提取** | ⚠️ 部分失败 | ✅ 多源保障 | 🚀 显著提升 |
 
-| 技术方案 | 实施复杂度 | 性能影响 | 稳定性 | 维护成本 | 最终效果 |
-|----------|------------|----------|--------|----------|----------|
-| **方案A**: 统一渲染路径 | 🔴 高 | 🟡 中等 | 🔴 不稳定 | 🔴 高 | 🟡 部分成功 |
-| **方案B**: 手动后处理 | 🔴 高 | 🔴 低 | 🔴 不稳定 | 🔴 高 | ❌ 已否决 |
-| **方案C**: 混合渲染 | 🔴 高 | 🟢 优秀 | 🟡 中等 | 🔴 高 | ❌ 已否决 |
-| **方案2**: CSS拦截 ✅ | 🟢 简单 | 🟢 最优 | 🟢 稳定 | 🟢 最低 | ✅ 完全成功 |
+### 🎯 **技术资产价值**
 
-### 🎯 **最终解决方案特点**
-
-#### **技术优势**
-- ✅ **纯CSS解决**: 零JavaScript运行时开销
-- ✅ **精确控制**: 只影响多行块，不影响其他功能  
-- ✅ **自动递归**: 处理任意深度的嵌套编辑器
-- ✅ **智能保护**: 保持必要的交互能力
-
-#### **用户体验**
-- ✅ **视觉一致**: 接近静态渲染的外观
-- ✅ **功能完整**: 嵌套块正常渲染和交互
-- ✅ **交互合理**: 文本选择、工具栏等仍可用
-- ✅ **性能优秀**: 无卡顿、无延迟
-
-### 📋 **技术债务清理**
-
-#### **已完成清理**
-- ✅ 移除了复杂的StateEffect实验代码
-- ✅ 简化了DOM操作回退机制
-- ✅ 统一了CSS样式管理
-- ✅ 消除了RangeError错误源
-
-#### **保留的技术资产**
-- ✅ 统一的`enactor.openPath`架构（为嵌套渲染提供基础）
-- ✅ 详细的调试日志系统（便于未来问题诊断）
-- ✅ 模块化的CSS样式（易于维护和扩展）
-
-### 🔍 **关键学习要点**
-
-#### **技术层面**
-1. **API理解的重要性**: 深入理解第三方库的实际行为机制
-2. **简单方案优先**: 复杂的技术方案往往不如简单直接的解决方案
-3. **DOM直接操作**: 有时候直接操作DOM比使用框架API更有效
-
-#### **问题解决方法**
-1. **严格的Research Mode**: 通过详细日志准确定位问题
-2. **多方案并行设计**: 在Innovate Mode中设计多个备选方案
-3. **渐进式验证**: 逐步验证和完善解决方案
-
-### 🎯 **项目影响**
-
-#### **功能完善**
-- 多行块嵌套渲染功能现在完全可用
-- 用户体验与预期完全一致
-- 无已知技术债务或兼容性问题
+#### **架构改进**
+- ✅ **统一处理模式**: `processMultilineEmbed` 函数实现了处理逻辑统一
+- ✅ **多源数据策略**: 建立了完整的链接信息提取机制
+- ✅ **防御性设计**: 多层检查确保系统稳定性
+- ✅ **模式适配**: 完美适配Live Preview和Reading Mode
 
 #### **代码质量**
-- 架构更加清晰和统一
-- CSS样式集中管理
-- 调试和维护更加便利
+- ✅ **可维护性**: 统一函数减少代码重复
+- ✅ **可读性**: 清晰的逻辑分层和注释
+- ✅ **可扩展性**: 易于添加新的处理模式
+- ✅ **健壮性**: 完善的错误处理和回退机制
 
-#### **技术资产**
-- 积累了CodeMirror 6的深度使用经验
-- 建立了完整的问题诊断方法论
-- 形成了可复用的CSS解决方案模式
+### 🎉 **里程碑意义**
+
+#### **用户体验突破**
+- **无缝切换**: 用户可以在任何模式间自由切换
+- **功能一致**: 所有模式下多行块功能表现一致
+- **稳定可靠**: 不再出现渲染丢失或功能失效
+
+#### **技术架构成熟**
+- **处理统一**: 建立了完整的嵌入处理架构
+- **数据可靠**: 多源提取确保信息完整性
+- **系统稳定**: 防御性设计提高整体可靠性
+
+### 🎯 **后续优化方向**
+
+#### **性能优化**
+- 考虑缓存机制减少重复计算
+- 优化DOM查询和处理效率
+- 减少不必要的重新渲染
+
+#### **功能扩展**
+- 扩展多行块的交互功能
+- 增加更多的渲染模式支持
+- 提供更丰富的自定义选项
+
+**🎊 Live Preview模式切换Bug已完美解决，多行块渲染达到生产级稳定性！**
 
 ## 📎 Context References
 - 📄 Active Files: 
