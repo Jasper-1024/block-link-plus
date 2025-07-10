@@ -5,6 +5,7 @@
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
+		"debug": "node esbuild.debug.mjs",
 		"build": "node esbuild.config.mjs production",
 		"build-with-types": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
@@ -41,7 +42,7 @@
 		"prop-types": "^15.7.2",
 		"ts-jest": "^29.1.2",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4"
+		"typescript": "^4.7.4"
 	},
 	"dependencies": {
 		"@codemirror/basic-setup": "^0.20.0",

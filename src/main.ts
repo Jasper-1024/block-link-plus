@@ -33,6 +33,7 @@ import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
+import { DebugUtils } from "./utils/debug";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -90,6 +91,8 @@ export default class BlockLinkPlus extends Plugin {
 
 	async onload() {
 		console.log(`loading ${this.appName}`);
+		// Initialize debug utilities
+		DebugUtils.init(this);
 
 		// Load settings.
 		await this.loadSettings();
