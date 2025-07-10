@@ -80,6 +80,24 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
           });
         }
       }
+    } else if (
+      expandedState == FlowEditorState.Open &&
+      type == FlowEditorLinkType.ReadOnlyEmbed
+    ) {
+      // step2: handle readonly embed
+      // avoid conflict with Obsidian native rendering, check selection state
+      const shouldSkip = (state.selection.main.from == from - 3 &&
+                         state.selection.main.to == to + 2) ||
+                        (state.selection.main.from >= from - 2 &&
+                         state.selection.main.to <= to + 1);
+      
+      if (!shouldSkip) {
+        values.push({
+          start: from - 3,
+          end: to + 2,
+          decoration: flowEditorWidgetDecoration(info, plugin),
+        });
+      }
     }
   }
   values.sort(compareByField("start", true));

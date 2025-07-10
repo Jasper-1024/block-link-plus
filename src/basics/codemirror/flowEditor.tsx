@@ -41,6 +41,7 @@ export enum FlowEditorLinkType {
   Link = 0,
   Embed = 1,
   EmbedClosed = 2,
+  ReadOnlyEmbed = 3,      // ^![[]] readonly embed
 }
 
 export interface FlowEditorInfo {
@@ -131,6 +132,38 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
       newValues.push(info);
     }
 
+    // step1: detect ^![[]] readonly embed
+    for (const match of str.matchAll(/\^!\[\[([^\]]+)\]\]/g)) {
+      if (match.index === undefined) continue;
+      
+      const link = match[1];
+      console.log('🔍 found readonly embed:', link);
+      
+      // validate if it is a valid multiline block reference format #^xyz-xyz
+      if (!link.match(/#\^([a-z0-9]+)-\1$/)) {
+        console.log('❌ invalid multiline block reference format:', link);
+        console.log('💡 correct format should be: file#^abc-abc (where abc is the same identifier)');
+        continue;
+      }
+      
+      console.log('✅ valid multiline block reference format:', link);
+      
+      // step2: create FlowEditorInfo object
+      const id = genId();
+      const info: FlowEditorInfo = {
+        id: id,
+        link: link,
+        from: match.index + 3,  // 跳过 "^![["
+        to: match.index + 3 + link.length,
+        type: FlowEditorLinkType.ReadOnlyEmbed,
+        height: -1,
+        expandedState: FlowEditorState.Open  // 默认展开
+      };
+      
+      newValues.push(info);
+      console.log('🎯 created readonly embed info:', { id, link, type: 'ReadOnlyEmbed' });
+    }
+
     newValues.sort(compareByField("from", true));
     return newValues;
   },
@@ -155,6 +188,23 @@ class FlowEditorWidget extends WidgetType {
 
     div.setAttribute("id", "mk-flow-" + this.info.id);
     div.style.setProperty("height", this.info.height + "px");
+    
+    // step2: handle readonly embed
+    if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
+      div.classList.add("mk-multiline-readonly");
+      div.innerHTML = `
+        <div style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+          <strong>MULTILINE BLOCK TEST (Live Preview)</strong><br>
+          This is the first line<br>
+          This is the second line<br>
+          This is the third line<br>
+          <small>Reference: ${this.info.link}</small>
+        </div>
+      `;
+      return div;
+    }
+    
+    // handle other types
     if (this.info.link && view.state.field(editorInfoField, false)) {
       const infoField = view.state.field(editorInfoField, false);
       const file = infoField.file;
