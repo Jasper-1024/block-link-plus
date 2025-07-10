@@ -11,8 +11,8 @@
       "types/*": ["src/types/*"],
       "main": ["src/main.ts"]
     },
-    "inlineSourceMap": true,
-    "inlineSources": true,
+    // "inlineSourceMap": true,
+    // "inlineSources": true,
     "module": "ESNext",
     "target": "ES6",
     "allowJs": true,
