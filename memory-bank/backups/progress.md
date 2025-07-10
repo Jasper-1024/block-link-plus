@@ -1,19 +1,11 @@
 # σ₅: Progress Tracker
-*v1.0 | Created: 2023-11-15 | Updated: 2024-12-28*
+*v1.0 | Created: 2023-11-15 | Updated: 2023-11-18*
 *Π: 🏗️DEVELOPMENT | Ω: ⚙️EXECUTE*
 
 ## 📈 Project Status
-Completion: 80% (新增 multiline block 重构任务)
+Completion: 85%
 
 ## 🎯 Milestones
-
-### 🚧 Current: Multiline Block 重构
-- [ ] 基础架构扩展 (FlowEditorLinkType, flowEditorInfo)
-- [ ] Live Preview 模式实现
-- [ ] Reading Mode 模式实现
-- [ ] 模式切换和状态管理
-- [ ] 样式和交互优化
-- [ ] 测试和完善
 
 ### ✅ Core Block Link Functionality
 - [x] 基本块链接复制功能
@@ -110,29 +102,7 @@ Completion: 80% (新增 multiline block 重构任务)
 
 ## 🚧 Current Sprint Status
 
-### 🎯 Current Sprint: Multiline Block 功能重构
-
-**📅 Sprint 开始**: 2024-12-28  
-**🎯 Sprint 目标**: 基于现有 !![[]] 流程扩展实现 multiline block 功能，采用 ^![[]] 语法避免与 Obsidian 原生渲染冲突
-
-#### 🔄 Sprint 策略
-- **一小步一验证**: 每个步骤都有明确的验证标准
-- **渐进式实现**: 先用固定内容验证流程，最后实现真正的多行块渲染
-- **风险控制**: 通过分步实现避免 block 分支的无限循环 bug 问题
-
-#### 📋 待办任务 (10步计划)
-1. **步骤1**: 基础检测 - 识别 ^![[]] 语法，console.log 输出
-2. **步骤2**: Live Preview 固定内容 - 用固定文本替换显示
-3. **步骤3**: Reading Mode 固定内容 - 用固定文本替换显示
-4. **步骤4**: 模式切换测试 - Live ↔ Reading 切换验证
-5. **步骤5**: Live Preview 跳转链接 - 添加跳转按钮
-6. **步骤6**: Reading Mode 跳转链接 - 添加跳转按钮
-7. **步骤7**: Live Preview 编辑图标 - 添加编辑图标，悬浮显示
-8. **步骤8**: Reading Mode 编辑图标 - 添加编辑图标，悬浮显示
-9. **步骤9**: 完整模式切换 - 所有功能在模式切换时正确工作
-10. **步骤10**: 真正的多行块渲染 - 替换固定内容为实际多行块内容
-
-### 🎯 Previous Sprint: Timeline 输出格式改进
+### 🎯 Current Sprint: Timeline 输出格式改进
 
 **📅 Sprint 开始**: 2024-06-28  
 **🎯 Sprint 目标**: 改进 Timeline 输出格式，提高可读性和组织性

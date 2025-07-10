@@ -1,141 +1,137 @@
 # σ₄: Active Context
-*v1.0 | Created: 2024-12-19 | Updated: 2024-06-28*
+*v1.0 | Created: 2024-12-19 | Updated: 2024-12-28*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
 ## 🔮 Current Focus
-🔧 **NEW: Timeline 输出格式改进**
-- 用户需求：改进 Timeline 输出格式，提高可读性和组织性
-- **实现方案**：按文件分组，添加文件链接、分隔符和空行
-- **格式特点**：每个文件有链接入口，文件间有分隔符，内容行间有空行
-- **状态**：功能已实现，版本已更新至 1.5.3
+🚧 **NEW: Multiline Block 功能重构**
+- 用户需求：基于现有的 !![[]] 流程扩展实现 multiline block 功能
+- **背景问题**：block 分支的 multiline block 实现设计太 lan，导致无限循环修改 bug
+- **解决方案**：完全重构，基于 ^![[file#^xyz-xyz]] 语法，复用现有 !![[]] 流程
+- **核心挑战**：Live Preview 和 Reading Mode 下的各种细节处理
+- **实现策略**：一小步一验证，先用固定内容验证流程，最后才是真正的多行块渲染
 
 ## 📎 Context References
 - 📄 Active Files: 
-  - `src/features/dataview-timeline/index.ts` (已修改输出格式)
-  - `doc/timeline-debug-example.md` (已更新格式说明)
-  - `doc/timeline-format-test.md` (新增测试文件)
+  - `doc/multiline-block-implementation-based-on-existing-flow.md` (完整重构设计方案)
+  - `src/basics/codemirror/flowEditor.tsx` (需要扩展的核心文件)
+  - `src/basics/enactor/obsidian.tsx` (装饰器应用逻辑)
+  - `src/basics/ui/UINote.tsx` (UI 渲染组件)
+  - `src/basics/flow/markdownPost.tsx` (Reading Mode 处理)
   - `memory-bank/activeContext.md` (当前更新)
 - 💻 Active Code: 
-  - `handleTimeline()` 函数 (修改内容生成逻辑)
-  - 按文件分组的格式化输出实现
-- 📚 Active Docs: Timeline 功能文档
-- 📁 Active Folders: `src/features/dataview-timeline/`
-- 🔄 Git References: Timeline 输出格式改进
+  - `FlowEditorLinkType` 枚举 (需要扩展)
+  - `flowEditorInfo` StateField (需要扩展检测逻辑)
+  - `FlowEditorWidget` 渲染逻辑 (需要支持只读多行块)
+  - `replaceAllTables` 函数 (需要扩展处理 ^![[]])
+- 📚 Active Docs: 
+  - Multiline Block 重构设计文档
+  - 现有 3 种链接类型的实现机制分析
+- 📁 Active Folders: 
+  - `src/basics/` (核心实现目录)
+  - `doc/` (设计文档目录)
+- 🔄 Git References: 
+  - feature-multline-block 分支
+  - multiline block 重构实现
 - 📏 Active Rules: CursorRIPER♦Σ Lite 1.0.0 Execute Mode
 
 ## 📡 Context Status
-- 🟢 Active: Timeline 输出格式改进
-- 🟡 Partially Relevant: README 更新
-- 🟣 Essential: 保留用户对嵌入链接的自定义修改
-- 🔴 Deprecated: 旧的输出格式
+- 🟢 Active: Multiline Block 功能重构
+- 🟡 Partially Relevant: 现有 !![[]] 和 ![[]] 链接类型实现
+- 🟣 Essential: 一小步一验证的实现策略
+- 🔴 Deprecated: block 分支的多行块实现
 
-## 🎯 Timeline 输出格式改进
+## 🎯 Multiline Block 重构需求分析
 
-### 1. **新格式要求**
-- **文件链接入口**：每个文件组以 `[[文件路径]]` 作为入口
-- **分隔符**：文件组之间用 `---` 分隔
-- **空行**：每个内容行之间添加空行
-- **用户修改保留**：保留用户对嵌入链接的自定义修改
+### 1. **问题背景**
+- **现有实现**：项目支持 3 种链接类型
+  - `!![[]]` - 完全独立的 embed edit block (已实现)
+  - `![[]]` - Obsidian 原生渲染 + 插件编辑图标 (已实现)
+  - `![[file#^xyz-xyz]]` - 多行 block (未实现，最复杂)
+- **核心问题**：block 分支的 multiline block 设计太 lan，导致无限循环修改 bug
+- **技术挑战**：Obsidian 会先将 `![[file#^xyz-xyz]]` 作为单行 block 渲染，需要排除干扰
 
-### 2. **新格式示例**
-```
-%% blp-timeline-start data-hash="..." %%
-[[文件路径1]]
+### 2. **设计方案**
+- **新语法**：使用 `^![[file#^xyz-xyz]]` 避免与 Obsidian 原生渲染冲突
+- **复用策略**：基于成熟的 `!![[]]` 处理流程扩展
+- **最小改动**：尽可能少地修改现有代码
+- **统一处理**：Live Preview 和 Reading Mode 保持一致
 
-![[文件路径1#标题1]]
+### 3. **实现策略**
+- **一小步一验证**：每个步骤都有明确的验证标准
+- **先固定内容**：用固定文本验证流程，再实现真正的多行块渲染
+- **渐进式功能**：按功能模块逐步实现（识别 → 渲染 → 跳转 → 编辑图标）
+- **最后真实渲染**：所有基础功能验证完成后，才替换为真正的多行块内容
 
-![[文件路径1#标题2]]
+## 🛠️ 技术实现概览
 
----
-[[文件路径2]]
-
-![[文件路径2#标题1]]
-%% blp-timeline-end %%
-```
-
-### 3. **实现方案**
-- **按文件分组**：使用 `groupedByFile` 对象按文件路径分组
-- **排序**：按照 `config.sort_order` 对文件组进行排序
-- **格式化输出**：生成包含文件链接、分隔符和空行的格式化内容
-- **保留用户修改**：使用 `userModificationsMap` 保留用户对嵌入链接的修改
-
-### 4. **兼容性考虑**
-- **哈希计算**：确保新格式与哈希机制兼容
-- **用户修改**：只保留对嵌入链接的修改，文件链接和分隔符使用默认格式
-- **向后兼容**：首次运行时会更新所有现有 Timeline 区域，后续运行正常
-
-## 🔧 技术实现细节
-
-### 按文件分组
+### 类型系统扩展
 ```typescript
-// 1. 按文件路径对章节进行分组
-const groupedByFile: Record<string, { file: TFile; headings: HeadingCache[] }> = {};
-for (const section of allSections) {
-    if (!groupedByFile[section.file.path]) {
-        groupedByFile[section.file.path] = {
-            file: section.file,
-            headings: [],
-        };
-    }
-    groupedByFile[section.file.path].headings.push(section.heading);
+// src/types/index.ts
+export enum FlowEditorLinkType {
+  Link = 0,
+  Embed = 1,              // !![[]] 嵌入
+  EmbedClosed = 2,
+  ReadOnlyEmbed = 3,      // 新增：^![[]] 多行只读
 }
 ```
 
-### 格式化输出
+### 检测逻辑扩展
 ```typescript
-// 3. 生成格式化的内容
-const newContentLines: string[] = [];
-let isFirstGroup = true;
-
-for (const group of sortedGroups) {
-    // 添加分隔符（除了第一个组）
-    if (!isFirstGroup) {
-        newContentLines.push("---");
-        newContentLines.push("");
-    } else {
-        isFirstGroup = false;
-    }
-    
-    // 添加文件链接
-    newContentLines.push(`[[${group.file.path}]]`);
-    newContentLines.push("");
-    
-    // 排序并添加章节嵌入
-    const sortedHeadings = group.headings.sort(
-        (a, b) => a.position.start.line - b.position.start.line
-    );
-    
-    for (let i = 0; i < sortedHeadings.length; i++) {
-        const heading = sortedHeadings[i];
-        const key = `${group.file.path}#${heading.heading}`;
-        if (userModificationsMap.has(key)) {
-            newContentLines.push(userModificationsMap.get(key)!);
-        } else {
-            const embedLink =
-                config.embed_format === "!![[]]"
-                    ? `!![[${group.file.path}#${heading.heading}]]`
-                    : `![[${group.file.path}#${heading.heading}]]`;
-            newContentLines.push(embedLink);
-        }
-        
-        // 在每个嵌入链接后添加空行（除了最后一个）
-        if (i < sortedHeadings.length - 1) {
-            newContentLines.push("");
-        }
-    }
+// src/basics/codemirror/flowEditor.tsx
+// 新增：处理 ^![[]]
+for (const match of str.matchAll(/\^!\[\[([^\]]+)\]\]/g)) {
+  // 验证是否为多行块引用
+  if (!link.match(/#\^([a-z0-9]+)-\1$/)) continue;
+  // 创建 FlowEditorInfo
 }
 ```
 
-## 📝 下一步行动
-1. ✅ 更新版本号至 1.5.3
-2. ✅ 更新文档说明新格式
-3. ✅ 创建测试文件验证功能
-4. 📋 更新 README 文件
-5. 🔍 收集用户反馈
+### 渲染逻辑扩展
+- **Live Preview**：扩展 `FlowEditorWidget` 渲染逻辑
+- **Reading Mode**：扩展 `replaceAllTables` 处理 `^![[]]`
+- **UI 组件**：扩展 `UINote` 支持只读多行块
 
-## 📊 开发进度
-- **格式需求分析**：✅ 完成
-- **代码实现**：✅ 完成  
-- **文档更新**：✅ 完成
-- **测试验证**：✅ 完成
-- **版本更新**：✅ 完成
+## 📋 实施计划概览
+
+### 🚀 10步渐进式实现计划
+1. **基础检测** - 识别 `^![[]]` 语法，console.log 输出
+2. **Live Preview 固定内容** - 用固定文本替换显示
+3. **Reading Mode 固定内容** - 用固定文本替换显示
+4. **模式切换测试** - Live ↔ Reading 切换验证
+5. **Live Preview 跳转链接** - 添加跳转按钮
+6. **Reading Mode 跳转链接** - 添加跳转按钮
+7. **Live Preview 编辑图标** - 添加编辑图标，悬浮显示
+8. **Reading Mode 编辑图标** - 添加编辑图标，悬浮显示
+9. **完整模式切换** - 所有功能在模式切换时正确工作
+10. **真正的多行块渲染** - 替换固定内容为实际多行块内容
+
+### 🎯 关键优势
+- **每步可验证**：避免陷入复杂的调试循环
+- **渐进式开发**：先解决复杂的模式切换问题
+- **风险控制**：用固定内容先验证流程
+- **易于调试**：每步都有明确的验证标准
+
+## 🔄 下一步行动
+1. ✅ 完成需求分析和设计方案研究
+2. ✅ 制定详细的实施计划
+3. ✅ 更新 memory-bank 文档
+4. 📋 创建详细的实施计划文档
+5. 🚀 开始第一步：基础检测实现
+
+## 📊 项目状态
+- **当前阶段**：设计和规划完成，准备开始实施
+- **技术准备**：已完成技术方案设计和实施策略
+- **文档状态**：memory-bank 已更新，详细计划待记录
+- **风险评估**：通过渐进式实现策略，风险已充分控制
+
+## 📝 历史上下文
+- **Timeline 功能**：✅ 已完成 (v1.5.3)
+- **Flow Editor 功能**：✅ 已稳定
+- **基础架构**：✅ 已完善
+- **测试框架**：✅ 已建立
+
+## 🎨 设计原则
+- **复用而非重建**：基于成熟的 `!![[]]` 处理流程扩展
+- **最小改动原则**：尽可能少地修改现有代码
+- **统一处理流程**：Live Preview 和 Reading Mode 保持一致
+- **一小步一验证**：每个步骤都有明确的验证标准
