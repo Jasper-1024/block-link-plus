@@ -90,7 +90,7 @@ export default class BlockLinkPlus extends Plugin {
 	}
 
 	async onload() {
-		console.log(`loading ${this.appName}`);
+		console.log(`loading ${this.appName}, version: ${this.manifest.version}`);
 		// Initialize debug utilities
 		DebugUtils.init(this);
 

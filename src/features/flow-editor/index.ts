@@ -14,26 +14,26 @@ import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
 export class FlowEditorManager {
-    private plugin: BlockLinkPlus;
-    public enactor: Enactor;
-    private lastMode: Record<string, string> = {};
+	private plugin: BlockLinkPlus;
+	public enactor: Enactor;
+	private lastMode: Record<string, string> = {};
 
-    constructor(plugin: BlockLinkPlus) {
-        this.plugin = plugin;
-        this.enactor = new ObsidianEnactor(this.plugin);
-    }
+	constructor(plugin: BlockLinkPlus) {
+		this.plugin = plugin;
+		this.enactor = new ObsidianEnactor(this.plugin);
+	}
 
-    public initialize() {
-        this.enactor.load();
+	public initialize() {
+		this.enactor.load();
 
 		if (this.plugin.settings.editorFlow) {
 			this.setupFlowEditor();
 			this.reloadExtensions(true);
 			this.setupMultilineBlockCleanup();
 		}
-    }
+	}
 
-    private setupFlowEditor(): void {
+	private setupFlowEditor(): void {
 		// Patch workspace for flow editing
 		patchWorkspaceForFlow(this.plugin);
 		patchWorkspaceLeafForFlow(this.plugin);
@@ -45,72 +45,51 @@ export class FlowEditorManager {
 		// live preview
 		// Register markdown post processor for embedded blocks
 		this.plugin.registerMarkdownPostProcessor((element, context) => {
-			console.log('📝 LIVE PREVIEW POST PROCESSOR CALLED:', {
-				elementTag: element.tagName,
-				elementClass: element.className,
-				sourcePath: context.sourcePath,
-				hasEmbeds: element.querySelectorAll('.internal-embed.markdown-embed').length
-			});
 
 			const view = this.plugin.app.workspace.activeLeaf?.view;
 
 			if (!(view instanceof MarkdownView && view.editor)) {
-				console.log('📝 LIVE PREVIEW: Not MarkdownView or no editor, skipping');
 				return;
 			}
 
 			// First defense: exit early for reading mode.
 			if (view.getMode() === 'preview') {
-				console.log('📝 LIVE PREVIEW: In preview mode, skipping');
 				return;
 			}
 
 			// Second, more precise defense: exit if not in live preview.
 			const isLivePreview = view.editor.cm.state.field(editorLivePreviewField, false);
 			if (!isLivePreview) {
-				console.log('📝 LIVE PREVIEW: Not in live preview mode, skipping');
 				return;
 			}
 
-			console.log('📝 LIVE PREVIEW: Processing elements...');
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
 			// Live Preview mode: showEditIcon = true (enable edit interactions)
 			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, true);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
-			console.log('📝 LIVE PREVIEW: Processing completed');
 		});
 
 		// read mode
 		this.plugin.registerMarkdownPostProcessor((element, context) => {
-			console.log('📖 READING MODE POST PROCESSOR CALLED:', {
-				elementTag: element.tagName,
-				elementClass: element.className,
-				sourcePath: context.sourcePath,
-				hasEmbeds: element.querySelectorAll('.internal-embed.markdown-embed').length
-			});
 
 			const view = this.plugin.app.workspace.activeLeaf?.view;
 
 			if (!(view instanceof MarkdownView)) {
-				console.log('📖 READING MODE: Not MarkdownView, skipping');
 				return;
 			}
 
 			// Only process in reading mode
 			if (view.getMode() !== 'preview') {
-				console.log('📖 READING MODE: Not in preview mode, skipping');
 				return;
 			}
-			
-			console.log('📖 READING MODE: Processing elements...');
+
 			// Reading mode: showEditIcon = false (only readonly display)
 			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
-			console.log('📖 READING MODE: Processing completed');
 		});
 	}
 
-    private processEmbeddedBlocks(element: HTMLElement): void {
+	private processEmbeddedBlocks(element: HTMLElement): void {
 		const embeds = element.querySelectorAll(".internal-embed.markdown-embed");
 		for (let index = 0; index < embeds.length; index++) {
 			const embed = embeds.item(index) as HTMLElement;
@@ -124,11 +103,11 @@ export class FlowEditorManager {
 		}
 	}
 
-    public reloadExtensions(firstLoad: boolean): void {
+	public reloadExtensions(firstLoad: boolean): void {
 		(this.enactor as ObsidianEnactor).loadExtensions(firstLoad);
 	}
 
-    public openFlow(): void {
+	public openFlow(): void {
 		const cm = getActiveCM(this.plugin);
 		if (cm) {
 			const value = cm.state.field(flowEditorInfo, false);
@@ -176,7 +155,7 @@ export class FlowEditorManager {
 					const isLivePreview = view.editor?.cm?.state.field(editorLivePreviewField, false);
 					const filePath = view.file.path;
 					const previousMode = this.lastMode[filePath];
-					
+
 					// Detect mode switches
 					if (previousMode && previousMode !== currentMode) {
 						// Mode has changed
@@ -192,19 +171,19 @@ export class FlowEditorManager {
 							}, 500); // Delay for Reading mode render
 						}
 					}
-					
+
 					// Track mode state
 					this.lastMode[filePath] = currentMode;
 					this.lastMode[filePath + '_isLive'] = isLivePreview ? 'true' : 'false';
 				}
-				
+
 				// Also do generic cleanup
 				setTimeout(() => {
 					cleanupMultilineBlocks();
 				}, 100);
 			})
 		);
-		
+
 		// 监听文档变化，检测从!![[]]切换回![[]]的情况
 		this.plugin.registerEvent(
 			this.plugin.app.workspace.on('editor-change', (editor) => {
@@ -212,36 +191,33 @@ export class FlowEditorManager {
 				if (view instanceof MarkdownView && view.getMode() === 'source' && editor === view.editor) {
 					// 获取当前文档内容
 					const content = editor.getValue();
-					
+
 					// 检测是否包含![[file#^xyz-xyz]]格式的多行块
 					const multilineBlockRegex = /!\[\[([^\]]+#\^[a-z0-9]+-[a-z0-9]+)\]\]/g;
 					const matches = content.match(multilineBlockRegex);
-					
+
 					if (matches && matches.length > 0) {
-						console.log('🔄 Detected potential multiline blocks after edit:', matches);
-						
+
 						// 查找这些多行块对应的DOM元素
 						setTimeout(() => {
 							const embeds = view.containerEl.querySelectorAll('.internal-embed.markdown-embed');
 							let needsProcessing = false;
-							
+
 							embeds.forEach((embed) => {
 								const embedEl = embed as HTMLElement;
 								const src = embedEl.getAttribute('src');
-								
+
 								// 检查是否是多行块且没有内容
 								if (src && /#\^([a-z0-9]+)-\1$/.test(src)) {
 									const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
 									const hasContent = reactContainer && reactContainer.children.length > 0;
 									if (!hasContent) {
-										console.log('🔄 Found empty multiline block that needs processing:', src);
 										needsProcessing = true;
 									}
 								}
 							});
-							
+
 							if (needsProcessing) {
-								console.log('🔄 Processing empty multiline blocks...');
 								this.handleModeSwitch(view, 'multiline-block-update');
 							}
 						}, 100);
@@ -250,36 +226,27 @@ export class FlowEditorManager {
 			})
 		);
 	}
-	
+
 	private handleModeSwitch(view: MarkdownView, switchType: string): void {
-		console.log('🚀 handleModeSwitch called:', {
-			switchType,
-			filePath: view.file?.path,
-			mode: view.getMode(),
-			isLivePreview: view.editor?.cm?.state.field(editorLivePreviewField, false)
-		});
 
 		// 第一步：根据不同模式使用不同的选择器 - 从bak11恢复这个逻辑
 		const containerSelector = switchType === 'to-reading-mode'
 			? '.markdown-preview-view .markdown-preview-sizer'
 			: '.cm-content';
-			
+
 		const container = view.containerEl.querySelector(containerSelector);
-		
+
 		// 第二步：使用特定选择器查找嵌入块
 		let embeds: NodeListOf<Element>;
-		
+
 		if (container) {
 			embeds = switchType === 'to-reading-mode'
 				? container.querySelectorAll('p > span.internal-embed.markdown-embed')
 				: container.querySelectorAll('.internal-embed.markdown-embed');
-			
-			console.log('🚀 Found embeds to process with specific selector:', embeds.length);
+
 		} else {
 			// 如果找不到特定容器，使用通用选择器
-			console.log('🚀 Container not found for selector:', containerSelector);
 			embeds = view.containerEl.querySelectorAll('.internal-embed.markdown-embed');
-			console.log('🚀 Found embeds with fallback selector:', embeds.length);
 		}
 
 		let processedCount = 0;
@@ -290,69 +257,48 @@ export class FlowEditorManager {
 			const isMultilineBlock = (src && /#\^([a-z0-9]+)-\1$/.test(src)) ||
 				(alt && /\^[a-z0-9]+-[a-z0-9]+/.test(alt));
 
-			console.log(`🚀 Processing embed ${index}:`, {
-				src,
-				alt,
-				isMultilineBlock,
-				classList: embedEl.className,
-				hasFlowEditor: !!embedEl.querySelector('.mk-floweditor'),
-				hasReactContent: !!embedEl.querySelector('.mk-multiline-ref'),
-				hasReactContainer: !!embedEl.querySelector('.mk-multiline-react-container')
-			});
-
 			if (isMultilineBlock) {
-				console.log('🚀 Processing multiline block...');
-				
+
 				// 第三步：检查是否需要处理
 				// 关键改进：对于模式切换，特别是从Reading到Live Preview，总是强制重新处理
-				const forceProcess = 
+				const forceProcess =
 					switchType === 'reading-to-live-preview' || // 从Reading切换到Live Preview
 					switchType === 'multiline-block-update';    // 从!![[]]切换到![[]]
-				
+
 				// 检查是否有内容
 				const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
 				const hasContent = reactContainer && reactContainer.children.length > 0;
 				const hasFlowEditor = embedEl.querySelector('.mk-floweditor');
 				const hasReactContent = embedEl.querySelector('.mk-multiline-ref');
-				
+
 				// 第四步：更精确的处理判断
-				const needsProcessing = 
+				const needsProcessing =
 					forceProcess || // 强制处理特定模式切换
 					!hasContent || // 没有内容
 					(!hasFlowEditor && !hasReactContent) || // 没有必要的内容元素
 					embedEl.classList.contains('mk-multiline-block') === false; // 没有正确的类名
-				
+
 				if (needsProcessing) {
-					console.log('🚀 Multiline block needs processing:', {
-						switchType,
-						forceProcess,
-						hasContent,
-						hasFlowEditor,
-						hasReactContent,
-						hasClass: embedEl.classList.contains('mk-multiline-block')
-					});
-					
+
 					// 第五步：彻底清理旧内容
 					// 如果有React容器但没有内容，先清除
 					if (reactContainer) {
-						console.log('🚀 Cleaning existing React container');
 						reactContainer.remove();
 					}
-					
+
 					// 移除可能阻止重新处理的类
 					embedEl.classList.remove('mk-multiline-block');
 					embedEl.classList.remove('mk-multiline-readonly');
-					
+
 					// 移除任何可能的残留内容
 					const existingEditor = embedEl.querySelector('.mk-floweditor');
 					if (existingEditor) {
 						existingEditor.remove();
 					}
-					
+
 					// 第六步：重新渲染
 					// Determine if we should show edit icon
 					const showEditIcon = switchType !== 'to-reading-mode';
-					console.log('🚀 showEditIcon:', showEditIcon);
 
 					// Create mock context
 					const mockContext = {
@@ -363,16 +309,11 @@ export class FlowEditorManager {
 						remainingNestLevel: 4
 					};
 
-					console.log('🚀 Re-rendering multiline block...');
 					// Re-render the multiline block
 					replaceMultilineBlocks(embedEl, mockContext as any, this.plugin, this.plugin.app, showEditIcon);
 					processedCount++;
-				} else {
-					console.log('🚀 Multiline block already has content, skipping');
 				}
 			}
 		});
-
-		console.log('🚀 handleModeSwitch completed, processed:', processedCount);
 	}
 } 

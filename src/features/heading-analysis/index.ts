@@ -15,7 +15,6 @@ export function analyzeHeadings(
 	end_line: number
 ): HeadingAnalysisResult {
 	if (start_line === 0 && end_line === 0) {
-		console.log("block-link-plus: analyzeHeadings: start_line === 0 && end_line === 0");
 		return {
 			isValid: false,
 			start_line,

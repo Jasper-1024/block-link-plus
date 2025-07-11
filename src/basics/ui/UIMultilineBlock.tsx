@@ -77,7 +77,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
         });
         
         const handleClick = (e: MouseEvent) => {
-            console.log('UIMultilineBlock: Click detected', e);
             
             // 获取当前文件的编辑器
             const activeLeaf = props.plugin.app.workspace.getLeaf(false);
@@ -380,7 +379,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                 }
 
                 // 使用enactor.openPath在容器中创建编辑器，并设置为只读
-                console.log('UIMultilineBlock: Loading block reference in container:', props.blockRef);
                 props.plugin.enactor.openPath(filePath, container, true);
 
                 // 在编辑器加载后添加跳转图标、编辑图标和行链接功能
@@ -398,7 +396,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                             createLineClickHandler(container, embedElement as HTMLElement);
                         }
                     }, 300);
-                    console.log('UIMultilineBlock: Rendering completed with all features');
                 }, 150);
             }
 

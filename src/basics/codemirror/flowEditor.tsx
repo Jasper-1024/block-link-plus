@@ -90,18 +90,11 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
     return [];
   },
   update(value, tr) {
-    console.log('⚡ flowEditorInfo UPDATE called:', {
-      docChanged: tr.docChanged,
-      effects: tr.effects.length
-    });
-
     const newValues = [] as FlowEditorInfo[];
     const previous = value;
     const usedContainers: string[] = [];
 
     const str = tr.newDoc.sliceString(0);
-    console.log('⚡ Document content length:', str.length);
-
     const reverseExpandedState = (state: FlowEditorState) => {
       const news =
         state != FlowEditorState.Open
@@ -112,7 +105,6 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
 
     // Only process embed links, not regular [[xxx]] links
     for (const match of str.matchAll(/!!\[\[([^\]]+)\]\]/g)) {
-      console.log('⚡ Found !![[]] pattern:', match[0]);
       const link = match[1];
       const existingLinks = previous.filter((f) => f.link == link);
       const offset = usedContainers.filter((f) => f == link).length;
@@ -143,14 +135,10 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
     // Step 2: Process ![[]] syntax for multiline block references
     for (const match of str.matchAll(/(?<!!)!\[\[([^\]]+)\]\]/g)) {
       const link = match[1];
-      console.log('⚡ Found ![[]] pattern:', match[0], 'link:', link);
       
       if (!link.match(/#\^([a-z0-9]+)-\1$/)) {
-        console.log('⚡ Not a multiline block pattern, skipping');
         continue;
       }
-
-      console.log('⚡ Valid multiline block detected, creating FlowEditorInfo');
       
       if (match.index === undefined) continue;
       
@@ -170,7 +158,6 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
     }
 
     newValues.sort(compareByField("from", true));
-    console.log('⚡ Total FlowEditorInfo created:', newValues.length);
     return newValues;
   },
 });
@@ -189,19 +176,11 @@ class FlowEditorWidget extends WidgetType {
   }
 
   toDOM(view: EditorView) {
-    console.log('🎨 FlowEditorWidget.toDOM called:', {
-      infoId: this.info.id,
-      infoType: this.info.type,
-      infoLink: this.info.link,
-      isReadOnlyEmbed: this.info.type === FlowEditorLinkType.ReadOnlyEmbed
-    });
-
     const div = document.createElement("div");
     div.classList.add("mk-floweditor-container");
 
     // Add different CSS class for multiline readonly
     if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
-      console.log('🎨 Adding readonly multiline class');
       div.classList.add("mk-multiline-readonly");
     }
 
@@ -214,7 +193,6 @@ class FlowEditorWidget extends WidgetType {
 
       // Step 2: For ReadOnlyEmbed, show fixed test content
       if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
-        console.log('🎨 Rendering ReadOnlyEmbed test content');
         div.innerHTML = `
           <div class="mk-multiline-block-test" style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
             <strong>Multiline Block Test Content (Live Preview)</strong><br>
@@ -225,7 +203,6 @@ class FlowEditorWidget extends WidgetType {
           </div>
         `;
       } else if (file) {
-        console.log('🎨 Rendering normal UINote for:', this.info.link);
         // Normal UINote rendering for other types (only if file exists)
         this.root = createRoot(div);
         this.root.render(
@@ -238,8 +215,6 @@ class FlowEditorWidget extends WidgetType {
         );
       }
     }
-    
-    console.log('🎨 FlowEditorWidget.toDOM completed, returning div');
     return div;
   }
   get estimatedHeight(): number {
@@ -320,19 +295,14 @@ export const flowEditorWidgetDecoration = (
   });
 
 const flowEditorDecorations = (view: EditorView, plugin: BlockLinkPlus) => {
-  console.log('🛠️ flowEditorDecorations CALLED');
   const builder = new RangeSetBuilder<Decoration>();
   if (!view.state.field(editorInfoField, false)) {
-    console.log('🛠️ No infoField, finishing');
     return builder.finish();
   }
   const infoField = view.state.field(editorInfoField, false);
-  console.log(`🛠️ Processing ${infoField.infos.length} infos`);
 
   for (const info of infoField.infos) {
-    console.log(`🛠️  - Info: type=${info.type}, link=${info.link}, from=${info.from}, to=${info.to}, state=${info.expandedState}`);
     if (info.expandedState != FlowEditorState.Open) {
-      console.log(`🛠️  - SKIPPING decoration: not open`);
       continue;
     }
 
@@ -342,11 +312,9 @@ const flowEditorDecorations = (view: EditorView, plugin: BlockLinkPlus) => {
       (view.state.selection.main.from >= info.from - 3 &&
         view.state.selection.main.to <= info.to + 1)
     ) {
-      console.log(`🛠️  - SKIPPING decoration: selection overlap`);
       continue;
     }
     
-    console.log(`🛠️  - ADDING decoration for ${info.id}`);
     builder.add(
       info.from,
       info.to,
@@ -358,6 +326,5 @@ const flowEditorDecorations = (view: EditorView, plugin: BlockLinkPlus) => {
     );
   }
   const finalDecorations = builder.finish();
-  console.log(`🛠️ flowEditorDecorations COMPLETED, returning ${finalDecorations.size} decorations`);
   return finalDecorations;
 };

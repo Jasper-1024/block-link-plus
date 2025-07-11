@@ -329,7 +329,6 @@ function processMultilineEmbed(
                   });
                   
                   cm.focus();
-                  console.log('Toggled multiline block to editable mode');
                 } else {
                   console.warn('Could not find embed pattern in line:', lineText);
                 }
@@ -402,7 +401,6 @@ function processMultilineEmbed(
                   });
                   
                   cm.focus();
-                  console.log('Toggled multiline block to editable mode');
                 } else {
                   console.warn('Could not find embed pattern in line:', lineText);
                 }

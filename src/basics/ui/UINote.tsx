@@ -82,7 +82,6 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
         setTimeout(() => {
           if (div) {
             div.classList.add('mk-readonly-mode');
-            console.log('Added readonly mode class to:', div);
           }
         }, 100);
       }

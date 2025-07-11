@@ -47,7 +47,6 @@ export function isTimeSection(text: string, pattern: string = "\\d{1,2}:\\d{1,2}
 }
 
 export function isDailyNote(fileName: string, pattern: string): boolean {
-	console.log(`isDailyNote checking: fileName="${fileName}", pattern="${pattern}"`);
 	try {
 		const regex = new RegExp(pattern);
 		const isMatch = regex.test(fileName);
