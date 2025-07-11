@@ -259,10 +259,30 @@ export class FlowEditorManager {
 			isLivePreview: view.editor?.cm?.state.field(editorLivePreviewField, false)
 		});
 
-		let processedCount = 0;
-		const embeds = view.containerEl.querySelectorAll('.internal-embed.markdown-embed');
-		console.log('🚀 Found embeds to process:', embeds.length);
+		// 第一步：根据不同模式使用不同的选择器 - 从bak11恢复这个逻辑
+		const containerSelector = switchType === 'to-reading-mode'
+			? '.markdown-preview-view .markdown-preview-sizer'
+			: '.cm-content';
+			
+		const container = view.containerEl.querySelector(containerSelector);
+		
+		// 第二步：使用特定选择器查找嵌入块
+		let embeds: NodeListOf<Element>;
+		
+		if (container) {
+			embeds = switchType === 'to-reading-mode'
+				? container.querySelectorAll('p > span.internal-embed.markdown-embed')
+				: container.querySelectorAll('.internal-embed.markdown-embed');
+			
+			console.log('🚀 Found embeds to process with specific selector:', embeds.length);
+		} else {
+			// 如果找不到特定容器，使用通用选择器
+			console.log('🚀 Container not found for selector:', containerSelector);
+			embeds = view.containerEl.querySelectorAll('.internal-embed.markdown-embed');
+			console.log('🚀 Found embeds with fallback selector:', embeds.length);
+		}
 
+		let processedCount = 0;
 		embeds.forEach((embed, index) => {
 			const embedEl = embed as HTMLElement;
 			const src = embedEl.getAttribute('src');
@@ -283,31 +303,53 @@ export class FlowEditorManager {
 			if (isMultilineBlock) {
 				console.log('🚀 Processing multiline block...');
 				
+				// 第三步：检查是否需要处理
+				// 关键改进：对于模式切换，特别是从Reading到Live Preview，总是强制重新处理
+				const forceProcess = 
+					switchType === 'reading-to-live-preview' || // 从Reading切换到Live Preview
+					switchType === 'multiline-block-update';    // 从!![[]]切换到![[]]
+				
 				// 检查是否有内容
 				const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
 				const hasContent = reactContainer && reactContainer.children.length > 0;
+				const hasFlowEditor = embedEl.querySelector('.mk-floweditor');
+				const hasReactContent = embedEl.querySelector('.mk-multiline-ref');
+				
+				// 第四步：更精确的处理判断
 				const needsProcessing = 
-					switchType === 'multiline-block-update' || // 新增：处理从!![[]]切换回![[]]的情况
+					forceProcess || // 强制处理特定模式切换
 					!hasContent || // 没有内容
+					(!hasFlowEditor && !hasReactContent) || // 没有必要的内容元素
 					embedEl.classList.contains('mk-multiline-block') === false; // 没有正确的类名
 				
 				if (needsProcessing) {
 					console.log('🚀 Multiline block needs processing:', {
 						switchType,
+						forceProcess,
 						hasContent,
+						hasFlowEditor,
+						hasReactContent,
 						hasClass: embedEl.classList.contains('mk-multiline-block')
 					});
 					
+					// 第五步：彻底清理旧内容
 					// 如果有React容器但没有内容，先清除
-					const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
-					if (reactContainer && !hasContent) {
-						console.log('🚀 Removing empty React container');
+					if (reactContainer) {
+						console.log('🚀 Cleaning existing React container');
 						reactContainer.remove();
 					}
 					
 					// 移除可能阻止重新处理的类
 					embedEl.classList.remove('mk-multiline-block');
+					embedEl.classList.remove('mk-multiline-readonly');
 					
+					// 移除任何可能的残留内容
+					const existingEditor = embedEl.querySelector('.mk-floweditor');
+					if (existingEditor) {
+						existingEditor.remove();
+					}
+					
+					// 第六步：重新渲染
 					// Determine if we should show edit icon
 					const showEditIcon = switchType !== 'to-reading-mode';
 					console.log('🚀 showEditIcon:', showEditIcon);
@@ -318,7 +360,7 @@ export class FlowEditorManager {
 						frontmatter: null,
 						addChild: () => { },
 						getSectionInfo: () => null,
-						containerEl: embedEl
+						remainingNestLevel: 4
 					};
 
 					console.log('🚀 Re-rendering multiline block...');
