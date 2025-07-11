@@ -39,16 +39,12 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
 
     // 添加行点击跳转的处理函数
     const createLineClickHandler = (parentContainer: HTMLElement, embedElement: HTMLElement) => {
-        console.log('UIMultilineBlock: Creating line click handler');
         
         // 添加点击事件监听器到内容区域
         const contentEl = parentContainer.querySelector('.cm-content');
         if (!contentEl) {
-            console.log('UIMultilineBlock: No content element found');
             return;
         }
-        
-        console.log('UIMultilineBlock: Found content element', contentEl);
         
         // 允许点击事件但仍保持只读
         const contentDOM = contentEl as HTMLElement;
@@ -97,8 +93,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                     const pos = cm.posAtDOM(embedElement);
                     
                     if (pos !== null && pos !== undefined) {
-                        console.log('UIMultilineBlock: Found embed position in editor:', pos);
-                        
                         // 移动光标到嵌入语法所在的行
                         const line = cm.state.doc.lineAt(pos);
                         const linePos = { line: line.number - 1, ch: 0 };
@@ -106,8 +100,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                         editor.setCursor(linePos);
                         editor.scrollIntoView({ from: linePos, to: linePos }, true);
                         editor.focus();
-                        
-                        console.log('UIMultilineBlock: Moved cursor to embed line:', line.number);
                     } else {
                         console.warn('UIMultilineBlock: Could not find embed position in editor');
                     }
@@ -347,9 +339,9 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
     };
 
     const loadMultilineBlock = async (force?: boolean) => {
-        // Use the parent container directly instead of a wrapper div
-        const parentContainer = flowRef.current?.parentElement;
-        if (!parentContainer) return;
+        // Use the component's own container instead of parent
+        const container = flowRef.current;
+        if (!container) return;
 
         try {
             // 解析多行块引用
@@ -381,29 +373,32 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                 setExistsPas(false);
                 setError(null);
 
-                // Add readonly class directly to parent container (external-embed)
-                parentContainer.classList.add('mk-multiline-readonly');
+                // Find the actual embed element (parent of react container)
+                const embedElement = container.closest('.internal-embed.markdown-embed');
+                if (embedElement) {
+                    embedElement.classList.add('mk-multiline-readonly');
+                }
 
-                // 使用enactor.openPath直接在父容器中创建编辑器，无中间层，并设置为只读
-                console.log('UIMultilineBlock: Loading block reference directly to parent container:', props.blockRef);
-                props.plugin.enactor.openPath(filePath, parentContainer, true);
+                // 使用enactor.openPath在容器中创建编辑器，并设置为只读
+                console.log('UIMultilineBlock: Loading block reference in container:', props.blockRef);
+                props.plugin.enactor.openPath(filePath, container, true);
 
                 // 在编辑器加载后添加跳转图标、编辑图标和行链接功能
                 setTimeout(() => {
-                    createJumpIcon(parentContainer);
-                    // 只在Live Preview模式下显示编辑图标
-                    if (props.showEditIcon) {
-                        createEditIcon(parentContainer);
+                    if (embedElement) {
+                        createJumpIcon(embedElement as HTMLElement);
+                        // 只在Live Preview模式下显示编辑图标
+                        if (props.showEditIcon) {
+                            createEditIcon(embedElement as HTMLElement);
+                        }
                     }
                     // 增加延迟以确保编辑器完全加载
                     setTimeout(() => {
-                        // 找到最近的嵌入元素
-                        const embedEl = parentContainer.closest('.internal-embed.markdown-embed');
-                        if (embedEl) {
-                            createLineClickHandler(parentContainer, embedEl as HTMLElement);
+                        if (embedElement) {
+                            createLineClickHandler(container, embedElement as HTMLElement);
                         }
                     }, 300);
-                    console.log('UIMultilineBlock: Direct rendering to parent container completed with all features');
+                    console.log('UIMultilineBlock: Rendering completed with all features');
                 }, 150);
             }
 
@@ -416,16 +411,19 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
     };
 
     const toggleFlow = () => {
-        // Clear any existing editor content in parent container
-        const parentContainer = flowRef.current?.parentElement;
-        if (parentContainer) {
+        // Clear any existing editor content in container
+        const container = flowRef.current;
+        if (container) {
             // Remove any existing flow editor content
-            const existingEditor = parentContainer.querySelector('.mk-floweditor');
+            const existingEditor = container.querySelector('.mk-floweditor');
             if (existingEditor) {
                 existingEditor.remove();
             }
-            // Also remove the readonly class to reset state
-            parentContainer.classList.remove('mk-multiline-readonly');
+            // Find and clean the embed element
+            const embedElement = container.closest('.internal-embed.markdown-embed');
+            if (embedElement) {
+                embedElement.classList.remove('mk-multiline-readonly');
+            }
         }
         loadMultilineBlock();
     };
@@ -442,32 +440,32 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
         };
     }, []);
 
-    // Handle error state by rendering error directly in parent container
+    // Handle error state by rendering error in the component's container
     useEffect(() => {
         if (existsPas || error) {
-            const parentContainer = flowRef.current?.parentElement;
-            if (parentContainer) {
+            const container = flowRef.current;
+            if (container) {
                 // Clear existing editor content
-                const existingEditor = parentContainer.querySelector('.mk-floweditor');
+                const existingEditor = container.querySelector('.mk-floweditor');
                 if (existingEditor) {
                     existingEditor.remove();
                 }
 
-                // Add error styling directly to parent container
-                parentContainer.classList.add('mk-multiline-error');
-                parentContainer.style.cssText = 'color: var(--text-error); padding: 8px; border: 1px solid var(--background-modifier-error); border-radius: 4px; background: var(--background-modifier-error); cursor: pointer; margin: 0.5rem 0;';
-                parentContainer.textContent = error || i18n.labels.notePlaceholder.replace("${1}", pathToString(props.blockRef));
-                parentContainer.onclick = () => loadMultilineBlock(true);
+                // Add error styling to container
+                container.classList.add('mk-multiline-error');
+                container.style.cssText = 'color: var(--text-error); padding: 8px; border: 1px solid var(--background-modifier-error); border-radius: 4px; background: var(--background-modifier-error); cursor: pointer; margin: 0.5rem 0;';
+                container.textContent = error || i18n.labels.notePlaceholder.replace("${1}", pathToString(props.blockRef));
+                container.onclick = () => loadMultilineBlock(true);
             }
         }
     }, [existsPas, error]);
 
-    // Return minimal ref element (hidden)
+    // Return a proper container div instead of hidden span
     return (
-        <span
+        <div
             ref={flowRef}
-            style={{ display: 'none' }}
-            className="mk-multiline-ref"
+            className="mk-multiline-container mk-flowspace-editor"
+            style={{ width: '100%' }}
         />
     );
 });

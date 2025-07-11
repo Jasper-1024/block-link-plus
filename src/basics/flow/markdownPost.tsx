@@ -5,9 +5,13 @@ import { UIMultilineBlock } from "basics/ui/UIMultilineBlock";
 import BlockLinkPlus from "main";
 import { App, MarkdownPostProcessorContext } from "obsidian";
 import React from "react";
-import { createRoot } from "react-dom/client";
+import { Root, createRoot } from "react-dom/client";
 import { MarkdownView } from "obsidian";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
+
+// Map to store React roots for proper lifecycle management
+// Using Map instead of WeakMap for better control
+const multilineBlockRoots = new Map<HTMLElement, Root>();
 
 const getCMFromElement = (
   el: HTMLElement,
@@ -200,13 +204,22 @@ function processMultilineEmbed(
       return;
     }
 
-    // Check if already processed (prevent double processing)
-    if (dom.classList.contains('mk-multiline-processed')) {
+    // Check if already processed by looking for actual content instead of class names
+    const hasFlowEditor = dom.querySelector('.mk-floweditor');
+    const hasReactContent = dom.querySelector('.mk-multiline-ref');
+    
+    if (hasFlowEditor || hasReactContent) {
+      // Content exists, skip processing
       return;
     }
+    
+    // Remove any orphaned elements
+    const orphanedEditIcon = dom.querySelector('.mk-multiline-external-edit');
+    if (orphanedEditIcon) {
+      orphanedEditIcon.remove();
+    }
 
-    // Mark as processed and add multiline block identifier
-    dom.classList.add('mk-multiline-processed');
+    // Add multiline block identifier for styling
     dom.classList.add('mk-multiline-block');
 
     // Hide the native rendering
@@ -330,9 +343,28 @@ function processMultilineEmbed(
     }
 
     // Step 7: Render UIMultilineBlock with native embed structure
-    console.log('Step 7: Rendering UIMultilineBlock with native embed structure:', embedLink);
+    // Check if a React root already exists for this DOM element
+    if (multilineBlockRoots.has(dom)) {
+      // Unmount the existing root before creating a new one
+      const existingRoot = multilineBlockRoots.get(dom);
+      try {
+        existingRoot!.unmount();
+      } catch (error) {
+        // Silently handle unmount errors
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Error unmounting existing React root:', error);
+        }
+      }
+      multilineBlockRoots.delete(dom);
+    }
     
-    const reactEl = createRoot(dom);
+    // Create a container div for React to manage
+    const reactContainer = dom.createDiv('mk-multiline-react-container');
+    
+    const reactEl = createRoot(reactContainer);
+    // Store the React root for proper lifecycle management
+    multilineBlockRoots.set(reactContainer, reactEl);
+    
     reactEl.render(
       <UIMultilineBlock
         plugin={plugin}
@@ -385,9 +417,36 @@ function processMultilineEmbed(
 
   } catch (error) {
     console.error('Failed to process multiline block embed:', error);
-    // Graceful degradation: show error message
-    const errorContainer = dom.createDiv('mk-multiline-block-error');
-    errorContainer.style.cssText = 'padding: 10px; background: #ffebee; border: 1px solid #f44336; color: #c62828;';
-    errorContainer.textContent = `Error processing multiline block: ${error.message}`;
+    // Graceful degradation: show error message only if it's not a DOM-related error
+    if (!(error instanceof DOMException)) {
+      const errorContainer = dom.createDiv('mk-multiline-block-error');
+      errorContainer.style.cssText = 'padding: 10px; background: #ffebee; border: 1px solid #f44336; color: #c62828;';
+      errorContainer.textContent = `Error processing multiline block: ${error.message}`;
+    }
   }
 }
+
+// Cleanup function to unmount React roots when DOM is removed
+export const cleanupMultilineBlocks = () => {
+  // Clean up disconnected React roots
+  const toDelete: HTMLElement[] = [];
+  
+  multilineBlockRoots.forEach((root, dom) => {
+    if (!dom.isConnected) {
+      // DOM is disconnected
+      try {
+        // Try to unmount gracefully
+        root.unmount();
+      } catch (error) {
+        // Ignore unmount errors for disconnected DOM
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('Cleanup: Root already unmounted or DOM disconnected', error);
+        }
+      }
+      toDelete.push(dom);
+    }
+  });
+  
+  // Remove from map
+  toDelete.forEach(dom => multilineBlockRoots.delete(dom));
+};
