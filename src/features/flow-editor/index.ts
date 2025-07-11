@@ -9,7 +9,7 @@ import {
 	patchWorkspaceForFlow,
 	patchWorkspaceLeafForFlow,
 } from "basics/flow/patchWorkspaceForFlow";
-import { replaceAllEmbed, replaceAllTables } from "basics/flow/markdownPost";
+import { replaceAllEmbed, replaceAllTables, replaceMultilineBlocks } from "basics/flow/markdownPost";
 import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
@@ -40,6 +40,7 @@ export class FlowEditorManager {
 		document.body.classList.add("mk-flow-replace");
 		document.body.classList.add("mk-flow-" + this.plugin.settings.editorFlowStyle);
 
+		// live preview
 		// Register markdown post processor for embedded blocks
 		this.plugin.registerMarkdownPostProcessor((element, context) => {
 			const view = this.plugin.app.workspace.activeLeaf?.view;
@@ -61,7 +62,25 @@ export class FlowEditorManager {
 
 			this.processEmbeddedBlocks(element);
 			replaceAllTables(this.plugin, element, context);
+			// Live Preview mode: showEditIcon = true (enable edit interactions)
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, true);
 			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
+		});
+
+		// read mode
+		this.plugin.registerMarkdownPostProcessor((element, context) => {
+			const view = this.plugin.app.workspace.activeLeaf?.view;
+
+			if (!(view instanceof MarkdownView && view.editor)) {
+				return;
+			}
+
+			// Only process in reading mode
+			if (view.getMode() !== 'preview') {
+				return;
+			}
+			// Reading mode: showEditIcon = false (only readonly display)
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
 		});
 	}
 

@@ -186,9 +186,6 @@ div:not(.mk-flowspace-editor) >
   margin-top: 24px;
 }
 
-.mk-floweditor-container:not(.mk-floweditor-fix) > .mk-floweditor:hover {
-}
-
 .mk-floweditor-container {
   min-height: var(--flow-height);
 }
@@ -343,4 +340,397 @@ body:not(.is-mobile) button.mk-toolbar-button:hover {
   > div
   > .mk-table {
   padding-bottom: 10px !important;
+}
+
+/* Multiline Block Styles */
+.mk-multiline-block-container {
+  position: relative;
+  margin: 0.5rem 0;
+}
+
+.mk-multiline-block-test {
+  position: relative;
+  /* 移除了边框、内边距和背景色，保持简洁 */
+}
+
+/* External Edit Icon - positioned outside the multiline block */
+.mk-multiline-external-edit {
+  position: absolute;
+  top: -34px;
+  right: 0px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: var(--layer-popover);
+  pointer-events: auto;
+  display: flex;
+}
+
+/* Show edit icon on hover - updated for flattened architecture */
+.internal-embed.mk-multiline-block:hover .mk-multiline-external-edit,
+.mk-multiline-external-edit:hover {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Jump Link - positioned inside the content */
+.mk-multiline-jump-link {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  color: var(--text-muted);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-primary);
+  border-radius: 3px;
+  padding: 2px;
+}
+
+.mk-multiline-jump-link:hover {
+  opacity: 1;
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.mk-multiline-jump-link .svg-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Ensure jump link is visible in readonly mode */
+.mk-multiline-readonly .mk-multiline-jump-link {
+  pointer-events: auto;
+}
+
+/* Legacy styles - kept for compatibility */
+.mk-multiline-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.mk-multiline-edit-link {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  color: var(--text-muted);
+}
+
+.mk-multiline-edit-link:hover {
+  opacity: 1;
+  color: var(--text-normal);
+}
+
+.mk-multiline-edit-link .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Error Handling */
+.mk-multiline-block-error {
+  color: var(--text-error);
+  padding: 0.5rem;
+  border: 1px solid var(--background-modifier-error);
+  border-radius: 4px;
+  background: var(--background-modifier-error);
+}
+
+/* Readonly Mode Styles - Step 7.2 */
+.mk-readonly-mode .cm-editor .cm-content {
+  pointer-events: none;
+  user-select: text;
+  background: var(--background-secondary);
+  border-radius: 4px;
+}
+
+/* Allow text selection but disable editing */
+.mk-readonly-mode .cm-editor .cm-content * {
+  pointer-events: none;
+  user-select: text;
+}
+
+/* Style readonly mode with subtle visual indication */
+.mk-readonly-mode .cm-editor {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+/* Ensure buttons and interactive elements within readonly mode are disabled */
+.mk-readonly-mode .cm-editor button,
+.mk-readonly-mode .cm-editor input,
+.mk-readonly-mode .cm-editor textarea {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Allow scrolling in readonly mode */
+.mk-readonly-mode .cm-editor .cm-scroller {
+  pointer-events: auto;
+}
+
+/* Readonly multiline block container styling */
+.mk-readonly-mode .mk-multiline-block-container {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-secondary);
+  position: relative;
+}
+
+/* Readonly indicator */
+.mk-readonly-mode::after {
+  content: "Read Only";
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--background-primary);
+  padding: 2px 6px;
+  border-radius: 2px;
+  z-index: 100;
+}
+
+/* =========================== */
+/* UIMultilineBlock Styles - Flattened Architecture */
+/* =========================== */
+
+/* Multiline Block Container - Applied directly to native embed */
+.internal-embed.mk-multiline-block {
+  position: relative;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+/* External container base styling - will be overridden below */
+
+/* Remove gaps and backgrounds from mk-floweditor */
+.internal-embed.mk-multiline-readonly .mk-floweditor {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove gaps from popover content */
+.internal-embed.mk-multiline-readonly .mk-floweditor .popover-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Remove gaps from workspace elements */
+.internal-embed.mk-multiline-readonly .workspace-leaf,
+.internal-embed.mk-multiline-readonly .workspace-leaf-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Remove gaps from view content */
+.internal-embed.mk-multiline-readonly .view-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Remove gaps from markdown source view */
+.internal-embed.mk-multiline-readonly .markdown-source-view {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Multiline Block Content - Direct rendering to parent container */
+.internal-embed.mk-multiline-readonly .cm-editor {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto;
+  box-shadow: none !important;
+}
+
+/* Remove editor-specific styling to make it look like static content */
+.internal-embed.mk-multiline-readonly .cm-editor .cm-scroller {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.internal-embed.mk-multiline-readonly .cm-editor .cm-sizer {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.internal-embed.mk-multiline-readonly .cm-editor .cm-contentContainer {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide line numbers specifically for multiline blocks */
+.internal-embed.mk-multiline-readonly .cm-gutters {
+  display: none !important;
+}
+
+/* Disable editing for multiline blocks but allow clicks for line link feature */
+.internal-embed.mk-multiline-readonly .cm-editor .cm-content {
+  /* pointer-events: none; -- Commented out to allow line link clicks */
+  pointer-events: auto;
+  user-select: text;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* Remove all editor visual indicators */
+.internal-embed.mk-multiline-readonly .cm-line {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Make text content look like static content */
+.internal-embed.mk-multiline-readonly .cm-content .cm-line {
+  line-height: 1.6 !important;
+  font-size: inherit !important;
+  color: var(--text-normal) !important;
+}
+
+/* Allow text selection and clicks for line link feature */
+.internal-embed.mk-multiline-readonly .cm-editor .cm-content * {
+  /* pointer-events: none; -- Commented out to allow line link clicks */
+  pointer-events: auto;
+  user-select: text;
+}
+
+/* Ensure buttons and interactive elements are disabled */
+.internal-embed.mk-multiline-readonly .cm-editor button,
+.internal-embed.mk-multiline-readonly .cm-editor input,
+.internal-embed.mk-multiline-readonly .cm-editor textarea {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Allow scrolling */
+.internal-embed.mk-multiline-readonly .cm-editor .cm-scroller {
+  pointer-events: auto;
+}
+
+/* Compact layout for multiline blocks */
+.internal-embed.mk-multiline-readonly .mk-floweditor > .workspace-leaf > .workspace-leaf-content,
+.internal-embed.mk-multiline-readonly .mk-floweditor > .workspace-leaf > .workspace-leaf-content > .view-content,
+.internal-embed.mk-multiline-readonly .mk-floweditor > .workspace-leaf > .workspace-leaf-content > .view-content > .mod-cm6 > .cm-editor > .cm-scroller {
+  overflow: visible !important;
+  height: auto;
+  min-height: auto;
+}
+
+/* Hide metadata container for multiline blocks */
+.internal-embed.mk-multiline-readonly .metadata-container {
+  display: none !important;
+}
+
+/* Hide all editor UI elements to make it look like static content */
+.internal-embed.mk-multiline-readonly .mk-flow-titlebar {
+  display: none !important;
+}
+
+.internal-embed.mk-multiline-readonly .workspace-split {
+  display: none !important;
+}
+
+.internal-embed.mk-multiline-readonly .workspace-leaf-resize-handle {
+  display: none !important;
+}
+
+.internal-embed.mk-multiline-readonly .popover-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Make the overall container match the visual style of static embeds */
+.internal-embed.mk-multiline-readonly {
+  background: var(--background-primary) !important;
+  border-radius: 4px;
+  padding: 8px !important;
+  margin: 0.5rem 0 !important;
+  border: 1px solid var(--background-modifier-border) !important;
+}
+
+/* Ensure block IDs are styled correctly */
+.internal-embed.mk-multiline-readonly .cm-blockid {
+  opacity: 0.5;
+  font-size: 0.9em;
+  color: var(--text-muted) !important;
+}
+
+/* Remove any cursor indicators or focus states */
+.internal-embed.mk-multiline-readonly .cm-cursor,
+.internal-embed.mk-multiline-readonly .cm-cursor-primary,
+.internal-embed.mk-multiline-readonly .cm-cursor-secondary {
+  display: none !important;
+}
+
+.internal-embed.mk-multiline-readonly .cm-focused {
+  outline: none !important;
+}
+
+/* Make sure hover states don't show editor behaviors */
+.internal-embed.mk-multiline-readonly:hover .cm-content {
+  background: transparent !important;
+}
+
+/* Error handling for multiline blocks */
+.mk-multiline-error {
+  color: var(--text-error);
+  padding: 8px;
+  border: 1px solid var(--background-modifier-error);
+  border-radius: 4px;
+  background: var(--background-modifier-error);
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+.mk-multiline-error:hover {
+  background: var(--background-modifier-error-hover);
+}
+
+/* Hide the gutter in readonly mode */
+.blp-readonly-editor .cm-gutters {
+  border-right: none !important;
+}
+
+.mk-readonly-mode .cm-content {
+  padding-bottom: 0px !important;
+}
+
+.blp-readonly-editor .cm-selectionBackground {
+  background-color: rgba(180, 213, 255, 0.3) !important;
 }

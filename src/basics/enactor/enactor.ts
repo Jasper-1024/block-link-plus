@@ -8,6 +8,6 @@ export interface Enactor {
     load(): void;
     loadExtensions(firstLoad: boolean): void;
     uriByString(uri: string, source?: string): any;
-    openPath(path: string, source?: HTMLElement): void;
+    openPath(path: string, source?: HTMLElement, isReadOnly?: boolean): void;
 }
 

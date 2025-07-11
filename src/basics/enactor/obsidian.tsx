@@ -80,25 +80,32 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
           });
         }
       }
-    } else if (
+    }
+    // DISABLED: ReadOnlyEmbed now handled by MarkdownPostProcessor only
+    /*
+    else if (
       expandedState == FlowEditorState.Open &&
       type == FlowEditorLinkType.ReadOnlyEmbed
     ) {
-      // step2: handle readonly embed
-      // avoid conflict with Obsidian native rendering, check selection state
-      const shouldSkip = (state.selection.main.from == from - 3 &&
-                         state.selection.main.to == to + 2) ||
-                        (state.selection.main.from >= from - 2 &&
-                         state.selection.main.to <= to + 1);
+      // Handle ^![[]] multiline readonly blocks
+      // Use different selection boundaries due to different syntax (^![[]] vs !![[]])
+      const shouldSkip = (
+        (state.selection.main.from == from - 3 &&
+          state.selection.main.to == to + 2) ||
+        (state.selection.main.from >= from - 2 &&
+          state.selection.main.to <= to + 1)
+      );
       
       if (!shouldSkip) {
+        // For ReadOnlyEmbed, replace the entire ^![[]] syntax
         values.push({
-          start: from - 3,
-          end: to + 2,
+          start: from - 3,  // Start from ^
+          end: to + 2,      // End after ]]
           decoration: flowEditorWidgetDecoration(info, plugin),
         });
       }
     }
+    */
   }
   values.sort(compareByField("start", true));
   for (const value of values) {
@@ -185,7 +192,7 @@ export class ObsidianEnactor implements Enactor {
     const finalUri = subpath ? `${basePath}${subpath}` : basePath;
     return parseURI(finalUri);
   }
-  openPath(path: string, source?: HTMLElement) {
+  openPath(path: string, source?: HTMLElement, isReadOnly?: boolean) {
     const uri = this.uriByString(path);
 	if (!uri) {
 		new Notice(`File not found: ${path}`);
@@ -202,10 +209,19 @@ export class ObsidianEnactor implements Enactor {
           await leaf.openFile(this.plugin.app.vault.getAbstractFileByPath(uri.basePath) as TFile);
           const selectiveRange = getLineRangeFromRef(uri.basePath, uri.refStr, this.plugin.app);
           if (!leaf.view?.editor) return;
+          
+          // 无论是否只读，都需要设置范围来限制显示的行
           if (selectiveRange[0] && selectiveRange[1]) {
             leaf.view.editor?.cm.dispatch({
               annotations: [editableRange.of(selectiveRange)],
             });
+          }
+          
+          // 如果是只读模式，设置编辑器为只读
+          if (isReadOnly && leaf.view?.editor) {
+            // 使用 CSS 类和编辑器设置确保只读
+            leaf.view.editor.cm.contentDOM.contentEditable = 'false';
+            leaf.view.editor.cm.dom.classList.add('mk-readonly-editor');
           }
         }
       }

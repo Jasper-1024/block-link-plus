@@ -39,9 +39,9 @@ export enum FlowEditorState {
 }
 export enum FlowEditorLinkType {
   Link = 0,
-  Embed = 1,
+  Embed = 1,              // !![[]] embed
   EmbedClosed = 2,
-  ReadOnlyEmbed = 3,      // ^![[]] readonly embed
+  ReadOnlyEmbed = 3,      // ^![[]] multiline readonly (new)
 }
 
 export interface FlowEditorInfo {
@@ -132,37 +132,36 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
       newValues.push(info);
     }
 
-    // step1: detect ^![[]] readonly embed
+    // Step 2: Process ^![[]] syntax for multiline block references
+    // DISABLED: Now handled by MarkdownPostProcessor only
+    /*
     for (const match of str.matchAll(/\^!\[\[([^\]]+)\]\]/g)) {
       if (match.index === undefined) continue;
       
       const link = match[1];
-      console.log('🔍 found readonly embed:', link);
+      console.log('Found multiline block reference:', link);
       
-      // validate if it is a valid multiline block reference format #^xyz-xyz
+      // Validate if it's a valid multiline block reference format
       if (!link.match(/#\^([a-z0-9]+)-\1$/)) {
-        console.log('❌ invalid multiline block reference format:', link);
-        console.log('💡 correct format should be: file#^abc-abc (where abc is the same identifier)');
+        console.log('Invalid multiline block reference format:', link);
         continue;
       }
       
-      console.log('✅ valid multiline block reference format:', link);
+      console.log('Valid multiline block reference:', link);
       
-      // step2: create FlowEditorInfo object
-      const id = genId();
-      const info: FlowEditorInfo = {
-        id: id,
+      // Step 2: Create FlowEditorInfo for multiline readonly blocks
+      const info = {
+        id: genId(),
         link: link,
-        from: match.index + 3,  // 跳过 "^![["
+        from: match.index + 3,  // Skip "^![["
         to: match.index + 3 + link.length,
         type: FlowEditorLinkType.ReadOnlyEmbed,
         height: -1,
-        expandedState: FlowEditorState.Open  // 默认展开
+        expandedState: FlowEditorState.Open  // Default expanded
       };
-      
       newValues.push(info);
-      console.log('🎯 created readonly embed info:', { id, link, type: 'ReadOnlyEmbed' });
     }
+    */
 
     newValues.sort(compareByField("from", true));
     return newValues;
@@ -186,38 +185,41 @@ class FlowEditorWidget extends WidgetType {
     const div = document.createElement("div");
     div.classList.add("mk-floweditor-container");
 
+    // Add different CSS class for multiline readonly
+    if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
+      div.classList.add("mk-multiline-readonly");
+    }
+
     div.setAttribute("id", "mk-flow-" + this.info.id);
     div.style.setProperty("height", this.info.height + "px");
     
-    // step2: handle readonly embed
-    if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
-      div.classList.add("mk-multiline-readonly");
-      div.innerHTML = `
-        <div style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-          <strong>MULTILINE BLOCK TEST (Live Preview)</strong><br>
-          This is the first line<br>
-          This is the second line<br>
-          This is the third line<br>
-          <small>Reference: ${this.info.link}</small>
-        </div>
-      `;
-      return div;
-    }
-    
-    // handle other types
     if (this.info.link && view.state.field(editorInfoField, false)) {
       const infoField = view.state.field(editorInfoField, false);
       const file = infoField.file;
 
-      this.root = createRoot(div);
-      this.root.render(
-        <UINote
-          load={true}
-          plugin={this.plugin}
-          path={this.info.link}
-          source={file.path}
-        ></UINote>
-      );
+      // Step 2: For ReadOnlyEmbed, show fixed test content
+      if (this.info.type === FlowEditorLinkType.ReadOnlyEmbed) {
+        div.innerHTML = `
+          <div class="mk-multiline-block-test" style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+            <strong>Multiline Block Test Content (Live Preview)</strong><br>
+            This is the first line<br>
+            This is the second line<br>
+            This is the third line<br>
+            <small>Reference: ${this.info.link}</small>
+          </div>
+        `;
+      } else if (file) {
+        // Normal UINote rendering for other types (only if file exists)
+        this.root = createRoot(div);
+        this.root.render(
+          <UINote
+            load={true}
+            plugin={this.plugin}
+            path={this.info.link}
+            source={file.path}
+          ></UINote>
+        );
+      }
     }
     return div;
   }
@@ -292,8 +294,8 @@ export const flowEditorWidgetDecoration = (
   info: FlowEditorInfo,
   plugin: BlockLinkPlus
 ) =>
-  Decoration.widget({
+  Decoration.replace({
     widget: new FlowEditorWidget(info, plugin),
-    inclusiveStart: true,
+    inclusive: true,
     block: true,
   });

@@ -19,6 +19,7 @@ const pathToString = (path: string) => {
 
   return path;
 };
+
 export interface NoteViewProps {
   plugin: BlockLinkPlus;
   source?: string;
@@ -27,6 +28,7 @@ export interface NoteViewProps {
   properties?: Record<string, any>;
   classname?: string;
   forceNote?: boolean;
+  isReadOnly?: boolean;  // 新增只读属性
 }
 
 export const UINote = forwardRef((props: NoteViewProps, ref) => {
@@ -70,7 +72,20 @@ export const UINote = forwardRef((props: NoteViewProps, ref) => {
       }
     } else {
       setExistsPas(false);
+      
+      // 使用enactor.openPath创建编辑器
       props.plugin.enactor.openPath(filePath, div);
+      
+      // 如果是只读模式，添加CSS类标记
+      if (props.isReadOnly) {
+        // 使用setTimeout确保编辑器DOM结构已创建
+        setTimeout(() => {
+          if (div) {
+            div.classList.add('mk-readonly-mode');
+            console.log('Added readonly mode class to:', div);
+          }
+        }, 100);
+      }
     }
 
     setLoaded(true);
