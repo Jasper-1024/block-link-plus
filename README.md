@@ -1,6 +1,6 @@
 # Block Link Plus
 
-Enhanced Obsidian block reference plugin supporting multi-line text, timeline aggregation, and inline editing.
+Enhances Obsidian's right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.
 
 [![Version](https://img.shields.io/badge/version-1.7.5-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
@@ -34,17 +34,17 @@ Enhanced Obsidian block reference plugin supporting multi-line text, timeline ag
 
 ## 📖 Documentation
 
-**Complete documentation available at:** https://jasper-1024.github.io/obsidian-block-link-plus/
+**Complete documentation available at:** https://block-link-plus.jasper1024.com/
 
-- [Installation Guide](https://jasper-1024.github.io/obsidian-block-link-plus/install/)
-- [Multi-line Blocks](https://jasper-1024.github.io/obsidian-block-link-plus/usage/multiline/)
-- [Timeline Feature](https://jasper-1024.github.io/obsidian-block-link-plus/usage/timeline/)
-- [Settings Reference](https://jasper-1024.github.io/obsidian-block-link-plus/reference/settings/)
+- [Installation Guide](https://block-link-plus.jasper1024.com/install/)
+- [Multi-line Blocks](https://block-link-plus.jasper1024.com/usage/multiline/)
+- [Timeline Feature](https://block-link-plus.jasper1024.com/usage/timeline/)
+- [Settings Reference](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ### Language Support
-- [English](https://jasper-1024.github.io/obsidian-block-link-plus/en/) 
-- [简体中文](https://jasper-1024.github.io/obsidian-block-link-plus/)
-- [繁體中文](https://jasper-1024.github.io/obsidian-block-link-plus/zh-TW/)
+- [English](https://block-link-plus.jasper1024.com/en/) 
+- [简体中文](https://block-link-plus.jasper1024.com/)
+- [繁體中文](https://block-link-plus.jasper1024.com/zh-TW/)
 
 ## 🆕 What's New in v1.7.5
 
@@ -158,5 +158,5 @@ GNU GPLv3 License - see [LICENSE](LICENSE) file for details.
 ## 🐛 Support
 
 - [GitHub Issues](https://github.com/Jasper-1024/obsidian-block-link-plus/issues)
-- [Documentation](https://jasper-1024.github.io/obsidian-block-link-plus/)
+- [Documentation](https://block-link-plus.jasper1024.com/)
 - [Chinese README](README_zh.md)
