@@ -1,0 +1,386 @@
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  Cleaning site directory
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - en/index.md
+  - en/api.md
+  - en/changelog.md
+  - en/install.md
+  - en/examples/daily-notes.md
+  - en/examples/workflows.md
+  - en/reference/commands.md
+  - en/reference/settings.md
+  - en/reference/yaml.md
+  - en/usage/block-links.md
+  - en/usage/flow-editor.md
+  - en/usage/multiline.md
+  - en/usage/time-sections.md
+  - en/usage/timeline.md
+  - zh-TW/index.md
+  - zh-TW/api.md
+  - zh-TW/changelog.md
+  - zh-TW/install.md
+  - zh-TW/examples/daily-notes.md
+  - zh-TW/examples/workflows.md
+  - zh-TW/reference/commands.md
+  - zh-TW/reference/settings.md
+  - zh-TW/reference/yaml.md
+  - zh-TW/usage/block-links.md
+  - zh-TW/usage/flow-editor.md
+  - zh-TW/usage/multiline.md
+  - zh-TW/usage/time-sections.md
+  - zh-TW/usage/timeline.md
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh-TW'
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr/en
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'en'
+INFO    -  Documentation built in 1.35 seconds
+INFO    -  [14:07:05] Watching paths for changes: 'docs', 'mkdocs.yml'
+INFO    -  [14:07:05] Serving on http://0.0.0.0:8000/obsidian-block-link-plus/
+INFO    -  [14:07:07] Browser connected: http://localhost:8000/obsidian-block-link-plus/index.html
+INFO    -  [14:07:25] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:07:27] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:07:31] Browser connected: http://localhost:8000/obsidian-block-link-plus/examples/daily-notes/
+INFO    -  [14:07:48] Detected file changes
+INFO    -  Building documentation...
+WARNING -  Config value 'plugins': Plugin 'i18n' option 'default_language': Unrecognised configuration name: default_language
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - en/index.md
+  - en/api.md
+  - en/changelog.md
+  - en/install.md
+  - en/examples/daily-notes.md
+  - en/examples/workflows.md
+  - en/reference/commands.md
+  - en/reference/settings.md
+  - en/reference/yaml.md
+  - en/usage/block-links.md
+  - en/usage/flow-editor.md
+  - en/usage/multiline.md
+  - en/usage/time-sections.md
+  - en/usage/timeline.md
+  - zh-TW/index.md
+  - zh-TW/api.md
+  - zh-TW/changelog.md
+  - zh-TW/install.md
+  - zh-TW/examples/daily-notes.md
+  - zh-TW/examples/workflows.md
+  - zh-TW/reference/commands.md
+  - zh-TW/reference/settings.md
+  - zh-TW/reference/yaml.md
+  - zh-TW/usage/block-links.md
+  - zh-TW/usage/flow-editor.md
+  - zh-TW/usage/multiline.md
+  - zh-TW/usage/time-sections.md
+  - zh-TW/usage/timeline.md
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr/zh
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh'
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh-TW'
+INFO    -  [14:07:49] Reloading browsers
+INFO    -  [14:07:50] Browser connected: http://localhost:8000/obsidian-block-link-plus/examples/daily-notes/
+INFO    -  [14:08:13] Browser connected: http://localhost:8000/obsidian-block-link-plus/examples/daily-notes/
+WARNING -  [14:08:16] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+INFO    -  [14:08:18] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:08:20] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:08:22] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:08:28] Detected file changes
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - en/index.md
+  - en/api.md
+  - en/changelog.md
+  - en/install.md
+  - en/examples/daily-notes.md
+  - en/examples/workflows.md
+  - en/reference/commands.md
+  - en/reference/settings.md
+  - en/reference/yaml.md
+  - en/usage/block-links.md
+  - en/usage/flow-editor.md
+  - en/usage/multiline.md
+  - en/usage/time-sections.md
+  - en/usage/timeline.md
+  - zh-TW/index.md
+  - zh-TW/api.md
+  - zh-TW/changelog.md
+  - zh-TW/install.md
+  - zh-TW/examples/daily-notes.md
+  - zh-TW/examples/workflows.md
+  - zh-TW/reference/commands.md
+  - zh-TW/reference/settings.md
+  - zh-TW/reference/yaml.md
+  - zh-TW/usage/block-links.md
+  - zh-TW/usage/flow-editor.md
+  - zh-TW/usage/multiline.md
+  - zh-TW/usage/time-sections.md
+  - zh-TW/usage/timeline.md
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr/zh
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh'
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh-TW'
+INFO    -  Documentation built in 1.30 seconds
+INFO    -  [14:08:29] Reloading browsers
+INFO    -  [14:08:30] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:08:45] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:08:48] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:08:49] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:09:03] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:09:05] Browser connected: http://localhost:8000/obsidian-block-link-plus/install/
+INFO    -  [14:09:07] Browser connected: http://localhost:8000/obsidian-block-link-plus/usage/block-links/
+WARNING -  [14:09:07] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+INFO    -  [14:09:10] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:09:12] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+WARNING -  [14:09:12] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+WARNING -  [14:09:34] "GET /obsidian-block-link-plus/examples/daily-notes.md HTTP/1.1" code 404
+WARNING -  [14:09:35] "GET /obsidian-block-link-plus/changelog.md HTTP/1.1" code 404
+WARNING -  [14:09:37] "GET /obsidian-block-link-plus/api.md HTTP/1.1" code 404
+WARNING -  [14:09:38] "GET /obsidian-block-link-plus/usage/block-links.md HTTP/1.1" code 404
+WARNING -  [14:09:49] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+WARNING -  [14:09:52] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+INFO    -  [14:09:54] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/usage/timeline/
+WARNING -  [14:10:09] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+WARNING -  [14:10:18] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+INFO    -  [14:10:31] Detected file changes
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - en/index.md
+  - en/api.md
+  - en/changelog.md
+  - en/install.md
+  - en/examples/daily-notes.md
+  - en/examples/workflows.md
+  - en/reference/commands.md
+  - en/reference/settings.md
+  - en/reference/yaml.md
+  - en/usage/block-links.md
+  - en/usage/flow-editor.md
+  - en/usage/multiline.md
+  - en/usage/time-sections.md
+  - en/usage/timeline.md
+  - zh-TW/index.md
+  - zh-TW/api.md
+  - zh-TW/changelog.md
+  - zh-TW/install.md
+  - zh-TW/examples/daily-notes.md
+  - zh-TW/examples/workflows.md
+  - zh-TW/reference/commands.md
+  - zh-TW/reference/settings.md
+  - zh-TW/reference/yaml.md
+  - zh-TW/usage/block-links.md
+  - zh-TW/usage/flow-editor.md
+  - zh-TW/usage/multiline.md
+  - zh-TW/usage/time-sections.md
+  - zh-TW/usage/timeline.md
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr/en
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'en'
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+WARNING -  A reference to 'index.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'install.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/block-links.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/multiline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/timeline.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/time-sections.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'usage/flow-editor.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/settings.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/commands.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'reference/yaml.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/daily-notes.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'examples/workflows.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'changelog.md' is included in the 'nav' configuration, which is not found in the documentation files.
+WARNING -  A reference to 'api.md' is included in the 'nav' configuration, which is not found in the documentation files.
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+WARNING -  mkdocs_static_i18n: Could not find a homepage for locale 'zh-TW'
+INFO    -  Documentation built in 1.39 seconds
+INFO    -  [14:10:33] Reloading browsers
+WARNING -  [14:10:45] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+WARNING -  [14:11:54] "GET /obsidian-block-link-plus/zh/ HTTP/1.1" code 404
+WARNING -  [14:11:57] "GET /obsidian-block-link-plus/index.md HTTP/1.1" code 404
+WARNING -  [14:11:58] "GET /obsidian-block-link-plus/index.md HTTP/1.1" code 404
+WARNING -  [14:12:00] "GET /obsidian-block-link-plus/install.md HTTP/1.1" code 404
+WARNING -  [14:12:01] "GET /obsidian-block-link-plus/usage/block-links.md HTTP/1.1" code 404
+WARNING -  [14:12:04] "GET /obsidian-block-link-plus/index.md HTTP/1.1" code 404
+WARNING -  [14:12:47] "GET /obsidian-block-link-plus/install.html HTTP/1.1" code 404
+INFO    -  [14:12:54] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:12:56] Browser connected: http://localhost:8000/obsidian-block-link-plus/install/
+INFO    -  [14:12:58] Browser connected: http://localhost:8000/obsidian-block-link-plus/usage/block-links/
+INFO    -  [14:12:59] Browser connected: http://localhost:8000/obsidian-block-link-plus/reference/settings/
+INFO    -  [14:13:01] Browser connected: http://localhost:8000/obsidian-block-link-plus/changelog/
+INFO    -  [14:13:02] Browser connected: http://localhost:8000/obsidian-block-link-plus/api/
+INFO    -  [14:13:04] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:13:05] Browser connected: http://localhost:8000/obsidian-block-link-plus/en/
+INFO    -  [14:13:07] Browser connected: http://localhost:8000/obsidian-block-link-plus/install/
+INFO    -  [14:13:09] Browser connected: http://localhost:8000/obsidian-block-link-plus/usage/block-links/
+INFO    -  [14:13:11] Browser connected: http://localhost:8000/obsidian-block-link-plus/changelog/
+INFO    -  [14:13:19] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:13:21] Browser connected: http://localhost:8000/obsidian-block-link-plus/en/
+INFO    -  [14:13:23] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:13:26] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:13:29] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:13:31] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:13:33] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:17:04] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:17:09] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:17:10] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:17:12] Browser connected: http://localhost:8000/obsidian-block-link-plus/en/
+INFO    -  [14:17:14] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:17:15] Browser connected: http://localhost:8000/obsidian-block-link-plus/
+INFO    -  [14:18:01] Browser connected: http://localhost:8000/obsidian-block-link-plus/en/
+INFO    -  [14:19:33] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:20:59] Detected file changes
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr/en
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+INFO    -  Documentation built in 1.41 seconds
+INFO    -  [14:21:01] Reloading browsers
+INFO    -  [14:21:01] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:21:17] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:21:19] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:21:21] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:21:23] Browser connected: http://localhost:8000/obsidian-block-link-plus/en/
+INFO    -  [14:21:26] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/
+INFO    -  [14:21:27] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/api/
+INFO    -  [14:21:29] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/changelog/
+INFO    -  [14:21:30] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/examples/daily-notes/
+INFO    -  [14:21:40] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/install/
+INFO    -  [14:21:42] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/usage/block-links/
+INFO    -  [14:21:54] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/reference/settings/
+INFO    -  [14:21:56] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/examples/daily-notes/
+INFO    -  [14:21:57] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/changelog/
+INFO    -  [14:21:58] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/api/
+INFO    -  [14:21:59] Browser connected: http://localhost:8000/obsidian-block-link-plus/zh-TW/changelog/
+INFO    -  [14:30:34] Detected file changes
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr/en
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+INFO    -  Documentation built in 1.70 seconds
+INFO    -  [14:30:36] Reloading browsers
+INFO    -  [14:31:36] Detected file changes
+INFO    -  Building documentation...
+INFO    -  mkdocs_static_i18n: Building 'zh' documentation to directory: /tmp/mkdocs_emhjspmr
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh'
+INFO    -  mkdocs_static_i18n: Building 'en' documentation to directory: /tmp/mkdocs_emhjspmr/en
+INFO    -  mkdocs_static_i18n: Building 'zh-TW' documentation to directory: /tmp/mkdocs_emhjspmr/zh-TW
+INFO    -  mkdocs_static_i18n: Language 'zh-TW' is not supported by lunr.js, not setting it in the 'plugins.search.lang' option
+INFO    -  mkdocs_static_i18n: Translated 17 navigation elements to 'zh-TW'
+INFO    -  [14:31:38] Reloading browsers
