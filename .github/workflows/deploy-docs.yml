@@ -2,7 +2,7 @@ name: Deploy MkDocs
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, feature-multline-block]
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
@@ -20,4 +20,7 @@ jobs:
       - run: |
           pip install mkdocs-material
           pip install mkdocs-static-i18n
+      - run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - run: mkdocs gh-deploy --force
