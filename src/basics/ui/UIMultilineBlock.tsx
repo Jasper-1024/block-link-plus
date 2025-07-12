@@ -392,7 +392,7 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                     }
                     // 增加延迟以确保编辑器完全加载
                     setTimeout(() => {
-                        if (embedElement) {
+                        if (embedElement && props.showEditIcon) {
                             createLineClickHandler(container, embedElement as HTMLElement);
                         }
                     }, 300);
