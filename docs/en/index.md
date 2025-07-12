@@ -4,78 +4,35 @@ Obsidian block link enhancement plugin designed to improve note reference effici
 
 ## Core Features
 
-Obsidian's native block link functionality has limitations. Block Link Plus solves these issues:
-
-### ^abc123-abc123 Multi-line Block References
-- Break through native single-paragraph limitations
-- Support references spanning multiple paragraphs
-- Maintain content integrity
-
-### Timeline Aggregation
-- Automatically organize content with time markers
-- Support multiple filter conditions
-- Flexible YAML configuration
-
-### Flow Editor
-- Edit original content directly within references
-- Bidirectional synchronization updates
-- Improve collaboration efficiency
-
-### Time Sections
-- Quick timestamp insertion
-- Support custom formats
-- Automatic timeline organization
-
-### Smart Aliases
-- Auto-generate content previews
-- Multiple alias formats
-- Enhance readability
-
-## Typical Applications
-
-### Project Management
-Extract key decisions from meeting notes as blocks, reference centrally in project boards:
-```markdown
-## This Week's Decisions
-![[Meeting Notes#^decision-abc123]]
-![[Discussion Notes#^action-def456]]
-```
-
-### Learning Notes
-Extract core insights from literature, organize knowledge networks in research notes:
-```markdown
-## Theoretical Foundation
-![[Paper A#^key-insight-abc123]]
-![[Paper B#^methodology-def456]]
-```
-
-### Journal System
-Use timeline functionality to automatically aggregate daily important events:
-````markdown
-```blp-timeline
----
-source_folders: ["Daily Notes/2024"]
-heading_level: 2
-within_days: 30
----
-```
-````
-
-## Installation
-
-See [Installation Guide](install.md) for detailed steps.
+- **Multi-line Block References** - Innovative `^abc123-abc123` range identifier for multi-line references
+- **Timeline Aggregation** - Extract time headings from multiple files, display in chronological order
+- **Inline Editing** - Edit embedded block content directly without jumping to original file
+- **Time Sections** - Insert current time as heading with automatic level detection
+- **Smart Aliases** - Display block content summary instead of random IDs
 
 ## Quick Start
 
-1. Install and enable the plugin
-2. Adjust preferences in settings
-3. Start creating block links `[[note#^block-id]]`
-4. Use multi-line block functionality to extract long paragraphs
+1. Search "Block Link Plus" in Community Plugins
+2. Enable the plugin
+3. Right-click selected text → "Copy Block Link"
 
-## Documentation Navigation
+## Link Types
 
-- **Usage Guides**: Detailed feature descriptions and examples
-- **Reference Materials**: Configuration options and API documentation
-- **Examples**: Real-world application scenarios
+- `[[file#^abc123]]` - Regular block reference
+- `![[file#^abc123]]` - Embedded block
+- `!![[file#^abc123]]` - Editable embedded block
+- `obsidian://open?vault=...` - URI link
 
-Start using Block Link Plus now to enhance your Obsidian note-taking experience.
+## Acknowledgments
+
+Block Link Plus is inspired by excellent open-source projects:
+
+- **Editable Block Functionality** - Adapted from [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
+- **Block Reference Foundation** - Inspired by [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link)
+- **Multi-block Processing** - Inspired by [Text Transporter](https://github.com/TfTHacker/obsidian42-text-transporter)
+
+Thanks to all open-source contributors for their efforts in the Obsidian ecosystem.
+
+## Dependencies
+
+Timeline functionality requires the [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin.

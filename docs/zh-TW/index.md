@@ -1,81 +1,38 @@
 # Block Link Plus
 
-Obsidian 塊連結增強插件，專為提升筆記引用效率而設計。
+增強 Obsidian 塊引用功能的外掛，支援多行文字、時間線聚合和內聯編輯。
 
 ## 核心功能
 
-Obsidian 原生塊連結功能存在限制，Block Link Plus 解決了這些問題：
-
-### ^abc123-abc123 多行塊引用
-- 突破原生單段落限制
-- 支援跨越多個段落的引用
-- 保持內容完整性
-
-### 時間線聚合
-- 自動整理含時間標記的內容
-- 支援多重篩選條件
-- 靈活的 YAML 組態
-
-### 流式編輯器
-- 在引用中直接編輯原始內容
-- 雙向同步更新
-- 提升協作效率
-
-### 時間章節
-- 快速插入時間戳
-- 支援自訂格式
-- 自動組織時間軸
-
-### 智慧別名
-- 自動生成內容預覽
-- 多種別名格式
-- 提升可讀性
-
-## 典型應用
-
-### 專案管理
-將會議記錄中的關鍵決定提取為塊，在專案看板中集中引用：
-```markdown
-## 本週決定
-![[會議記錄#^decision-abc123]]
-![[討論記錄#^action-def456]]
-```
-
-### 學習筆記
-從文獻中提取核心觀點，在研究筆記中組織知識網路：
-```markdown
-## 理論基礎
-![[論文A#^key-insight-abc123]]
-![[論文B#^methodology-def456]]
-```
-
-### 日記系統
-使用時間線功能自動聚合每日重要事件：
-````markdown
-```blp-timeline
----
-source_folders: ["日記/2024"]
-heading_level: 2
-within_days: 30
----
-```
-````
-
-## 安裝方式
-
-參見 [安裝指南](install.md) 瞭解詳細步驟。
+- **多行塊引用** - 創新的 `^abc123-abc123` 範圍標識符，實現多行引用
+- **時間線聚合** - 從多個檔案提取時間標題，按時間排序顯示
+- **內聯編輯** - 直接編輯嵌入塊內容，無需跳轉原檔案
+- **時間章節** - 插入當前時間作為標題，自動判斷標題級別
+- **智慧別名** - 塊連結顯示內容摘要而非隨機ID
 
 ## 快速開始
 
-1. 安裝並啟用插件
-2. 在設定中調整偏好選項
-3. 開始建立塊連結 `[[筆記#^block-id]]`
-4. 使用多行塊功能提取長段落
+1. 在社群外掛中搜尋 "Block Link Plus"
+2. 啟用外掛
+3. 選取文字右鍵 → "複製塊連結"
 
-## 文件導覽
+## 連結類型
 
-- **使用指南**：功能詳細說明和範例
-- **參考資料**：組態選項和 API 文件
-- **範例**：實際應用場景展示
+- `[[檔案#^abc123]]` - 常規塊連結
+- `![[檔案#^abc123]]` - 嵌入塊
+- `!![[檔案#^abc123]]` - 可編輯嵌入塊
+- `obsidian://open?vault=...` - URI連結
 
-立即開始使用 Block Link Plus，提升你的 Obsidian 筆記體驗。
+## 致謝
+
+Block Link Plus 參考了優秀的開源專案：
+
+- **可編輯塊功能** - 移植修改自 [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
+- **塊引用基礎** - 參考 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link)
+- **多塊處理** - 啟發自 [Text Transporter](https://github.com/TfTHacker/obsidian42-text-transporter)
+
+感謝所有開源貢獻者為 Obsidian 生態做出的努力。
+
+## 相依套件
+
+時間線功能需要 [Dataview](https://github.com/blacksmithgu/obsidian-dataview) 外掛。

@@ -46,6 +46,21 @@ const editor = plugin.api.getActiveEditor();
 const enactor = plugin.api.getEnactor();
 ```
 
+## Settings Interface
+
+```typescript
+interface PluginSettings {
+    mult_line_handle: number;
+    alias_type: number;
+    enable_right_click_block: boolean;
+    alias_length: number;
+    enable_prefix: boolean;
+    id_prefix: string;
+    id_length: number;
+    // ... other settings
+}
+```
+
 ## Notes
 
 - API is experimental and may change in updates
