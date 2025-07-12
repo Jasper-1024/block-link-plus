@@ -192,8 +192,8 @@ export class FlowEditorManager {
 					// 获取当前文档内容
 					const content = editor.getValue();
 
-					// 检测是否包含![[file#^xyz-xyz]]格式的多行块
-					const multilineBlockRegex = /!\[\[([^\]]+#\^[a-z0-9]+-[a-z0-9]+)\]\]/g;
+					// 检测是否包含![[file#^xyz-xyz]]或![[file#^xyz-xyz|alias]]格式的多行块
+					const multilineBlockRegex = /!\[\[([^\]]+#\^[a-z0-9]+-[a-z0-9]+)(?:\|[^\]]+)?\]\]/g;
 					const matches = content.match(multilineBlockRegex);
 
 					if (matches && matches.length > 0) {
@@ -208,7 +208,11 @@ export class FlowEditorManager {
 								const src = embedEl.getAttribute('src');
 
 								// 检查是否是多行块且没有内容
-								if (src && /#\^([a-z0-9]+)-\1$/.test(src)) {
+								let actualSrc = src;
+								if (src && src.indexOf('|') !== -1) {
+									actualSrc = src.substring(0, src.indexOf('|'));
+								}
+								if (actualSrc && /#\^([a-z0-9]+)-\1$/.test(actualSrc)) {
 									const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
 									const hasContent = reactContainer && reactContainer.children.length > 0;
 									if (!hasContent) {
@@ -254,7 +258,12 @@ export class FlowEditorManager {
 			const embedEl = embed as HTMLElement;
 			const src = embedEl.getAttribute('src');
 			const alt = embedEl.getAttribute('alt');
-			const isMultilineBlock = (src && /#\^([a-z0-9]+)-\1$/.test(src)) ||
+			// Extract actual link without alias
+			let actualSrc = src;
+			if (src && src.indexOf('|') !== -1) {
+				actualSrc = src.substring(0, src.indexOf('|'));
+			}
+			const isMultilineBlock = (actualSrc && /#\^([a-z0-9]+)-\1$/.test(actualSrc)) ||
 				(alt && /\^[a-z0-9]+-[a-z0-9]+/.test(alt));
 
 			if (isMultilineBlock) {

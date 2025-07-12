@@ -199,8 +199,16 @@ function processMultilineEmbed(
       return;
     }
 
+    // Extract the actual link part (remove alias if present)
+    // Handle both [[file#^xyz-xyz|alias]] and [[file#^xyz-xyz]] formats
+    let actualLink = embedLink;
+    const pipeIndex = embedLink.indexOf('|');
+    if (pipeIndex !== -1) {
+      actualLink = embedLink.substring(0, pipeIndex);
+    }
+
     const multiLineBlockRegex = /#\^([a-z0-9]+)-\1$/;
-    if (!multiLineBlockRegex.test(embedLink)) {
+    if (!multiLineBlockRegex.test(actualLink)) {
       return;
     }
 
@@ -367,7 +375,7 @@ function processMultilineEmbed(
     reactEl.render(
       <UIMultilineBlock
         plugin={plugin}
-        blockRef={embedLink}
+        blockRef={actualLink}
         source={ctx.sourcePath}
         showEditIcon={showEditIcon}
         onEdit={() => {
