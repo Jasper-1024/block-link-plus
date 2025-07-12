@@ -40,7 +40,7 @@ export function gen_insert_blocklink_singleline(
 	// 处理 heading 的特殊情况
 	if (block.type === "heading" && settings.heading_id_newline) {
 		const id = generateRandomId(
-			settings.enble_prefix ? settings.id_prefix : "",
+			settings.enable_prefix ? settings.id_prefix : "",
 			settings.id_length
 		);
 
@@ -54,7 +54,7 @@ export function gen_insert_blocklink_singleline(
 	}
 
 	const id = generateRandomId(
-		settings.enble_prefix ? settings.id_prefix : "",
+		settings.enable_prefix ? settings.id_prefix : "",
 		settings.id_length
 	);
 
@@ -79,7 +79,7 @@ export function gen_insert_blocklink_multline_heading(
 	heading_level: number
 ) {
 	const id = generateRandomId(
-		settings.enble_prefix ? settings.id_prefix : "",
+		settings.enable_prefix ? settings.id_prefix : "",
 		settings.id_length
 	);
 
@@ -123,7 +123,7 @@ export function _gen_insert_block_singleline(
 	};
 
 	const id = generateRandomId(
-		settings.enble_prefix ? settings.id_prefix : "",
+		settings.enable_prefix ? settings.id_prefix : "",
 		settings.id_length
 	);
 

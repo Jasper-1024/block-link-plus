@@ -1,6 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, DropdownComponent, Notice } from "obsidian";
 import t from "shared/i18n";
-import { KeysOfType, PluginSettings } from "../types";
+import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
 import { detectDataviewStatus } from "../utils/dataview-detector";
 
@@ -109,14 +109,14 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// Create a function to get the current description based on the setting value
 		const getMultiLineDescription = (value: string) => {
-			switch (value) {
-				case "0":
+			switch (parseInt(value)) {
+				case MultLineHandle.oneline:
 					return t.settings.multiLineHandle.descriptions.default;
-				case "1":
+				case MultLineHandle.heading:
 					return t.settings.multiLineHandle.descriptions.addHeading;
-				case "2":
+				case MultLineHandle.multblock:
 					return t.settings.multiLineHandle.descriptions.addMultiBlock;
-				case "3":
+				case MultLineHandle.multilineblock:
 					return t.settings.multiLineHandle.descriptions.addMultilineBlock;
 				default:
 					return t.settings.multiLineHandle.desc;
@@ -126,10 +126,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// Add dropdown with dynamic description updates
 		multiLineHandleSetting.addDropdown((dropdown) => {
 			const options = [
-				{ value: "0", display: t.settings.multiLineHandle.options.default },
-				{ value: "1", display: t.settings.multiLineHandle.options.addHeading },
-				{ value: "2", display: t.settings.multiLineHandle.options.addMultiBlock },
-				{ value: "3", display: t.settings.multiLineHandle.options.addMultilineBlock }
+				{ value: MultLineHandle.oneline.toString(), display: t.settings.multiLineHandle.options.default },
+				{ value: MultLineHandle.heading.toString(), display: t.settings.multiLineHandle.options.addHeading },
+				{ value: MultLineHandle.multblock.toString(), display: t.settings.multiLineHandle.options.addMultiBlock },
+				{ value: MultLineHandle.multilineblock.toString(), display: t.settings.multiLineHandle.options.addMultilineBlock }
 			];
 			
 			options.forEach(option => {
@@ -168,14 +168,14 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// Create a function to get the current description based on the alias style value
 		const getAliasStyleDescription = (value: string) => {
-			switch (value) {
-				case "0":
+			switch (parseInt(value)) {
+				case BlockLinkAliasType.Default:
 					return t.settings.blockLink.aliasStyle.descriptions.noAlias;
-				case "1":
+				case BlockLinkAliasType.FirstChars:
 					return t.settings.blockLink.aliasStyle.descriptions.firstChars;
-				case "2":
+				case BlockLinkAliasType.Heading:
 					return t.settings.blockLink.aliasStyle.descriptions.parentHeading;
-				case "3":
+				case BlockLinkAliasType.SelectedText:
 					return t.settings.blockLink.aliasStyle.descriptions.selectedText;
 				default:
 					return t.settings.blockLink.aliasStyle.desc;
@@ -185,10 +185,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// Add dropdown with dynamic description updates
 		aliasStyleSetting.addDropdown((dropdown) => {
 			const options = [
-				{ value: "0", display: t.settings.blockLink.aliasStyle.options.noAlias },
-				{ value: "1", display: t.settings.blockLink.aliasStyle.options.firstChars },
-				{ value: "2", display: t.settings.blockLink.aliasStyle.options.parentHeading },
-				{ value: "3", display: t.settings.blockLink.aliasStyle.options.selectedText }
+				{ value: BlockLinkAliasType.Default.toString(), display: t.settings.blockLink.aliasStyle.options.noAlias },
+				{ value: BlockLinkAliasType.FirstChars.toString(), display: t.settings.blockLink.aliasStyle.options.firstChars },
+				{ value: BlockLinkAliasType.Heading.toString(), display: t.settings.blockLink.aliasStyle.options.parentHeading },
+				{ value: BlockLinkAliasType.SelectedText.toString(), display: t.settings.blockLink.aliasStyle.options.selectedText }
 			];
 			
 			options.forEach(option => {
@@ -233,6 +233,28 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("enable_right_click_editable_embed").setName(t.settings.editableEmbedLink.enableRightClick.name);
 		this.addToggleSetting("enable_editable_embed_notification").setName(t.settings.editableEmbedLink.enableNotification.name);
 
+		// Embedded Block Editing
+		this.addHeading(t.settings.sectionFlow).setDesc(t.settings.embeddedBlockDesc);
+		this.addToggleSetting("editorFlow")
+			.setName(t.settings.editorFlowReplace.name)
+			.setDesc(t.settings.editorFlowReplace.desc);
+
+		// Embedded editing style
+		new Setting(containerEl)
+			.setName(t.settings.editorFlowStyle.name)
+			.setDesc(t.settings.editorFlowStyle.desc)
+			.addDropdown((dropdown: DropdownComponent) => {
+				dropdown.addOption("minimal", t.settings.editorFlowStyle.minimal);
+				dropdown.addOption("seamless", t.settings.editorFlowStyle.seamless);
+				dropdown
+					.setValue(this.plugin.settings.editorFlowStyle)
+					.onChange(async (value) => {
+						this.plugin.settings.editorFlowStyle = value;
+						this.updateFlowStyleClasses(value);
+						await this.plugin.saveData(this.plugin.settings);
+					});
+			});
+
 		// Obsidian URI
 		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);
 		this.addToggleSetting("enable_right_click_url").setName(t.settings.obsidianUri.enableRightClick.name);
@@ -244,7 +266,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.blockId.maxLength.name)
 			.setDesc(t.settings.blockId.maxLength.desc);
 
-		this.addToggleSetting("enble_prefix").setName(t.settings.blockId.enablePrefix.name);
+		this.addToggleSetting("enable_prefix").setName(t.settings.blockId.enablePrefix.name);
 
 		this.addTextInputSetting("id_prefix", "")
 			.setName(t.settings.blockId.prefix.name)
@@ -330,28 +352,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.timeline.defaultSortOrder.name)
 			.setDesc(t.settings.timeline.defaultSortOrder.desc);
 
-		// 内联编辑
-		this.addHeading(t.settings.sectionFlow).setDesc(t.settings.embeddedBlockDesc);
-		// 从 SettingsPanel.ts 中提取的设置
-		this.addToggleSetting("editorFlow")
-			.setName(t.settings.editorFlowReplace.name)
-			.setDesc(t.settings.editorFlowReplace.desc);
-
-		// Embedded editing style
-		new Setting(containerEl)
-			.setName(t.settings.editorFlowStyle.name)
-			.setDesc(t.settings.editorFlowStyle.desc)
-			.addDropdown((dropdown: DropdownComponent) => {
-				dropdown.addOption("minimal", t.settings.editorFlowStyle.minimal);
-				dropdown.addOption("seamless", t.settings.editorFlowStyle.seamless);
-				dropdown
-					.setValue(this.plugin.settings.editorFlowStyle)
-					.onChange(async (value) => {
-						this.plugin.settings.editorFlowStyle = value;
-						this.updateFlowStyleClasses(value);
-						await this.plugin.saveData(this.plugin.settings);
-					});
-			});
 	}
 
 	// 添加 updateFlowStyleClasses 方法

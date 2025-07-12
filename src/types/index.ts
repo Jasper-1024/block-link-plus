@@ -76,7 +76,7 @@ export interface PluginSettings {
 	enable_right_click_editable_embed: boolean;
 	enable_right_click_url: boolean;
 	alias_length: number;
-	enble_prefix: boolean;
+	enable_prefix: boolean;
 	id_prefix: string;
 	id_length: number;
 	heading_id_newline: boolean;
@@ -106,16 +106,16 @@ export interface PluginSettings {
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	mult_line_handle: MultLineHandle.oneline, // as one line handle
-	alias_type: BlockLinkAliasType.Default, // no alias
+	mult_line_handle: MultLineHandle.oneline, // Default: treat multi-line selection as single block
+	alias_type: BlockLinkAliasType.Default, // Default: no alias text for block links
 	enable_right_click_block: true,
 	enable_right_click_embed: true,
 	enable_right_click_editable_embed: true,
 	enable_right_click_url: false,
 	alias_length: 20,
-	enble_prefix: false, // no prefix
-	id_prefix: "", // prefix
-	id_length: 4, // id length
+	enable_prefix: false, // Default: no prefix for block IDs
+	id_prefix: "", // Custom prefix for block IDs (empty by default)
+	id_length: 4, // Default block ID length in characters
 	heading_id_newline: false,
 	enable_block_notification: true,
 	enable_embed_notification: true,
@@ -129,7 +129,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	insert_heading_level: true,
 	daily_note_heading_level: 2,
 	enable_time_section_in_menu: false,
-	time_section_plain_style: false, // Default to standard heading style
+	time_section_plain_style: false, // Default: use standard heading style for time sections
 	
 	// Timeline Feature
 	enableTimeline: true,
@@ -137,7 +137,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	timelineDefaultEmbedFormat: '!![[]]',
 	timelineDefaultSortOrder: 'desc',
 	
-	// inline edit
-	editorFlow: true,
-	editorFlowStyle: "minimal",
+	// Inline editing settings
+	editorFlow: true, // Enable embedded block editing
+	editorFlowStyle: "minimal", // Default editing style
 }; 
