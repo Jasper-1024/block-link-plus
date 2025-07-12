@@ -41,11 +41,18 @@ class T {
         // Multi-line behavior
         multiLineHandle: {
           name: "Multi-line block behavior",
-          desc: "Define how multi-line selections generate block ids. 'Default' treats them as a single line.",
+          desc: "Define how multi-line selections generate block ids.",
           options: {
             default: "Default",
             addHeading: "Add new heading", 
-            addMultiBlock: "Add multi block"
+            addMultiBlock: "Add multi block",
+            addMultilineBlock: "Add multiline block"
+          },
+          descriptions: {
+            default: "Treats multi-line selections as a single block. Creates one block ID ^abc123 at the end of the selection.",
+            addHeading: "Adds a new heading above the selection. Creates a heading with block ID for organization.",
+            addMultiBlock: "Creates separate block IDs for each line. Each line gets its own ^abc123 identifier.",
+            addMultilineBlock: "Creates a range block with ^abc123-abc123 format. Marks the first line with ^abc123 and adds ^abc123-abc123 after the last line for precise multi-line referencing."
           }
         },
 
@@ -69,6 +76,12 @@ class T {
               firstChars: "First X chars", 
               parentHeading: "Parent heading",
               selectedText: "Selected text"
+            },
+            descriptions: {
+              noAlias: "Links will appear as [[file#^abc123]] without any alias text.",
+              firstChars: "Links will use the first X characters of the block content as alias: [[file#^abc123|First few words...]]",
+              parentHeading: "Links will use the nearest parent heading as alias: [[file#^abc123|Parent Heading]]",
+              selectedText: "Links will use the selected text as alias: [[file#^abc123|Your selected text]]"
             }
           },
           aliasLength: {
@@ -91,6 +104,20 @@ class T {
           },
           enableNotification: {
             name: "Show notification when embed link is copied", 
+            desc: ""
+          }
+        },
+
+        // Editable embed link section
+        editableEmbedLink: {
+          title: "Editable embed link",
+          desc: "Link: !![[file#block_id]]",
+          enableRightClick: {
+            name: "Enable editable embed link in right click menu",
+            desc: ""
+          },
+          enableNotification: {
+            name: "Show notification when editable embed link is copied", 
             desc: ""
           }
         },
@@ -312,7 +339,14 @@ class T {
           options: {
             default: "默认",
             addHeading: "添加新标题", 
-            addMultiBlock: "添加多块"
+            addMultiBlock: "添加多块",
+            addMultilineBlock: "添加多行块"
+          },
+          descriptions: {
+            default: "将多行选择视为单个块。在选择末尾创建一个块 ID ^abc123。",
+            addHeading: "在选择上方添加一个新标题。为组织创建一个带块 ID 的标题。",
+            addMultiBlock: "为每行创建单独的块 ID。每行获得自己的 ^abc123 标识符。",
+            addMultilineBlock: "创建一个 ^abc123-abc123 格式的范围块。用 ^abc123 标记第一行，并在最后一行后添加 ^abc123-abc123 以精确引用多行。"
           }
         },
 
@@ -336,6 +370,12 @@ class T {
               firstChars: "前 X 个字符", 
               parentHeading: "父标题",
               selectedText: "选中文本"
+            },
+            descriptions: {
+              noAlias: "链接将显示为 [[文件#^abc123]] 没有别名文本。",
+              firstChars: "链接将使用块内容的第一个 X 个字符作为别名：[[文件#^abc123|前几个词...]]",
+              parentHeading: "链接将使用最近的父标题作为别名：[[文件#^abc123|父标题]]",
+              selectedText: "链接将使用选中的文本作为别名：[[文件#^abc123|您选中的文本]]"
             }
           },
           aliasLength: {
@@ -358,6 +398,20 @@ class T {
           },
           enableNotification: {
             name: "复制嵌入链接时显示通知", 
+            desc: ""
+          }
+        },
+
+        // Editable embed link section
+        editableEmbedLink: {
+          title: "可编辑嵌入链接",
+          desc: "链接格式：![[文件#块id]]",
+          enableRightClick: {
+            name: "在右键菜单中启用可编辑嵌入链接",
+            desc: ""
+          },
+          enableNotification: {
+            name: "复制可编辑嵌入链接时显示通知", 
             desc: ""
           }
         },
@@ -579,7 +633,14 @@ class T {
           options: {
             default: "預設",
             addHeading: "新增新標題", 
-            addMultiBlock: "新增多區塊"
+            addMultiBlock: "新增多區塊",
+            addMultilineBlock: "新增多行塊"
+          },
+          descriptions: {
+            default: "將多行選擇視為單一區塊。在選擇結尾處創建一個區塊 ID ^abc123。",
+            addHeading: "在選擇上方新增一個新標題。為組織創建一個帶區塊 ID 的標題。",
+            addMultiBlock: "為每行創建單獨的區塊 ID。每行獲得自己的 ^abc123 識別符。",
+            addMultilineBlock: "創建一個 ^abc123-abc123 格式的範圍區塊。用 ^abc123 標記第一行，並在最后一行後添加 ^abc123-abc123 以精確引用多行。"
           }
         },
 
@@ -603,6 +664,12 @@ class T {
               firstChars: "前 X 個字元", 
               parentHeading: "父標題",
               selectedText: "選中文字"
+            },
+            descriptions: {
+              noAlias: "連結將顯示為 [[檔案#^abc123]] 沒有別名文字。",
+              firstChars: "連結將使用塊內容的第一個 X 個字元作為別名：[[檔案#^abc123|前幾個詞...]]",
+              parentHeading: "連結將使用最近的父標題作為別名：[[檔案#^abc123|父標題]]",
+              selectedText: "連結將使用選中的文字作為別名：[[檔案#^abc123|您選中的文字]]"
             }
           },
           aliasLength: {
@@ -625,6 +692,20 @@ class T {
           },
           enableNotification: {
             name: "複製嵌入連結時顯示通知", 
+            desc: ""
+          }
+        },
+
+        // Editable embed link section
+        editableEmbedLink: {
+          title: "可編輯嵌入連結",
+          desc: "連結格式：![[檔案#區塊_id]]",
+          enableRightClick: {
+            name: "在右鍵選單中啟用可編輯嵌入連結",
+            desc: ""
+          },
+          enableNotification: {
+            name: "複製可編輯嵌入連結時顯示通知", 
             desc: ""
           }
         },

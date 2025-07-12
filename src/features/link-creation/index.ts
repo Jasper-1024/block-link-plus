@@ -184,4 +184,57 @@ export function gen_insert_blocklink_multline_block(
 	}
 
 	return links;
+}
+
+/**
+ * Generates and inserts a multiline block reference with ^xyz-xyz format.
+ * Creates a range block that can be referenced with ![[file#^xyz-xyz]].
+ * 
+ * @param editor - The editor instance.
+ * @param settings - The plugin settings.
+ * @returns The generated multiline block link in format "^xyz-xyz".
+ */
+export function gen_insert_blocklink_multiline_block(
+	editor: Editor,
+	settings: PluginSettings
+): string {
+	const cursorFrom = editor.getCursor('from');
+	const cursorTo = editor.getCursor('to');
+	
+	// Generate unique ID (6 character alphanumeric)
+	let id: string;
+	const fullText = editor.getValue();
+	do {
+		id = generateRandomId("", 6); // Always 6 chars for multiline blocks, no prefix
+	} while (fullText.includes(`^${id}`)); // Ensure uniqueness across entire document
+	
+	// Get the first line content
+	const firstLine = editor.getLine(cursorFrom.line);
+	let newFirstLine: string;
+	
+	if (firstLine.trim() === '') {
+		// Handle empty line with comment syntax
+		newFirstLine = `%% %% ^${id}`;
+	} else {
+		// Add marker to end of existing content
+		newFirstLine = `${firstLine} ^${id}`;
+	}
+	
+	// Replace the first line with the marked version
+	editor.replaceRange(
+		newFirstLine,
+		{ line: cursorFrom.line, ch: 0 },
+		{ line: cursorFrom.line, ch: firstLine.length }
+	);
+	
+	// Insert end marker on a new line after the last selected line
+	const insertPosition = { line: cursorTo.line + 1, ch: 0 };
+	editor.replaceRange(
+		`\n^${id}-${id}`,
+		insertPosition,
+		insertPosition
+	);
+	
+	// Return the multiline block reference format
+	return `^${id}-${id}`;
 } 

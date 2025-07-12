@@ -4,7 +4,7 @@ import { get_is_heading } from '../utils';
 import { analyzeHeadings } from '../features/heading-analysis';
 import * as LinkCreation from '../features/link-creation';
 import * as Clipboard from '../features/clipboard-handler';
-import BlockLinkPlus from '../../main';
+import BlockLinkPlus from '../main';
 import * as TimeSection from '../features/time-section';
 
 
@@ -15,7 +15,8 @@ function handleSingleLine(
     isEmbed: boolean,
     head_analysis: HeadingAnalysisResult,
     editor: any,
-    isUrl: boolean = false
+    isUrl: boolean = false,
+    isEditableEmbed: boolean = false
 ) {
     let link: string | undefined;
 
@@ -29,7 +30,7 @@ function handleSingleLine(
 
     if (link) {
         const alias = Clipboard.calculateAlias(plugin.settings, link, isHeading, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
     }
 }
 
@@ -41,12 +42,13 @@ function handleMultiLine(
     head_analysis: HeadingAnalysisResult,
     editor: any,
     fileCache: any,
-    isUrl: boolean = false
+    isUrl: boolean = false,
+    isEditableEmbed: boolean = false
 ) {
     if (isHeading && head_analysis.headingAtStart) {
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, head_analysis.headingAtStart.heading, isEmbed, undefined, isUrl);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, head_analysis.headingAtStart.heading, isEmbed, undefined, isUrl, isEditableEmbed);
     } else {
-        handleMultiLineBlock(plugin, file, isEmbed, head_analysis, editor, fileCache, isUrl);
+        handleMultiLineBlock(plugin, file, isEmbed, head_analysis, editor, fileCache, isUrl, isEditableEmbed);
     }
 }
 
@@ -86,7 +88,8 @@ function handleMultiLineBlock(
     head_analysis: HeadingAnalysisResult,
     editor: any,
     fileCache: any,
-    isUrl: boolean = false
+    isUrl: boolean = false,
+    isEditableEmbed: boolean = false
 ) {
     if (plugin.settings.mult_line_handle == MultLineHandle.oneline) {
         if (head_analysis.block) {
@@ -96,8 +99,24 @@ function handleMultiLineBlock(
                 plugin.settings
             );
             const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-            Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
+            Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
         }
+        return;
+    } else if (plugin.settings.mult_line_handle == MultLineHandle.multilineblock) {
+        // Handle multiline block format ^xyz-xyz
+        if (head_analysis.minLevelInRange != Infinity) {
+            new Notice(
+                `Selection cannot contain headings`,
+                1500
+            );
+            return;
+        }
+        const link = LinkCreation.gen_insert_blocklink_multiline_block(
+            editor,
+            plugin.settings
+        );
+        const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
         return;
     } else {
         if (head_analysis.minLevelInRange != Infinity) {
@@ -118,7 +137,7 @@ function handleMultiLineBlock(
             head_analysis
         );
         const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
         return;
     }
 }
@@ -130,7 +149,8 @@ function handleMenuItemClick(
     isHeading: boolean,
     isEmbed: boolean,
     head_analysis: HeadingAnalysisResult,
-    isUrl: boolean = false
+    isUrl: boolean = false,
+    isEditableEmbed: boolean = false
 ) {
     if (!view.file || !head_analysis.isValid) return;
 
@@ -139,9 +159,9 @@ function handleMenuItemClick(
     if (!fileCache) return;
 
     if (!head_analysis.isMultiline) {
-        handleSingleLine(plugin, file, isHeading, isEmbed, head_analysis, editor, isUrl);
+        handleSingleLine(plugin, file, isHeading, isEmbed, head_analysis, editor, isUrl, isEditableEmbed);
     } else {
-        handleMultiLine(plugin, file, isHeading, isEmbed, head_analysis, editor, fileCache, isUrl);
+        handleMultiLine(plugin, file, isHeading, isEmbed, head_analysis, editor, fileCache, isUrl, isEditableEmbed);
     }
 }
 
@@ -166,7 +186,7 @@ export function handleEditorMenu(
 
     let isHeading = get_is_heading(head_analysis);
 
-    const addItemToMenu = (title: string, isEmbed: boolean, isUrl: boolean = false) => {
+    const addItemToMenu = (title: string, isEmbed: boolean, isUrl: boolean = false, isEditableEmbed: boolean = false) => {
         menu.addItem((item: any) => {
             item.setTitle(title)
                 .setIcon("links-coming-in")
@@ -177,7 +197,8 @@ export function handleEditorMenu(
                         isHeading,
                         isEmbed,
                         head_analysis,
-                        isUrl
+                        isUrl,
+                        isEditableEmbed
                     )
                 );
         });
@@ -193,6 +214,15 @@ export function handleEditorMenu(
     if (plugin.settings.enable_right_click_embed) {
         addItemToMenu(
             isHeading ? "Copy Heading as Embed" : "Copy Block as Embed",
+            true
+        );
+    }
+
+    if (plugin.settings.enable_right_click_editable_embed) {
+        addItemToMenu(
+            isHeading ? "Copy Heading as Editable Embed" : "Copy Block as Editable Embed",
+            true,
+            false,
             true
         );
     }

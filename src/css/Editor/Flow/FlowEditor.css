@@ -134,8 +134,8 @@ div:not(.mk-flowspace-editor) >
   border-left: thin solid var(--mk-ui-divider);
 }
 
-.mk-flow-minimal .markdown-embed-title,
-.mk-flow-seamless .markdown-embed-title {
+.mk-flow-minimal .mk-floweditor-container .markdown-embed-title,
+.mk-flow-seamless .mk-floweditor-container .markdown-embed-title {
   display: none;
 }
 .mk-foldernote > .mk-floweditor > .popover-content > .mk-flow-titlebar,
@@ -146,16 +146,16 @@ div:not(.mk-flowspace-editor) >
 
 
 
-.mk-flow-minimal .internal-embed > .markdown-embed,
-.mk-flow-minimal .internal-embed.markdown-embed {
+.mk-flow-minimal .mk-floweditor-container .internal-embed > .markdown-embed,
+.mk-flow-minimal .mk-floweditor-container .internal-embed.markdown-embed {
   padding: 8px;
   border-radius: 4px;
   border: thin solid var(--mk-ui-divider);
   margin-top: 4px;
 }
 
-.mk-flow-seamless .internal-embed > .markdown-embed,
-.mk-flow-seamless .internal-embed.markdown-embed {
+.mk-flow-seamless .mk-floweditor-container .internal-embed > .markdown-embed,
+.mk-flow-seamless .mk-floweditor-container .internal-embed.markdown-embed {
   margin-top: 4px;
 }
 
@@ -179,10 +179,10 @@ div:not(.mk-flowspace-editor) >
 .markdown-embed p {
   margin-bottom: 24px;
 }
-.mk-flow-minimal .internal-embed > .markdown-embed,
-.mk-flow-minimal .internal-embed > .markdown-embed,
-.mk-flow-seamless .internal-embed.markdown-embed,
-.mk-flow-seamless .internal-embed.markdown-embed {
+.mk-flow-minimal .mk-floweditor-container .internal-embed > .markdown-embed,
+.mk-flow-minimal .mk-floweditor-container .internal-embed > .markdown-embed,
+.mk-flow-seamless .mk-floweditor-container .internal-embed.markdown-embed,
+.mk-flow-seamless .mk-floweditor-container .internal-embed.markdown-embed {
   margin-top: 24px;
 }
 

@@ -139,6 +139,14 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		this.addCommand({
+			id: "copy-editable-embed-to-block",
+			name: "Copy Block as Editable Embed",
+			editorCheckCallback: (isChecking, editor, view) => {
+				return CommandHandler.handleCommand(this, isChecking, editor, view, true, false, true);
+			},
+		});
+
+		this.addCommand({
 			id: "copy-url-to-block",
 			name: "Copy Block as Obsidian URI",
 			editorCheckCallback: (isChecking, editor, view) => {

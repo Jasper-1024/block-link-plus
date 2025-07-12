@@ -102,43 +102,118 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		// title
 		containerEl.createEl("h2", { text: t.settings.pluginTitle });
 
-		this.addDropdownSetting(
-			//@ts-ignore
-			"mult_line_handle",
-			["0", "1", "2"],
-			(option) => {
-				const optionsSet = new Map([
-					["0", t.settings.multiLineHandle.options.default],
-					["1", t.settings.multiLineHandle.options.addHeading],
-					["2", t.settings.multiLineHandle.options.addMultiBlock],
-				]);
-				return optionsSet.get(option) || "Unknown";
-			}
-		)
+		// Multi-line block behavior with dynamic descriptions
+		const multiLineHandleSetting = new Setting(this.containerEl)
 			.setName(t.settings.multiLineHandle.name)
 			.setDesc(t.settings.multiLineHandle.desc);
+
+		// Create a function to get the current description based on the setting value
+		const getMultiLineDescription = (value: string) => {
+			switch (value) {
+				case "0":
+					return t.settings.multiLineHandle.descriptions.default;
+				case "1":
+					return t.settings.multiLineHandle.descriptions.addHeading;
+				case "2":
+					return t.settings.multiLineHandle.descriptions.addMultiBlock;
+				case "3":
+					return t.settings.multiLineHandle.descriptions.addMultilineBlock;
+				default:
+					return t.settings.multiLineHandle.desc;
+			}
+		};
+
+		// Add dropdown with dynamic description updates
+		multiLineHandleSetting.addDropdown((dropdown) => {
+			const options = [
+				{ value: "0", display: t.settings.multiLineHandle.options.default },
+				{ value: "1", display: t.settings.multiLineHandle.options.addHeading },
+				{ value: "2", display: t.settings.multiLineHandle.options.addMultiBlock },
+				{ value: "3", display: t.settings.multiLineHandle.options.addMultilineBlock }
+			];
+			
+			options.forEach(option => {
+				dropdown.addOption(option.value, option.display);
+			});
+			
+			dropdown
+				.setValue(this.plugin.settings.mult_line_handle.toString())
+				.onChange(async (value) => {
+					this.plugin.settings.mult_line_handle = parseInt(value);
+					await this.plugin.saveSettings();
+					
+					// Update the description dynamically
+					const descEl = multiLineHandleSetting.descEl;
+					if (descEl) {
+						descEl.textContent = getMultiLineDescription(value);
+					}
+				});
+		});
+
+		// Set initial description based on current setting
+		const initialDescription = getMultiLineDescription(this.plugin.settings.mult_line_handle.toString());
+		if (multiLineHandleSetting.descEl) {
+			multiLineHandleSetting.descEl.textContent = initialDescription;
+		}
 
 		// Block link	
 		this.addHeading(t.settings.blockLink.title).setDesc(t.settings.blockLink.desc);
 		this.addToggleSetting("enable_right_click_block").setName(t.settings.blockLink.enableRightClick.name);
 		this.addToggleSetting("enable_block_notification").setName(t.settings.blockLink.enableNotification.name);
 
-		this.addDropdownSetting(
-			//@ts-ignore
-			"alias_type",
-			["0", "1", "2", "3"],
-			(option) => {
-				const optionsSet = new Map([
-					["0", t.settings.blockLink.aliasStyle.options.noAlias],
-					["1", t.settings.blockLink.aliasStyle.options.firstChars],
-					["2", t.settings.blockLink.aliasStyle.options.parentHeading],
-					["3", t.settings.blockLink.aliasStyle.options.selectedText]
-				]);
-				return optionsSet.get(option) || "Unknown";
-			}
-		)
+		// Alias style with dynamic descriptions
+		const aliasStyleSetting = new Setting(this.containerEl)
 			.setName(t.settings.blockLink.aliasStyle.name)
 			.setDesc(t.settings.blockLink.aliasStyle.desc);
+
+		// Create a function to get the current description based on the alias style value
+		const getAliasStyleDescription = (value: string) => {
+			switch (value) {
+				case "0":
+					return t.settings.blockLink.aliasStyle.descriptions.noAlias;
+				case "1":
+					return t.settings.blockLink.aliasStyle.descriptions.firstChars;
+				case "2":
+					return t.settings.blockLink.aliasStyle.descriptions.parentHeading;
+				case "3":
+					return t.settings.blockLink.aliasStyle.descriptions.selectedText;
+				default:
+					return t.settings.blockLink.aliasStyle.desc;
+			}
+		};
+
+		// Add dropdown with dynamic description updates
+		aliasStyleSetting.addDropdown((dropdown) => {
+			const options = [
+				{ value: "0", display: t.settings.blockLink.aliasStyle.options.noAlias },
+				{ value: "1", display: t.settings.blockLink.aliasStyle.options.firstChars },
+				{ value: "2", display: t.settings.blockLink.aliasStyle.options.parentHeading },
+				{ value: "3", display: t.settings.blockLink.aliasStyle.options.selectedText }
+			];
+			
+			options.forEach(option => {
+				dropdown.addOption(option.value, option.display);
+			});
+			
+			dropdown
+				.setValue(this.plugin.settings.alias_type.toString())
+				.onChange(async (value) => {
+					this.plugin.settings.alias_type = parseInt(value);
+					await this.plugin.saveSettings();
+					
+					// Update the description dynamically
+					const descEl = aliasStyleSetting.descEl;
+					if (descEl) {
+						descEl.textContent = getAliasStyleDescription(value);
+					}
+				});
+		});
+
+		// Set initial description based on current setting
+		const initialAliasDescription = getAliasStyleDescription(this.plugin.settings.alias_type.toString());
+		if (aliasStyleSetting.descEl) {
+			aliasStyleSetting.descEl.textContent = initialAliasDescription;
+		}
 
 		this.addSliderSetting("alias_length", 1, 100, 1)
 			.setName(t.settings.blockLink.aliasLength.name)
@@ -152,6 +227,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addHeading(t.settings.embedLink.title).setDesc(t.settings.embedLink.desc);
 		this.addToggleSetting("enable_right_click_embed").setName(t.settings.embedLink.enableRightClick.name);
 		this.addToggleSetting("enable_embed_notification").setName(t.settings.embedLink.enableNotification.name);
+
+		// Editable embed link
+		this.addHeading(t.settings.editableEmbedLink.title).setDesc(t.settings.editableEmbedLink.desc);
+		this.addToggleSetting("enable_right_click_editable_embed").setName(t.settings.editableEmbedLink.enableRightClick.name);
+		this.addToggleSetting("enable_editable_embed_notification").setName(t.settings.editableEmbedLink.enableNotification.name);
 
 		// Obsidian URI
 		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);
