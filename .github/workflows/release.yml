@@ -1,0 +1,57 @@
+name: Release Obsidian Plugin
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'  # 匹配 x.x.x 格式的标签
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build plugin
+        run: npm run build
+        
+      - name: Check required files
+        run: |
+          if [ ! -f "main.js" ]; then
+            echo "Error: main.js not found"
+            exit 1
+          fi
+          if [ ! -f "manifest.json" ]; then
+            echo "Error: manifest.json not found"
+            exit 1
+          fi
+          if [ ! -f "styles.css" ]; then
+            echo "Error: styles.css not found"
+            exit 1
+          fi
+          if [ ! -f "data.json" ]; then
+            echo "Warning: data.json not found, creating empty file"
+            echo "{}" > data.json
+          fi
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            main.js
+            manifest.json
+            styles.css
+            data.json
+          generate_release_notes: true
