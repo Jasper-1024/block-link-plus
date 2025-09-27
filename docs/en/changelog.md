@@ -2,7 +2,13 @@
 
 Version history and new features for Block Link Plus.
 
-## v1.7.5 (Current)
+## v1.7.6 (Current)
+
+- Fixed Timeline link matching to support full path link formats (e.g., `[[Task/path/file.md|alias]]`)
+- Improved link matching with dual strategy: path resolution + basename matching
+- Maintained backward compatibility with existing short-form links
+
+## v1.7.5
 
 - Enhanced multi-line block handling by extracting actual links without aliases in markdown processing and flow editor
 - Update regex patterns to support both alias and non-alias formats

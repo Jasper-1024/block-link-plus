@@ -302,11 +302,26 @@ function extractRelevantSections(
         
         const targetLinkBasenames = getBasenamesWithRegex(targetLinkPaths)
         // Check if this section contains any of the target links
-        const containsTargetLink = allLinksInFile.some(link => 
-            (targetLinkBasenames.has(link.link)) &&
-            link.position.start.line >= startLine && 
-            link.position.start.line < endLine
-        );
+        const containsTargetLink = allLinksInFile.some(link => {
+            // Check if link is within the section range
+            if (link.position.start.line < startLine || link.position.start.line >= endLine) {
+                return false;
+            }
+            
+            // Strategy 1: Resolve link to full path and match against target paths
+            const resolvedFile = context.app.metadataCache.getFirstLinkpathDest(link.link, file.path);
+            if (resolvedFile && targetLinkPaths.has(resolvedFile.path)) {
+                return true;
+            }
+            
+            // Strategy 2: Basename matching (maintains backward compatibility)
+            const linkBasename = link.link.match(/([^/]+?)(?:\.md)?$/)?.[1];
+            if (linkBasename && targetLinkBasenames.has(linkBasename)) {
+                return true;
+            }
+            
+            return false;
+        });
         
         // If this section contains a target tag or link, add it to the valid sections
         if (containsTargetTag || containsTargetLink) {

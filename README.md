@@ -2,7 +2,7 @@
 
 Enhances Obsidian's right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.
 
-[![Version](https://img.shields.io/badge/version-1.7.5-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-1.7.6-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ![Demo](user_case.gif)
