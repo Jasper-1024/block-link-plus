@@ -46,14 +46,18 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 - [简体中文](https://block-link-plus.jasper1024.com/)
 - [繁體中文](https://block-link-plus.jasper1024.com/zh-TW/)
 
-## 🆕 What's New in v1.7.5
+## 🆕 What's New in v1.7.6
 
-- Enhanced multi-line block handling with improved `^abc123-abc123` format
-- Better flow editor integration and performance
-- Updated Chinese localization
-- Improved settings organization
+- Fixed Timeline link matching for full path formats
+- Enhanced link matching with dual strategy approach
+- Maintained backward compatibility
 
 ## 📋 Changelog
+
+### 1.7.6
+- Fixed Timeline link matching to support full path link formats (e.g., `[[Task/path/file.md|alias]]`)
+- Improved link matching with dual strategy: path resolution + basename matching
+- Maintained backward compatibility with existing short-form links
 
 ### 1.7.5
 - Enhanced multi-line block handling by extracting actual links without aliases in markdown processing and flow editor
