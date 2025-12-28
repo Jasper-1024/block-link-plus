@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, DropdownComponent, Notice } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Notice } from "obsidian";
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
@@ -228,33 +228,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("enable_right_click_embed").setName(t.settings.embedLink.enableRightClick.name);
 		this.addToggleSetting("enable_embed_notification").setName(t.settings.embedLink.enableNotification.name);
 
-		// Editable embed link
-		this.addHeading(t.settings.editableEmbedLink.title).setDesc(t.settings.editableEmbedLink.desc);
-		this.addToggleSetting("enable_right_click_editable_embed").setName(t.settings.editableEmbedLink.enableRightClick.name);
-		this.addToggleSetting("enable_editable_embed_notification").setName(t.settings.editableEmbedLink.enableNotification.name);
-
-		// Embedded Block Editing
-		this.addHeading(t.settings.sectionFlow).setDesc(t.settings.embeddedBlockDesc);
-		this.addToggleSetting("editorFlow")
-			.setName(t.settings.editorFlowReplace.name)
-			.setDesc(t.settings.editorFlowReplace.desc);
-
-		// Embedded editing style
-		new Setting(containerEl)
-			.setName(t.settings.editorFlowStyle.name)
-			.setDesc(t.settings.editorFlowStyle.desc)
-			.addDropdown((dropdown: DropdownComponent) => {
-				dropdown.addOption("minimal", t.settings.editorFlowStyle.minimal);
-				dropdown.addOption("seamless", t.settings.editorFlowStyle.seamless);
-				dropdown
-					.setValue(this.plugin.settings.editorFlowStyle)
-					.onChange(async (value) => {
-						this.plugin.settings.editorFlowStyle = value;
-						this.updateFlowStyleClasses(value);
-						await this.plugin.saveData(this.plugin.settings);
-					});
-			});
-
 		// Obsidian URI
 		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);
 		this.addToggleSetting("enable_right_click_url").setName(t.settings.obsidianUri.enableRightClick.name);
@@ -272,6 +245,20 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.blockId.prefix.name)
 			.setDesc(t.settings.blockId.prefix.desc);
 
+		// Inline edit
+		this.addHeading(t.settings.inlineEdit.title).setDesc(t.settings.inlineEdit.desc);
+		this.addToggleSetting("inlineEditEnabled")
+			.setName(t.settings.inlineEdit.enable.name)
+			.setDesc(t.settings.inlineEdit.enable.desc);
+		this.addToggleSetting("inlineEditFile")
+			.setName(t.settings.inlineEdit.file.name)
+			.setDesc(t.settings.inlineEdit.file.desc);
+		this.addToggleSetting("inlineEditHeading")
+			.setName(t.settings.inlineEdit.heading.name)
+			.setDesc(t.settings.inlineEdit.heading.desc);
+		this.addToggleSetting("inlineEditBlock")
+			.setName(t.settings.inlineEdit.block.name)
+			.setDesc(t.settings.inlineEdit.block.desc);
 		// 时间章节设置
 		this.addHeading(t.settings.timeSection.title).setDesc(t.settings.timeSection.desc);
 
@@ -336,13 +323,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.timeline.defaultHeadingLevel.name)
 			.setDesc(t.settings.timeline.defaultHeadingLevel.desc);
 		
-		this.addDropdownSetting(
-			"timelineDefaultEmbedFormat",
-			["!![[]]", "![[]]"],
-			(option) => option === "!![[]]" ? t.settings.timeline.defaultEmbedFormat.options.expanded : t.settings.timeline.defaultEmbedFormat.options.collapsed
-		)
-			.setName(t.settings.timeline.defaultEmbedFormat.name)
-			.setDesc(t.settings.timeline.defaultEmbedFormat.desc);
 		
 		this.addDropdownSetting(
 			"timelineDefaultSortOrder",
@@ -354,16 +334,4 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 	}
 
-	// 添加 updateFlowStyleClasses 方法
-	private updateFlowStyleClasses(style: string): void {
-		// 移除所有 flow 样式类
-		document.body.classList.remove("mk-flow-minimal", "mk-flow-seamless");
-
-		// 添加选定的样式类
-		if (style === "minimal") {
-			document.body.classList.add("mk-flow-minimal");
-		} else if (style === "seamless") {
-			document.body.classList.add("mk-flow-seamless");
-		}
-	}
 }

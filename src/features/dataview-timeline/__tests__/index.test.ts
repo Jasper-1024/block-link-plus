@@ -82,10 +82,7 @@ function renderTimelineMarkdown(
 
     markdown += `[[${group.file.basename}]]\n`;
     for (const heading of sortedHeadings) {
-      const embedLink =
-        config.embed_format === "!![[]]"
-          ? `!![[${group.file.path}#${heading.heading}]]`
-          : `![[${group.file.path}#${heading.heading}]]`;
+      const embedLink = `![[${group.file.path}#${heading.heading}]]`;
       markdown += `${embedLink}\n`;
     }
     markdown += "\n---\n\n";
@@ -290,7 +287,7 @@ source_folders: ["folder1"]
       } as TimelineConfig;
       
       const result2 = renderTimelineMarkdown(sections, config2);
-      expect(result2).toContain('!![[/test/file.md#标题]]');
+      expect(result2).toContain('![[/test/file.md#标题]]');
     });
   });
 }); 

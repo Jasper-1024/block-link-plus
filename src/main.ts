@@ -66,7 +66,7 @@ export default class BlockLinkPlus extends Plugin {
 		getActiveEditor: () => getActiveCM(this),
 
 		// Check if flow editing is enabled
-		isFlowEnabled: () => this.settings.editorFlow,
+		isFlowEnabled: () => this.settings.inlineEditEnabled,
 
 		// Access to enactor for path operations
 		getEnactor: () => this.flowEditorManager.enactor
@@ -139,14 +139,6 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		this.addCommand({
-			id: "copy-editable-embed-to-block",
-			name: "Copy Block as Editable Embed",
-			editorCheckCallback: (isChecking, editor, view) => {
-				return CommandHandler.handleCommand(this, isChecking, editor, view, true, false, true);
-			},
-		});
-
-		this.addCommand({
 			id: "copy-url-to-block",
 			name: "Copy Block as Obsidian URI",
 			editorCheckCallback: (isChecking, editor, view) => {
@@ -177,11 +169,38 @@ export default class BlockLinkPlus extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		const raw = (await this.loadData()) ?? {};
+		let shouldSave = false;
+
+		if (typeof raw === "object" && raw !== null) {
+			if ("editorFlow" in raw && !("inlineEditEnabled" in raw)) {
+				// @ts-expect-error Legacy setting migration
+				raw.inlineEditEnabled = raw.editorFlow;
+				shouldSave = true;
+			}
+
+			const legacyKeys = [
+				"editorFlow",
+				"editorFlowStyle",
+				"timelineDefaultEmbedFormat",
+				"enable_right_click_editable_embed",
+				"enable_editable_embed_notification",
+			] as const;
+
+			for (const key of legacyKeys) {
+				if (key in raw) {
+					// @ts-expect-error Legacy key cleanup
+					delete raw[key];
+					shouldSave = true;
+				}
+			}
+		}
+
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, raw);
+
+		if (shouldSave) {
+			await this.saveData(this.settings);
+		}
 	}
 
 	async saveSettings() {

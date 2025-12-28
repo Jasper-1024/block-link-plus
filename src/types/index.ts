@@ -73,7 +73,6 @@ export interface PluginSettings {
 	alias_type: BlockLinkAliasType;
 	enable_right_click_block: boolean;
 	enable_right_click_embed: boolean;
-	enable_right_click_editable_embed: boolean;
 	enable_right_click_url: boolean;
 	alias_length: number;
 	enable_prefix: boolean;
@@ -82,7 +81,6 @@ export interface PluginSettings {
 	heading_id_newline: boolean;
 	enable_block_notification: boolean;
 	enable_embed_notification: boolean;
-	enable_editable_embed_notification: boolean;
 	enable_url_notification: boolean;
 	// Time Section
 	enable_time_section: boolean;
@@ -97,12 +95,13 @@ export interface PluginSettings {
 	// Timeline Feature
 	enableTimeline: boolean;
 	timelineDefaultHeadingLevel: number;
-	timelineDefaultEmbedFormat: '!![[]]' | '![[]]';
 	timelineDefaultSortOrder: 'asc' | 'desc';
 
-	// inline edit
-	editorFlow: boolean;
-	editorFlowStyle: string;
+	// Inline Edit
+	inlineEditEnabled: boolean;
+	inlineEditFile: boolean;
+	inlineEditHeading: boolean;
+	inlineEditBlock: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -110,7 +109,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	alias_type: BlockLinkAliasType.Default, // Default: no alias text for block links
 	enable_right_click_block: true,
 	enable_right_click_embed: true,
-	enable_right_click_editable_embed: true,
 	enable_right_click_url: false,
 	alias_length: 20,
 	enable_prefix: false, // Default: no prefix for block IDs
@@ -119,7 +117,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	heading_id_newline: false,
 	enable_block_notification: true,
 	enable_embed_notification: true,
-	enable_editable_embed_notification: true,
 	enable_url_notification: true,
 	// Time Section
 	enable_time_section: true,
@@ -134,10 +131,11 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	// Timeline Feature
 	enableTimeline: true,
 	timelineDefaultHeadingLevel: 4,
-	timelineDefaultEmbedFormat: '!![[]]',
 	timelineDefaultSortOrder: 'desc',
 	
-	// Inline editing settings
-	editorFlow: true, // Enable embedded block editing
-	editorFlowStyle: "minimal", // Default editing style
+	// Inline edit (default: enabled, but file-embed editing off)
+	inlineEditEnabled: true,
+	inlineEditFile: false,
+	inlineEditHeading: true,
+	inlineEditBlock: true,
 }; 

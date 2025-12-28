@@ -1,5 +1,5 @@
 import BlockLinkPlus from "main";
-import { App, DropdownComponent, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import t from "shared/i18n";
 
 export class MakeBasicsSettingsTab extends PluginSettingTab {
@@ -14,46 +14,47 @@ export class MakeBasicsSettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    // Embedded Block Editing Settings
-    containerEl.createEl("h3", { text: t.settings.sectionFlow });
-    
-    // Enable embedded block editing
+    // Inline Edit Settings
+    containerEl.createEl("h3", { text: t.settings.inlineEdit.title });
+
     new Setting(containerEl)
-      .setName(t.settings.editorFlowReplace.name)
-      .setDesc(t.settings.editorFlowReplace.desc)
+      .setName(t.settings.inlineEdit.enable.name)
+      .setDesc(t.settings.inlineEdit.enable.desc)
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.editorFlow).onChange((value) => {
-          this.plugin.settings.editorFlow = value;
+        toggle.setValue(this.plugin.settings.inlineEditEnabled).onChange((value) => {
+          this.plugin.settings.inlineEditEnabled = value;
           this.plugin.saveData(this.plugin.settings);
         })
       );
 
-    // Embedded editing style
     new Setting(containerEl)
-      .setName(t.settings.editorFlowStyle.name)
-      .setDesc(t.settings.editorFlowStyle.desc)
-      .addDropdown((dropdown: DropdownComponent) => {
-        dropdown.addOption("minimal", t.settings.editorFlowStyle.minimal);
-        dropdown.addOption("seamless", t.settings.editorFlowStyle.seamless);
-        dropdown
-          .setValue(this.plugin.settings.editorFlowStyle)
-          .onChange(async (value) => {
-            this.plugin.settings.editorFlowStyle = value;
-            this.updateFlowStyleClasses(value);
-            await this.plugin.saveData(this.plugin.settings);
-          });
-      });
-  }
+      .setName(t.settings.inlineEdit.file.name)
+      .setDesc(t.settings.inlineEdit.file.desc)
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.inlineEditFile).onChange((value) => {
+          this.plugin.settings.inlineEditFile = value;
+          this.plugin.saveData(this.plugin.settings);
+        })
+      );
 
-  private updateFlowStyleClasses(style: string): void {
-    // Remove all flow style classes
-    document.body.classList.remove("mk-flow-minimal", "mk-flow-seamless");
-    
-    // Add the selected style class
-    if (style === "minimal") {
-      document.body.classList.add("mk-flow-minimal");
-    } else if (style === "seamless") {
-      document.body.classList.add("mk-flow-seamless");
-    }
+    new Setting(containerEl)
+      .setName(t.settings.inlineEdit.heading.name)
+      .setDesc(t.settings.inlineEdit.heading.desc)
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.inlineEditHeading).onChange((value) => {
+          this.plugin.settings.inlineEditHeading = value;
+          this.plugin.saveData(this.plugin.settings);
+        })
+      );
+
+    new Setting(containerEl)
+      .setName(t.settings.inlineEdit.block.name)
+      .setDesc(t.settings.inlineEdit.block.desc)
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.inlineEditBlock).onChange((value) => {
+          this.plugin.settings.inlineEditBlock = value;
+          this.plugin.saveData(this.plugin.settings);
+        })
+      );
   }
 }

@@ -141,10 +141,10 @@ export class ObsidianEnactor implements Enactor {
   loadCommands() {
     this.plugin.addCommand({
       id: "mk-flow-editor",
-      name: "Toggle Flow Editor",
+      name: "Toggle Inline Edit",
       callback: () => {
-        this.plugin.settings.editorFlow = !this.plugin.settings.editorFlow;
-        this.plugin.saveData(this.plugin.settings);
+        this.plugin.settings.inlineEditEnabled = !this.plugin.settings.inlineEditEnabled;
+        void this.plugin.saveSettings();
         this.plugin.flowEditorManager.reloadExtensions(false);
       },
     });
@@ -165,9 +165,6 @@ export class ObsidianEnactor implements Enactor {
     const extensions = cmExtensions(this.plugin);
     if (firstLoad) {
       this.plugin.registerEditorExtension(extensions);
-    }
-    if (this.plugin.settings.editorFlow) {
-      this.plugin.registerEditorExtension(flowEditorField(this.plugin));
     }
   }
   uriByString(uri: string, source?: string) {

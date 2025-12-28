@@ -9,7 +9,7 @@ import {
 	patchWorkspaceForFlow,
 	patchWorkspaceLeafForFlow,
 } from "basics/flow/patchWorkspaceForFlow";
-import { replaceAllEmbed, replaceAllTables, replaceMultilineBlocks, cleanupMultilineBlocks } from "basics/flow/markdownPost";
+import { replaceMultilineBlocks, cleanupMultilineBlocks } from "basics/flow/markdownPost";
 import { getActiveCM } from "basics/codemirror";
 import { flowEditorInfo, toggleFlowEditor } from "basics/codemirror/flowEditor";
 
@@ -26,7 +26,7 @@ export class FlowEditorManager {
 	public initialize() {
 		this.enactor.load();
 
-		if (this.plugin.settings.editorFlow) {
+		if (this.plugin.settings.inlineEditEnabled) {
 			this.setupFlowEditor();
 			this.reloadExtensions(true);
 			this.setupMultilineBlockCleanup();
@@ -40,7 +40,6 @@ export class FlowEditorManager {
 
 		// Apply CSS classes for flow editing
 		document.body.classList.add("mk-flow-replace");
-		document.body.classList.add("mk-flow-" + this.plugin.settings.editorFlowStyle);
 
 		// live preview
 		// Register markdown post processor for embedded blocks
@@ -63,11 +62,8 @@ export class FlowEditorManager {
 				return;
 			}
 
-			this.processEmbeddedBlocks(element);
-			replaceAllTables(this.plugin, element, context);
-			// Live Preview mode: showEditIcon = true (enable edit interactions)
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, true);
-			replaceAllEmbed(element, context, this.plugin, this.plugin.app);
+			// Live Preview mode: multiline blocks render readonly for now (no !![[...]] support)
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
 		});
 
 		// read mode

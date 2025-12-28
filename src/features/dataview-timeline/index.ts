@@ -112,10 +112,7 @@ function renderTimelineMarkdown(
 
         markdown += `[[${group.file.basename}]]\n`;
         for (const heading of sortedHeadings) {
-            const embedLink =
-                config.embed_format === "!![[]]"
-                    ? `!![[${group.file.path}#${heading.heading}]]`
-                    : `![[${group.file.path}#${heading.heading}]]`;
+            const embedLink = `![[${group.file.path}#${heading.heading}]]`;
             markdown += `${embedLink}\n`;
         }
         markdown += "\n---\n\n";
@@ -366,7 +363,6 @@ export async function handleTimeline(
             // 从插件设置中获取默认值
             sort_order: plugin.settings.timelineDefaultSortOrder,
             heading_level: plugin.settings.timelineDefaultHeadingLevel,
-            embed_format: plugin.settings.timelineDefaultEmbedFormat,
             
             // 覆盖代码块中指定的值
             ...blockConfig,
@@ -509,11 +505,7 @@ export async function handleTimeline(
                 if (userModificationsMap.has(key)) {
                     newContentLines.push(userModificationsMap.get(key)!);
                 } else {
-                    const embedLink =
-                        config.embed_format === "!![[]]"
-                            ? `!![[${group.file.path}#${heading.heading}]]`
-                            : `![[${group.file.path}#${heading.heading}]]`;
-                    newContentLines.push(embedLink);
+                    newContentLines.push(`![[${group.file.path}#${heading.heading}]]`);
                 }
                 
                 // 在每个嵌入链接后添加空行（除了最后一个）

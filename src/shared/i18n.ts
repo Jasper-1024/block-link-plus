@@ -108,17 +108,25 @@ class T {
           }
         },
 
-        // Editable embed link section
-        editableEmbedLink: {
-          title: "Editable embed link",
-          desc: "Link: !![[file#block_id]]",
-          enableRightClick: {
-            name: "Enable editable embed link in right click menu",
-            desc: ""
+        // Inline edit
+        inlineEdit: {
+          title: "Inline edit",
+          desc: "Control which ![[...]] embeds are editable in Live Preview.",
+          enable: {
+            name: "Enable inline edit",
+            desc: "If enabled, supported ![[...]] embeds may become editable in Live Preview."
           },
-          enableNotification: {
-            name: "Show notification when editable embed link is copied", 
-            desc: ""
+          file: {
+            name: "Enable file embeds (![[file]])",
+            desc: "If enabled, ![[file]] may become editable in Live Preview."
+          },
+          heading: {
+            name: "Enable heading embeds (![[file#Heading]])",
+            desc: "If enabled, ![[file#Heading]] may become editable in Live Preview."
+          },
+          block: {
+            name: "Enable block embeds (![[file#^id]] / ![[file#^id-id]])",
+            desc: "If enabled, ![[file#^id]] and ![[file#^id-id]] may become editable in Live Preview."
           }
         },
 
@@ -208,14 +216,6 @@ class T {
             name: "Default heading level",
             desc: "Default heading level to use for timeline sections (1-6). Can be overridden in code block."
           },
-          defaultEmbedFormat: {
-            name: "Default embed format",
-            desc: "Default format for embedded timeline links. Can be overridden in code block.",
-            options: {
-              expanded: "Expanded embed (!![[]])",
-              collapsed: "Collapsed embed (![[]])"
-            }
-          },
           defaultSortOrder: {
             name: "Default sort order", 
             desc: "Default sort order for timeline entries. Can be overridden in code block.",
@@ -225,20 +225,6 @@ class T {
             }
           }
         },
-
-        // Embedded Block Editing (existing)
-        sectionFlow: "Embedded Block Editing",
-        embeddedBlockDesc: "Settings for inline editing of embedded blocks",
-        editorFlowReplace: {
-          name: "Enable Embedded Block Editing",
-          desc: "Enable editing embedded blocks in place"
-        },
-        editorFlowStyle: {
-          name: "Editing Style",
-          desc: "Choose the visual style for inline editing",
-          minimal: "Minimal",
-          seamless: "Seamless"
-        }
       },
 
       // Only used translations - Commands
@@ -402,17 +388,25 @@ class T {
           }
         },
 
-        // Editable embed link section
-        editableEmbedLink: {
-          title: "可编辑嵌入链接",
-          desc: "链接格式：![[文件#块id]]",
-          enableRightClick: {
-            name: "在右键菜单中启用可编辑嵌入链接",
-            desc: ""
+        // Inline edit
+        inlineEdit: {
+          title: "内联编辑",
+          desc: "控制 Live Preview 下哪些 ![[...]] 嵌入允许就地编辑。",
+          enable: {
+            name: "启用内联编辑",
+            desc: "启用后，支持的 ![[...]] 嵌入在 Live Preview 中可能可编辑。"
           },
-          enableNotification: {
-            name: "复制可编辑嵌入链接时显示通知", 
-            desc: ""
+          file: {
+            name: "允许文件嵌入 (![[file]])",
+            desc: "启用后，![[file]] 在 Live Preview 中可能可编辑。"
+          },
+          heading: {
+            name: "允许标题嵌入 (![[file#Heading]])",
+            desc: "启用后，![[file#Heading]] 在 Live Preview 中可能可编辑。"
+          },
+          block: {
+            name: "允许块嵌入 (![[file#^id]] / ![[file#^id-id]])",
+            desc: "启用后，![[file#^id]] 与 ![[file#^id-id]] 在 Live Preview 中可能可编辑。"
           }
         },
 
@@ -502,14 +496,6 @@ class T {
             name: "默认标题级别",
             desc: "时间线部分使用的默认标题级别(1-6). 可在代码块中覆盖."
           },
-          defaultEmbedFormat: {
-            name: "默认嵌入格式",
-            desc: "嵌入时间线链接的默认格式. 可在代码块中覆盖.",
-            options: {
-              expanded: "展开嵌入(!![[]])",
-              collapsed: "折叠嵌入(![[]])"
-            }
-          },
           defaultSortOrder: {
             name: "默认排序顺序", 
             desc: "时间线条目的默认排序顺序. 可在代码块中覆盖.",
@@ -519,20 +505,6 @@ class T {
             }
           }
         },
-
-        // 嵌入块编辑（现有）
-        sectionFlow: "内联块编辑",
-        embeddedBlockDesc: "内联编辑嵌入块的设置",
-        editorFlowReplace: {
-          name: "启用内联块编辑",
-          desc: "启用就地编辑嵌入块功能"
-        },
-        editorFlowStyle: {
-          name: "编辑样式",
-          desc: "选择内联编辑的视觉样式",
-          minimal: "minimal",
-          seamless: "seamless"
-        }
       },
 
       // 命令翻译
@@ -696,17 +668,25 @@ class T {
           }
         },
 
-        // Editable embed link section
-        editableEmbedLink: {
-          title: "可編輯嵌入連結",
-          desc: "連結格式：![[檔案#區塊_id]]",
-          enableRightClick: {
-            name: "在右鍵選單中啟用可編輯嵌入連結",
-            desc: ""
+        // Inline edit
+        inlineEdit: {
+          title: "內聯編輯",
+          desc: "控制 Live Preview 下哪些 ![[...]] 嵌入允許就地編輯。",
+          enable: {
+            name: "啟用內聯編輯",
+            desc: "啟用後，支援的 ![[...]] 嵌入在 Live Preview 中可能可編輯。"
           },
-          enableNotification: {
-            name: "複製可編輯嵌入連結時顯示通知", 
-            desc: ""
+          file: {
+            name: "允許檔案嵌入 (![[file]])",
+            desc: "啟用後，![[file]] 在 Live Preview 中可能可編輯。"
+          },
+          heading: {
+            name: "允許標題嵌入 (![[file#Heading]])",
+            desc: "啟用後，![[file#Heading]] 在 Live Preview 中可能可編輯。"
+          },
+          block: {
+            name: "允許區塊嵌入 (![[file#^id]] / ![[file#^id-id]])",
+            desc: "啟用後，![[file#^id]] 與 ![[file#^id-id]] 在 Live Preview 中可能可編輯。"
           }
         },
 
@@ -796,14 +776,6 @@ class T {
             name: "預設標題級別",
             desc: "時間軸部分使用的預設標題級別(1-6). 可在程式碼區塊中覆蓋."
           },
-          defaultEmbedFormat: {
-            name: "預設嵌入格式",
-            desc: "嵌入時間軸連結的預設格式. 可在程式碼區塊中覆蓋.",
-            options: {
-              expanded: "展開嵌入(!![[]])",
-              collapsed: "摺疊嵌入(![[]])"
-            }
-          },
           defaultSortOrder: {
             name: "預設排序順序", 
             desc: "時間軸條目的預設排序順序. 可在程式碼區塊中覆蓋.",
@@ -813,20 +785,6 @@ class T {
             }
           }
         },
-
-        // 嵌入區塊編輯（現有）
-        sectionFlow: "嵌入區塊編輯",
-        embeddedBlockDesc: "內聯編輯嵌入區塊的設定",
-        editorFlowReplace: {
-          name: "啟用嵌入區塊編輯",
-          desc: "啟用就地編輯嵌入區塊功能"
-        },
-        editorFlowStyle: {
-          name: "編輯樣式",
-          desc: "選擇內聯編輯的視覺樣式",
-          minimal: "簡潔",
-          seamless: "無縫"
-        }
       },
 
       // 命令翻譯

@@ -14,8 +14,7 @@ function handleSingleLine(
     isEmbed: boolean,
     head_analysis: HeadingAnalysisResult,
     editor: any,
-    isUrl: boolean = false,
-    isEditableEmbed: boolean = false
+    isUrl: boolean = false
 ) {
     let link: string | undefined;
 
@@ -29,7 +28,7 @@ function handleSingleLine(
 
     if (link) {
         const alias = Clipboard.calculateAlias(plugin.settings, link, isHeading, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
     }
 }
 
@@ -41,13 +40,12 @@ function handleMultiLine(
     head_analysis: HeadingAnalysisResult,
     editor: any,
     fileCache: any,
-    isUrl: boolean = false,
-    isEditableEmbed: boolean = false
+    isUrl: boolean = false
 ) {
     if (isHeading && head_analysis.headingAtStart) {
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, head_analysis.headingAtStart.heading, isEmbed, undefined, isUrl, isEditableEmbed);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, head_analysis.headingAtStart.heading, isEmbed, undefined, isUrl);
     } else {
-        handleMultiLineBlock(plugin, file, isEmbed, head_analysis, editor, fileCache, isUrl, isEditableEmbed);
+        handleMultiLineBlock(plugin, file, isEmbed, head_analysis, editor, fileCache, isUrl);
     }
 }
 
@@ -87,8 +85,7 @@ function handleMultiLineBlock(
     head_analysis: HeadingAnalysisResult,
     editor: any,
     fileCache: any,
-    isUrl: boolean = false,
-    isEditableEmbed: boolean = false
+    isUrl: boolean = false
 ) {
     if (plugin.settings.mult_line_handle == MultLineHandle.oneline) {
         if (head_analysis.block) {
@@ -98,7 +95,7 @@ function handleMultiLineBlock(
                 plugin.settings
             );
             const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-            Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
+            Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
         }
         return;
     } else if (plugin.settings.mult_line_handle == MultLineHandle.multilineblock) {
@@ -115,7 +112,7 @@ function handleMultiLineBlock(
             plugin.settings
         );
         const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
         return;
     } else {
         if (head_analysis.minLevelInRange != Infinity) {
@@ -136,7 +133,7 @@ function handleMultiLineBlock(
             head_analysis
         );
         const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
-        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl, isEditableEmbed);
+        Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
         return;
     }
 }
@@ -147,8 +144,7 @@ export function handleCommand(
     editor: Editor,
     view: MarkdownView | MarkdownFileInfo,
     isEmbed: boolean,
-    isUrl: boolean = false,
-    isEditableEmbed: boolean = false
+    isUrl: boolean = false
 ) {
     if (isChecking) {
         return true;
@@ -170,9 +166,9 @@ export function handleCommand(
     let isHeading = get_is_heading(head_analysis);
 
     if (!head_analysis.isMultiline) {
-        handleSingleLine(plugin, file, isHeading, isEmbed, head_analysis, editor, isUrl, isEditableEmbed);
+        handleSingleLine(plugin, file, isHeading, isEmbed, head_analysis, editor, isUrl);
     } else {
-        handleMultiLine(plugin, file, isHeading, isEmbed, head_analysis, editor, fileCache, isUrl, isEditableEmbed);
+        handleMultiLine(plugin, file, isHeading, isEmbed, head_analysis, editor, fileCache, isUrl);
     }
     return true;
 } 

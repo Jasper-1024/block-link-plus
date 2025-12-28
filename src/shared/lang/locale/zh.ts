@@ -1,208 +1,182 @@
 export default {
 	flow: {
-		edit: "编辑",
-		open: "打开",
-		hover: "悬停编辑"
+		edit: "编�?",
+		open: "?��?",
+		hover: "?��?编�?"
 	},
 	commandPalette: {
-		openFlow: "打开流程编辑器",
-		closeFlow: "关闭流程编辑器"
+		openFlow: "?��?流�?编�???,
+		closeFlow: "?�闭流�?编�???
 	},
 	settings: {
-		// 插件标题
+		// ?�件?��?
 		pluginTitle: "Block Link Plus",
 
-		// 多行块行为
+		// 多�??��?�?
 		multiLineHandle: {
-			name: "多行块行为",
-			desc: "定义多行选择如何生成块ID",
+			name: "多�??��?�?,
+			desc: "定�?多�??�择如�??��??�ID",
 			options: {
 				default: "默认",
-				addHeading: "添加新标题",
-				addMultiBlock: "添加多个块",
-				addMultilineBlock: "添加多行块"
+				addHeading: "添�??��?�?,
+				addMultiBlock: "添�?多个??,
+				addMultilineBlock: "添�?多�???
 			},
 			descriptions: {
-				default: "将多行选择视为单个块，在选择末尾创建一个块ID ^abc123",
-				addHeading: "在选择上方添加新标题，创建带有块ID的标题以便组织",
-				addMultiBlock: "为每行创建单独的块ID，每行都有自己的 ^abc123 标识符",
-				addMultilineBlock: "创建 ^abc123-abc123 格式的范围块，在第一行标记 ^abc123，在最后一行后添加 ^abc123-abc123 以进行精确的多行引用"
+				default: "将�?行选择视为?�个?��??�选择?�尾?�建一个�?ID ^abc123",
+				addHeading: "?�选择上方添�??��?题�??�建带�??�ID?��?题以便�?�?,
+				addMultiBlock: "为�?行�?建�??��??�ID，�?行都?�自己�? ^abc123 ?��?�?,
+				addMultilineBlock: "?�建 ^abc123-abc123 ?��??��??��?，在第�?行�?�?^abc123，在?�?��?行�?添�? ^abc123-abc123 以�?行精确�?多�?引用"
 			}
 		},
 
-		// 块链接部分
+		// ?�链?�部??
 		blockLink: {
-			title: "块链接",
-			desc: "链接格式：[[文件#块ID]]",
+			title: "?�链??,
+			desc: "?�接?��?：[[?�件#?�ID]]",
 			enableRightClick: {
-				name: "在右键菜单中启用块链接"
+				name: "?�右?��??�中?�用?�链??
 			},
 			enableNotification: {
-				name: "复制块链接时显示通知"
+				name: "复制?�链?�时?�示?�知"
 			},
 			aliasStyle: {
-				name: "别名样式",
-				desc: "选择如何为块链接生成别名。对于标题块，除非选择"无别名"，否则别名始终是标题文本",
+				name: "?��??��?",
+				desc: "?�择如�?为�??�接?��??��??�对于�?题�?，除?�选择"?�别??，否?�别?��?终是?��??�本",
 				options: {
-					noAlias: "无别名",
-					firstChars: "前X个字符",
-					parentHeading: "父标题",
-					selectedText: "选中文本"
+					noAlias: "?�别??,
+					firstChars: "?�X个�?�?,
+					parentHeading: "?��?�?,
+					selectedText: "?�中?�本"
 				},
 				descriptions: {
-					noAlias: "链接显示为 [[文件#^abc123]] 不带任何别名文本",
-					firstChars: "链接使用块内容的前X个字符作为别名：[[文件#^abc123|前几个词...]]",
-					parentHeading: "链接使用最近的父标题作为别名：[[文件#^abc123|父标题]]",
-					selectedText: "链接使用选中的文本作为别名：[[文件#^abc123|您选中的文本]]"
+					noAlias: "?�接?�示�?[[?�件#^abc123]] 不带任�??��??�本",
+					firstChars: "?�接使用?��?容�??�X个�?符�?为别?��?[[?�件#^abc123|?��?个�?...]]",
+					parentHeading: "?�接使用?�近�??��?题�?为别?��?[[?�件#^abc123|?��?题]]",
+					selectedText: "?�接使用?�中?��??��?为别?��?[[?�件#^abc123|?�选中?��??�]]"
 				}
 			},
 			aliasLength: {
-				name: "别名长度",
-				desc: "设置别名的长度（1-100）。仅在别名样式为"前X个字符"时使用"
+				name: "?��??�度",
+				desc: "设置?��??�长度�?1-100）。�??�别?�样式为"?�X个�?�??�使??
 			},
 			headingIdNewline: {
-				name: "实验性：标题块ID样式",
-				desc: "仅选择单个标题行时在新行中放置块ID"
+				name: "实�??��??��??�ID?��?",
+				desc: "仅选择?�个?��?行时?�新行中?�置?�ID"
 			}
 		},
 
-		// 嵌入链接部分
+		// 嵌入?�接?��?
 		embedLink: {
-			title: "嵌入链接",
-			desc: "链接格式：![[文件#块ID]]",
+			title: "嵌入?�接",
+			desc: "?�接?��?�?[[?�件#?�ID]]",
 			enableRightClick: {
-				name: "在右键菜单中启用嵌入链接"
+				name: "?�右?��??�中?�用嵌入?�接"
 			},
 			enableNotification: {
-				name: "复制嵌入链接时显示通知"
+				name: "复制嵌入?�接?�显示通知"
 			}
 		},
 
-		// 可编辑嵌入链接部分
-		editableEmbedLink: {
-			title: "可编辑嵌入链接",
-			desc: "链接格式：!![[文件#块ID]]",
-			enableRightClick: {
-				name: "在右键菜单中启用可编辑嵌入链接"
-			},
+		// ?��?辑�??�链?�部??
 			enableNotification: {
-				name: "复制可编辑嵌入链接时显示通知"
+				name: "复制?��?辑�??�链?�时?�示?�知"
 			}
 		},
 
-		// Obsidian URI部分
+		// Obsidian URI?��?
 		obsidianUri: {
-			title: "Obsidian URI链接",
-			desc: "链接格式：obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId}",
+			title: "Obsidian URI?�接",
+			desc: "?�接?��?：obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId}",
 			enableRightClick: {
-				name: "在右键菜单中启用Obsidian URI链接"
+				name: "?�右?��??�中?�用Obsidian URI?�接"
 			},
 			enableNotification: {
-				name: "复制URI链接时显示通知"
+				name: "复制URI?�接?�显示通知"
 			}
 		},
 
-		// 块ID部分
+		// ?�ID?��?
 		blockId: {
-			title: "块ID",
-			desc: "块ID生成设置",
+			title: "?�ID",
+			desc: "?�ID?��?设置",
 			maxLength: {
-				name: "最大长度",
-				desc: "设置块ID的最大长度（3-7个字符）"
+				name: "?�大长�?,
+				desc: "设置?�ID?��?大长度�?3-7个�?符�?"
 			},
 			enablePrefix: {
-				name: "启用前缀",
-				desc: "为块ID添加自定义前缀"
+				name: "?�用?��?",
+				desc: "为�?ID添�??��?义�?缀"
 			},
 			prefix: {
-				name: "前缀",
-				desc: "块ID的自定义前缀"
+				name: "?��?",
+				desc: "?�ID?�自定�??��?"
 			}
 		},
 
-		// 时间段部分
+		// ?�间段部??
 		timeSection: {
-			title: "时间段",
-			desc: "时间段功能设置",
+			title: "?�间�?,
+			desc: "?�间段�??�设�?,
 			enable: {
-				name: "启用时间段"
+				name: "?�用?�间�?
 			},
 			enableInMenu: {
-				name: "在菜单中启用时间段",
-				desc: "在右键菜单中显示时间段选项"
+				name: "?��??�中?�用?�间�?,
+				desc: "?�右?��??�中?�示?�间段选项"
 			},
 			timeFormat: {
-				name: "时间格式",
-				desc: "设置时间显示格式（例如：HH:mm）"
+				name: "?�间?��?",
+				desc: "设置?�间?�示?��?（�?如�?HH:mm�?
 			},
 			titlePattern: {
-				name: "标题模式",
-				desc: "用于识别时间段标题的正则表达式模式"
+				name: "?��?模�?",
+				desc: "?��?识别?�间段�?题�?�??表达式模�?
 			},
 			insertAsHeading: {
-				name: "插入为标题",
-				desc: "将时间段作为标题插入"
+				name: "?�入为�?�?,
+				desc: "将时?�段作为?��??�入"
 			},
 			plainStyle: {
-				name: "预览中的纯文本样式",
-				desc: "如果启用，时间块在预览模式下将显示为纯文本，即使作为标题插入"
+				name: "预�?中�?纯�??�样�?,
+				desc: "如�??�用，时?��??��?览模式�?将显示为纯�??��??�使作为?��??�入"
 			},
 			dailyNotePattern: {
-				name: "日记模式",
-				desc: "用于识别日记文件名的正则表达式（默认：YYYY-MM-DD）"
+				name: "?�记模�?",
+				desc: "?��?识别?�记?�件?��?�??表达式�?默认：YYYY-MM-DD�?
 			},
 			headingLevel: {
-				name: "日记标题级别",
-				desc: "在日记中使用的标题级别（1-6，对应#-######）"
+				name: "?�记?��?级别",
+				desc: "?�日记中使用?��?题级?��?1-6，对�?-######�?
 			}
 		},
 
-		// 时间线部分
+		// ?�间线部??
 		timeline: {
-			title: "时间线功能",
-			desc: "blp-timeline代码块功能设置",
+			title: "?�间线�???,
+			desc: "blp-timeline�???��??�设�?,
 			dataviewStatus: {
-				available: "✅ Dataview插件已安装并启用（版本${version}）",
-				unavailable: "❌ Dataview插件未安装或未启用。时间线功能将无法工作"
+				available: "??Dataview?�件已�?装并?�用（�???{version}�?,
+				unavailable: "??Dataview?�件?��?装�??�启?�。时?�线?�能将�?法工�?
 			},
 			enable: {
-				name: "启用时间线功能",
-				desc: "启用blp-timeline代码块功能。需要Dataview插件"
+				name: "?�用?�间线�???,
+				desc: "?�用blp-timeline�???��??�。�?要Dataview?�件"
 			},
 			defaultHeadingLevel: {
-				name: "默认标题级别",
-				desc: "时间线部分使用的默认标题级别（1-6）。可在代码块中覆盖"
-			},
-			defaultEmbedFormat: {
-				name: "默认嵌入格式",
-				desc: "嵌入时间线链接的默认格式。可在代码块中覆盖",
-				options: {
-					expanded: "展开嵌入（!![[]]）",
-					collapsed: "折叠嵌入（![[]]）"
-				}
+				name: "默认?��?级别",
+				desc: "?�间线部?�使?��?默认?��?级别�?-6）。可?�代?��?中�???
 			},
 			defaultSortOrder: {
-				name: "默认排序顺序",
-				desc: "时间线条目的默认排序顺序。可在代码块中覆盖",
+				name: "默认?��?顺�?",
+				desc: "?�间线条?��?默认?��?顺�??�可?�代?��?中�???,
 				options: {
-					ascending: "升序（最旧的在前）",
-					descending: "降序（最新的在前）"
+					ascending: "?��?（�??��??��?�?,
+					descending: "?��?（�??��??��?�?
 				}
 			}
 		},
 
-		// 嵌入块编辑
-		sectionFlow: "嵌入块编辑",
-		embeddedBlockDesc: "嵌入块内联编辑设置",
-		editorFlowReplace: {
-			name: "启用嵌入块编辑",
-			desc: "启用就地编辑嵌入块功能"
-		},
-		editorFlowStyle: {
-			name: "编辑样式",
-			desc: "选择内联编辑的视觉样式",
-			minimal: "简洁",
-			seamless: "无缝"
-		}
+		// 嵌入?��?�?
 	}
 } as const;

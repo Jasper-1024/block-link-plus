@@ -5,19 +5,19 @@
 ## Milestones
 
 ### Milestone 0: OpenSpec (spec-first)
-- [ ] 0.1 创建 change 脚手架（`proposal.md` / `tasks.md` / spec deltas）。
-- [ ] 0.2 编写并自检 spec deltas：
-  - [ ] `inline-editing-embeds`
-  - [ ] `block-link-generation`
-  - [ ] `multiline-block-references`
-  - [ ] `settings-configuration`
-  - [ ] `timeline-aggregation`
+- [x] 0.1 创建 change 脚手架（`proposal.md` / `tasks.md` / spec deltas）。
+- [x] 0.2 编写并自检 spec deltas：
+  - [x] `inline-editing-embeds`
+  - [x] `block-link-generation`
+  - [x] `multiline-block-references`
+  - [x] `settings-configuration`
+  - [x] `timeline-aggregation`
 
 ### Milestone 1: Settings migration (no engine switch)
-- [ ] 1.1 新增设置：`inlineEditEnabled` + `inlineEditFile/Heading/Block`（默认：file=false，heading=true，block=true；global 由旧值迁移）。
-- [ ] 1.2 迁移并移除旧设置：`editorFlow` → `inlineEditEnabled`；删除 `editorFlowStyle`。
-- [ ] 1.3 Settings UI：替换旧 FlowEditor 区块为新 4 个 toggle（无 style）。
-- [ ] 1.4 Timeline 设置：删除 `timelineDefaultEmbedFormat` 与任何 `embed_format`/`!!` 相关描述。
+- [x] 1.1 新增设置：`inlineEditEnabled` + `inlineEditFile/Heading/Block`（默认：file=false，heading=true，block=true；global 由旧值迁移）。
+- [x] 1.2 迁移并移除旧设置：`editorFlow` → `inlineEditEnabled`；删除 `editorFlowStyle`。
+- [x] 1.3 Settings UI：替换旧 FlowEditor 区块为新 4 个 toggle（无 style）。
+- [x] 1.4 Timeline 设置：删除 `timelineDefaultEmbedFormat` 与任何 `embed_format`/`!!` 相关描述。
 
 验收（手动）：设置页不再出现 `!!` / editable embed / `editorFlowStyle`；新 4 个开关可保存并在重启后保持。
 
