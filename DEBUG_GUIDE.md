@@ -5,6 +5,9 @@
 ### 1. 构建调试版本
 
 ```bash
+npm install
+npm run build
+npm run dev
 # 使用专门的调试构建脚本
 npm run debug
 ```
