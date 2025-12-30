@@ -1,0 +1,68 @@
+.internal-embed.markdown-embed.blp-inline-edit-active .markdown-embed-content > :not(.blp-inline-edit-host) {
+	display: none !important;
+}
+
+.internal-embed.markdown-embed.blp-inline-edit-active .markdown-embed-content {
+	padding: 0 !important;
+}
+
+.internal-embed.markdown-embed.blp-inline-edit-active .markdown-embed-link {
+	display: none !important;
+}
+
+.blp-inline-edit-host {
+	display: block;
+}
+
+/* Inline embed editor layout (ported from sync-embeds, adapted) */
+.blp-inline-edit-root .view-header {
+	display: none !important;
+}
+
+.blp-inline-edit-root .view-content {
+	background-color: transparent !important;
+	padding: 0 !important;
+}
+
+.blp-inline-edit-root .inline-title,
+.blp-inline-edit-root .metadata-container {
+	display: none !important;
+}
+
+.blp-inline-edit-root .markdown-source-view,
+.blp-inline-edit-root .cm-editor,
+.blp-inline-edit-root .cm-scroller {
+	background-color: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.blp-inline-edit-root .markdown-source-view.mod-cm6 .cm-editor {
+	width: 100%;
+}
+
+.blp-inline-edit-root .cm-content {
+	background-color: transparent !important;
+	padding-bottom: 18px !important;
+	padding-left: 10px !important;
+	padding-right: 10px !important;
+}
+
+.blp-inline-edit-root .cm-sizer {
+	padding-inline-start: 0 !important;
+	padding-inline-end: 0 !important;
+}
+
+.blp-inline-edit-root .workspace-leaf-content,
+.blp-inline-edit-root .view-content {
+	height: auto !important;
+	max-height: none !important;
+}
+
+.blp-inline-edit-root .workspace-leaf-content {
+	overflow: visible !important;
+}
+
+.blp-inline-edit-root .cm-scroller {
+	overflow-x: hidden !important;
+}

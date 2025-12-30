@@ -22,17 +22,17 @@
 验收（手动）：设置页不再出现 `!!` / editable embed / `editorFlowStyle`；新 4 个开关可保存并在重启后保持。
 
 ### Milestone 2: New engine scaffold (safe no-op)
-- [ ] 2.1 新模块骨架：InlineEditEngine / EmbedLeafManager / FocusTracker（可空跑）。
-- [ ] 2.2 Leaf 生命周期：create/open/re-parent/detach/cleanup（参考 `sync-embeds/src/embed-manager.js`）。
-- [ ] 2.3 防递归：对 inline edit 根容器打标，扫描命中则跳过。
-- [ ] 2.4 禁止 `!![[...]]` 兼容：识别并跳过，不做 DOM 清理或降级。
+- [x] 2.1 新模块骨架：InlineEditEngine / EmbedLeafManager / FocusTracker（可空跑）。
+- [x] 2.2 Leaf 生命周期：create/open/re-parent/detach/cleanup（参考 `sync-embeds/src/embed-manager.js`）。
+- [x] 2.3 防递归：对 inline edit 根容器打标，扫描命中则跳过。
+- [x] 2.4 禁止 `!![[...]]` 兼容：识别并跳过，不做 DOM 清理或降级。
 
 验收（手动）：开启开关后不接管渲染也不报错；关闭开关不残留 DOM。
 
 ### Milestone 3: Live Preview takeover (BlockID)
-- [ ] 3.1 仅在 Live Preview 生效（Reading 不创建 editor）。
-- [ ] 3.2 `![[file#^id]]`：创建 leaf/editor 并裁剪到可见/可编辑范围（可见=可编辑）。
-- [ ] 3.3 卸载与切换：关闭文件/切换 leaf/关闭设置时正确 detach。
+- [x] 3.1 仅在 Live Preview 生效（Reading 不创建 editor）。
+- [x] 3.2 `![[file#^id]]`：创建 leaf/editor 并裁剪到可见/可编辑范围（可见=可编辑）。
+- [x] 3.3 卸载与切换：关闭文件/切换 leaf/关闭设置时正确 detach。
 
 验收（手动）：Live Preview 下 `![[file#^id]]` 可编辑；控制台无错误。
 

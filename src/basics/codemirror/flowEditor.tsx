@@ -40,7 +40,7 @@ export enum FlowEditorState {
 }
 export enum FlowEditorLinkType {
   Link = 0,
-  Embed = 1,              // !![[]] embed
+  Embed = 1,              // ![[...]] embed
   EmbedClosed = 2,
   ReadOnlyEmbed = 3,      // ^![[]] multiline readonly (new)
 }

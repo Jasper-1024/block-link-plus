@@ -26,10 +26,7 @@ export interface MultilineBlockProps {
     blockRef: string;          // 如 "file#^block-block"
     source?: string;           // 来源文件路径
     classname?: string;        // CSS类名
-    onJump?: (ref: string) => void;  // 跳转回调
-    onEdit?: () => void;       // 编辑回调 - 切换![[]]为!![[]]
-    showEditIcon?: boolean;    // 是否显示编辑图标
-}
+    onJump?: (ref: string) => void;  // 跳转回调}
 
 export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => {
     const flowRef = useRef<HTMLDivElement>(null);
@@ -118,83 +115,6 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
     };
 
     // 添加编辑图标的处理函数
-    const createEditIcon = (parentContainer: HTMLElement) => {
-        // 检查是否已经存在编辑图标
-        if (parentContainer.querySelector('.mk-multiline-external-edit')) {
-            return;
-        }
-
-        // 创建编辑图标容器
-        const externalEditIcon = parentContainer.createDiv('mk-multiline-external-edit');
-        externalEditIcon.style.cssText = `
-            position: absolute;
-            top: -34px;
-            right: 0px;
-            cursor: pointer;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
-            z-index: var(--layer-popover);
-            pointer-events: auto;
-            display: flex;
-        `;
-        
-        externalEditIcon.innerHTML = `
-            <div class="mk-flowblock-menu">
-                <button class="mk-toolbar-button" aria-label="Edit block">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/>
-                    </svg>
-                </button>
-            </div>
-        `;
-        
-        externalEditIcon.title = 'Edit block';
-        
-        // 添加悬停效果处理
-        const showEditIconHandler = () => {
-            externalEditIcon.style.opacity = '1';
-            externalEditIcon.style.visibility = 'visible';
-        };
-        
-        const hideEditIconHandler = () => {
-            externalEditIcon.style.opacity = '0';
-            externalEditIcon.style.visibility = 'hidden';
-        };
-        
-        // 当鼠标悬停在多行块上时显示编辑图标
-        parentContainer.addEventListener('mouseenter', showEditIconHandler);
-        parentContainer.addEventListener('mouseleave', hideEditIconHandler);
-        
-        // 当鼠标悬停在编辑图标上时保持显示
-        externalEditIcon.addEventListener('mouseenter', showEditIconHandler);
-        externalEditIcon.addEventListener('mouseleave', hideEditIconHandler);
-        
-        // 为编辑按钮添加悬停效果和点击处理
-        const editButton = externalEditIcon.querySelector('.mk-toolbar-button') as HTMLElement;
-        if (editButton) {
-            editButton.addEventListener('mouseenter', () => {
-                editButton.style.color = 'var(--text-accent)';
-                editButton.style.background = 'var(--background-modifier-hover)';
-            });
-            
-            editButton.addEventListener('mouseleave', () => {
-                editButton.style.color = 'var(--mk-ui-text-tertiary)';
-                editButton.style.background = 'rgba(var(--nav-item-background-active), 0.3)';
-            });
-            
-            // 点击编辑按钮的处理
-            editButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                
-                // 触发编辑功能 - 将![[]]切换为!![[]]
-                if (props.onEdit) {
-                    props.onEdit();
-                }
-            });
-        }
-    };
 
     // 添加跳转图标的处理函数
     const createJumpIcon = (parentContainer: HTMLElement) => {
@@ -386,15 +306,9 @@ export const UIMultilineBlock = forwardRef((props: MultilineBlockProps, ref) => 
                     if (embedElement) {
                         createJumpIcon(embedElement as HTMLElement);
                         // 只在Live Preview模式下显示编辑图标
-                        if (props.showEditIcon) {
-                            createEditIcon(embedElement as HTMLElement);
-                        }
                     }
                     // 增加延迟以确保编辑器完全加载
                     setTimeout(() => {
-                        if (embedElement && props.showEditIcon) {
-                            createLineClickHandler(container, embedElement as HTMLElement);
-                        }
                     }, 300);
                 }, 150);
             }

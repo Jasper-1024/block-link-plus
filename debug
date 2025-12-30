@@ -1,0 +1,319 @@
+[BLP InlineEdit] skip:parse-failed 
+{src: '环球#好莱坞', alt: '环球 > 好莱坞', ctxSourcePath: 'Review/day/2025/12/2025-12-28.md'}
+plugin:block-link-plus:18486 [BLP InlineEdit] skip:parse-failed 
+{src: '环球#^wj1vnm-wj1vnm', alt: '环球 > ^wj1vnm-wj1vnm', ctxSourcePath: 'Review/day/2025/12/2025-12-28.md'}
+plugin:block-link-plus:18486 [BLP InlineEdit] skip:already-mounted 环球#^0zp2
+plugin:block-link-plus:18486 [BLP InlineEdit] skip:not-live-preview 环球#好莱坞
+plugin:block-link-plus:18486 [BLP InlineEdit] skip:not-live-preview 环球#^wj1vnm-wj1vnm
+plugin:block-link-plus:18486 [BLP InlineEdit] skip:not-live-preview 环球#^0zp2
+
+---
+
+<div class="internal-embed markdown-embed inline-embed is-loaded blp-inline-edit-active" tabindex="-1" src="环球#^0zp2"
+    alt="环球 > ^0zp2" contenteditable="false" data-type="block">
+    <div class="embed-title markdown-embed-title"></div>
+    <div class="markdown-embed-content node-insert-event">
+        <div
+            class="markdown-preview-view markdown-rendered node-insert-event show-indentation-guide allow-fold-headings allow-fold-lists show-properties">
+            <div class="markdown-preview-sizer markdown-preview-section" style="padding-bottom: 0px; min-height: 22px;">
+                <div class="markdown-preview-pusher" style="width: 1px; height: 0.1px; margin-bottom: 0px;"></div>
+                <div class="mod-header mod-ui">
+                    <div class="inline-title" contenteditable="false" spellcheck="false" autocapitalize="on"
+                        tabindex="-1" enterkeyhint="done"></div>
+                    <div class="metadata-container is-collapsed" tabindex="-1" data-property-count="0">
+                        <div class="metadata-error-container" style="display: none;"></div>
+                        <div class="metadata-properties-heading is-collapsed" tabindex="0">
+                            <div class="collapse-indicator collapse-icon is-collapsed"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="svg-icon right-triangle">
+                                    <path d="M3 8L12 17L21 8"></path>
+                                </svg></div>
+                            <div class="metadata-properties-title">笔记属性</div>
+                        </div>
+                        <div class="metadata-content" style="display: none;">
+                            <div class="metadata-properties"></div>
+                            <div class="metadata-add-button text-icon-button" tabindex="0"><span
+                                    class="text-button-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="svg-icon lucide-plus">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5v14"></path>
+                                    </svg></span><span class="text-button-label">添加笔记属性</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="el-p">
+                    <p dir="auto">水世界表演关闭, 对的关闭 </p>
+                </div>
+            </div>
+        </div>
+        <div class="blp-inline-edit-host blp-inline-edit-root">
+            <div class="workspace-leaf-content" data-type="markdown" data-mode="source">
+                <div class="view-header">
+                    <div class="view-header-left">
+                        <div class="view-header-nav-buttons"><button class="clickable-icon" aria-disabled="true"
+                                aria-label="返回"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-arrow-left">
+                                    <path d="m12 19-7-7 7-7"></path>
+                                    <path d="M19 12H5"></path>
+                                </svg></button><button class="clickable-icon" aria-disabled="true" aria-label="前进"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="svg-icon lucide-arrow-right">
+                                    <path d="M5 12h14"></path>
+                                    <path d="m12 5 7 7-7 7"></path>
+                                </svg></button></div>
+                    </div>
+                    <div class="view-header-title-container mod-at-start mod-fade mod-at-end">
+                        <div class="view-header-title-parent"></div>
+                        <div class="view-header-title" tabindex="-1" contenteditable="true">环球</div>
+                    </div>
+                    <div class="view-actions"><button class="clickable-icon view-action" aria-label="该标签页处于编辑视图中
+点击此处切换至阅读视图
+Ctrl+单击以在新标签页中打开"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="svg-icon lucide-book-open">
+                                <path d="M12 7v14"></path>
+                                <path
+                                    d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z">
+                                </path>
+                            </svg></button><button class="clickable-icon view-action" aria-label="更多选项"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="svg-icon lucide-more-vertical">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                            </svg></button></div>
+                </div>
+                <div class="view-content">
+                    <div class="markdown-source-view cm-s-obsidian mod-cm6 node-insert-event is-live-preview is-folding show-properties"
+                        style="">
+                        <div class="cm-editor ͼ1 ͼ2 ">
+                            <div class="cm-announced" aria-live="polite"></div>
+                            <div tabindex="-1" class="cm-scroller">
+                                <div class="cm-sizer">
+                                    <div class="inline-title" contenteditable="true" spellcheck="false"
+                                        autocapitalize="on" tabindex="-1" enterkeyhint="done">环球</div>
+                                    <div class="metadata-container" tabindex="-1" data-property-count="3">
+                                        <div class="metadata-error-container" style="display: none;"></div>
+                                        <div class="metadata-properties-heading" tabindex="0">
+                                            <div class="collapse-indicator collapse-icon"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="svg-icon right-triangle">
+                                                    <path d="M3 8L12 17L21 8"></path>
+                                                </svg></div>
+                                            <div class="metadata-properties-title">笔记属性</div>
+                                        </div>
+                                        <div class="metadata-content">
+                                            <div class="metadata-properties">
+                                                <div class="metadata-property" tabindex="0" data-property-key="title">
+                                                    <div class="metadata-property-key"><span
+                                                            class="metadata-property-icon" aria-disabled="false"><svg
+                                                                xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="svg-icon lucide-text">
+                                                                <path d="M17 6.1H3"></path>
+                                                                <path d="M21 12.1H3"></path>
+                                                                <path d="M15.1 18H3"></path>
+                                                            </svg></span><input class="metadata-property-key-input"
+                                                            autocapitalize="none" enterkeyhint="next" type="text"
+                                                            aria-label="title"></div>
+                                                    <div class="metadata-property-value">
+                                                        <div class="metadata-input-longtext" placeholder="没有值"
+                                                            contenteditable="true" spellcheck="false" tabindex="0">环球
+                                                        </div>
+                                                        <div class="metadata-link" style="display: none;">
+                                                            <div class="metadata-link-inner" data-href="环球">环球</div>
+                                                            <div class="metadata-link-flair"><svg
+                                                                    xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="svg-icon lucide-pencil">
+                                                                    <path
+                                                                        d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                                                    </path>
+                                                                    <path d="m15 5 4 4"></path>
+                                                                </svg></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="clickable-icon metadata-property-warning-icon"
+                                                        aria-label="未匹配到类型，建议使用 文本" style="display: none;"><svg
+                                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            class="svg-icon lucide-alert-triangle">
+                                                            <path
+                                                                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3">
+                                                            </path>
+                                                            <path d="M12 9v4"></path>
+                                                            <path d="M12 17h.01"></path>
+                                                        </svg></div>
+                                                </div>
+                                                <div class="metadata-property" tabindex="0" data-property-key="date">
+                                                    <div class="metadata-property-key"><span
+                                                            class="metadata-property-icon" aria-disabled="false"><svg
+                                                                xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="svg-icon lucide-text">
+                                                                <path d="M17 6.1H3"></path>
+                                                                <path d="M21 12.1H3"></path>
+                                                                <path d="M15.1 18H3"></path>
+                                                            </svg></span><input class="metadata-property-key-input"
+                                                            autocapitalize="none" enterkeyhint="next" type="text"
+                                                            aria-label="date"></div>
+                                                    <div class="metadata-property-value">
+                                                        <div class="metadata-input-longtext" placeholder="没有值"
+                                                            contenteditable="true" spellcheck="false" tabindex="0">
+                                                            2025-12-21 13:37</div>
+                                                        <div class="metadata-link" style="display: none;">
+                                                            <div class="metadata-link-inner"
+                                                                data-href="2025-12-21 13:37">2025-12-21 13:37</div>
+                                                            <div class="metadata-link-flair"><svg
+                                                                    xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="svg-icon lucide-pencil">
+                                                                    <path
+                                                                        d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                                                    </path>
+                                                                    <path d="m15 5 4 4"></path>
+                                                                </svg></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="clickable-icon metadata-property-warning-icon"
+                                                        aria-label="未匹配到类型，建议使用 文本" style="display: none;"><svg
+                                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            class="svg-icon lucide-alert-triangle">
+                                                            <path
+                                                                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3">
+                                                            </path>
+                                                            <path d="M12 9v4"></path>
+                                                            <path d="M12 17h.01"></path>
+                                                        </svg></div>
+                                                </div>
+                                                <div class="metadata-property" tabindex="0" data-property-key="updated">
+                                                    <div class="metadata-property-key"><span
+                                                            class="metadata-property-icon" aria-disabled="false"><svg
+                                                                xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="svg-icon lucide-text">
+                                                                <path d="M17 6.1H3"></path>
+                                                                <path d="M21 12.1H3"></path>
+                                                                <path d="M15.1 18H3"></path>
+                                                            </svg></span><input class="metadata-property-key-input"
+                                                            autocapitalize="none" enterkeyhint="next" type="text"
+                                                            aria-label="updated"></div>
+                                                    <div class="metadata-property-value">
+                                                        <div class="metadata-input-longtext" placeholder="没有值"
+                                                            contenteditable="true" spellcheck="false" tabindex="0">
+                                                            2025-12-21 16:38</div>
+                                                        <div class="metadata-link" style="display: none;">
+                                                            <div class="metadata-link-inner"
+                                                                data-href="2025-12-21 16:38">2025-12-21 16:38</div>
+                                                            <div class="metadata-link-flair"><svg
+                                                                    xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                    height="24" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="svg-icon lucide-pencil">
+                                                                    <path
+                                                                        d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z">
+                                                                    </path>
+                                                                    <path d="m15 5 4 4"></path>
+                                                                </svg></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="clickable-icon metadata-property-warning-icon"
+                                                        aria-label="未匹配到类型，建议使用 文本" style="display: none;"><svg
+                                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            class="svg-icon lucide-alert-triangle">
+                                                            <path
+                                                                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3">
+                                                            </path>
+                                                            <path d="M12 9v4"></path>
+                                                            <path d="M12 17h.01"></path>
+                                                        </svg></div>
+                                                </div>
+                                            </div>
+                                            <div class="metadata-add-button text-icon-button" tabindex="0"><span
+                                                    class="text-button-icon"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" class="svg-icon lucide-plus">
+                                                        <path d="M5 12h14"></path>
+                                                        <path d="M12 5v14"></path>
+                                                    </svg></span><span class="text-button-label">添加笔记属性</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="cm-contentContainer">
+                                        <div class="cm-gutters cm-gutters-before" aria-hidden="true"
+                                            style="min-height: 104.5px;">
+                                            <div class="cm-gutter cm-lineNumbers">
+                                                <div class="cm-gutterElement"
+                                                    style="height: 0px; visibility: hidden; pointer-events: none;">999
+                                                </div>
+                                                <div class="cm-gutterElement cm-active"
+                                                    style="height: 22.5px; padding-top: 0px; line-height: 22.5px;">149
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div spellcheck="false" autocorrect="on" autocapitalize="on"
+                                            writingsuggestions="false" translate="no" contenteditable="true"
+                                            class="cm-content cm-lineWrapping" role="textbox" aria-multiline="true"
+                                            data-language="templater" style="tab-size: 2; padding-bottom: 82px;">
+                                            <div contenteditable="false"></div>
+                                            <div class="cm-active cm-line" dir="ltr">水世界表演关闭, 对的关闭 <span
+                                                    class="cm-blockid" spellcheck="false">^0zp2</span></div>
+                                            <div contenteditable="false"></div>
+                                        </div>
+                                    </div>
+                                    <div class="embedded-backlinks" style="display: none;"></div>
+                                </div>
+                                <div class="cm-layer cm-layer-above cm-cursorLayer" aria-hidden="true"
+                                    style="z-index: 150; animation-duration: 1200ms; animation-name: cm-blink;"></div>
+                                <div class="cm-layer cm-selectionLayer" aria-hidden="true" style="z-index: -2;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="markdown-reading-view" style="width: 100%; height: 100%; display: none;">
+                        <div
+                            class="markdown-preview-view markdown-rendered node-insert-event allow-fold-headings allow-fold-lists show-indentation-guide show-properties">
+                            <div class="markdown-preview-sizer markdown-preview-section" style="padding-bottom: 0px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="markdown-embed-content node-insert-event" style="display: none;"></div>
+    <div class="markdown-embed-link" aria-label="打开链接"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="svg-icon lucide-maximize-2">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg></div>
+</div>

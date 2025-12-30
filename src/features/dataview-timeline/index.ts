@@ -41,7 +41,6 @@ export interface TimelineConfig {
     within_days?: number;
     sort_order?: 'asc' | 'desc';
     heading_level?: number;
-    embed_format?: '!![[]]' | '![[]]';
     time_pattern?: string;
     debug?: boolean;
     filters?: {
@@ -143,7 +142,6 @@ function renderDebugOutput(
             within_days: config.within_days,
             sort_order: config.sort_order,
             heading_level: config.heading_level,
-            embed_format: config.embed_format,
             time_pattern: config.time_pattern,
             debug: config.debug,
             filters: config.filters

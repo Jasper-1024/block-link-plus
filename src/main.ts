@@ -16,12 +16,14 @@ import { getAPI } from "obsidian-dataview";
 // Inline Edit`
 import { getActiveCM } from "basics/codemirror";
 import { FlowEditorManager } from "./features/flow-editor";
+import { InlineEditEngine } from "./features/inline-edit-engine";
 import { Enactor } from "basics/enactor/enactor";
 
 // 导入所需的 CSS
 import "css/DefaultVibe.css";
 import "css/Editor/Flow/FlowEditor.css";
 import "css/Editor/Flow/FlowState.css";
+import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
 import "css/custom-styles.css";
 
@@ -44,6 +46,7 @@ export default class BlockLinkPlus extends Plugin {
 	viewPlugin: BlockLinkPlusViewPlugin;
 	editorExtensions: Extension[] = [];
 	flowEditorManager: FlowEditorManager;
+	inlineEditEngine: InlineEditEngine;
 
 	public get enactor(): Enactor {
 		return this.flowEditorManager.enactor;
@@ -164,6 +167,11 @@ export default class BlockLinkPlus extends Plugin {
 		this.flowEditorManager = new FlowEditorManager(this);
 		this.flowEditorManager.initialize();
 
+		// New inline edit engine scaffold (safe no-op for now)
+		this.inlineEditEngine = new InlineEditEngine(this);
+		this.inlineEditEngine.load();
+		this.register(() => this.inlineEditEngine.unload());
+
 		// Register plugin in global scope for external access
 		(window as any).BlockLinkPlus = this;
 	}
@@ -208,5 +216,6 @@ export default class BlockLinkPlus extends Plugin {
 		// Update view plugin after saving settings
 		// This ensures that the plugin is updated whenever settings are changed
 		this.updateViewPlugin();
+		this.inlineEditEngine?.onSettingsChanged();
 	}
 }

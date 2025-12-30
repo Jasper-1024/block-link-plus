@@ -88,7 +88,7 @@ const flowEditorRangeset = (state: EditorState, plugin: BlockLinkPlus) => {
       type == FlowEditorLinkType.ReadOnlyEmbed
     ) {
       // Handle ^![[]] multiline readonly blocks
-      // Use different selection boundaries due to different syntax (^![[]] vs !![[]])
+      // Use different selection boundaries due to different syntax (^![[]] vs ![[]])
       const shouldSkip = (
         (state.selection.main.from == from - 3 &&
           state.selection.main.to == to + 2) ||

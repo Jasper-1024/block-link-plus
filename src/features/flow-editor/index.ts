@@ -62,8 +62,8 @@ export class FlowEditorManager {
 				return;
 			}
 
-			// Live Preview mode: multiline blocks render readonly for now (no !![[...]] support)
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
+			// Live Preview mode: multiline blocks render readonly for now
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
 
 		// read mode
@@ -80,8 +80,8 @@ export class FlowEditorManager {
 				return;
 			}
 
-			// Reading mode: showEditIcon = false (only readonly display)
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app, false);
+			// Reading mode: readonly display
+			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
 	}
 
@@ -180,7 +180,7 @@ export class FlowEditorManager {
 			})
 		);
 
-		// 监听文档变化，检测从!![[]]切换回![[]]的情况
+		// 监听文档变化，检测从![[]]切换回![[]]的情况
 		this.plugin.registerEvent(
 			this.plugin.app.workspace.on('editor-change', (editor) => {
 				const view = this.plugin.app.workspace.activeLeaf?.view;
@@ -268,7 +268,7 @@ export class FlowEditorManager {
 				// 关键改进：对于模式切换，特别是从Reading到Live Preview，总是强制重新处理
 				const forceProcess =
 					switchType === 'reading-to-live-preview' || // 从Reading切换到Live Preview
-					switchType === 'multiline-block-update';    // 从!![[]]切换到![[]]
+					switchType === 'multiline-block-update';    // 从![[]]切换到![[]]
 
 				// 检查是否有内容
 				const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
@@ -302,9 +302,6 @@ export class FlowEditorManager {
 					}
 
 					// 第六步：重新渲染
-					// Determine if we should show edit icon
-					const showEditIcon = switchType !== 'to-reading-mode';
-
 					// Create mock context
 					const mockContext = {
 						sourcePath: view.file?.path || '',
@@ -315,7 +312,7 @@ export class FlowEditorManager {
 					};
 
 					// Re-render the multiline block
-					replaceMultilineBlocks(embedEl, mockContext as any, this.plugin, this.plugin.app, showEditIcon);
+					replaceMultilineBlocks(embedEl, mockContext as any, this.plugin, this.plugin.app);
 					processedCount++;
 				}
 			}

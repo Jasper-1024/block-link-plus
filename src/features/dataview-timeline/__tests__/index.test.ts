@@ -236,7 +236,6 @@ source_folders: ["folder1"]
       const config: TimelineConfig = {
         app: mockApp,
         sort_order: 'desc',
-        embed_format: '![[]]'
       } as TimelineConfig;
       
       const result = renderTimelineMarkdown(sections, config);
@@ -275,7 +274,6 @@ source_folders: ["folder1"]
       
       const config1: TimelineConfig = {
         app: mockApp,
-        embed_format: '![[]]'
       } as TimelineConfig;
       
       const result1 = renderTimelineMarkdown(sections, config1);
@@ -283,7 +281,6 @@ source_folders: ["folder1"]
       
       const config2: TimelineConfig = {
         app: mockApp,
-        embed_format: '!![[]]'
       } as TimelineConfig;
       
       const result2 = renderTimelineMarkdown(sections, config2);
