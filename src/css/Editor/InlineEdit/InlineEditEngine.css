@@ -6,10 +6,6 @@
 	padding: 0 !important;
 }
 
-.internal-embed.markdown-embed.blp-inline-edit-active .markdown-embed-link {
-	display: none !important;
-}
-
 .blp-inline-edit-host {
 	display: block;
 }

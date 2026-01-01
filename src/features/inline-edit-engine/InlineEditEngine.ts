@@ -7,6 +7,7 @@ import { FocusTracker } from "./FocusTracker";
 
 const INLINE_EDIT_ACTIVE_CLASS = "blp-inline-edit-active";
 const INLINE_EDIT_HOST_CLASS = "blp-inline-edit-host";
+const LIVE_PREVIEW_GRACE_MS = 5000;
 
 type LivePreviewObserverEntry = {
 	view: MarkdownView;
@@ -15,6 +16,7 @@ type LivePreviewObserverEntry = {
 	pendingEmbeds: Set<HTMLElement>;
 	scheduled: number | null;
 	processing: boolean;
+	createdAt: number;
 };
 
 export class InlineEditEngine {
@@ -22,6 +24,7 @@ export class InlineEditEngine {
 	readonly leaves: EmbedLeafManager;
 	readonly focus: FocusTracker;
 	private loaded = false;
+	private didInitialMetadataResolve = false;
 	private readonly pendingEmbeds = new WeakSet<HTMLElement>();
 	private readonly livePreviewObservers = new Map<MarkdownView, LivePreviewObserverEntry>();
 	private readonly debugSkipCache = new WeakMap<HTMLElement, { key: string; at: number }>();
@@ -50,6 +53,22 @@ export class InlineEditEngine {
 					this.refreshLivePreviewObservers();
 					this.cleanupHiddenEmbeds();
 				}, 50);
+			})
+		);
+
+		this.plugin.app.workspace.onLayoutReady(() => {
+			if (!this.loaded) return;
+			if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+			this.refreshLivePreviewObservers(true);
+		});
+
+		this.plugin.registerEvent(
+			this.plugin.app.metadataCache.on("resolved", () => {
+				if (!this.loaded) return;
+				if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+				if (this.didInitialMetadataResolve) return;
+				this.didInitialMetadataResolve = true;
+				this.refreshLivePreviewObservers(true);
 			})
 		);
 
@@ -115,46 +134,78 @@ export class InlineEditEngine {
 		}
 	}
 
-	private disconnectAllObservers(): void {
-		for (const entry of this.livePreviewObservers.values()) {
+	private disconnectObserverEntry(entry: LivePreviewObserverEntry): void {
+		try {
+			entry.observer.disconnect();
+		} catch {
+			// ignore
+		}
+
+		if (entry.scheduled !== null) {
 			try {
-				entry.observer.disconnect();
+				window.clearTimeout(entry.scheduled);
 			} catch {
 				// ignore
 			}
+			entry.scheduled = null;
+		}
 
-			if (entry.scheduled !== null) {
-				try {
-					window.clearTimeout(entry.scheduled);
-				} catch {
-					// ignore
-				}
-			}
+		entry.pendingEmbeds.clear();
+	}
 
-			entry.pendingEmbeds.clear();
+	private disconnectAllObservers(): void {
+		for (const entry of this.livePreviewObservers.values()) {
+			this.disconnectObserverEntry(entry);
 		}
 		this.livePreviewObservers.clear();
 	}
 
-	private isLivePreviewMarkdownView(view: MarkdownView): boolean {
-		if (!view.file) return false;
-		if (view.getMode() === "preview") return false;
-		return view.editor?.cm?.state.field(editorLivePreviewField, false) === true;
+	private scheduleObserverEntry(entry: LivePreviewObserverEntry, delayMs = 25): void {
+		if (!this.loaded) return;
+		if (entry.scheduled !== null) return;
+
+		entry.scheduled = window.setTimeout(() => {
+			entry.scheduled = null;
+			void this.processObserverEntry(entry);
+		}, delayMs);
 	}
 
-	private refreshLivePreviewObservers(): void {
+	private getLivePreviewState(entry: LivePreviewObserverEntry): "live" | "not-live" | "unknown" {
+		const view = entry.view;
+		if (!view.file) return "unknown";
+		if (view.getMode() === "preview") return "not-live";
+
+		if (entry.rootEl.classList.contains("is-live-preview")) {
+			return "live";
+		}
+
+		const cm: any = view.editor?.cm as any;
+		if (!cm) return "unknown";
+
+		try {
+			if (cm.state?.field?.(editorLivePreviewField, false) === true) {
+				return "live";
+			}
+		} catch {
+			// ignore
+		}
+
+		if (Date.now() - entry.createdAt < LIVE_PREVIEW_GRACE_MS) {
+			return "unknown";
+		}
+
+		return "not-live";
+	}
+
+	private refreshLivePreviewObservers(forceRescan = false): void {
 		for (const [view, entry] of this.livePreviewObservers) {
 			if (
 				!view.containerEl.isConnected ||
 				!entry.rootEl.isConnected ||
-				!this.isLivePreviewMarkdownView(view) ||
+				view.getMode() === "preview" ||
 				view.containerEl.closest(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)
 			) {
-				try {
-					entry.observer.disconnect();
-				} catch {
-					// ignore
-				}
+				this.disconnectObserverEntry(entry);
 				this.livePreviewObservers.delete(view);
 			}
 		}
@@ -165,26 +216,22 @@ export class InlineEditEngine {
 		for (const leaf of leaves) {
 			const view = leaf.view;
 			if (!(view instanceof MarkdownView)) continue;
-			if (!this.isLivePreviewMarkdownView(view)) continue;
+			if (view.getMode() === "preview") continue;
 			if (view.containerEl.closest(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)) continue;
 
-			this.ensureLivePreviewObserver(view);
+			this.ensureLivePreviewObserver(view, forceRescan);
 		}
 	}
 
-	private ensureLivePreviewObserver(view: MarkdownView): void {
+	private ensureLivePreviewObserver(view: MarkdownView, forceRescan = false): void {
 		const rootEl = view.containerEl.querySelector<HTMLElement>(".markdown-source-view");
 		if (!rootEl) return;
 
 		const existing = this.livePreviewObservers.get(view);
-		if (existing && existing.rootEl === rootEl) return;
+		if (existing && existing.rootEl === rootEl && !forceRescan) return;
 
 		if (existing) {
-			try {
-				existing.observer.disconnect();
-			} catch {
-				// ignore
-			}
+			this.disconnectObserverEntry(existing);
 			this.livePreviewObservers.delete(view);
 		}
 
@@ -195,16 +242,7 @@ export class InlineEditEngine {
 			pendingEmbeds: new Set(),
 			scheduled: null,
 			processing: false,
-		};
-
-		const schedule = () => {
-			if (!this.loaded) return;
-			if (entry.scheduled !== null) return;
-
-			entry.scheduled = window.setTimeout(() => {
-				entry.scheduled = null;
-				void this.processObserverEntry(entry);
-			}, 25);
+			createdAt: Date.now(),
 		};
 
 		entry.observer = new MutationObserver((mutations) => {
@@ -230,7 +268,7 @@ export class InlineEditEngine {
 			}
 
 			if (entry.pendingEmbeds.size > 0) {
-				schedule();
+				this.scheduleObserverEntry(entry);
 			}
 		});
 
@@ -248,7 +286,7 @@ export class InlineEditEngine {
 		});
 
 		if (entry.pendingEmbeds.size > 0) {
-			schedule();
+			this.scheduleObserverEntry(entry);
 		}
 	}
 
@@ -263,12 +301,16 @@ export class InlineEditEngine {
 				return;
 			}
 
-			const view = entry.view;
-			if (!this.isLivePreviewMarkdownView(view)) {
+			const livePreviewState = this.getLivePreviewState(entry);
+			if (livePreviewState === "not-live") {
 				entry.pendingEmbeds.clear();
 				return;
 			}
+			if (livePreviewState === "unknown") {
+				return;
+			}
 
+			const view = entry.view;
 			const ctx = {
 				sourcePath: view.file!.path,
 				addChild: () => {},
@@ -285,8 +327,7 @@ export class InlineEditEngine {
 		} finally {
 			entry.processing = false;
 			if (entry.pendingEmbeds.size > 0) {
-				entry.scheduled = null;
-				window.setTimeout(() => void this.processObserverEntry(entry), 25);
+				this.scheduleObserverEntry(entry);
 			}
 		}
 	}
