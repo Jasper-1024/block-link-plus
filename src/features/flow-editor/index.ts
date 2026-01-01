@@ -150,24 +150,6 @@ export class FlowEditorManager {
 
 			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
-
-		// read mode
-		this.plugin.registerMarkdownPostProcessor((element, context) => {
-
-			const view = this.plugin.app.workspace.activeLeaf?.view;
-
-			if (!(view instanceof MarkdownView)) {
-				return;
-			}
-
-			// Only process in reading mode
-			if (view.getMode() !== 'preview') {
-				return;
-			}
-
-			// Reading mode: readonly display
-			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
-		});
 	}
 
 	private processEmbeddedBlocks(element: HTMLElement): void {
@@ -245,11 +227,6 @@ export class FlowEditorManager {
 							setTimeout(() => {
 								this.handleModeSwitch(view, 'reading-to-live-preview');
 							}, 300); // Give DOM time to stabilize
-						} else if (currentMode === 'preview') {
-							// Switched to Reading mode
-							setTimeout(() => {
-								this.handleModeSwitch(view, 'to-reading-mode');
-							}, 500); // Delay for Reading mode render
 						}
 					}
 

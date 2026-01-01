@@ -609,7 +609,6 @@ body:not(.is-mobile) button.mk-toolbar-button:hover {
 /* Remove all editor visual indicators */
 .internal-embed.mk-multiline-readonly .cm-line {
   margin: 0 !important;
-  padding: 0 !important;
   background: transparent !important;
 }
 

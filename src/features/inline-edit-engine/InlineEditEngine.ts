@@ -1,5 +1,12 @@
 import type BlockLinkPlus from "../../main";
-import { MarkdownPostProcessorContext, MarkdownView, TFile, editorLivePreviewField } from "obsidian";
+import {
+	MarkdownPostProcessorContext,
+	MarkdownRenderChild,
+	MarkdownRenderer,
+	MarkdownView,
+	TFile,
+	editorLivePreviewField,
+} from "obsidian";
 import { around } from "monkey-around";
 import { contentRange, editableRange } from "shared/utils/codemirror/selectiveEditor";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
@@ -9,6 +16,7 @@ import { FocusTracker } from "./FocusTracker";
 const INLINE_EDIT_ACTIVE_CLASS = "blp-inline-edit-active";
 const INLINE_EDIT_HOST_CLASS = "blp-inline-edit-host";
 const LIVE_PREVIEW_GRACE_MS = 5000;
+const READING_RANGE_ACTIVE_CLASS = "blp-reading-range-active";
 
 type LivePreviewObserverEntry = {
 	view: MarkdownView;
@@ -36,6 +44,11 @@ export class InlineEditEngine {
 	private didInitialMetadataResolve = false;
 	private commandRoutingDepth = 0;
 	private readonly commandRoutingUninstallers: Array<() => void> = [];
+	private readonly readingRangeEmbedsByPath = new Map<string, Set<ReadingRangeEmbedChild>>();
+	private readonly readingRangeDebounceTimers = new Map<string, number>();
+	private readonly readingRangeChildByEmbed = new WeakMap<HTMLElement, ReadingRangeEmbedChild>();
+	private readonly readingRangeChildren = new Set<ReadingRangeEmbedChild>();
+	private readingRangeObserver: MutationObserver | null = null;
 	private readonly pendingEmbeds = new WeakSet<HTMLElement>();
 	private readonly livePreviewObservers = new Map<MarkdownView, LivePreviewObserverEntry>();
 	private readonly debugSkipCache = new WeakMap<HTMLElement, { key: string; at: number }>();
@@ -53,6 +66,7 @@ export class InlineEditEngine {
 
 		this.installCommandRouting();
 		this.installFocusTracking();
+		this.installReadingRangeRendering();
 
 		this.plugin.registerEvent(
 			this.plugin.app.workspace.on("layout-change", () => {
@@ -99,6 +113,7 @@ export class InlineEditEngine {
 		this.loaded = false;
 		this.disconnectAllObservers();
 		this.uninstallCommandRouting();
+		this.cleanupReadingRangeRendering();
 		this.focus.cleanup();
 		this.leaves.cleanup();
 	}
@@ -171,7 +186,273 @@ export class InlineEditEngine {
 		});
 	}
 
+	private installReadingRangeRendering(): void {
+		// Reading-mode: `^id-id` is a BLP-extended syntax and MUST render even when inline edit is disabled.
+		this.plugin.registerMarkdownPostProcessor((element, ctx) => {
+			const embeds = element.matches?.(".internal-embed.markdown-embed")
+				? [element as HTMLElement]
+				: Array.from(element.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed"));
+
+			for (const embedEl of embeds) {
+				this.ensureReadingRangeEmbedChild(embedEl, ctx.sourcePath, "postprocessor");
+			}
+		});
+
+		this.plugin.registerEvent(
+			this.plugin.app.vault.on("modify", (file) => {
+				if (!this.loaded) return;
+				if (!(file instanceof TFile)) return;
+				this.scheduleReadingRangeRefresh(file.path);
+			})
+		);
+
+		this.plugin.registerEvent(
+			(this.plugin.app.metadataCache as any).on("changed", (file: TFile) => {
+				if (!this.loaded) return;
+				if (!(file instanceof TFile)) return;
+				this.scheduleReadingRangeRefresh(file.path);
+			})
+		);
+
+		// Some preview embeds are inserted asynchronously after the markdown post processor runs,
+		// so we also observe the workspace DOM and attach range renderers to newly added embeds.
+		this.installReadingRangeObserver();
+	}
+
+	private cleanupReadingRangeRendering(): void {
+		if (this.readingRangeObserver) {
+			try {
+				this.readingRangeObserver.disconnect();
+			} catch {
+				// ignore
+			}
+			this.readingRangeObserver = null;
+		}
+
+		for (const child of Array.from(this.readingRangeChildren)) {
+			try {
+				child.unload();
+			} catch {
+				// ignore
+			}
+		}
+		this.readingRangeChildren.clear();
+
+		for (const timer of this.readingRangeDebounceTimers.values()) {
+			try {
+				window.clearTimeout(timer);
+			} catch {
+				// ignore
+			}
+		}
+		this.readingRangeDebounceTimers.clear();
+		this.readingRangeEmbedsByPath.clear();
+	}
+
+	private installReadingRangeObserver(): void {
+		if (this.readingRangeObserver) return;
+
+		const root = this.plugin.app.workspace.containerEl;
+		if (!root) return;
+
+		const observer = new MutationObserver((mutations) => {
+			for (const mutation of mutations) {
+				for (const removed of Array.from(mutation.removedNodes)) {
+					if (!(removed instanceof HTMLElement)) continue;
+					this.cleanupReadingRangeChildrenInNode(removed);
+				}
+
+				for (const added of Array.from(mutation.addedNodes)) {
+					if (!(added instanceof HTMLElement)) continue;
+					this.scanReadingRangeEmbedsInNode(added, null, "mutation");
+				}
+			}
+		});
+
+		try {
+			observer.observe(root, { childList: true, subtree: true });
+			this.readingRangeObserver = observer;
+		} catch {
+			// ignore
+			return;
+		}
+
+		// Catch already-rendered embeds (e.g. existing Reading views on startup).
+		this.scanReadingRangeEmbedsInNode(root, null, "initial-scan");
+	}
+
+	private scanReadingRangeEmbedsInNode(node: HTMLElement, sourcePath: string | null, origin: string): void {
+		const hasAnyEmbeds =
+			node.matches?.(".internal-embed.markdown-embed") || node.querySelector?.(".internal-embed.markdown-embed") !== null;
+		if (!hasAnyEmbeds) return;
+
+		const embeds = node.matches?.(".internal-embed.markdown-embed")
+			? [node]
+			: Array.from(node.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed"));
+
+		for (const embedEl of embeds) {
+			this.ensureReadingRangeEmbedChild(embedEl, sourcePath, origin);
+		}
+	}
+
+	private cleanupReadingRangeChildrenInNode(node: HTMLElement): void {
+		const hasAnyEmbeds =
+			node.matches?.(".internal-embed.markdown-embed") || node.querySelector?.(".internal-embed.markdown-embed") !== null;
+		if (!hasAnyEmbeds) return;
+
+		const embeds = node.matches?.(".internal-embed.markdown-embed")
+			? [node]
+			: Array.from(node.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed"));
+
+		for (const embedEl of embeds) {
+			const child = this.readingRangeChildByEmbed.get(embedEl);
+			if (!child) continue;
+
+			this.debugLog("reading:unload", embedEl.getAttribute("src"));
+			try {
+				child.unload();
+			} catch {
+				// ignore
+			} finally {
+				this.readingRangeChildByEmbed.delete(embedEl);
+				this.readingRangeChildren.delete(child);
+			}
+		}
+	}
+
+	private getSourcePathForEmbedElement(embedEl: HTMLElement): string | null {
+		let sourcePath: string | null = null;
+
+		try {
+			this.plugin.app.workspace.iterateAllLeaves((leaf) => {
+				if (sourcePath) return;
+				const view = leaf.view;
+				if (!(view instanceof MarkdownView)) return;
+				if (!view.file) return;
+				if (!view.containerEl?.contains(embedEl)) return;
+				sourcePath = view.file.path;
+			});
+		} catch {
+			// ignore
+		}
+
+		return sourcePath;
+	}
+
+	private ensureReadingRangeEmbedChild(embedEl: HTMLElement, sourcePath: string | null, origin: string): void {
+		if (this.readingRangeChildByEmbed.has(embedEl)) return;
+		if (!embedEl.isConnected) return;
+		if (embedEl.closest(".markdown-source-view")) {
+			this.debugSkip(embedEl, "reading:skip:source-view", { origin });
+			return;
+		}
+		if (this.leaves.isNestedWithinEmbed(embedEl)) {
+			this.debugSkip(embedEl, "reading:skip:nested", { origin });
+			return;
+		}
+		if (embedEl.classList.contains(READING_RANGE_ACTIVE_CLASS)) return;
+
+		const resolvedSourcePath =
+			sourcePath ?? this.getSourcePathForEmbedElement(embedEl) ?? this.plugin.app.workspace.getActiveFile()?.path ?? "";
+
+		const parsed = this.parseRangeEmbedForReading(embedEl, resolvedSourcePath);
+		if (!parsed) {
+			const src = embedEl.getAttribute("src") ?? "";
+			const alt = embedEl.getAttribute("alt") ?? "";
+			if (/#\^([a-z0-9_]+)-\1$/i.test(src.split("|")[0]) || /\^([a-z0-9_]+)-\1$/i.test(alt)) {
+				this.debugSkip(embedEl, "reading:skip:parse-failed", {
+					origin,
+					src,
+					alt,
+					sourcePath: resolvedSourcePath,
+				});
+			}
+			return;
+		}
+
+		this.debugLog("reading:attach", {
+			origin,
+			src: embedEl.getAttribute("src"),
+			alt: embedEl.getAttribute("alt"),
+			sourcePath: resolvedSourcePath,
+			file: parsed.file.path,
+			subpath: parsed.subpath,
+		});
+
+		const child = new ReadingRangeEmbedChild({
+			plugin: this.plugin,
+			embedEl,
+			file: parsed.file,
+			subpath: parsed.subpath,
+			register: this.registerReadingRangeEmbed.bind(this),
+			unregister: this.unregisterReadingRangeEmbed.bind(this),
+		});
+
+		this.readingRangeChildByEmbed.set(embedEl, child);
+		this.readingRangeChildren.add(child);
+		child.register(() => {
+			this.readingRangeChildren.delete(child);
+			this.readingRangeChildByEmbed.delete(embedEl);
+		});
+
+		child.load();
+	}
+
+	private registerReadingRangeEmbed(filePath: string, child: ReadingRangeEmbedChild): void {
+		let set = this.readingRangeEmbedsByPath.get(filePath);
+		if (!set) {
+			set = new Set();
+			this.readingRangeEmbedsByPath.set(filePath, set);
+		}
+		set.add(child);
+	}
+
+	private unregisterReadingRangeEmbed(filePath: string, child: ReadingRangeEmbedChild): void {
+		const set = this.readingRangeEmbedsByPath.get(filePath);
+		if (!set) return;
+
+		set.delete(child);
+		if (set.size > 0) return;
+
+		this.readingRangeEmbedsByPath.delete(filePath);
+		const timer = this.readingRangeDebounceTimers.get(filePath);
+		if (timer !== undefined) {
+			try {
+				window.clearTimeout(timer);
+			} catch {
+				// ignore
+			}
+			this.readingRangeDebounceTimers.delete(filePath);
+		}
+	}
+
+	private scheduleReadingRangeRefresh(filePath: string, delayMs = 200): void {
+		if (!this.readingRangeEmbedsByPath.has(filePath)) return;
+
+		const existing = this.readingRangeDebounceTimers.get(filePath);
+		if (existing !== undefined) {
+			try {
+				window.clearTimeout(existing);
+			} catch {
+				// ignore
+			}
+		}
+
+		const timer = window.setTimeout(() => {
+			this.readingRangeDebounceTimers.delete(filePath);
+			const embeds = this.readingRangeEmbedsByPath.get(filePath);
+			if (!embeds) return;
+			for (const child of Array.from(embeds)) {
+				void child.render();
+			}
+		}, delayMs);
+
+		this.readingRangeDebounceTimers.set(filePath, timer);
+	}
+
 	private installCommandRouting(): void {
+		const uninstallers: Array<() => void> = [];
+
 		try {
 			const uninstallExecuteCommand = around(this.plugin.app.commands as any, {
 				executeCommand: (old: any) => {
@@ -215,6 +496,12 @@ export class InlineEditEngine {
 				},
 			});
 
+			uninstallers.push(uninstallExecuteCommand);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to patch commands.executeCommand", error);
+		}
+
+		try {
 			const uninstallGetActiveView = around(this.plugin.app.workspace as any, {
 				getActiveViewOfType: (old: any) => {
 					const engine = this;
@@ -231,28 +518,95 @@ export class InlineEditEngine {
 				},
 			});
 
-			const uninstallActiveLeaf = around(this.plugin.app.workspace as any, {
-				activeLeaf: {
-					get: (old: any) => {
-						const engine = this;
-						return function () {
-							if (engine.commandRoutingDepth > 0) {
-								const focusedEmbed = engine.focus.getFocused();
-								if (focusedEmbed?.leaf) {
-									return focusedEmbed.leaf;
-								}
-							}
-
-							return old.call(this);
-						};
-					},
-				},
-			});
-
-			this.commandRoutingUninstallers.push(uninstallExecuteCommand, uninstallGetActiveView, uninstallActiveLeaf);
+			uninstallers.push(uninstallGetActiveView);
 		} catch (error) {
-			console.error("InlineEditEngine: failed to install command routing", error);
+			console.error("InlineEditEngine: failed to patch workspace.getActiveViewOfType", error);
 		}
+
+		try {
+			const uninstallActiveLeaf = this.patchWorkspaceActiveLeafGetter();
+			uninstallers.push(uninstallActiveLeaf);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to patch workspace.activeLeaf", error);
+		}
+
+		if (uninstallers.length > 0) {
+			this.commandRoutingUninstallers.push(...uninstallers);
+		}
+	}
+
+	private patchWorkspaceActiveLeafGetter(): () => void {
+		const workspace = this.plugin.app.workspace as any;
+		const key = "activeLeaf";
+
+		const hadOwn = Object.prototype.hasOwnProperty.call(workspace, key);
+		const originalOwnDescriptor = Object.getOwnPropertyDescriptor(workspace, key);
+
+		const originalDescriptor = originalOwnDescriptor;
+		if (!originalDescriptor) return () => {};
+		if (originalDescriptor.configurable === false) return () => {};
+
+		let storedValue = "value" in originalDescriptor ? originalDescriptor.value : workspace[key];
+		const originalGetter = originalDescriptor.get;
+		const originalSetter = originalDescriptor.set;
+
+		const engine = this;
+
+		Object.defineProperty(workspace, key, {
+			configurable: true,
+			enumerable: originalDescriptor.enumerable ?? true,
+			get() {
+				if (engine.commandRoutingDepth > 0) {
+					const focusedEmbed = engine.focus.getFocused();
+					if (focusedEmbed?.leaf) return focusedEmbed.leaf;
+				}
+
+				if (typeof originalGetter === "function") {
+					return originalGetter.call(this);
+				}
+
+				return storedValue;
+			},
+			set(value) {
+				if (typeof originalSetter === "function") {
+					originalSetter.call(this, value);
+					return;
+				}
+
+				storedValue = value;
+			},
+		});
+
+		return () => {
+			try {
+				const currentStored = (() => {
+					if (typeof originalGetter === "function") {
+						try {
+							return originalGetter.call(workspace);
+						} catch {
+							return storedValue;
+						}
+					}
+					return storedValue;
+				})();
+
+				if (hadOwn && originalOwnDescriptor) {
+					if ("value" in originalOwnDescriptor) {
+						Object.defineProperty(workspace, key, {
+							...originalOwnDescriptor,
+							value: currentStored,
+						});
+					} else {
+						Object.defineProperty(workspace, key, originalOwnDescriptor);
+					}
+					return;
+				}
+
+				delete workspace[key];
+			} catch {
+				// ignore
+			}
+		};
 	}
 
 	private uninstallCommandRouting(): void {
@@ -495,7 +849,7 @@ export class InlineEditEngine {
 	}
 
 	private isInLivePreview(embedEl: HTMLElement): boolean {
-		return embedEl.closest(".markdown-source-view") !== null && embedEl.closest(".markdown-preview-view") === null;
+		return embedEl.closest(".markdown-source-view") !== null;
 	}
 
 	private cleanupOrphanedShell(embedEl: HTMLElement): void {
@@ -517,11 +871,54 @@ export class InlineEditEngine {
 		if (!embedLink && altText) {
 			const match = altText.match(/(.+?)\\s*>\\s*(.+)/);
 			if (match) {
-				embedLink = `${match[1].trim()}#${match[2].trim()}`;
+				let subpath = match[2].trim();
+				if (subpath.startsWith("#")) {
+					subpath = subpath.slice(1).trim();
+				}
+				embedLink = `${match[1].trim()}#${subpath}`;
 			}
 		}
 
 		return embedLink;
+	}
+
+	private parseRangeEmbedForReading(
+		embedEl: HTMLElement,
+		sourcePath: string
+	): { file: TFile; subpath: string } | null {
+		const embedLink = this.getInternalEmbedLink(embedEl);
+		if (!embedLink) return null;
+
+		const pipeIndex = embedLink.indexOf("|");
+		const actualLink = pipeIndex === -1 ? embedLink : embedLink.substring(0, pipeIndex);
+
+		const hashIndex = actualLink.indexOf("#");
+		if (hashIndex === -1) return null;
+
+		let notePath = actualLink.substring(0, hashIndex).trim();
+		let ref = actualLink.substring(hashIndex + 1).trim();
+
+		if (ref.startsWith("#")) {
+			ref = ref.slice(1).trim();
+		}
+
+		if (!ref.startsWith("^")) return null;
+		if (!/^\^[a-zA-Z0-9_-]+$/.test(ref)) return null;
+		if (!/^\^([a-z0-9_]+)-\1$/i.test(ref)) return null;
+
+		let file: TFile | null = null;
+		if (!notePath) {
+			const current = this.plugin.app.vault.getAbstractFileByPath(sourcePath);
+			if (current instanceof TFile) {
+				file = current;
+			}
+		} else {
+			file = this.plugin.app.metadataCache.getFirstLinkpathDest(notePath, sourcePath);
+		}
+
+		if (!file) return null;
+
+		return { file, subpath: `#${ref}` };
 	}
 
 	private parseBlockIdEmbed(
@@ -963,6 +1360,227 @@ export class InlineEditEngine {
 			console.error("InlineEditEngine: failed to mount embed editor", error);
 		} finally {
 			this.pendingEmbeds.delete(embedEl);
+		}
+	}
+}
+
+type ReadingRangeEmbedChildArgs = {
+	plugin: BlockLinkPlus;
+	embedEl: HTMLElement;
+	file: TFile;
+	subpath: string;
+	register: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	unregister: (filePath: string, child: ReadingRangeEmbedChild) => void;
+};
+
+class ReadingRangeEmbedChild extends MarkdownRenderChild {
+	private readonly plugin: BlockLinkPlus;
+	private readonly embedEl: HTMLElement;
+	private readonly file: TFile;
+	private readonly subpath: string;
+	private readonly register: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	private readonly unregister: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	private renderSeq = 0;
+	private mounted = false;
+	private activated = false;
+	private renderChild: MarkdownRenderChild | null = null;
+	private retryTimer: number | null = null;
+	private retryCount = 0;
+
+	constructor(args: ReadingRangeEmbedChildArgs) {
+		super(args.embedEl);
+		this.plugin = args.plugin;
+		this.embedEl = args.embedEl;
+		this.file = args.file;
+		this.subpath = args.subpath;
+		this.register = args.register;
+		this.unregister = args.unregister;
+	}
+
+	onload(): void {
+		this.mounted = true;
+		void this.render();
+	}
+
+	onunload(): void {
+		this.mounted = false;
+		if (this.retryTimer !== null) {
+			try {
+				window.clearTimeout(this.retryTimer);
+			} catch {
+				// ignore
+			}
+			this.retryTimer = null;
+		}
+
+		if (this.activated) {
+			try {
+				this.embedEl.classList.remove(READING_RANGE_ACTIVE_CLASS);
+			} catch {
+				// ignore
+			}
+			try {
+				this.unregister(this.file.path, this);
+			} catch {
+				// ignore
+			}
+		}
+		try {
+			this.renderChild?.unload();
+		} catch {
+			// ignore
+		}
+		this.renderChild = null;
+	}
+
+	private scheduleRetry(delayMs: number): void {
+		if (!this.mounted) return;
+		if (this.retryTimer !== null) return;
+		if (this.retryCount >= 60) return;
+
+		this.retryCount += 1;
+		this.retryTimer = window.setTimeout(() => {
+			this.retryTimer = null;
+			void this.render();
+		}, delayMs);
+	}
+
+	private cleanupLegacyMultilineShell(): void {
+		try {
+			this.embedEl.querySelector(".mk-multiline-react-container")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-multiline-jump-link")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-multiline-external-edit")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-floweditor")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.classList.remove("mk-multiline-block");
+			this.embedEl.classList.remove("mk-multiline-readonly");
+		} catch {
+			// ignore
+		}
+
+		const nativeContent = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+
+		const nativeLink = this.embedEl.querySelector<HTMLElement>(".markdown-embed-link");
+		if (nativeLink) {
+			try {
+				nativeLink.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	async render(): Promise<void> {
+		if (!this.mounted) return;
+		if (!this.embedEl.isConnected) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		// Only render in preview-like contexts (Reading mode / hover previews). Live Preview embeds are handled elsewhere.
+		if (this.embedEl.closest(".markdown-source-view")) {
+			return;
+		}
+
+		if (!this.activated) {
+			this.activated = true;
+			try {
+				this.embedEl.classList.add(READING_RANGE_ACTIVE_CLASS);
+			} catch {
+				// ignore
+			}
+			this.cleanupLegacyMultilineShell();
+			this.register(this.file.path, this);
+		}
+
+		if (!this.embedEl.classList.contains("is-loaded")) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const currentSeq = (this.renderSeq += 1);
+
+		const contentEl = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (!contentEl) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const [start, end] = getLineRangeFromRef(this.file.path, this.subpath, this.plugin.app);
+		if (!start || !end) {
+			this.scheduleRetry(100);
+			return;
+		}
+
+		let raw = "";
+		try {
+			raw = await this.plugin.app.vault.cachedRead(this.file);
+		} catch {
+			this.scheduleRetry(200);
+			return;
+		}
+
+		if (!this.mounted) return;
+		if (currentSeq !== this.renderSeq) return;
+
+		const lines = raw.split(/\r?\n/);
+		const clamp = (line: number) => Math.min(Math.max(1, line), Math.max(1, lines.length));
+		const from = clamp(Math.min(start, end));
+		const to = clamp(Math.max(start, end));
+		const fragment = lines.slice(from - 1, to).join("\n");
+
+		try {
+			this.renderChild?.unload();
+		} catch {
+			// ignore
+		}
+		this.renderChild = null;
+
+		try {
+			contentEl.empty();
+		} catch {
+			// ignore
+		}
+
+		const previewView = contentEl.createDiv({ cls: "markdown-preview-view markdown-rendered" });
+		const previewSizer = previewView.createDiv({ cls: "markdown-preview-sizer markdown-preview-section" });
+
+		const renderChild = new MarkdownRenderChild(previewSizer);
+		this.addChild(renderChild);
+		renderChild.load();
+		this.renderChild = renderChild;
+		this.retryCount = 0;
+
+		try {
+			await MarkdownRenderer.renderMarkdown(fragment, previewSizer, this.file.path, renderChild);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to render reading range embed", error);
 		}
 	}
 }
