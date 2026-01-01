@@ -22,6 +22,10 @@
 - **WHEN** Live Preview 中出现 `![[file#^id-id]]` 且 `inlineEditEnabled=true` 且 `inlineEditBlock=true`
 - **THEN** 末尾 marker 行（`^id-id` 所在行）必须可见但不可编辑
 
+#### Scenario: Inline edit preserves Obsidian jump affordance
+- **WHEN** an inline-edit embed is mounted in Live Preview
+- **THEN** the Obsidian embed jump/open affordance (`markdown-embed-link`) remains available
+
 #### Scenario: Inline edit does not recurse
 - **WHEN** 一个 `![[...]]` 嵌入出现在另一个 inline edit editor 的 DOM 容器内部
 - **THEN** 插件 MUST 跳过该嵌入的 inline edit（避免 editor-in-editor）
