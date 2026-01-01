@@ -33,6 +33,84 @@ export class FlowEditorManager {
 		}
 	}
 
+	private isInlineEditBlockEnabled(): boolean {
+		return this.plugin.settings.inlineEditEnabled && this.plugin.settings.inlineEditBlock;
+	}
+
+	private restoreNativeMultilineEmbed(embedEl: HTMLElement): void {
+		// Remove legacy multiline renderer output so InlineEditEngine can take over in Live Preview.
+		try {
+			embedEl.querySelector('.mk-multiline-react-container')?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector('.mk-multiline-jump-link')?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector('.mk-multiline-external-edit')?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector('.mk-floweditor')?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.classList.remove('mk-multiline-block');
+			embedEl.classList.remove('mk-multiline-readonly');
+		} catch {
+			// ignore
+		}
+
+		const nativeContent = embedEl.querySelector<HTMLElement>('.markdown-embed-content');
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = '';
+			} catch {
+				// ignore
+			}
+		}
+
+		const nativeLink = embedEl.querySelector<HTMLElement>('.markdown-embed-link');
+		if (nativeLink) {
+			try {
+				nativeLink.style.display = '';
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private restoreNativeMultilineEmbedsInElement(element: HTMLElement): void {
+		const embeds = element.matches?.('.internal-embed.markdown-embed')
+			? [element as HTMLElement]
+			: Array.from(element.querySelectorAll<HTMLElement>('.internal-embed.markdown-embed'));
+
+		for (const embedEl of embeds) {
+			const src = embedEl.getAttribute('src');
+			const alt = embedEl.getAttribute('alt');
+			let actualSrc = src;
+			if (src && src.indexOf('|') !== -1) {
+				actualSrc = src.substring(0, src.indexOf('|'));
+			}
+
+			const isMultilineBlock =
+				(actualSrc && /#\^([a-z0-9]+)-\1$/.test(actualSrc)) ||
+				(alt && /\^[a-z0-9]+-[a-z0-9]+/.test(alt));
+
+			if (!isMultilineBlock) continue;
+			this.restoreNativeMultilineEmbed(embedEl);
+		}
+	}
+
 	private setupFlowEditor(): void {
 		// Patch workspace for flow editing
 		patchWorkspaceForFlow(this.plugin);
@@ -63,6 +141,11 @@ export class FlowEditorManager {
 			}
 
 			// Live Preview mode: multiline blocks render readonly for now
+			if (this.isInlineEditBlockEnabled()) {
+				this.restoreNativeMultilineEmbedsInElement(element);
+				return;
+			}
+
 			replaceMultilineBlocks(element, context, this.plugin, this.plugin.app);
 		});
 
@@ -271,6 +354,12 @@ export class FlowEditorManager {
 					switchType === 'multiline-block-update';    // 从![[]]切换到![[]]
 
 				// 检查是否有内容
+				if (switchType !== 'to-reading-mode' && this.isInlineEditBlockEnabled()) {
+					this.restoreNativeMultilineEmbed(embedEl);
+					processedCount++;
+					return;
+				}
+
 				const reactContainer = embedEl.querySelector('.mk-multiline-react-container');
 				const hasContent = reactContainer && reactContainer.children.length > 0;
 				const hasFlowEditor = embedEl.querySelector('.mk-floweditor');

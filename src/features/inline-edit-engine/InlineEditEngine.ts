@@ -470,16 +470,12 @@ export class InlineEditEngine {
 		if (this.plugin.settings.inlineEditBlock) {
 			const parsedBlock = this.parseBlockIdEmbed(embedEl, ctx);
 			if (parsedBlock) {
-				const [start, end] = parsedBlock.range;
-				const rangeEditable: [number, number] = parsedBlock.isRange ? [start, end - 1] : [start, end];
-				if (rangeEditable[1] < rangeEditable[0]) return null;
-
 				return {
 					kind: parsedBlock.isRange ? "range" : "block",
 					file: parsedBlock.file,
 					subpath: parsedBlock.subpath,
 					visibleRange: parsedBlock.range,
-					editableRange: rangeEditable,
+					editableRange: parsedBlock.range,
 				};
 			}
 		}
@@ -489,6 +485,119 @@ export class InlineEditEngine {
 		}
 
 		return null;
+	}
+
+	private cleanupLegacyMultilineEmbed(embedEl: HTMLElement): void {
+		if (!embedEl.classList.contains("mk-multiline-block") && !embedEl.querySelector(".mk-multiline-react-container")) {
+			return;
+		}
+
+		try {
+			embedEl.querySelector(".mk-multiline-react-container")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector(".mk-multiline-jump-link")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector(".mk-multiline-external-edit")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.querySelector(".mk-floweditor")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			embedEl.classList.remove("mk-multiline-block");
+			embedEl.classList.remove("mk-multiline-readonly");
+		} catch {
+			// ignore
+		}
+
+		const nativeContent = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+
+		const nativeLink = embedEl.querySelector<HTMLElement>(".markdown-embed-link");
+		if (nativeLink) {
+			try {
+				nativeLink.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private resolveEmbedLineRanges(
+		parsed: ParsedInlineEmbed,
+		cm: { state?: { doc?: { lines?: number; line?: (n: number) => { text?: string } } } }
+	): { visibleRange: [number, number]; editableRange: [number, number] } {
+		const doc: any = cm?.state?.doc;
+		if (!doc?.line || typeof doc.lines !== "number") {
+			return { visibleRange: parsed.visibleRange, editableRange: parsed.editableRange };
+		}
+
+		let [start, end] = parsed.visibleRange;
+		if (start > end) {
+			[start, end] = [end, start];
+		}
+
+		const clamp = (line: number) => Math.min(Math.max(1, line), doc.lines);
+		const visibleStart = clamp(start);
+		const visibleEnd = clamp(end);
+
+		if (parsed.kind !== "range") {
+			let [editableStart, editableEnd] = parsed.editableRange;
+			if (editableStart > editableEnd) {
+				[editableStart, editableEnd] = [editableEnd, editableStart];
+			}
+
+			const normalizedEditableStart = clamp(Math.max(visibleStart, editableStart));
+			const normalizedEditableEnd = clamp(Math.min(visibleEnd, editableEnd));
+			return {
+				visibleRange: [visibleStart, visibleEnd],
+				editableRange: [
+					normalizedEditableStart,
+					Math.max(normalizedEditableStart, normalizedEditableEnd),
+				],
+			};
+		}
+
+		const marker = parsed.subpath.startsWith("#") ? parsed.subpath.slice(1) : parsed.subpath;
+		const isMarkerLine = (lineNumber: number): boolean => {
+			try {
+				const text = doc.line(lineNumber).text ?? "";
+				return text.trim() === marker;
+			} catch {
+				return false;
+			}
+		};
+
+		if (isMarkerLine(visibleEnd)) {
+			const editableEnd = clamp(Math.max(visibleStart, visibleEnd - 1));
+			return { visibleRange: [visibleStart, visibleEnd], editableRange: [visibleStart, editableEnd] };
+		}
+
+		const nextLine = visibleEnd + 1;
+		if (nextLine <= doc.lines && isMarkerLine(nextLine)) {
+			return { visibleRange: [visibleStart, nextLine], editableRange: [visibleStart, visibleEnd] };
+		}
+
+		return { visibleRange: [visibleStart, visibleEnd], editableRange: [visibleStart, visibleEnd] };
 	}
 
 	private prepareEmbedShell(embedEl: HTMLElement): { hostEl: HTMLElement; cleanup: () => void } {
@@ -603,6 +712,10 @@ export class InlineEditEngine {
 			return;
 		}
 
+		if (parsed.kind === "range") {
+			this.cleanupLegacyMultilineEmbed(embedEl);
+		}
+
 		this.pendingEmbeds.add(embedEl);
 
 		const { hostEl, cleanup } = this.prepareEmbedShell(embedEl);
@@ -685,15 +798,17 @@ export class InlineEditEngine {
 					// ignore
 				}
 
+				const resolvedRanges = this.resolveEmbedLineRanges(parsed, cm);
+
 				cm.dispatch({
 					annotations: [
-						contentRange.of(parsed.visibleRange),
-						editableRange.of(parsed.editableRange),
+						contentRange.of(resolvedRanges.visibleRange),
+						editableRange.of(resolvedRanges.editableRange),
 					],
 				});
 
 				try {
-					const startLine = Math.max(0, parsed.editableRange[0] - 1);
+					const startLine = Math.max(0, resolvedRanges.editableRange[0] - 1);
 					embed.view.editor?.setCursor({ line: startLine, ch: 0 });
 					embed.view.editor?.scrollIntoView({ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } }, true);
 				} catch {
