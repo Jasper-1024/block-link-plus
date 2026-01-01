@@ -409,7 +409,7 @@ export class InlineEditEngine {
 
 		if (!ref.startsWith("^")) return null;
 		if (!/^\^[a-zA-Z0-9_-]+$/.test(ref)) return null;
-		const isRange = /^\^([a-z0-9]+)-\1$/i.test(ref);
+		const isRange = /^\^([a-z0-9_]+)-\1$/i.test(ref);
 
 		if (!notePath) {
 			notePath = ctx.sourcePath;

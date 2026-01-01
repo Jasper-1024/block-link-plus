@@ -7,8 +7,12 @@ import { App, HeadingCache, resolveSubpath, HeadingSubpathResult, BlockSubpathRe
  * @returns 
  */
 function getMultilineBlockId(inputStr: string): string | null {
-  const matchResult = inputStr.match(/^\^([a-z0-9]+)-\1$/);
-  return matchResult ? `^${matchResult[1]}` : null;
+  const trimmed = inputStr.trim();
+  const hasHashPrefix = trimmed.startsWith("#");
+  const candidate = hasHashPrefix ? trimmed.slice(1) : trimmed;
+  const matchResult = candidate.match(/^\^([a-z0-9_]+)-\1$/i);
+  if (!matchResult) return null;
+  return `${hasHashPrefix ? "#" : ""}^${matchResult[1]}`;
 }
 
 /**
