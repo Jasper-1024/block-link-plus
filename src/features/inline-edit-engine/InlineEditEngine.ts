@@ -1,5 +1,6 @@
 import type BlockLinkPlus from "../../main";
 import { MarkdownPostProcessorContext, MarkdownView, TFile, editorLivePreviewField } from "obsidian";
+import { around } from "monkey-around";
 import { contentRange, editableRange } from "shared/utils/codemirror/selectiveEditor";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
 import { EmbedLeafManager } from "./EmbedLeafManager";
@@ -33,6 +34,8 @@ export class InlineEditEngine {
 	readonly focus: FocusTracker;
 	private loaded = false;
 	private didInitialMetadataResolve = false;
+	private commandRoutingDepth = 0;
+	private readonly commandRoutingUninstallers: Array<() => void> = [];
 	private readonly pendingEmbeds = new WeakSet<HTMLElement>();
 	private readonly livePreviewObservers = new Map<MarkdownView, LivePreviewObserverEntry>();
 	private readonly debugSkipCache = new WeakMap<HTMLElement, { key: string; at: number }>();
@@ -48,12 +51,16 @@ export class InlineEditEngine {
 		if (this.loaded) return;
 		this.loaded = true;
 
+		this.installCommandRouting();
+		this.installFocusTracking();
+
 		this.plugin.registerEvent(
 			this.plugin.app.workspace.on("layout-change", () => {
 				if (!this.loaded) return;
 				if (!this.isInlineEditActive()) {
 					this.disconnectAllObservers();
 					this.leaves.cleanup();
+					this.focus.cleanup();
 					return;
 				}
 
@@ -91,6 +98,7 @@ export class InlineEditEngine {
 		if (!this.loaded) return;
 		this.loaded = false;
 		this.disconnectAllObservers();
+		this.uninstallCommandRouting();
 		this.focus.cleanup();
 		this.leaves.cleanup();
 	}
@@ -131,16 +139,141 @@ export class InlineEditEngine {
 		if (!this.isInlineEditActive()) {
 			this.disconnectAllObservers();
 			this.leaves.cleanup();
+			this.focus.cleanup();
 			return;
 		}
 
 		this.refreshLivePreviewObservers();
 	}
 
+	private installFocusTracking(): void {
+		this.plugin.registerDomEvent(document, "focusin", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) return;
+
+			const embed = this.leaves.getEmbedFromElement(target);
+			if (embed) {
+				this.focus.setFocused(embed);
+			}
+		});
+
+		this.plugin.registerDomEvent(document, "focusout", (event) => {
+			const next = (event as FocusEvent).relatedTarget;
+			if (next instanceof HTMLElement) {
+				const embed = this.leaves.getEmbedFromElement(next);
+				if (embed) {
+					this.focus.setFocused(embed);
+					return;
+				}
+			}
+
+			this.focus.setFocused(null);
+		});
+	}
+
+	private installCommandRouting(): void {
+		try {
+			const uninstallExecuteCommand = around(this.plugin.app.commands as any, {
+				executeCommand: (old: any) => {
+					const engine = this;
+					return function (command: any, ...args: any[]) {
+						const focusedEmbed = engine.focus.getFocused();
+						const editor = focusedEmbed?.view?.editor;
+
+						const isEditorCommand =
+							typeof command?.editorCallback === "function" ||
+							typeof command?.editorCheckCallback === "function" ||
+							(typeof command?.id === "string" && command.id.startsWith("editor:"));
+
+						if (focusedEmbed && editor && isEditorCommand) {
+							if (typeof command?.editorCheckCallback === "function") {
+								try {
+									return command.editorCheckCallback(false, editor, focusedEmbed.view);
+								} catch {
+									// ignore and fallback
+								}
+							}
+
+							if (typeof command?.editorCallback === "function") {
+								try {
+									return command.editorCallback(editor, focusedEmbed.view);
+								} catch {
+									// ignore and fallback
+								}
+							}
+
+							engine.commandRoutingDepth += 1;
+							try {
+								return old.call(this, command, ...args);
+							} finally {
+								engine.commandRoutingDepth -= 1;
+							}
+						}
+
+						return old.call(this, command, ...args);
+					};
+				},
+			});
+
+			const uninstallGetActiveView = around(this.plugin.app.workspace as any, {
+				getActiveViewOfType: (old: any) => {
+					const engine = this;
+					return function (type: any) {
+						if (engine.commandRoutingDepth > 0) {
+							const focusedEmbed = engine.focus.getFocused();
+							if (focusedEmbed && focusedEmbed.view instanceof type) {
+								return focusedEmbed.view;
+							}
+						}
+
+						return old.call(this, type);
+					};
+				},
+			});
+
+			const uninstallActiveLeaf = around(this.plugin.app.workspace as any, {
+				activeLeaf: {
+					get: (old: any) => {
+						const engine = this;
+						return function () {
+							if (engine.commandRoutingDepth > 0) {
+								const focusedEmbed = engine.focus.getFocused();
+								if (focusedEmbed?.leaf) {
+									return focusedEmbed.leaf;
+								}
+							}
+
+							return old.call(this);
+						};
+					},
+				},
+			});
+
+			this.commandRoutingUninstallers.push(uninstallExecuteCommand, uninstallGetActiveView, uninstallActiveLeaf);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to install command routing", error);
+		}
+	}
+
+	private uninstallCommandRouting(): void {
+		const uninstallers = this.commandRoutingUninstallers.splice(0);
+		for (const uninstall of uninstallers) {
+			try {
+				uninstall();
+			} catch {
+				// ignore
+			}
+		}
+		this.commandRoutingDepth = 0;
+	}
+
 	private cleanupHiddenEmbeds(): void {
 		const embeds = this.leaves.getActiveEmbeds();
 		for (const embed of embeds) {
 			if (!embed.containerEl.isConnected || !embed.containerEl.isShown()) {
+				if (this.focus.getFocused() === embed) {
+					this.focus.setFocused(null);
+				}
 				this.leaves.detach(embed);
 			}
 		}

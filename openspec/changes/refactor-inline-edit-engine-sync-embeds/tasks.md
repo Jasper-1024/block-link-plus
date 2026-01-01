@@ -50,8 +50,8 @@
 验收（手动）：marker 行可见但无法编辑；其余行可改。
 
 ### Milestone 6: Command / hotkey routing (sync-embeds style)
-- [ ] 6.1 focus tracking：维护“当前聚焦 embed”。
-- [ ] 6.2 `monkey-around` patch：`executeCommand` / `getActiveViewOfType` / `activeLeaf`（参考 `sync-embeds/src/main.js`）。
+- [x] 6.1 focus tracking：维护“当前聚焦 embed”。
+- [x] 6.2 `monkey-around` patch：`executeCommand` / `getActiveViewOfType` / `activeLeaf`（参考 `sync-embeds/src/main.js`）。
 
 验收（手动）：在 embed editor 内，常用快捷键与用户自定义热键作用于 embed。
 

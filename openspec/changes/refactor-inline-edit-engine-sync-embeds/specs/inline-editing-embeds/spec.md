@@ -30,6 +30,10 @@
 - **WHEN** 一个 `![[...]]` 嵌入出现在另一个 inline edit editor 的 DOM 容器内部
 - **THEN** 插件 MUST 跳过该嵌入的 inline edit（避免 editor-in-editor）
 
+#### Scenario: Hotkeys/commands target the focused embed editor
+- **WHEN** 焦点位于某个 inline edit 的嵌入 editor 内，且用户触发一个 editor command/hotkey（含用户自定义热键）
+- **THEN** 该命令 MUST 作用于该嵌入 editor（而不是宿主笔记的 editor）
+
 #### Scenario: Reading mode is never editable
 - **WHEN** 用于展示嵌入的视图处于 Reading/preview mode
 - **THEN** 插件 MUST NOT 创建/挂载任何嵌入 editor leaf；嵌入只能只读展示
