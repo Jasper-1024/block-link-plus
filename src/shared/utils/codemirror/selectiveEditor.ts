@@ -31,25 +31,28 @@ export const hideLine = StateField.define<DecorationSet>({
   },
   update(value, tr) {
     const builder = new RangeSetBuilder<Decoration>();
-    const betterFacet = combinedRangeFacets(tr.state.field(selectiveLinesFacet, false), tr.state.field(frontmatterFacet, false));
-    if (betterFacet?.[0] != null) {
-      const starterLine = Math.min(
-        tr.state.doc.lines,
-        betterFacet[0]
-      );
-      builder.add(
-        tr.state.doc.line(1).from,
-        tr.state.doc.line(starterLine).from-1,
-        hiddenLine
-      );
-      if (tr.newDoc.lines != betterFacet[1])
-      builder.add(
-        tr.state.doc.line(
-          Math.min(tr.newDoc.lines, betterFacet[1])
-        ).to,
-        tr.state.doc.line(tr.newDoc.lines).to,
-        hiddenLine
-      );
+
+    const editableLines = tr.state.field(selectiveLinesFacet, false);
+    const contentLines = tr.state.field(frontmatterFacet, false);
+    const visibleLines = contentLines?.[0] ? contentLines : editableLines;
+
+    if (visibleLines?.[0] != null && visibleLines?.[1] != null) {
+      const startLine = Math.min(tr.state.doc.lines, visibleLines[0]);
+      const endLine = Math.min(tr.state.doc.lines, visibleLines[1]);
+      if (startLine > 1) {
+        const hideBeforeTo = tr.state.doc.line(startLine).from - 1;
+        if (hideBeforeTo >= tr.state.doc.line(1).from) {
+          builder.add(tr.state.doc.line(1).from, hideBeforeTo, hiddenLine);
+        }
+      }
+
+      if (endLine < tr.state.doc.lines) {
+        builder.add(
+          tr.state.doc.line(endLine).to,
+          tr.state.doc.line(tr.state.doc.lines).to,
+          hiddenLine
+        );
+      }
     }
     const dec = builder.finish();
     return dec;

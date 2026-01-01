@@ -1,6 +1,6 @@
 import type BlockLinkPlus from "../../main";
 import { MarkdownPostProcessorContext, MarkdownView, TFile, editorLivePreviewField } from "obsidian";
-import { editableRange } from "shared/utils/codemirror/selectiveEditor";
+import { contentRange, editableRange } from "shared/utils/codemirror/selectiveEditor";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
 import { EmbedLeafManager } from "./EmbedLeafManager";
 import { FocusTracker } from "./FocusTracker";
@@ -17,6 +17,14 @@ type LivePreviewObserverEntry = {
 	scheduled: number | null;
 	processing: boolean;
 	createdAt: number;
+};
+
+type ParsedInlineEmbed = {
+	kind: "block" | "heading";
+	file: TFile;
+	subpath: string;
+	visibleRange: [number, number];
+	editableRange: [number, number];
 };
 
 export class InlineEditEngine {
@@ -43,7 +51,7 @@ export class InlineEditEngine {
 		this.plugin.registerEvent(
 			this.plugin.app.workspace.on("layout-change", () => {
 				if (!this.loaded) return;
-				if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) {
+				if (!this.isInlineEditActive()) {
 					this.disconnectAllObservers();
 					this.leaves.cleanup();
 					return;
@@ -58,14 +66,14 @@ export class InlineEditEngine {
 
 		this.plugin.app.workspace.onLayoutReady(() => {
 			if (!this.loaded) return;
-			if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+			if (!this.isInlineEditActive()) return;
 			this.refreshLivePreviewObservers(true);
 		});
 
 		this.plugin.registerEvent(
 			this.plugin.app.metadataCache.on("resolved", () => {
 				if (!this.loaded) return;
-				if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+				if (!this.isInlineEditActive()) return;
 				if (this.didInitialMetadataResolve) return;
 				this.didInitialMetadataResolve = true;
 				this.refreshLivePreviewObservers(true);
@@ -74,7 +82,7 @@ export class InlineEditEngine {
 
 		window.setTimeout(() => {
 			if (!this.loaded) return;
-			if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+			if (!this.isInlineEditActive()) return;
 			this.refreshLivePreviewObservers();
 		}, 0);
 	}
@@ -112,11 +120,15 @@ export class InlineEditEngine {
 		this.debugLog(key, data ?? embedEl.getAttribute("src"));
 	}
 
+	private isInlineEditActive(): boolean {
+		const { inlineEditEnabled, inlineEditFile, inlineEditHeading, inlineEditBlock } = this.plugin.settings;
+		return inlineEditEnabled && (inlineEditFile || inlineEditHeading || inlineEditBlock);
+	}
+
 	onSettingsChanged(): void {
 		if (!this.loaded) return;
 
-		const { inlineEditEnabled, inlineEditBlock } = this.plugin.settings;
-		if (!inlineEditEnabled || !inlineEditBlock) {
+		if (!this.isInlineEditActive()) {
 			this.disconnectAllObservers();
 			this.leaves.cleanup();
 			return;
@@ -210,7 +222,7 @@ export class InlineEditEngine {
 			}
 		}
 
-		if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) return;
+		if (!this.isInlineEditActive()) return;
 
 		const leaves = this.plugin.app.workspace.getLeavesOfType("markdown");
 		for (const leaf of leaves) {
@@ -296,7 +308,7 @@ export class InlineEditEngine {
 		entry.processing = true;
 
 		try {
-			if (!this.plugin.settings.inlineEditEnabled || !this.plugin.settings.inlineEditBlock) {
+			if (!this.isInlineEditActive()) {
 				entry.pendingEmbeds.clear();
 				return;
 			}
@@ -320,7 +332,7 @@ export class InlineEditEngine {
 			entry.pendingEmbeds.clear();
 
 			for (const embedEl of embeds) {
-				await this.processBlockIdEmbed(embedEl, ctx, view);
+				await this.processInlineEmbed(embedEl, ctx, view);
 			}
 
 			this.cleanupHiddenEmbeds();
@@ -413,6 +425,68 @@ export class InlineEditEngine {
 		return { file, subpath, range: [start, end] };
 	}
 
+	private parseHeadingEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
+		const embedLink = this.getInternalEmbedLink(embedEl);
+		if (!embedLink) return null;
+
+		const pipeIndex = embedLink.indexOf("|");
+		const actualLink = pipeIndex === -1 ? embedLink : embedLink.substring(0, pipeIndex);
+
+		const hashIndex = actualLink.indexOf("#");
+		if (hashIndex === -1) return null;
+
+		let notePath = actualLink.substring(0, hashIndex).trim();
+		const ref = actualLink.substring(hashIndex + 1).trim();
+
+		if (!ref) return null;
+		if (ref.startsWith("^")) return null;
+
+		if (!notePath) {
+			notePath = ctx.sourcePath;
+		}
+
+		const file = this.plugin.app.metadataCache.getFirstLinkpathDest(notePath, ctx.sourcePath);
+		if (!file) return null;
+
+		const subpath = `#${ref}`;
+		const [start, end] = getLineRangeFromRef(file.path, subpath, this.plugin.app);
+		if (!start || !end) return null;
+
+		const editableStart = start + 1;
+		if (editableStart > end) return null;
+
+		return {
+			kind: "heading",
+			file,
+			subpath,
+			visibleRange: [start, end],
+			editableRange: [editableStart, end],
+		};
+	}
+
+	private parseInlineEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
+		if (!this.plugin.settings.inlineEditEnabled) return null;
+
+		if (this.plugin.settings.inlineEditBlock) {
+			const parsedBlock = this.parseBlockIdEmbed(embedEl, ctx);
+			if (parsedBlock) {
+				return {
+					kind: "block",
+					file: parsedBlock.file,
+					subpath: parsedBlock.subpath,
+					visibleRange: parsedBlock.range,
+					editableRange: parsedBlock.range,
+				};
+			}
+		}
+
+		if (this.plugin.settings.inlineEditHeading) {
+			return this.parseHeadingEmbed(embedEl, ctx);
+		}
+
+		return null;
+	}
+
 	private prepareEmbedShell(embedEl: HTMLElement): { hostEl: HTMLElement; cleanup: () => void } {
 		embedEl.addClass(INLINE_EDIT_ACTIVE_CLASS);
 
@@ -486,7 +560,7 @@ export class InlineEditEngine {
 		};
 	}
 
-	private async processBlockIdEmbed(
+	private async processInlineEmbed(
 		embedEl: HTMLElement,
 		ctx: MarkdownPostProcessorContext,
 		hostView?: MarkdownView
@@ -515,7 +589,7 @@ export class InlineEditEngine {
 			return;
 		}
 
-		const parsed = this.parseBlockIdEmbed(embedEl, ctx);
+		const parsed = this.parseInlineEmbed(embedEl, ctx);
 		if (!parsed) {
 			this.debugSkip(embedEl, "skip:parse-failed", {
 				src: embedEl.getAttribute("src"),
@@ -532,9 +606,11 @@ export class InlineEditEngine {
 		try {
 			this.debugLog("mount:start", {
 				src: embedEl.getAttribute("src"),
+				kind: parsed.kind,
 				filePath: parsed.file.path,
 				subpath: parsed.subpath,
-				range: parsed.range,
+				visibleRange: parsed.visibleRange,
+				editableRange: parsed.editableRange,
 			});
 
 			const embed = await this.leaves.createEmbedLeaf({
@@ -606,11 +682,14 @@ export class InlineEditEngine {
 				}
 
 				cm.dispatch({
-					annotations: [editableRange.of(parsed.range)],
+					annotations: [
+						contentRange.of(parsed.visibleRange),
+						editableRange.of(parsed.editableRange),
+					],
 				});
 
 				try {
-					const startLine = Math.max(0, parsed.range[0] - 1);
+					const startLine = Math.max(0, parsed.editableRange[0] - 1);
 					embed.view.editor?.setCursor({ line: startLine, ch: 0 });
 					embed.view.editor?.scrollIntoView({ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } }, true);
 				} catch {

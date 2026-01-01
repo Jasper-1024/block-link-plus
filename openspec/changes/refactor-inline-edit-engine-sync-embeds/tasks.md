@@ -37,8 +37,8 @@
 验收（手动）：Live Preview 下 `![[file#^id]]` 可编辑；控制台无错误。
 
 ### Milestone 4: Live Preview takeover (Heading + line-level read-only)
-- [ ] 4.1 `![[file#Heading]]`：可见范围 `[start,end]`。
-- [ ] 4.2 标题行“可见但只读”：实现“可见范围 vs 可编辑范围”分离（heading 行不可编辑）。
+- [x] 4.1 `![[file#Heading]]`：可见范围 `[start,end]`。
+- [x] 4.2 标题行“可见但只读”：实现“可见范围 vs 可编辑范围”分离（heading 行不可编辑）。
 
 验收（手动）：标题行显示正常但无法改；正文可改。
 
