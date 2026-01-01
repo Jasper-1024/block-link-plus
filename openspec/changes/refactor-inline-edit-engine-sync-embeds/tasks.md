@@ -43,8 +43,8 @@
 验收（手动）：标题行显示正常但无法改；正文可改。
 
 ### Milestone 5: Live Preview takeover (Range `^id-id` + marker read-only)
-- [ ] 5.1 `![[file#^id-id]]`：可见范围 `[start,end]`。
-- [ ] 5.2 marker 行“可见但只读”：末尾 `^id-id` 行不可编辑但仍显示。
+- [x] 5.1 `![[file#^id-id]]`：可见范围 `[start,end]`。
+- [x] 5.2 marker 行“可见但只读”：末尾 `^id-id` 行不可编辑但仍显示。
 
 验收（手动）：marker 行可见但无法编辑；其余行可改。
 

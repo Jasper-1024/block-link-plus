@@ -20,7 +20,7 @@ type LivePreviewObserverEntry = {
 };
 
 type ParsedInlineEmbed = {
-	kind: "block" | "heading";
+	kind: "block" | "heading" | "range";
 	file: TFile;
 	subpath: string;
 	visibleRange: [number, number];
@@ -394,7 +394,7 @@ export class InlineEditEngine {
 	private parseBlockIdEmbed(
 		embedEl: HTMLElement,
 		ctx: MarkdownPostProcessorContext
-	): { file: TFile; subpath: string; range: [number, number] } | null {
+	): { file: TFile; subpath: string; range: [number, number]; isRange: boolean } | null {
 		const embedLink = this.getInternalEmbedLink(embedEl);
 		if (!embedLink) return null;
 
@@ -408,8 +408,8 @@ export class InlineEditEngine {
 		const ref = actualLink.substring(hashIndex + 1).trim();
 
 		if (!ref.startsWith("^")) return null;
-		if (/^\^([a-z0-9]+)-\1$/i.test(ref)) return null;
 		if (!/^\^[a-zA-Z0-9_-]+$/.test(ref)) return null;
+		const isRange = /^\^([a-z0-9]+)-\1$/i.test(ref);
 
 		if (!notePath) {
 			notePath = ctx.sourcePath;
@@ -422,7 +422,7 @@ export class InlineEditEngine {
 		const [start, end] = getLineRangeFromRef(file.path, subpath, this.plugin.app);
 		if (!start || !end) return null;
 
-		return { file, subpath, range: [start, end] };
+		return { file, subpath, range: [start, end], isRange };
 	}
 
 	private parseHeadingEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
@@ -470,12 +470,16 @@ export class InlineEditEngine {
 		if (this.plugin.settings.inlineEditBlock) {
 			const parsedBlock = this.parseBlockIdEmbed(embedEl, ctx);
 			if (parsedBlock) {
+				const [start, end] = parsedBlock.range;
+				const rangeEditable: [number, number] = parsedBlock.isRange ? [start, end - 1] : [start, end];
+				if (rangeEditable[1] < rangeEditable[0]) return null;
+
 				return {
-					kind: "block",
+					kind: parsedBlock.isRange ? "range" : "block",
 					file: parsedBlock.file,
 					subpath: parsedBlock.subpath,
 					visibleRange: parsedBlock.range,
-					editableRange: parsedBlock.range,
+					editableRange: rangeEditable,
 				};
 			}
 		}
