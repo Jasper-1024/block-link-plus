@@ -26,11 +26,11 @@ export class FlowEditorManager {
 	public initialize() {
 		this.enactor.load();
 
-		if (this.plugin.settings.inlineEditEnabled) {
-			this.setupFlowEditor();
-			this.reloadExtensions(true);
-			this.setupMultilineBlockCleanup();
-		}
+		// Always load CM extensions and register multiline block rendering.
+		// `^id-id` is a BLP-extended syntax and MUST render even when inline edit is disabled.
+		this.reloadExtensions(true);
+		this.setupFlowEditor();
+		this.setupMultilineBlockCleanup();
 	}
 
 	private isInlineEditBlockEnabled(): boolean {
@@ -112,12 +112,14 @@ export class FlowEditorManager {
 	}
 
 	private setupFlowEditor(): void {
-		// Patch workspace for flow editing
-		patchWorkspaceForFlow(this.plugin);
-		patchWorkspaceLeafForFlow(this.plugin);
+		if (this.plugin.settings.inlineEditEnabled) {
+			// Patch workspace for flow editing
+			patchWorkspaceForFlow(this.plugin);
+			patchWorkspaceLeafForFlow(this.plugin);
 
-		// Apply CSS classes for flow editing
-		document.body.classList.add("mk-flow-replace");
+			// Apply CSS classes for flow editing
+			document.body.classList.add("mk-flow-replace");
+		}
 
 		// live preview
 		// Register markdown post processor for embedded blocks
