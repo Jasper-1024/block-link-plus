@@ -30,7 +30,6 @@ source_folders:
 heading_level: 4              # 提取的標題層級
 within_days: 30              # 最近30天
 sort_order: desc             # desc/asc
-embed_format: '!![[]]'       # !![[]] 或 ![[]]
 ```
 
 ## 篩選器

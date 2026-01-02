@@ -11,7 +11,6 @@
 ### 命令面板
 - `Copy Block Link` - 常规链接
 - `Copy Block as Embed` - 嵌入链接
-- `Copy Block as Editable Embed` - 可编辑嵌入
 - `Copy Block as Obsidian URI` - URI链接
 
 ## 链接格式
@@ -19,8 +18,8 @@
 | 类型 | 格式 | 用途 |
 |------|------|------|
 | 常规链接 | `[[文件#^abc123]]` | 普通引用 |
-| 嵌入链接 | `![[文件#^abc123]]` | 显示内容 |
-| 可编辑嵌入 | `!![[文件#^abc123]]` | 可编辑显示 |
+| 嵌入链接 | `![[文件#^abc123]]` | 显示内容（Live Preview 可编辑，需开启设置） |
+| 多行范围嵌入 | `![[文件#^abc123-abc123]]` | 显示多行范围内容 |
 | URI链接 | `obsidian://open?vault=...` | 外部访问 |
 
 ## 别名类型

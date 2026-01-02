@@ -15,13 +15,11 @@
 ### 右键菜单
 - **enable_right_click_block** - 启用常规块链接菜单
 - **enable_right_click_embed** - 启用嵌入链接菜单
-- **enable_right_click_editable_embed** - 启用可编辑嵌入菜单
 - **enable_right_click_url** - 启用URI链接菜单
 
 ### 通知设置
 - **enable_block_notification** - 复制块链接时显示通知
 - **enable_embed_notification** - 复制嵌入链接时显示通知
-- **enable_editable_embed_notification** - 复制可编辑嵌入时显示通知
 - **enable_url_notification** - 复制URI时显示通知
 
 ### 别名配置
@@ -50,13 +48,14 @@
 
 - **enableTimeline** - 启用时间线功能
 - **timelineDefaultHeadingLevel** - 默认标题级别 (1-6)
-- **timelineDefaultEmbedFormat** - 默认嵌入格式 ('!![[]]' 或 '![[]]')
 - **timelineDefaultSortOrder** - 默认排序 ('asc' 或 'desc')
 
-## 流式编辑器
+## 内嵌编辑 (Inline Edit)
 
-- **editorFlow** - 启用嵌入块编辑
-- **editorFlowStyle** - 编辑样式 ("minimal" 或 "seamless")
+- **inlineEditEnabled** - 内嵌编辑总开关
+- **inlineEditFile** - 允许 `![[file]]` 在 Live Preview 中可编辑
+- **inlineEditHeading** - 允许 `![[file#Heading]]` 在 Live Preview 中可编辑
+- **inlineEditBlock** - 允许 `![[file#^id]]` / `![[file#^id-id]]` 在 Live Preview 中可编辑
 
 ## 默认值
 
@@ -65,15 +64,30 @@
   "mult_line_handle": 0,
   "alias_type": 0,
   "alias_length": 20,
+  "enable_right_click_block": true,
+  "enable_right_click_embed": true,
+  "enable_right_click_url": false,
   "enable_prefix": false,
   "id_prefix": "",
   "id_length": 4,
+  "heading_id_newline": false,
+  "enable_block_notification": true,
+  "enable_embed_notification": true,
+  "enable_url_notification": true,
   "enable_time_section": true,
+  "enable_time_section_in_menu": false,
   "time_section_format": "HH:mm",
+  "time_section_title_pattern": "\\\\d{1,2}:\\\\d{1,2}",
+  "daily_note_pattern": "\\\\d{4}-\\\\d{1,2}-\\\\d{1,2}",
   "daily_note_heading_level": 2,
+  "insert_heading_level": true,
+  "time_section_plain_style": false,
   "enableTimeline": true,
   "timelineDefaultHeadingLevel": 4,
-  "editorFlow": true,
-  "editorFlowStyle": "minimal"
+  "timelineDefaultSortOrder": "desc",
+  "inlineEditEnabled": true,
+  "inlineEditFile": false,
+  "inlineEditHeading": true,
+  "inlineEditBlock": true
 }
 ```

@@ -14,11 +14,6 @@
 - **功能**: 複製嵌入連結 `![[檔案#^id]]`
 - **快速鍵**: 可在設定中自訂
 
-### Copy Block as Editable Embed
-- **ID**: `copy-editable-embed-to-block`
-- **功能**: 複製可編輯嵌入 `!![[檔案#^id]]`
-- **快速鍵**: 可在設定中自訂
-
 ### Copy Block as Obsidian URI
 - **ID**: `copy-url-to-block`
 - **功能**: 複製 URI 連結用於外部存取

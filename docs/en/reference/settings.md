@@ -15,13 +15,11 @@ Detailed explanation of all configuration options.
 ### Right-click Menu
 - **enable_right_click_block** - Enable regular block link menu
 - **enable_right_click_embed** - Enable embed link menu
-- **enable_right_click_editable_embed** - Enable editable embed menu
 - **enable_right_click_url** - Enable URI link menu
 
 ### Notification Settings
 - **enable_block_notification** - Show notification when copying block links
 - **enable_embed_notification** - Show notification when copying embed links
-- **enable_editable_embed_notification** - Show notification when copying editable embeds
 - **enable_url_notification** - Show notification when copying URIs
 
 ### Alias Configuration
@@ -50,13 +48,14 @@ Detailed explanation of all configuration options.
 
 - **enableTimeline** - Enable timeline functionality
 - **timelineDefaultHeadingLevel** - Default heading level (1-6)
-- **timelineDefaultEmbedFormat** - Default embed format ('!![[]]' or '![[]]')
 - **timelineDefaultSortOrder** - Default sort order ('asc' or 'desc')
 
-## Flow Editor
+## Inline Edit
 
-- **editorFlow** - Enable embedded block editing
-- **editorFlowStyle** - Editing style ("minimal" or "seamless")
+- **inlineEditEnabled** - Global toggle
+- **inlineEditFile** - Allow `![[file]]` to be editable in Live Preview
+- **inlineEditHeading** - Allow `![[file#Heading]]` to be editable in Live Preview
+- **inlineEditBlock** - Allow `![[file#^id]]` / `![[file#^id-id]]` to be editable in Live Preview
 
 ## Default Values
 
@@ -65,15 +64,30 @@ Detailed explanation of all configuration options.
   "mult_line_handle": 0,
   "alias_type": 0,
   "alias_length": 20,
+  "enable_right_click_block": true,
+  "enable_right_click_embed": true,
+  "enable_right_click_url": false,
   "enable_prefix": false,
   "id_prefix": "",
   "id_length": 4,
+  "heading_id_newline": false,
+  "enable_block_notification": true,
+  "enable_embed_notification": true,
+  "enable_url_notification": true,
   "enable_time_section": true,
+  "enable_time_section_in_menu": false,
   "time_section_format": "HH:mm",
+  "time_section_title_pattern": "\\\\d{1,2}:\\\\d{1,2}",
+  "daily_note_pattern": "\\\\d{4}-\\\\d{1,2}-\\\\d{1,2}",
   "daily_note_heading_level": 2,
+  "insert_heading_level": true,
+  "time_section_plain_style": false,
   "enableTimeline": true,
   "timelineDefaultHeadingLevel": 4,
-  "editorFlow": true,
-  "editorFlowStyle": "minimal"
+  "timelineDefaultSortOrder": "desc",
+  "inlineEditEnabled": true,
+  "inlineEditFile": false,
+  "inlineEditHeading": true,
+  "inlineEditBlock": true
 }
 ```

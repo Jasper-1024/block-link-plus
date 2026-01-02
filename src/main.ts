@@ -21,8 +21,6 @@ import { Enactor } from "basics/enactor/enactor";
 
 // 导入所需的 CSS
 import "css/DefaultVibe.css";
-import "css/Editor/Flow/FlowEditor.css";
-import "css/Editor/Flow/FlowState.css";
 import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
 import "css/custom-styles.css";

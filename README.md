@@ -134,8 +134,8 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 | Format | Type | Usage |
 |--------|------|-------|
 | `[[file#^id]]` | Regular | Normal block reference |
-| `![[file#^id]]` | Embed | Display block content |
-| `!![[file#^id]]` | Editable | Inline editing capability |
+| `![[file#^id]]` | Embed | Display block content (editable in Live Preview when enabled) |
+| `![[file#^id-id]]` | Range | Display multi-line range |
 | `obsidian://...` | URI | External app access |
 
 ## 📋 Requirements

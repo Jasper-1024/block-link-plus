@@ -17,6 +17,7 @@ const INLINE_EDIT_ACTIVE_CLASS = "blp-inline-edit-active";
 const INLINE_EDIT_HOST_CLASS = "blp-inline-edit-host";
 const LIVE_PREVIEW_GRACE_MS = 5000;
 const READING_RANGE_ACTIVE_CLASS = "blp-reading-range-active";
+const LIVE_PREVIEW_RANGE_ACTIVE_CLASS = "blp-live-preview-range-active";
 
 type LivePreviewObserverEntry = {
 	view: MarkdownView;
@@ -45,9 +46,12 @@ export class InlineEditEngine {
 	private commandRoutingDepth = 0;
 	private readonly commandRoutingUninstallers: Array<() => void> = [];
 	private readonly readingRangeEmbedsByPath = new Map<string, Set<ReadingRangeEmbedChild>>();
+	private readonly livePreviewRangeEmbedsByPath = new Map<string, Set<LivePreviewRangeEmbedChild>>();
 	private readonly readingRangeDebounceTimers = new Map<string, number>();
 	private readonly readingRangeChildByEmbed = new WeakMap<HTMLElement, ReadingRangeEmbedChild>();
 	private readonly readingRangeChildren = new Set<ReadingRangeEmbedChild>();
+	private readonly livePreviewRangeChildByEmbed = new WeakMap<HTMLElement, LivePreviewRangeEmbedChild>();
+	private readonly livePreviewRangeChildren = new Set<LivePreviewRangeEmbedChild>();
 	private readingRangeObserver: MutationObserver | null = null;
 	private readonly pendingEmbeds = new WeakSet<HTMLElement>();
 	private readonly livePreviewObservers = new Map<MarkdownView, LivePreviewObserverEntry>();
@@ -195,6 +199,7 @@ export class InlineEditEngine {
 
 			for (const embedEl of embeds) {
 				this.ensureReadingRangeEmbedChild(embedEl, ctx.sourcePath, "postprocessor");
+				this.ensureLivePreviewRangeEmbedChild(embedEl, ctx.sourcePath, "postprocessor");
 			}
 		});
 
@@ -238,6 +243,15 @@ export class InlineEditEngine {
 		}
 		this.readingRangeChildren.clear();
 
+		for (const child of Array.from(this.livePreviewRangeChildren)) {
+			try {
+				child.unload();
+			} catch {
+				// ignore
+			}
+		}
+		this.livePreviewRangeChildren.clear();
+
 		for (const timer of this.readingRangeDebounceTimers.values()) {
 			try {
 				window.clearTimeout(timer);
@@ -247,6 +261,7 @@ export class InlineEditEngine {
 		}
 		this.readingRangeDebounceTimers.clear();
 		this.readingRangeEmbedsByPath.clear();
+		this.livePreviewRangeEmbedsByPath.clear();
 	}
 
 	private installReadingRangeObserver(): void {
@@ -292,6 +307,7 @@ export class InlineEditEngine {
 
 		for (const embedEl of embeds) {
 			this.ensureReadingRangeEmbedChild(embedEl, sourcePath, origin);
+			this.ensureLivePreviewRangeEmbedChild(embedEl, sourcePath, origin);
 		}
 	}
 
@@ -305,17 +321,30 @@ export class InlineEditEngine {
 			: Array.from(node.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed"));
 
 		for (const embedEl of embeds) {
-			const child = this.readingRangeChildByEmbed.get(embedEl);
-			if (!child) continue;
+			const readingChild = this.readingRangeChildByEmbed.get(embedEl);
+			if (readingChild) {
+				this.debugLog("reading:unload", embedEl.getAttribute("src"));
+				try {
+					readingChild.unload();
+				} catch {
+					// ignore
+				} finally {
+					this.readingRangeChildByEmbed.delete(embedEl);
+					this.readingRangeChildren.delete(readingChild);
+				}
+			}
 
-			this.debugLog("reading:unload", embedEl.getAttribute("src"));
-			try {
-				child.unload();
-			} catch {
-				// ignore
-			} finally {
-				this.readingRangeChildByEmbed.delete(embedEl);
-				this.readingRangeChildren.delete(child);
+			const liveChild = this.livePreviewRangeChildByEmbed.get(embedEl);
+			if (liveChild) {
+				this.debugLog("live-preview:unload", embedEl.getAttribute("src"));
+				try {
+					liveChild.unload();
+				} catch {
+					// ignore
+				} finally {
+					this.livePreviewRangeChildByEmbed.delete(embedEl);
+					this.livePreviewRangeChildren.delete(liveChild);
+				}
 			}
 		}
 	}
@@ -384,8 +413,8 @@ export class InlineEditEngine {
 			embedEl,
 			file: parsed.file,
 			subpath: parsed.subpath,
-			register: this.registerReadingRangeEmbed.bind(this),
-			unregister: this.unregisterReadingRangeEmbed.bind(this),
+			registerEmbed: this.registerReadingRangeEmbed.bind(this),
+			unregisterEmbed: this.unregisterReadingRangeEmbed.bind(this),
 		});
 
 		this.readingRangeChildByEmbed.set(embedEl, child);
@@ -393,6 +422,66 @@ export class InlineEditEngine {
 		child.register(() => {
 			this.readingRangeChildren.delete(child);
 			this.readingRangeChildByEmbed.delete(embedEl);
+		});
+
+		child.load();
+	}
+
+	private ensureLivePreviewRangeEmbedChild(embedEl: HTMLElement, sourcePath: string | null, origin: string): void {
+		if (this.livePreviewRangeChildByEmbed.has(embedEl)) return;
+		if (!embedEl.isConnected) return;
+		if (!embedEl.closest(".markdown-source-view")) {
+			this.debugSkip(embedEl, "live-preview:skip:not-source-view", { origin });
+			return;
+		}
+		if (this.leaves.isNestedWithinEmbed(embedEl)) {
+			this.debugSkip(embedEl, "live-preview:skip:nested", { origin });
+			return;
+		}
+		if (embedEl.classList.contains(LIVE_PREVIEW_RANGE_ACTIVE_CLASS)) return;
+		if (embedEl.classList.contains(INLINE_EDIT_ACTIVE_CLASS)) return;
+
+		const resolvedSourcePath =
+			sourcePath ?? this.getSourcePathForEmbedElement(embedEl) ?? this.plugin.app.workspace.getActiveFile()?.path ?? "";
+
+		const parsed = this.parseRangeEmbedForReading(embedEl, resolvedSourcePath);
+		if (!parsed) {
+			const src = embedEl.getAttribute("src") ?? "";
+			const alt = embedEl.getAttribute("alt") ?? "";
+			if (/#\^([a-z0-9_]+)-\1$/i.test(src.split("|")[0]) || /\^([a-z0-9_]+)-\1$/i.test(alt)) {
+				this.debugSkip(embedEl, "live-preview:skip:parse-failed", {
+					origin,
+					src,
+					alt,
+					sourcePath: resolvedSourcePath,
+				});
+			}
+			return;
+		}
+
+		this.debugLog("live-preview:attach", {
+			origin,
+			src: embedEl.getAttribute("src"),
+			alt: embedEl.getAttribute("alt"),
+			sourcePath: resolvedSourcePath,
+			file: parsed.file.path,
+			subpath: parsed.subpath,
+		});
+
+		const child = new LivePreviewRangeEmbedChild({
+			plugin: this.plugin,
+			embedEl,
+			file: parsed.file,
+			subpath: parsed.subpath,
+			registerEmbed: this.registerLivePreviewRangeEmbed.bind(this),
+			unregisterEmbed: this.unregisterLivePreviewRangeEmbed.bind(this),
+		});
+
+		this.livePreviewRangeChildByEmbed.set(embedEl, child);
+		this.livePreviewRangeChildren.add(child);
+		child.register(() => {
+			this.livePreviewRangeChildren.delete(child);
+			this.livePreviewRangeChildByEmbed.delete(embedEl);
 		});
 
 		child.load();
@@ -415,6 +504,37 @@ export class InlineEditEngine {
 		if (set.size > 0) return;
 
 		this.readingRangeEmbedsByPath.delete(filePath);
+		if (this.livePreviewRangeEmbedsByPath.has(filePath)) return;
+		const timer = this.readingRangeDebounceTimers.get(filePath);
+		if (timer !== undefined) {
+			try {
+				window.clearTimeout(timer);
+			} catch {
+				// ignore
+			}
+			this.readingRangeDebounceTimers.delete(filePath);
+		}
+	}
+
+	private registerLivePreviewRangeEmbed(filePath: string, child: LivePreviewRangeEmbedChild): void {
+		let set = this.livePreviewRangeEmbedsByPath.get(filePath);
+		if (!set) {
+			set = new Set();
+			this.livePreviewRangeEmbedsByPath.set(filePath, set);
+		}
+		set.add(child);
+	}
+
+	private unregisterLivePreviewRangeEmbed(filePath: string, child: LivePreviewRangeEmbedChild): void {
+		const set = this.livePreviewRangeEmbedsByPath.get(filePath);
+		if (!set) return;
+
+		set.delete(child);
+		if (set.size > 0) return;
+
+		this.livePreviewRangeEmbedsByPath.delete(filePath);
+		if (this.readingRangeEmbedsByPath.has(filePath)) return;
+
 		const timer = this.readingRangeDebounceTimers.get(filePath);
 		if (timer !== undefined) {
 			try {
@@ -427,7 +547,7 @@ export class InlineEditEngine {
 	}
 
 	private scheduleReadingRangeRefresh(filePath: string, delayMs = 200): void {
-		if (!this.readingRangeEmbedsByPath.has(filePath)) return;
+		if (!this.readingRangeEmbedsByPath.has(filePath) && !this.livePreviewRangeEmbedsByPath.has(filePath)) return;
 
 		const existing = this.readingRangeDebounceTimers.get(filePath);
 		if (existing !== undefined) {
@@ -440,10 +560,19 @@ export class InlineEditEngine {
 
 		const timer = window.setTimeout(() => {
 			this.readingRangeDebounceTimers.delete(filePath);
-			const embeds = this.readingRangeEmbedsByPath.get(filePath);
-			if (!embeds) return;
-			for (const child of Array.from(embeds)) {
-				void child.render();
+
+			const readingEmbeds = this.readingRangeEmbedsByPath.get(filePath);
+			if (readingEmbeds) {
+				for (const child of Array.from(readingEmbeds)) {
+					void child.render();
+				}
+			}
+
+			const livePreviewEmbeds = this.livePreviewRangeEmbedsByPath.get(filePath);
+			if (livePreviewEmbeds) {
+				for (const child of Array.from(livePreviewEmbeds)) {
+					void child.render();
+				}
 			}
 		}, delayMs);
 
@@ -1364,13 +1493,251 @@ export class InlineEditEngine {
 	}
 }
 
+type LivePreviewRangeEmbedChildArgs = {
+	plugin: BlockLinkPlus;
+	embedEl: HTMLElement;
+	file: TFile;
+	subpath: string;
+	registerEmbed: (filePath: string, child: LivePreviewRangeEmbedChild) => void;
+	unregisterEmbed: (filePath: string, child: LivePreviewRangeEmbedChild) => void;
+};
+
+class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
+	private readonly plugin: BlockLinkPlus;
+	private readonly embedEl: HTMLElement;
+	private readonly file: TFile;
+	private readonly subpath: string;
+	private readonly registerEmbed: (filePath: string, child: LivePreviewRangeEmbedChild) => void;
+	private readonly unregisterEmbed: (filePath: string, child: LivePreviewRangeEmbedChild) => void;
+	private renderSeq = 0;
+	private mounted = false;
+	private activated = false;
+	private renderChild: MarkdownRenderChild | null = null;
+	private retryTimer: number | null = null;
+	private retryCount = 0;
+
+	constructor(args: LivePreviewRangeEmbedChildArgs) {
+		super(args.embedEl);
+		this.plugin = args.plugin;
+		this.embedEl = args.embedEl;
+		this.file = args.file;
+		this.subpath = args.subpath;
+		this.registerEmbed = args.registerEmbed;
+		this.unregisterEmbed = args.unregisterEmbed;
+	}
+
+	onload(): void {
+		this.mounted = true;
+		void this.render();
+	}
+
+	onunload(): void {
+		this.mounted = false;
+		if (this.retryTimer !== null) {
+			try {
+				window.clearTimeout(this.retryTimer);
+			} catch {
+				// ignore
+			}
+			this.retryTimer = null;
+		}
+
+		if (this.activated) {
+			try {
+				this.embedEl.classList.remove(LIVE_PREVIEW_RANGE_ACTIVE_CLASS);
+			} catch {
+				// ignore
+			}
+			try {
+				this.unregisterEmbed(this.file.path, this);
+			} catch {
+				// ignore
+			}
+		}
+
+		try {
+			this.renderChild?.unload();
+		} catch {
+			// ignore
+		}
+		this.renderChild = null;
+	}
+
+	private scheduleRetry(delayMs: number): void {
+		if (!this.mounted) return;
+		if (this.retryTimer !== null) return;
+		if (this.retryCount >= 60) return;
+
+		this.retryCount += 1;
+		this.retryTimer = window.setTimeout(() => {
+			this.retryTimer = null;
+			void this.render();
+		}, delayMs);
+	}
+
+	private cleanupLegacyMultilineShell(): void {
+		try {
+			this.embedEl.querySelector(".mk-multiline-react-container")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-multiline-jump-link")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-multiline-external-edit")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.querySelector(".mk-floweditor")?.remove();
+		} catch {
+			// ignore
+		}
+
+		try {
+			this.embedEl.classList.remove("mk-multiline-block");
+			this.embedEl.classList.remove("mk-multiline-readonly");
+		} catch {
+			// ignore
+		}
+
+		const nativeContent = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+
+		const nativeLink = this.embedEl.querySelector<HTMLElement>(".markdown-embed-link");
+		if (nativeLink) {
+			try {
+				nativeLink.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	async render(): Promise<void> {
+		if (!this.mounted) return;
+		if (!this.embedEl.isConnected) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		// Live Preview (source mode) only.
+		if (!this.embedEl.closest(".markdown-source-view")) {
+			return;
+		}
+
+		// Avoid clobbering an active inline-edit takeover (host + embedded MarkdownView live here).
+		if (
+			this.embedEl.classList.contains(INLINE_EDIT_ACTIVE_CLASS) ||
+			this.embedEl.querySelector(`.${INLINE_EDIT_HOST_CLASS}`) ||
+			this.embedEl.querySelector(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)
+		) {
+			return;
+		}
+
+		if (!this.activated) {
+			this.activated = true;
+			try {
+				this.embedEl.classList.add(LIVE_PREVIEW_RANGE_ACTIVE_CLASS);
+			} catch {
+				// ignore
+			}
+			this.cleanupLegacyMultilineShell();
+			this.registerEmbed(this.file.path, this);
+		}
+
+		if (!this.embedEl.classList.contains("is-loaded")) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const currentSeq = (this.renderSeq += 1);
+
+		const contentEl = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (!contentEl) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const [start, end] = getLineRangeFromRef(this.file.path, this.subpath, this.plugin.app);
+		if (!start || !end) {
+			this.scheduleRetry(100);
+			return;
+		}
+
+		let raw = "";
+		try {
+			raw = await this.plugin.app.vault.cachedRead(this.file);
+		} catch {
+			this.scheduleRetry(200);
+			return;
+		}
+
+		if (!this.mounted) return;
+		if (currentSeq !== this.renderSeq) return;
+		if (
+			this.embedEl.classList.contains(INLINE_EDIT_ACTIVE_CLASS) ||
+			this.embedEl.querySelector(`.${INLINE_EDIT_HOST_CLASS}`) ||
+			this.embedEl.querySelector(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)
+		) {
+			return;
+		}
+
+		const lines = raw.split(/\r?\n/);
+		const clamp = (line: number) => Math.min(Math.max(1, line), Math.max(1, lines.length));
+		const from = clamp(Math.min(start, end));
+		const to = clamp(Math.max(start, end));
+		const fragment = lines.slice(from - 1, to).join("\n");
+
+		try {
+			this.renderChild?.unload();
+		} catch {
+			// ignore
+		}
+		this.renderChild = null;
+
+		try {
+			contentEl.empty();
+		} catch {
+			// ignore
+		}
+
+		const previewView = contentEl.createDiv({ cls: "markdown-preview-view markdown-rendered" });
+		const previewSizer = previewView.createDiv({ cls: "markdown-preview-sizer markdown-preview-section" });
+
+		const renderChild = new MarkdownRenderChild(previewSizer);
+		this.addChild(renderChild);
+		renderChild.load();
+		this.renderChild = renderChild;
+		this.retryCount = 0;
+
+		try {
+			await MarkdownRenderer.renderMarkdown(fragment, previewSizer, this.file.path, renderChild);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to render live preview range embed", error);
+		}
+	}
+}
+
 type ReadingRangeEmbedChildArgs = {
 	plugin: BlockLinkPlus;
 	embedEl: HTMLElement;
 	file: TFile;
 	subpath: string;
-	register: (filePath: string, child: ReadingRangeEmbedChild) => void;
-	unregister: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	registerEmbed: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	unregisterEmbed: (filePath: string, child: ReadingRangeEmbedChild) => void;
 };
 
 class ReadingRangeEmbedChild extends MarkdownRenderChild {
@@ -1378,8 +1745,8 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 	private readonly embedEl: HTMLElement;
 	private readonly file: TFile;
 	private readonly subpath: string;
-	private readonly register: (filePath: string, child: ReadingRangeEmbedChild) => void;
-	private readonly unregister: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	private readonly registerEmbed: (filePath: string, child: ReadingRangeEmbedChild) => void;
+	private readonly unregisterEmbed: (filePath: string, child: ReadingRangeEmbedChild) => void;
 	private renderSeq = 0;
 	private mounted = false;
 	private activated = false;
@@ -1393,8 +1760,8 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 		this.embedEl = args.embedEl;
 		this.file = args.file;
 		this.subpath = args.subpath;
-		this.register = args.register;
-		this.unregister = args.unregister;
+		this.registerEmbed = args.registerEmbed;
+		this.unregisterEmbed = args.unregisterEmbed;
 	}
 
 	onload(): void {
@@ -1420,7 +1787,7 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 				// ignore
 			}
 			try {
-				this.unregister(this.file.path, this);
+				this.unregisterEmbed(this.file.path, this);
 			} catch {
 				// ignore
 			}
@@ -1516,7 +1883,7 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 				// ignore
 			}
 			this.cleanupLegacyMultilineShell();
-			this.register(this.file.path, this);
+			this.registerEmbed(this.file.path, this);
 		}
 
 		if (!this.embedEl.classList.contains("is-loaded")) {

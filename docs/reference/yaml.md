@@ -14,7 +14,6 @@ source_folders:
 heading_level: 4
 within_days: 30
 sort_order: desc
-embed_format: '!![[]]'
 time_pattern: '(\\d{2}:\\d{2})'
 debug: false
 
@@ -52,12 +51,6 @@ within_days: 30   # 最近30天的文件
 **sort_order** (asc/desc)
 ```yaml
 sort_order: desc  # 最新的在前
-```
-
-**embed_format** (!![[]] 或 ![[]])
-```yaml
-embed_format: '!![[]]'  # 可编辑嵌入
-embed_format: '![[]]'   # 普通嵌入
 ```
 
 ### 时间匹配
@@ -149,7 +142,6 @@ source_folders:
 within_days: 30
 heading_level: 4
 time_pattern: '(\\d{2}:\\d{2})'
-embed_format: '!![[]]'
 sort_order: desc
 
 filters:

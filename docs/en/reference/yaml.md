@@ -14,7 +14,6 @@ source_folders:
 heading_level: 4
 within_days: 30
 sort_order: desc
-embed_format: '!![[]]'
 time_pattern: '(\\d{2}:\\d{2})'
 debug: false
 
@@ -52,12 +51,6 @@ within_days: 30   # Files from last 30 days
 **sort_order** (asc/desc)
 ```yaml
 sort_order: desc  # Newest first
-```
-
-**embed_format** (!![[]] or ![[]])
-```yaml
-embed_format: '!![[]]'  # Editable embed
-embed_format: '![[]]'   # Regular embed
 ```
 
 ### Time Matching
@@ -149,7 +142,6 @@ source_folders:
 within_days: 30
 heading_level: 4
 time_pattern: '(\\d{2}:\\d{2})'
-embed_format: '!![[]]'
 sort_order: desc
 
 filters:

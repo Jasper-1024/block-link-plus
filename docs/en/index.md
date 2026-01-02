@@ -19,8 +19,8 @@ Obsidian block link enhancement plugin designed to improve note reference effici
 ## Link Types
 
 - `[[file#^abc123]]` - Regular block reference
-- `![[file#^abc123]]` - Embedded block
-- `!![[file#^abc123]]` - Editable embedded block
+- `![[file#^abc123]]` - Embedded block (editable in Live Preview when enabled)
+- `![[file#^abc123-abc123]]` - Embedded range (multi-line)
 - `obsidian://open?vault=...` - URI link
 
 ## Acknowledgments

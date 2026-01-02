@@ -11,7 +11,6 @@ Convert text into referenceable blocks supporting four link formats.
 ### Command Palette
 - `Copy Block Link` - Regular link
 - `Copy Block as Embed` - Embed link  
-- `Copy Block as Editable Embed` - Editable embed
 - `Copy Block as Obsidian URI` - URI link
 
 ## Link Formats
@@ -19,8 +18,8 @@ Convert text into referenceable blocks supporting four link formats.
 | Type | Format | Purpose |
 |------|--------|---------|
 | Regular Link | `[[file#^abc123]]` | Normal reference |
-| Embed Link | `![[file#^abc123]]` | Display content |
-| Editable Embed | `!![[file#^abc123]]` | Editable display |
+| Embed Link | `![[file#^abc123]]` | Display content (editable in Live Preview when enabled) |
+| Range Embed | `![[file#^abc123-abc123]]` | Display multi-line range |
 | URI Link | `obsidian://open?vault=...` | External access |
 
 ## Alias Types

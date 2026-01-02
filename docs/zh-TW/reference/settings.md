@@ -15,13 +15,11 @@
 ### 右鍵選單
 - **enable_right_click_block** - 啟用常規塊連結選單
 - **enable_right_click_embed** - 啟用嵌入連結選單
-- **enable_right_click_editable_embed** - 啟用可編輯嵌入選單
 - **enable_right_click_url** - 啟用 URI 連結選單
 
 ### 通知設定
 - **enable_block_notification** - 複製塊連結時顯示通知
 - **enable_embed_notification** - 複製嵌入連結時顯示通知
-- **enable_editable_embed_notification** - 複製可編輯嵌入時顯示通知
 - **enable_url_notification** - 複製 URI 時顯示通知
 
 ### 別名設定
@@ -50,13 +48,14 @@
 
 - **enableTimeline** - 啟用時間線功能
 - **timelineDefaultHeadingLevel** - 預設標題層級 (1-6)
-- **timelineDefaultEmbedFormat** - 預設嵌入格式 ('!![[]]' 或 '![[]]')
 - **timelineDefaultSortOrder** - 預設排序 ('asc' 或 'desc')
 
-## 流式編輯器
+## 內嵌編輯 (Inline Edit)
 
-- **editorFlow** - 啟用嵌入塊編輯
-- **editorFlowStyle** - 編輯樣式 ("minimal" 或 "seamless")
+- **inlineEditEnabled** - 內嵌編輯總開關
+- **inlineEditFile** - 允許 `![[file]]` 在 Live Preview 中可編輯
+- **inlineEditHeading** - 允許 `![[file#Heading]]` 在 Live Preview 中可編輯
+- **inlineEditBlock** - 允許 `![[file#^id]]` / `![[file#^id-id]]` 在 Live Preview 中可編輯
 
 ## 預設值
 
@@ -65,15 +64,30 @@
   "mult_line_handle": 0,
   "alias_type": 0,
   "alias_length": 20,
+  "enable_right_click_block": true,
+  "enable_right_click_embed": true,
+  "enable_right_click_url": false,
   "enable_prefix": false,
   "id_prefix": "",
   "id_length": 4,
+  "heading_id_newline": false,
+  "enable_block_notification": true,
+  "enable_embed_notification": true,
+  "enable_url_notification": true,
   "enable_time_section": true,
+  "enable_time_section_in_menu": false,
   "time_section_format": "HH:mm",
+  "time_section_title_pattern": "\\\\d{1,2}:\\\\d{1,2}",
+  "daily_note_pattern": "\\\\d{4}-\\\\d{1,2}-\\\\d{1,2}",
   "daily_note_heading_level": 2,
+  "insert_heading_level": true,
+  "time_section_plain_style": false,
   "enableTimeline": true,
   "timelineDefaultHeadingLevel": 4,
-  "editorFlow": true,
-  "editorFlowStyle": "minimal"
+  "timelineDefaultSortOrder": "desc",
+  "inlineEditEnabled": true,
+  "inlineEditFile": false,
+  "inlineEditHeading": true,
+  "inlineEditBlock": true
 }
 ```

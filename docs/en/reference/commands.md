@@ -14,11 +14,6 @@ All available commands and their purposes.
 - **Function**: Copy embed link `![[file#^id]]`
 - **Hotkey**: Customizable in settings
 
-### Copy Block as Editable Embed
-- **ID**: `copy-editable-embed-to-block`
-- **Function**: Copy editable embed `!![[file#^id]]`
-- **Hotkey**: Customizable in settings
-
 ### Copy Block as Obsidian URI
 - **ID**: `copy-url-to-block`
 - **Function**: Copy URI link for external access

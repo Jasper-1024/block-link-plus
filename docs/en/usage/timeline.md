@@ -30,7 +30,6 @@ source_folders:
 heading_level: 4              # Heading level to extract
 within_days: 30              # Last 30 days only
 sort_order: desc             # desc/asc
-embed_format: '!![[]]'       # !![[]] or ![[]]
 ```
 
 ## Filters

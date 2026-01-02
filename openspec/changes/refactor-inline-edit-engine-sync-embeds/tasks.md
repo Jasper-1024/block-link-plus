@@ -56,15 +56,15 @@
 验收（手动）：在 embed editor 内，常用快捷键与用户自定义热键作用于 embed。
 
 ### Milestone 7: Reading mode (Range-only readonly rendering)
-- [ ] 7.1 Reading 永不创建 editor leaf。
-- [ ] 7.2 仅 `^id-id`：抽取片段走 preview 渲染管线渲染到原生 embed shell。
-- [ ] 7.3 增量刷新：按源文件路径索引 + debounce（监听 Vault/MetadataCache 信号）。
+- [x] 7.1 Reading 永不创建 editor leaf。
+- [x] 7.2 仅 `^id-id`：抽取片段走 preview 渲染管线渲染到原生 embed shell。
+- [x] 7.3 增量刷新：按源文件路径索引 + debounce（监听 Vault/MetadataCache 信号）。
 
 验收（手动）：Reading 下 `^id-id` 正确显示范围并随源文件更新；其它 embed 不被接管。
 
 ### Milestone 8: Final switch & cleanup
-- [ ] 8.1 移除旧 FlowEditor/Basics 接入与相关 CSS/patch。
-- [ ] 8.2 全仓清理 `!!`：代码/设置/i18n/docs/tests/Timeline YAML 文档。
+- [x] 8.1 移除旧 FlowEditor/Basics 接入与相关 CSS/patch。
+- [x] 8.2 全仓清理 `!!`：代码/设置/i18n/docs/tests/Timeline YAML 文档。
 - [ ] 8.3 回归：Live Preview/Reading、多种引用、无控制台错误。
 
-验收（手动）：仓库与文档中不再出现 `!![[`；功能按新设置模型运行。
+验收（手动）：用户文档（README、docs/）中不再出现 `!![[`；功能按新设置模型运行。
