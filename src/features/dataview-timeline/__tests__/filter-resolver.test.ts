@@ -17,6 +17,8 @@ describe('filter-resolver', () => {
     mockDataviewApi = new DataviewApi();
     mockCurrentFile = new TFile();
     mockCurrentFile.path = '/test/current-file.md';
+    mockCurrentFile.basename = 'current-file';
+    mockCurrentFile.name = 'current-file.md';
     
     // 模拟 dataviewApi.page 方法
     mockDataviewApi._addPage({
@@ -41,6 +43,9 @@ describe('filter-resolver', () => {
           const file = new TFile();
           file.path = '/test/existing-file.md';
           return file;
+        }
+        if (linkpath === 'current-file') {
+          return mockCurrentFile;
         }
         return null;
       }

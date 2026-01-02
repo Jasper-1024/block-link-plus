@@ -8,9 +8,9 @@ describe('region-parser', () => {
     test('应该找到完整的区域', () => {
       const content = `
 前面的内容
-<!-- blp-timeline-start -->
+${REGION_START_MARKER_PREFIX} %%
 区域内容
-<!-- blp-timeline-end -->
+${REGION_END_MARKER}
 后面的内容
       `.trim();
       
@@ -37,7 +37,7 @@ describe('region-parser', () => {
     test('当只有开始标记时应该返回 null', () => {
       const content = `
 前面的内容
-<!-- blp-timeline-start -->
+${REGION_START_MARKER_PREFIX} %%
 区域内容但没有结束标记
       `.trim();
       
@@ -50,7 +50,7 @@ describe('region-parser', () => {
       const content = `
 前面的内容
 区域内容但没有开始标记
-<!-- blp-timeline-end -->
+${REGION_END_MARKER}
       `.trim();
       
       const result = findDynamicRegion(content, 0);
