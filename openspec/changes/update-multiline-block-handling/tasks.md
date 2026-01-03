@@ -26,7 +26,8 @@
 - [x] 3.3 Fix end marker insertion so `^id-id` is always on its own line and does not prefix following content
 
 ## 4. Investigate/fix #29 (Android: note becomes blank on scroll)
-- [ ] 4.1 Audit reading-mode post processors for destructive mutations
-- [ ] 4.2 Add guards/fallback so preview rendering fails open (native content remains visible)
-- [ ] 4.3 Fix React root lifecycle for multiline embeds to avoid leaks across re-renders
-- [ ] 4.4 Manual verification on Android (or document constraints if not reproducible)
+- [x] 4.1 Audit reading-mode post processors for destructive mutations
+- [x] 4.2 Fix `markdownPostProcessor` so it does not wipe rendered text (prevents "blank note" on re-render/scroll)
+- [ ] 4.3 Add guards/fallback so preview rendering fails open (native content remains visible)
+- [ ] 4.4 Fix range embed lifecycle for multiline embeds across re-renders/scroll
+- [ ] 4.5 Manual verification on Android (or document constraints if not reproducible)
