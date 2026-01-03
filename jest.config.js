@@ -4,9 +4,9 @@ module.exports = {
   testEnvironment: 'jsdom',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    // 处理 CSS 导入
+    // 憭? CSS 撖澆
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    // 路径别名映射，与 tsconfig.json 保持一致
+    // 頝臬??怠???嚗? tsconfig.json 靽?銝??
     '^main$': '<rootDir>/src/main.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '^basics/(.*)$': '<rootDir>/src/basics/$1',
@@ -31,11 +31,6 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'clover'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testPathIgnorePatterns: ['/node_modules/', '/.git/'],
-  // 模拟 Obsidian API
+  // 璅⊥? Obsidian API
   moduleDirectories: ['node_modules', '<rootDir>'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
-}; 
+};

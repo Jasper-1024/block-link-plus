@@ -24,7 +24,11 @@ export function gen_insert_blocklink_singleline(
 	// for https://github.com/Jasper-1024/block-link-plus/issues/9
 	// if already has block id, return 
 	if (block.type === "list") {
-		const line = editor.getLine(block.position.start.line);
+		// Obsidian may treat an entire contiguous list as one "list" section. For
+		// correctness, ID reuse MUST be based on the active list item line, not the
+		// first line of the list section.
+		const activeLine = editor.getCursor("to").line;
+		const line = editor.getLine(activeLine);
 		const blockIdMatch = line.match(/\s*\^([a-zA-Z0-9-]+)\s*$/);
 		if (blockIdMatch) {
 			return `^${blockIdMatch[1]}`;
@@ -145,41 +149,97 @@ export function gen_insert_blocklink_multline_block(
 	editor: Editor,
 	settings: PluginSettings
 ): string[] | string {
-	if (fileCache.sections == null) return "";
+	if (fileCache.sections == null && fileCache.listItems == null) return "";
 
 	const start_line = editor.getCursor("from").line;
 	const end_line = editor.getCursor("to").line;
 
-	const sortedSections = [...fileCache.sections].sort(
-		(a, b) => a.position.start.line - b.position.start.line
-	);
 	let links = new Array<string>();
 
-	for (const section of sortedSections) {
-		// section is out of the [start_line, end_line]
-		if (section.position.start.line > end_line || section.position.end.line < start_line) continue;
+	const rangesIntersect = (
+		aStart: number,
+		aEnd: number,
+		bStart: number,
+		bEnd: number
+	): boolean => {
+		return aStart <= bEnd && bStart <= aEnd;
+	};
 
-		// list type is special
-		if (section.type === "list") {
-			let _start_line = Math.max(section.position.start.line, start_line);
-			let _end_line = Math.min(section.position.end.line, end_line);
-			for (let i = _start_line; i <= _end_line; i++) {
-				const id = _gen_insert_block_singleline(i, editor, settings);
-				links.push(id);
+	type SelectedTarget =
+		| { kind: "section"; startLine: number; endLine: number; section: SectionCache }
+		| { kind: "listItem"; startLine: number; endLine: number; line: number };
+
+	const selectedTargets: SelectedTarget[] = [];
+
+	// Prefer listItems when available so we operate on list items (not raw lines).
+	if (fileCache.listItems) {
+		for (const item of fileCache.listItems) {
+			const itemStart = item.position.start.line;
+			const itemEnd = item.position.end.line;
+			if (!rangesIntersect(itemStart, itemEnd, start_line, end_line)) continue;
+			selectedTargets.push({
+				kind: "listItem",
+				startLine: itemStart,
+				endLine: itemEnd,
+				line: itemStart,
+			});
+		}
+	}
+
+	if (fileCache.sections) {
+		const sortedSections = [...fileCache.sections].sort(
+			(a, b) => a.position.start.line - b.position.start.line
+		);
+
+		for (const section of sortedSections) {
+			// section is out of the [start_line, end_line]
+			if (!rangesIntersect(section.position.start.line, section.position.end.line, start_line, end_line)) {
+				continue;
 			}
+
+			// List sections are handled via listItems above (when available).
+			if (section.type === "list") {
+				if (!fileCache.listItems) {
+					// Fallback: treat each selected line as a separate target.
+					const _start_line = Math.max(section.position.start.line, start_line);
+					const _end_line = Math.min(section.position.end.line, end_line);
+					for (let i = _start_line; i <= _end_line; i++) {
+						const id = _gen_insert_block_singleline(i, editor, settings);
+						links.push(id);
+					}
+				}
+				continue;
+			}
+
+			selectedTargets.push({
+				kind: "section",
+				startLine: section.position.start.line,
+				endLine: section.position.end.line,
+				section,
+			});
+		}
+	}
+
+	const seen = new Set<string>();
+	const uniqueTargets = selectedTargets
+		.sort((a, b) => a.startLine - b.startLine || a.endLine - b.endLine)
+		.filter((target) => {
+			const key =
+				target.kind === "listItem"
+					? `listItem:${target.startLine}:${target.endLine}`
+					: `section:${target.startLine}:${target.endLine}:${target.section.type}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+
+	for (const target of uniqueTargets) {
+		if (target.kind === "listItem") {
+			const id = _gen_insert_block_singleline(target.line, editor, settings);
+			links.push(id);
 		} else {
-			// section is in the [start_line, end_line]
-			if (
-				section.position.start.line >= start_line &&
-				section.position.end.line <= end_line
-			) {
-				const id = gen_insert_blocklink_singleline(
-					section,
-					editor,
-					settings
-				);
-				links.push(id);
-			}
+			const id = gen_insert_blocklink_singleline(target.section, editor, settings);
+			links.push(id);
 		}
 	}
 
@@ -228,12 +288,19 @@ export function gen_insert_blocklink_multiline_block(
 	);
 	
 	// Insert end marker on a new line after the last selected line
-	const insertPosition = { line: cursorTo.line + 1, ch: 0 };
-	editor.replaceRange(
-		`\n^${id}-${id}`,
-		insertPosition,
-		insertPosition
-	);
+	const endMarker = `^${id}-${id}`;
+
+	// If there is already a next line, insert the marker line before it and
+	// terminate the marker so the next line does not get prefixed.
+	if (cursorTo.line < editor.lastLine()) {
+		const insertPosition = { line: cursorTo.line + 1, ch: 0 };
+		editor.replaceRange(`${endMarker}\n`, insertPosition, insertPosition);
+	} else {
+		// End of file: append marker as a new last line.
+		const lastLine = editor.lastLine();
+		const endOfDoc = { line: lastLine, ch: editor.getLine(lastLine).length };
+		editor.replaceRange(`\n${endMarker}`, endOfDoc, endOfDoc);
+	}
 	
 	// Return the multiline block reference format
 	return `^${id}-${id}`;

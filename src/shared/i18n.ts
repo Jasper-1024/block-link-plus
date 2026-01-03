@@ -51,7 +51,7 @@ class T {
           descriptions: {
             default: "Treats multi-line selections as a single block. Creates one block ID ^abc123 at the end of the selection.",
             addHeading: "Adds a new heading above the selection. Creates a heading with block ID for organization.",
-            addMultiBlock: "Creates separate block IDs for each line. Each line gets its own ^abc123 identifier.",
+            addMultiBlock: "Creates separate block IDs for each block (paragraph, list item, etc.). Each block gets its own ^abc123 identifier.",
             addMultilineBlock: "Creates a range block with ^abc123-abc123 format. Marks the first line with ^abc123 and adds ^abc123-abc123 after the last line for precise multi-line referencing."
           }
         },
@@ -331,7 +331,7 @@ class T {
           descriptions: {
             default: "将多行选择视为单个块。在选择末尾创建一个块 ID ^abc123。",
             addHeading: "在选择上方添加一个新标题。为组织创建一个带块 ID 的标题。",
-            addMultiBlock: "为每行创建单独的块 ID。每行获得自己的 ^abc123 标识符。",
+            addMultiBlock: "为每个块（段落、列表项等）创建单独的块 ID。每个块获得自己的 ^abc123 标识符。",
             addMultilineBlock: "创建一个 ^abc123-abc123 格式的范围块。用 ^abc123 标记第一行，并在最后一行后添加 ^abc123-abc123 以精确引用多行。"
           }
         },
@@ -611,7 +611,7 @@ class T {
           descriptions: {
             default: "將多行選擇視為單一區塊。在選擇結尾處創建一個區塊 ID ^abc123。",
             addHeading: "在選擇上方新增一個新標題。為組織創建一個帶區塊 ID 的標題。",
-            addMultiBlock: "為每行創建單獨的區塊 ID。每行獲得自己的 ^abc123 識別符。",
+            addMultiBlock: "為每個區塊（段落、清單項等）創建單獨的區塊 ID。每個區塊獲得自己的 ^abc123 識別符。",
             addMultilineBlock: "創建一個 ^abc123-abc123 格式的範圍區塊。用 ^abc123 標記第一行，並在最后一行後添加 ^abc123-abc123 以精確引用多行。"
           }
         },
