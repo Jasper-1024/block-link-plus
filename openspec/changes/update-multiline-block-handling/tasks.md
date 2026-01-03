@@ -23,7 +23,8 @@
 ## 3. Fix #28 (Range end marker prefixes the next line)
 - [x] 3.1 Add regression test: selection followed by non-empty next line
 - [x] 3.2 Add regression test: end marker insertion at end-of-file still results in a standalone marker line
-- [x] 3.3 Fix end marker insertion so `^id-id` is always on its own line and does not prefix following content
+- [x] 3.3 Fix end marker insertion so `^id-id` is always on its own line, is followed by a blank line when needed, and does not prefix following content
+- [x] 3.4 Add regression test: do not add extra blank line when next line is already blank
 
 ## 4. Investigate/fix #29 (Android: note becomes blank on scroll)
 - [x] 4.1 Audit reading-mode post processors for destructive mutations

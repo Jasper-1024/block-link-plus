@@ -25,11 +25,17 @@ Notes:
 
 ## MODIFIED Requirements
 ### Requirement: Generate range-based block references
-Range end marker `^startId-endId` MUST be inserted as a standalone line and MUST NOT be inserted as a prefix of the following content line. If there is existing content on the next line, the marker insertion MUST preserve that content on its own line (i.e., the marker line must be terminated so the next line does not get prefixed).
+Range end marker `^startId-endId` MUST be inserted as a standalone line and MUST NOT be inserted as a prefix of the following content line.
+
+If there is existing content on the next line, the plugin MUST insert a blank line after the marker so Obsidian can parse `^startId-endId` as a standalone block ID (end of Markdown block). If the next line is already blank, the plugin MUST NOT insert an extra blank line.
 
 #### Scenario: End marker does not prefix the next line
 - **WHEN** the line immediately after the selection already contains non-empty content
-- **THEN** the end marker appears on its own line between the selection and the next line, and the next line content is preserved
+- **THEN** the end marker appears on its own line between the selection and the next line, followed by a blank line, and the next line content is preserved
+
+#### Scenario: Existing blank line is reused
+- **WHEN** the line immediately after the selection is already blank
+- **THEN** the end marker is inserted before that blank line, and no additional blank line is added
 
 #### Scenario: End marker at end-of-file remains a standalone line
 - **WHEN** a range end marker is inserted after a selection that ends at end-of-file

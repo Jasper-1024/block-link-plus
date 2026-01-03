@@ -167,6 +167,23 @@ describe("link-creation", () => {
 				"line 1 ^abc123",
 				"line 2",
 				"^abc123-abc123",
+				"",
+				"next",
+			]);
+		});
+
+		test("does not insert an extra blank line when the next line is already blank", () => {
+			const editor = new MockEditor(["line 1", "line 2", "", "next"].join("\n"));
+			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 6 });
+
+			mockGenerateRandomId.mockReturnValueOnce("abc123");
+			gen_insert_blocklink_multiline_block(editor as any, baseSettings);
+
+			expect(editor.getLines()).toEqual([
+				"line 1 ^abc123",
+				"line 2",
+				"^abc123-abc123",
+				"",
 				"next",
 			]);
 		});

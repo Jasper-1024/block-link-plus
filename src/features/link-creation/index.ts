@@ -292,9 +292,22 @@ export function gen_insert_blocklink_multiline_block(
 
 	// If there is already a next line, insert the marker line before it and
 	// terminate the marker so the next line does not get prefixed.
+	//
+	// Additionally, Obsidian only recognizes a block id if it's at the end of a
+	// Markdown block. If the next line contains content, the marker line would
+	// otherwise join the following paragraph. Insert a blank line after the
+	// marker in that case (but avoid adding an extra blank line if one already
+	// exists).
 	if (cursorTo.line < editor.lastLine()) {
-		const insertPosition = { line: cursorTo.line + 1, ch: 0 };
-		editor.replaceRange(`${endMarker}\n`, insertPosition, insertPosition);
+		const insertLine = cursorTo.line + 1;
+		const nextLine = editor.getLine(insertLine);
+		const needsBlankLineAfter = nextLine.trim() !== "";
+		const insertPosition = { line: insertLine, ch: 0 };
+		editor.replaceRange(
+			`${endMarker}\n${needsBlankLineAfter ? "\n" : ""}`,
+			insertPosition,
+			insertPosition
+		);
 	} else {
 		// End of file: append marker as a new last line.
 		const lastLine = editor.lastLine();
