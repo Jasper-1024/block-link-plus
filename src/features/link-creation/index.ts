@@ -204,7 +204,9 @@ export function gen_insert_blocklink_multline_block(
 				kind: "listItem",
 				startLine: itemStart,
 				endLine: itemEnd,
-				line: itemStart,
+				// Obsidian only indexes list-item block IDs reliably at the end of the item
+				// (after all continuation lines), so insert at the item end line.
+				line: itemEnd,
 			});
 		}
 	}
@@ -315,20 +317,42 @@ export function gen_insert_blocklink_multiline_block(
 		id = generateRandomId("", 6); // Always 6 chars for multiline blocks, no prefix
 	} while (fullText.includes(`^${id}`)); // Ensure uniqueness across entire document
 
-	const startLineText = editor.getLine(startLine);
-	if (lineEndsWithBlockId(startLineText)) {
+	const pickListItemForLine = (line: number) => {
+		const listItems = fileCache.listItems;
+		if (!listItems) return null;
+		let best: { start: number; end: number } | null = null;
+		for (const item of listItems) {
+			const s = item.position.start.line;
+			const e = item.position.end.line;
+			if (s <= line && line <= e) {
+				if (!best || e - s < best.end - best.start) {
+					best = { start: s, end: e };
+				}
+			}
+		}
+		return best;
+	};
+
+	const startListItem = pickListItemForLine(startLine);
+	const endListItem = pickListItemForLine(endLine);
+
+	const startInsertLine = startListItem ? startListItem.end : startLine;
+	const endInsertLine = endListItem ? endListItem.end : endLine;
+
+	const startInsertText = editor.getLine(startInsertLine);
+	if (lineEndsWithBlockId(startInsertText)) {
 		return { ok: false, message: "Start line already has a block ID" };
 	}
 
-	const endLineText = editor.getLine(endLine);
-	if (lineEndsWithBlockId(endLineText)) {
+	const endInsertText = editor.getLine(endInsertLine);
+	if (lineEndsWithBlockId(endInsertText)) {
 		return { ok: false, message: "End line already has a block ID" };
 	}
 	
-	// Get the first line content
-	const firstLine = startLineText;
+	// Get the start insertion line content
+	const firstLine = startInsertText;
 	let newFirstLine: string;
-	
+
 	if (firstLine.trim() === '') {
 		// Handle empty line with comment syntax
 		newFirstLine = `%% %% ^${id}`;
@@ -336,13 +360,16 @@ export function gen_insert_blocklink_multiline_block(
 		// Add marker to end of existing content
 		newFirstLine = `${firstLine} ^${id}`;
 	}
-	
+
 	const endSection = (fileCache.sections || []).find((section) => {
-		return section.position.start.line <= endLine && section.position.end.line >= endLine;
+		return section.position.start.line <= endInsertLine && section.position.end.line >= endInsertLine;
 	});
 
 	const endMarker = `^${id}-${id}`;
-	const endMarkerInlineSafe = Boolean(endLineText.trim()) && !(endSection && shouldInsertAfter(endSection));
+	const endMarkerInlineSafe =
+		startInsertLine !== endInsertLine &&
+		Boolean(endInsertText.trim()) &&
+		!(endSection && shouldInsertAfter(endSection));
 
 	const originalCursorFrom = editor.getCursor("from");
 	const originalCursorTo = editor.getCursor("to");
@@ -352,18 +379,19 @@ export function gen_insert_blocklink_multiline_block(
 		// Replace the first line with the marked version.
 		editor.replaceRange(
 			newFirstLine,
-			{ line: startLine, ch: 0 },
-			{ line: startLine, ch: firstLine.length }
+			{ line: startInsertLine, ch: 0 },
+			{ line: startInsertLine, ch: firstLine.length }
 		);
 
 		if (endMarkerInlineSafe) {
-			const endPos: EditorPosition = { line: endLine, ch: endLineText.length };
+			const currentEndLineText = editor.getLine(endInsertLine);
+			const endPos: EditorPosition = { line: endInsertLine, ch: currentEndLineText.length };
 			editor.replaceRange(` ${endMarker}`, endPos);
 		} else {
 			const insertAfterLine =
 				endSection && (shouldInsertAfter(endSection) || endSection.type === "list")
 					? endSection.position.end.line
-					: endLine;
+					: endInsertLine;
 			const insertAfterText = editor.getLine(insertAfterLine);
 			const insertAfterPos: EditorPosition = { line: insertAfterLine, ch: insertAfterText.length };
 

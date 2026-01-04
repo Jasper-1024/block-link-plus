@@ -148,8 +148,8 @@ describe("link-creation", () => {
 			const links = gen_insert_blocklink_multline_block(fileCache, editor as any, baseSettings);
 
 			expect(links).toEqual(["^l11111", "^l22222"]);
-			expect(editor.getLine(0)).toBe("- item1 ^l11111");
-			expect(editor.getLine(1)).toBe("  cont");
+			expect(editor.getLine(0)).toBe("- item1");
+			expect(editor.getLine(1)).toBe("  cont ^l11111");
 			expect(editor.getLine(2)).toBe("- item2 ^l22222");
 		});
 	});
