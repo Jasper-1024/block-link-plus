@@ -155,14 +155,33 @@ describe("link-creation", () => {
 	});
 
 	describe("#28 multiline range end marker placement", () => {
-		test("inserts end marker as a standalone line before existing next-line content", () => {
+		test("inserts end marker inline when safe", () => {
 			const editor = new MockEditor(["line 1", "line 2", "next"].join("\n"));
 			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 6 });
 
+			const fileCache = { sections: [] } as any;
 			mockGenerateRandomId.mockReturnValueOnce("abc123");
-			const link = gen_insert_blocklink_multiline_block(editor as any, baseSettings);
+			const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, baseSettings);
 
-			expect(link).toBe("^abc123-abc123");
+			expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
+			expect(editor.getLines()).toEqual([
+				"line 1 ^abc123",
+				"line 2 ^abc123-abc123",
+				"next",
+			]);
+		});
+
+		test("falls back to a standalone end marker line (with blank line) when the end is inside a special block", () => {
+			const editor = new MockEditor(["line 1", "line 2", "next"].join("\n"));
+			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 6 });
+
+			const fileCache = {
+				sections: [section("blockquote", 0, 1, editor.getLine(1).length)],
+			} as any;
+			mockGenerateRandomId.mockReturnValueOnce("abc123");
+			const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, baseSettings);
+
+			expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
 			expect(editor.getLines()).toEqual([
 				"line 1 ^abc123",
 				"line 2",
@@ -176,8 +195,11 @@ describe("link-creation", () => {
 			const editor = new MockEditor(["line 1", "line 2", "", "next"].join("\n"));
 			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 6 });
 
+			const fileCache = {
+				sections: [section("blockquote", 0, 1, editor.getLine(1).length)],
+			} as any;
 			mockGenerateRandomId.mockReturnValueOnce("abc123");
-			gen_insert_blocklink_multiline_block(editor as any, baseSettings);
+			gen_insert_blocklink_multiline_block(fileCache, editor as any, baseSettings);
 
 			expect(editor.getLines()).toEqual([
 				"line 1 ^abc123",
@@ -188,14 +210,15 @@ describe("link-creation", () => {
 			]);
 		});
 
-		test("inserts end marker as a standalone line at end-of-file", () => {
+		test("inserts end marker inline at end-of-file when safe", () => {
 			const editor = new MockEditor(["line 1", "line 2"].join("\n"));
 			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 6 });
 
+			const fileCache = { sections: [] } as any;
 			mockGenerateRandomId.mockReturnValueOnce("abc123");
-			gen_insert_blocklink_multiline_block(editor as any, baseSettings);
+			gen_insert_blocklink_multiline_block(fileCache, editor as any, baseSettings);
 
-			expect(editor.getLines()).toEqual(["line 1 ^abc123", "line 2", "^abc123-abc123"]);
+			expect(editor.getLines()).toEqual(["line 1 ^abc123", "line 2 ^abc123-abc123"]);
 		});
 	});
 });
