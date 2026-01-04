@@ -2,6 +2,13 @@
 
 Version history and new features for Block Link Plus.
 
+## Unreleased
+
+- Inline Edit: migrated to a native leaf-based engine (more reliable in Live Preview).
+- Multi-line blocks: improved `^id-id` range creation (inline end marker when safe; otherwise inserted as a standalone line).
+- Fix: `^id-id` range embeds render consistently (including when Inline Edit is disabled).
+- Fix: reading-mode postprocessor no longer blanks notes/embeds (#29).
+
 ## v1.7.6 (Current)
 
 - Fixed Timeline link matching to support full path link formats (e.g., `[[Task/path/file.md|alias]]`)
