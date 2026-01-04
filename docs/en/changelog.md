@@ -8,6 +8,7 @@ Version history and new features for Block Link Plus.
 - Removed legacy `!![[...]]` embed syntax; use `![[...]]`.
 - Multi-line blocks: improved `^id-id` range creation (inline end marker when safe; otherwise inserted as a standalone line).
 - Fix: multi-block mode now targets blocks (paragraphs/list items), not individual lines (#22/#27).
+- Fix: when a list item has continuation lines, insert the block ID at the end of the item so Obsidian can index it.
 - Fix: `^id-id` range embeds render consistently (including when Inline Edit is disabled).
 - Fix: reading-mode postprocessor no longer blanks notes/embeds (#29).
 

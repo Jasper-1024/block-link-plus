@@ -84,6 +84,10 @@ Second line content
 Third line content ^abc123-abc123
 ```
 
+Notes:
+- By default, the end marker is appended inline at the end of the end line. If the end falls inside block structures (blockquote/list/code/table/comment, etc.), it may be inserted as a standalone line after the block, with a blank line added only when needed.
+- If a list item has continuation lines, the block ID is inserted at the end of the item.
+
 **Reference syntax**:
 ```
 ![[filename#^abc123-abc123]]
