@@ -11,11 +11,31 @@ import { getAvailableRanges } from "range-analyzer";
 type ContentRangeType  = [number | undefined, number | undefined];
 
 
-const combinedRangeFacets = (rangeA: ContentRangeType, rangeB: ContentRangeType ) : [number, number] => {
-  const startRange = !rangeA?.[0] ? rangeB[0] : !rangeB?.[0] ? rangeA[0] : Math.max(rangeA?.[0], rangeB?.[0])
-  const endRange = !rangeA?.[1] ? rangeB[1] : !rangeB?.[1] ? rangeA[1] : Math.min(rangeA?.[1], rangeB?.[1])
-  return [isNaN(startRange) ? null : startRange, isNaN(endRange) ? null : endRange]
-}
+const combinedRangeFacets = (
+  rangeA: ContentRangeType | undefined,
+  rangeB: ContentRangeType | undefined
+): ContentRangeType => {
+  const aStart = rangeA?.[0];
+  const aEnd = rangeA?.[1];
+  const bStart = rangeB?.[0];
+  const bEnd = rangeB?.[1];
+
+  const start =
+    aStart === undefined ? bStart : bStart === undefined ? aStart : Math.max(aStart, bStart);
+  const end =
+    aEnd === undefined ? bEnd : bEnd === undefined ? aEnd : Math.min(aEnd, bEnd);
+
+  if (start !== undefined && end !== undefined && start > end) {
+    return [undefined, undefined];
+  }
+
+  return [start, end];
+};
+
+const isCompleteLineRange = (
+  range: ContentRangeType
+): range is [number, number] =>
+  typeof range[0] === "number" && typeof range[1] === "number";
 
 export const editableRange =
   Annotation.define<ContentRangeType>();
@@ -65,14 +85,15 @@ export const frontmatterFacet = StateField.define<
 >({
   create: () => [undefined, undefined],
   update(value, tr) {
-    if (tr.annotation(contentRange)) {
-      if (tr.annotation(contentRange)[0]) {
-        return [
-          tr.annotation(contentRange)[0],
-          Math.min(tr.state.doc.lines, tr.annotation(contentRange)[1]),
-        ];
+    const next = tr.annotation(contentRange);
+    if (next !== undefined) {
+      const [startLine, endLine] = next;
+      if (startLine !== undefined) {
+        const clampedEnd =
+          endLine === undefined ? endLine : Math.min(tr.state.doc.lines, endLine);
+        return [startLine, clampedEnd];
       }
-      return tr.annotation(contentRange);
+      return next;
     }
     return value;
   },
@@ -83,14 +104,15 @@ export const selectiveLinesFacet = StateField.define<
 >({
   create: () => [undefined, undefined],
   update(value, tr) {
-    if (tr.annotation(editableRange)) {
-      if (tr.annotation(editableRange)[0]) {
-        return [
-          tr.annotation(editableRange)[0],
-          Math.min(tr.state.doc.lines, tr.annotation(editableRange)[1]),
-        ];
+    const next = tr.annotation(editableRange);
+    if (next !== undefined) {
+      const [startLine, endLine] = next;
+      if (startLine !== undefined) {
+        const clampedEnd =
+          endLine === undefined ? endLine : Math.min(tr.state.doc.lines, endLine);
+        return [startLine, clampedEnd];
       }
-      return tr.annotation(editableRange);
+      return next;
     }
     return value;
   },
@@ -110,17 +132,18 @@ export const lineRangeToPosRange = (
 export const smartDelete = EditorState.transactionFilter.of(
   (tr: Transaction) => {
 
-    if (tr.isUserEvent("delete") && !tr.annotation(Transaction.userEvent).endsWith('.smart')) {
+    const userEvent = tr.annotation(Transaction.userEvent) ?? "delete";
+    if (tr.isUserEvent("delete") && !userEvent.endsWith(".smart")) {
       const initialSelections = tr.startState.selection.ranges.map((range) => ({
         from: range.from,
         to: range.to,
       }));
       
-      const betterFacet = combinedRangeFacets(tr.startState.field(selectiveLinesFacet, false), tr.startState.field(frontmatterFacet, false));
-      if (
-        initialSelections.length > 0 &&
-        betterFacet?.[0]
-      ) {
+      const betterFacet = combinedRangeFacets(
+        tr.startState.field(selectiveLinesFacet, false),
+        tr.startState.field(frontmatterFacet, false)
+      );
+      if (initialSelections.length > 0 && isCompleteLineRange(betterFacet)) {
         const posRange = lineRangeToPosRange(
           tr.startState,
           betterFacet
@@ -134,7 +157,7 @@ export const smartDelete = EditorState.transactionFilter.of(
               to: Math.max(minFrom, minTo),
             },
             annotations: Transaction.userEvent.of(
-              `${tr.annotation(Transaction.userEvent)}.smart`
+              `${userEvent}.smart`
             ),
           }];
         }
@@ -149,8 +172,10 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
   (tr: Transaction) => {
     const newTrans = [];
     try {
-      const editableLines = tr.startState.field(selectiveLinesFacet, false)
-      const contentLines = tr.startState.field(frontmatterFacet, false)
+      const editableLines =
+        tr.startState.field(selectiveLinesFacet, false) ?? [undefined, undefined];
+      const contentLines =
+        tr.startState.field(frontmatterFacet, false) ?? [undefined, undefined];
       const selectiveLines = combinedRangeFacets(editableLines, contentLines);
 
       if (
@@ -158,7 +183,7 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
         tr.isUserEvent("delete") ||
         tr.isUserEvent("move")
       ) {
-        if (selectiveLines?.[0]) {
+        if (isCompleteLineRange(selectiveLines)) {
           const posRange = lineRangeToPosRange(
             tr.startState,
             selectiveLines
@@ -172,26 +197,26 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
       }
       if (tr.state.doc.lines != tr.startState.doc.lines) {
         const numberNewLines = tr.state.doc.lines - tr.startState.doc.lines;
-        if (selectiveLines?.[0]) {
+        if (isCompleteLineRange(selectiveLines)) {
           const posRange = lineRangeToPosRange(
             tr.startState,
             selectiveLines
           );
           if (tr.changes.touchesRange(0, posRange.from - 1)) {
             const newAnnotations = [];
-            if (editableLines[0]) {
+            if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
               newAnnotations.push(editableRange.of([
                 editableLines[0] + numberNewLines,
                 editableLines[1] + numberNewLines,
               ]))
-              
+               
             }
-            if (contentLines[0]) {
+            if (contentLines[0] !== undefined && contentLines[1] !== undefined) {
               newAnnotations.push(contentRange.of([
                 contentLines[0] + numberNewLines,
                 contentLines[1] + numberNewLines,
               ]))
-              
+               
             }
             newTrans.push({
               annotations: newAnnotations,
@@ -199,19 +224,19 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
             
           } else if (tr.changes.touchesRange(posRange.from - 1, posRange.to)) {
             const newAnnotations = [];
-            if (editableLines[0]) {
+            if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
               newAnnotations.push(editableRange.of([
                 editableLines[0],
                 editableLines[1] + numberNewLines,
               ]))
-              
+               
             }
-            if (contentLines[0]) {
+            if (contentLines[0] !== undefined && contentLines[1] !== undefined) {
               newAnnotations.push(contentRange.of([
                 contentLines[0],
                 contentLines[1] + numberNewLines,
               ]))
-              
+               
             }
             newTrans.push({
               annotations: newAnnotations,

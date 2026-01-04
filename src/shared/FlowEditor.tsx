@@ -76,7 +76,9 @@ export class FlowEditor extends nosuper(HoverPopover) {
 
   hideNavBarEl: HTMLElement;
 
-  oldPopover = this.parent?.flowEditors.find((he: any) => he.id !== this.id);
+  oldPopover: FlowEditor | undefined = this.parent?.flowEditors?.find(
+    (he: any) => he.id !== this.id
+  );
   document: Document =
     this.targetEl?.ownerDocument ?? window.activeDocument ?? window.document;
 
@@ -254,7 +256,7 @@ export class FlowEditor extends nosuper(HoverPopover) {
     setTimeout(() => (this.waitTime = closeDelay), closeDelay);
 
     this.oldPopover?.hide();
-    this.oldPopover = null;
+    this.oldPopover = undefined;
 
     this.hoverEl.classList.add("is-new");
 
@@ -269,7 +271,7 @@ export class FlowEditor extends nosuper(HoverPopover) {
     if (this.parent) {
       if (!this.parent.flowEditors) this.parent.flowEditors = [];
       this.parent.flowEditors.push(this);
-      this.parent.view.addChild(this);
+      this.parent.view?.addChild(this);
     }
     await this.onShowCallback?.(this);
     this.onShowCallback = undefined; // only call it once
@@ -346,11 +348,11 @@ export class FlowEditor extends nosuper(HoverPopover) {
   }
 
   onHide() {
-    this.oldPopover = null;
-    if (this.parent?.flowEditors.find((he: any) => he == this)) {
-      this.parent.flowEditors = this.parent.flowEditors.filter(
-        (he: any) => he.id !== this.id
-      );
+    this.oldPopover = undefined;
+    const parent = this.parent;
+    const flowEditors = parent?.flowEditors;
+    if (parent && flowEditors?.some((he: any) => he === this)) {
+      parent.flowEditors = flowEditors.filter((he: any) => he.id !== this.id);
     }
   }
 

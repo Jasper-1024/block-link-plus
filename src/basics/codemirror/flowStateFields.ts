@@ -14,8 +14,8 @@ export const flowIDStateField = StateField.define<string | undefined>({
 export const flowTypeStateField = StateField.define<PortalType>({
   create: (state) => "none",
   update(value, tr) {
-    if (tr.annotation(portalTypeAnnotation))
-      return tr.annotation(portalTypeAnnotation);
+    const nextType = tr.annotation(portalTypeAnnotation);
+    if (nextType !== undefined) return nextType;
     return value;
   },
 });

@@ -107,10 +107,18 @@ function handleMultiLineBlock(
             );
             return;
         }
-        const link = LinkCreation.gen_insert_blocklink_multiline_block(
+
+        const result = LinkCreation.gen_insert_blocklink_multiline_block(
+            fileCache,
             editor,
             plugin.settings
         );
+        if (!result.ok) {
+            new Notice(result.message, 1500);
+            return;
+        }
+
+        const link = result.link;
         const alias = Clipboard.calculateAlias(plugin.settings, link, false, isEmbed, isUrl, plugin.settings.alias_length, head_analysis);
         Clipboard.copyToClipboard(plugin.app, plugin.settings, file, link, isEmbed, alias, isUrl);
         return;

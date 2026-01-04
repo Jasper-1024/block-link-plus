@@ -52,7 +52,7 @@ class T {
             default: "Treats multi-line selections as a single block. Creates one block ID ^abc123 at the end of the selection.",
             addHeading: "Adds a new heading above the selection. Creates a heading with block ID for organization.",
             addMultiBlock: "Creates separate block IDs for each line. Each line gets its own ^abc123 identifier.",
-            addMultilineBlock: "Creates a range block with ^abc123-abc123 format. Marks the first line with ^abc123 and adds ^abc123-abc123 after the last line for precise multi-line referencing."
+            addMultilineBlock: "Creates a range block with ^abc123-abc123 format. Marks the first line with ^abc123 and marks the range end with ^abc123-abc123 (inline when safe; otherwise inserted on its own line)."
           }
         },
 

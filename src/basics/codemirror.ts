@@ -7,7 +7,7 @@ import BlockLinkPlus from "main";
 import { MarkdownView } from "obsidian";
 
 export const getActiveCM = (plugin: BlockLinkPlus): EditorView | undefined => {
-  let rcm: EditorView;
+  let rcm: EditorView | undefined;
   plugin.app.workspace.iterateLeaves((leaf) => {
     const cm = (leaf.view as MarkdownView).editor?.cm;
     if (cm?.hasFocus) {
@@ -21,7 +21,7 @@ export const getActiveCM = (plugin: BlockLinkPlus): EditorView | undefined => {
 
 
 export const getActiveMarkdownView = (plugin: BlockLinkPlus): MarkdownView | undefined => {
-  let rv: MarkdownView;
+  let rv: MarkdownView | undefined;
   plugin.app.workspace.iterateLeaves((leaf) => {
     const cm = (leaf.view as MarkdownView).editor?.cm;
     if (cm?.hasFocus) {

@@ -2,6 +2,29 @@ import type { Editor, SectionCache, EditorPosition, CachedMetadata } from 'obsid
 import type { PluginSettings } from '../../types';
 import { generateRandomId, shouldInsertAfter } from '../../utils';
 
+export type MultilineBlockLinkInsertResult =
+	| { ok: true; link: string }
+	| { ok: false; message: string };
+
+function lineEndsWithBlockId(line: string): boolean {
+	return /\s*\^[a-zA-Z0-9-]+\s*$/.test(line);
+}
+
+function isLikelyParagraphContinuationLine(line: string): boolean {
+	if (!line.trim()) return false;
+
+	// Start of a new Markdown block: treat as NOT a continuation.
+	if (/^\s*#{1,6}\s+/.test(line)) return false; // heading
+	if (/^\s*>/.test(line)) return false; // blockquote / callout
+	if (/^\s*([-*+]|(\d+\.))\s+/.test(line)) return false; // list item
+	if (/^\s*(```|~~~)/.test(line)) return false; // fenced code
+	if (/^\s*(\|\s*[-:]+|\|)/.test(line)) return false; // table-ish
+	if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) return false; // hr
+	if (/^\s*%%/.test(line)) return false; // comment block
+
+	return true;
+}
+
 /**
  * Generates and inserts a block link for a single line block.
  * If the block already has an ID, returns the existing ID.
@@ -195,11 +218,35 @@ export function gen_insert_blocklink_multline_block(
  * @returns The generated multiline block link in format "^xyz-xyz".
  */
 export function gen_insert_blocklink_multiline_block(
+	fileCache: CachedMetadata,
 	editor: Editor,
 	settings: PluginSettings
-): string {
-	const cursorFrom = editor.getCursor('from');
-	const cursorTo = editor.getCursor('to');
+): MultilineBlockLinkInsertResult {
+	const cursorFrom = editor.getCursor("from");
+	const cursorTo = editor.getCursor("to");
+
+	const startLine = Math.min(cursorFrom.line, cursorTo.line);
+	const endLine = Math.max(cursorFrom.line, cursorTo.line);
+
+	if (startLine === endLine) {
+		return { ok: false, message: "Selection must span multiple lines" };
+	}
+
+	const frontmatterEndLine = fileCache.frontmatter?.position?.end?.line;
+	if (typeof frontmatterEndLine === "number" && startLine <= frontmatterEndLine) {
+		return { ok: false, message: "Selection cannot include frontmatter" };
+	}
+
+	if (startLine === 0) {
+		try {
+			if (!editor.getLine(0).trim()) {
+				return { ok: false, message: "Selection cannot start at an empty first line" };
+			}
+		} catch {
+			// If we can't read the first line reliably, fail safe.
+			return { ok: false, message: "Selection is invalid" };
+		}
+	}
 	
 	// Generate unique ID (6 character alphanumeric)
 	let id: string;
@@ -207,9 +254,19 @@ export function gen_insert_blocklink_multiline_block(
 	do {
 		id = generateRandomId("", 6); // Always 6 chars for multiline blocks, no prefix
 	} while (fullText.includes(`^${id}`)); // Ensure uniqueness across entire document
+
+	const startLineText = editor.getLine(startLine);
+	if (lineEndsWithBlockId(startLineText)) {
+		return { ok: false, message: "Start line already has a block ID" };
+	}
+
+	const endLineText = editor.getLine(endLine);
+	if (lineEndsWithBlockId(endLineText)) {
+		return { ok: false, message: "End line already has a block ID" };
+	}
 	
 	// Get the first line content
-	const firstLine = editor.getLine(cursorFrom.line);
+	const firstLine = startLineText;
 	let newFirstLine: string;
 	
 	if (firstLine.trim() === '') {
@@ -220,21 +277,59 @@ export function gen_insert_blocklink_multiline_block(
 		newFirstLine = `${firstLine} ^${id}`;
 	}
 	
-	// Replace the first line with the marked version
-	editor.replaceRange(
-		newFirstLine,
-		{ line: cursorFrom.line, ch: 0 },
-		{ line: cursorFrom.line, ch: firstLine.length }
-	);
+	const endSection = (fileCache.sections || []).find((section) => {
+		return section.position.start.line <= endLine && section.position.end.line >= endLine;
+	});
+
+	const endMarker = `^${id}-${id}`;
+	const endMarkerInlineSafe = Boolean(endLineText.trim()) && !(endSection && shouldInsertAfter(endSection));
+
+	const originalCursorFrom = editor.getCursor("from");
+	const originalCursorTo = editor.getCursor("to");
+	const originalValue = fullText;
+
+	try {
+		// Replace the first line with the marked version.
+		editor.replaceRange(
+			newFirstLine,
+			{ line: startLine, ch: 0 },
+			{ line: startLine, ch: firstLine.length }
+		);
+
+		if (endMarkerInlineSafe) {
+			const endPos: EditorPosition = { line: endLine, ch: endLineText.length };
+			editor.replaceRange(` ${endMarker}`, endPos);
+		} else {
+			const insertAfterLine =
+				endSection && (shouldInsertAfter(endSection) || endSection.type === "list")
+					? endSection.position.end.line
+					: endLine;
+			const insertAfterText = editor.getLine(insertAfterLine);
+			const insertAfterPos: EditorPosition = { line: insertAfterLine, ch: insertAfterText.length };
+
+			let nextLineText = "";
+			try {
+				nextLineText = editor.getLine(insertAfterLine + 1) ?? "";
+			} catch {
+				nextLineText = "";
+			}
+
+			const needsBlankLineAfterMarker = isLikelyParagraphContinuationLine(nextLineText);
+			const insertText = needsBlankLineAfterMarker ? `\n${endMarker}\n` : `\n${endMarker}`;
+			editor.replaceRange(insertText, insertAfterPos);
+		}
+
+		return { ok: true, link: endMarker };
+	} catch {
+		// Best-effort rollback: restore the editor to its previous state.
+		try {
+			editor.setValue(originalValue);
+			editor.setSelection(originalCursorFrom, originalCursorTo);
+		} catch {
+			// ignore
+		}
+		return { ok: false, message: "Failed to create multiline block" };
+	}
 	
-	// Insert end marker on a new line after the last selected line
-	const insertPosition = { line: cursorTo.line + 1, ch: 0 };
-	editor.replaceRange(
-		`\n^${id}-${id}`,
-		insertPosition,
-		insertPosition
-	);
-	
-	// Return the multiline block reference format
-	return `^${id}-${id}`;
+	// Unreachable, but keeps TS happy if the editor API differs at runtime.
 } 

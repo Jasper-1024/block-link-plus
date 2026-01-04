@@ -33,9 +33,5 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/.git/'],
   // 模拟 Obsidian API
   moduleDirectories: ['node_modules', '<rootDir>'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
+
 }; 
