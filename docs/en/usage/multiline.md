@@ -59,7 +59,7 @@ Second line content
 ```
 
 ### 3. Add Multiple Blocks
-Create separate block ID for each line.
+Create separate block IDs per block (paragraph, list item, etc.).
 
 **Generated format**:
 ```
@@ -95,7 +95,7 @@ Third line content ^abc123-abc123
 
 - **Single-page reference** - Use default processing
 - **Section organization** - Use add new heading
-- **Line-by-line reference** - Use add multiple blocks
+- **Block-by-block reference** - Use add multiple blocks
 - **Precise range** - Use add multi-line block
 
 ## Compatibility

@@ -23,4 +23,4 @@ Reading mode is always read-only.
 
 ## Notes
 
-- Legacy double-bang embeds are ignored (no inline edit takeover).
+- Legacy `!![[...]]` embeds are no longer supported; use `![[...]]`.
