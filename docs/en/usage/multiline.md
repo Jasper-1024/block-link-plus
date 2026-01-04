@@ -48,14 +48,14 @@ Create new heading above selected content with special identifier.
 
 **Generated format**:
 ```
-## ˅abc123
+## ?abc123
 First line content
 Second line content
 ```
 
 **Reference syntax**:
 ```
-![[filename#˅abc123]]
+![[filename#?abc123]]
 ```
 
 ### 3. Add Multiple Blocks
