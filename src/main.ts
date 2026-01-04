@@ -178,12 +178,11 @@ export default class BlockLinkPlus extends Plugin {
 		const raw = (await this.loadData()) ?? {};
 		let shouldSave = false;
 
-		if (typeof raw === "object" && raw !== null) {
-			if ("editorFlow" in raw && !("inlineEditEnabled" in raw)) {
-				// @ts-expect-error Legacy setting migration
-				raw.inlineEditEnabled = raw.editorFlow;
-				shouldSave = true;
-			}
+			if (typeof raw === "object" && raw !== null) {
+				if ("editorFlow" in raw && !("inlineEditEnabled" in raw)) {
+					raw.inlineEditEnabled = raw.editorFlow;
+					shouldSave = true;
+				}
 
 			const legacyKeys = [
 				"editorFlow",
@@ -195,7 +194,6 @@ export default class BlockLinkPlus extends Plugin {
 
 			for (const key of legacyKeys) {
 				if (key in raw) {
-					// @ts-expect-error Legacy key cleanup
 					delete raw[key];
 					shouldSave = true;
 				}

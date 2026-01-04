@@ -17,6 +17,7 @@ export const FlowEditorHover = (props: {
   dom?: HTMLElement;
 }) => {
   const toggleFlow = () => {
+    if (!props.dom) return;
     const domPos = props.view.posAtDOM(props.dom);
     const line = props.view.state.doc.lineAt(domPos);
     const pos = line.from;

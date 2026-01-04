@@ -10,8 +10,7 @@ Multi-line block identifier format enabling multi-line text references:
 ```
 First line content ^abc123
 Second line content
-Third line content
-^abc123-abc123
+Third line content ^abc123-abc123
 ```
 
 **Reference syntax**:
@@ -82,8 +81,7 @@ Use range identifiers to mark start and end.
 ```
 First line content ^abc123
 Second line content
-Third line content
-^abc123-abc123
+Third line content ^abc123-abc123
 ```
 
 **Reference syntax**:

@@ -2,7 +2,7 @@ import type { Editor, MarkdownView, MarkdownFileInfo, TFile } from 'obsidian';
 import type { HeadingAnalysisResult } from '../../types';
 import { formatCurrentTime, isDailyNote } from '../../utils';
 import { analyzeHeadings } from '../heading-analysis'; // This will be a temporary import
-import type BlockLinkPlus from '../../../main';
+import type BlockLinkPlus from 'main';
 
 /**
  * Handle inserting time section

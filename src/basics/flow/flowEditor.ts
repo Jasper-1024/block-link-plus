@@ -48,15 +48,16 @@ export const loadFlowEditorByDOM = (
     setTimeout(async () => {
       //wait for el to be attached to the displayed document
       let leafFound = false;
-      if (plugin.app.workspace.activeEditor) {
-        if (plugin.app.workspace.activeEditor?.editor?.cm.dom == view.dom) {
+      const activeEditor = plugin.app.workspace.activeEditor;
+      if (activeEditor?.editor?.cm && activeEditor.editor.cm.dom == view.dom) {
           leafFound = true;
           plugin.app.workspace.iterateLeaves((leaf) => {
-            if (leaf.view.editor?.cm.dom == view.dom)
-            {
-              loadFlowEditorsForLeafForID(leaf,
-                plugin.app.workspace.activeEditor.editor.cm,
-                plugin.app.workspace.activeEditor.file?.path,
+            const leafCM = leaf.view.editor?.cm;
+            if (leafCM && leafCM.dom == view.dom) {
+              loadFlowEditorsForLeafForID(
+                leaf,
+                leafCM,
+                activeEditor.file?.path,
                 plugin,
                 id
               );
@@ -64,7 +65,6 @@ export const loadFlowEditorByDOM = (
           }, plugin.app.workspace["rootSplit"]!);
           
         }
-      }
       if (!leafFound) {
         plugin.app.workspace.iterateLeaves((leaf) => {
           const cm = leaf.view.editor?.cm as EditorView;
@@ -86,10 +86,11 @@ export const loadFlowEditorByDOM = (
 export const loadFlowEditorsForLeafForID = (
   leaf: WorkspaceLeaf,
   cm: EditorView,
-  source: string,
+  source: string | undefined,
   plugin: BlockLinkPlus,
   id: string
 ) => {
+  if (!source) return;
 
   const stateField = cm.state.field(flowEditorInfo, false);
   if (!stateField) return;
@@ -111,7 +112,11 @@ const loadFlowEditor = async (
   ) as HTMLElement;
   
   const path = plugin.enactor.uriByString(flowEditorInfo.link, source);
-  const basePath = plugin.app.metadataCache.getFirstLinkpathDest(path.basePath, source)?.path;
+  if (!path) return;
+
+  const basePath =
+    plugin.app.metadataCache.getFirstLinkpathDest(path.basePath, source)?.path ??
+    path.basePath;
 
   if (dom) {
 
@@ -128,12 +133,12 @@ const loadFlowEditor = async (
     } else  {
       
 
-      const file = plugin.app.vault.getAbstractFileByPath(path.basePath) ?? plugin.app.vault.getAbstractFileByPath(basePath);
+       const file = plugin.app.vault.getAbstractFileByPath(basePath);
     if (file) {
       if (!dom.hasAttribute("ready")) {
         // dom.empty();
         dom.setAttribute("ready", "");
-        plugin.enactor.openPath(basePath, dom);
+        plugin.enactor.openPath(path.fullPath, dom);
         
       }
     } else {
@@ -144,7 +149,8 @@ const loadFlowEditor = async (
       const createFile = async (e: MouseEvent) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        await plugin.app.vault.create(`/${basePath}.md`, "");
+        const newPath = basePath.endsWith(".md") ? basePath : `${basePath}.md`;
+        await plugin.app.vault.create(newPath, "");
         loadFlowEditor(leaf, cm, flowEditorInfo, source, plugin);
       };
       createDiv.setText(`"${basePath}" ` + i18n.labels.noFile);
@@ -153,7 +159,6 @@ const loadFlowEditor = async (
   }
   }
 };
-
 
 
 

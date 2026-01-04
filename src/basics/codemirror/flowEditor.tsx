@@ -1,6 +1,7 @@
 import {
   Annotation,
   EditorState,
+  RangeSetBuilder,
   StateField,
   Transaction,
   TransactionSpec,
@@ -95,6 +96,8 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
     const usedContainers: string[] = [];
 
     const str = tr.newDoc.sliceString(0);
+    const cachedHeight = tr.annotation(cacheFlowEditorHeight);
+    const toggleAnnotation = tr.annotation(toggleFlowEditor);
     const reverseExpandedState = (state: FlowEditorState) => {
       const news =
         state != FlowEditorState.Open
@@ -105,6 +108,7 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
 
     // Only process embed links, not regular [[xxx]] links
     for (const match of str.matchAll(/!!\[\[([^\]]+)\]\]/g)) {
+      if (match.index === undefined) continue;
       const link = match[1];
       const existingLinks = previous.filter((f) => f.link == link);
       const offset = usedContainers.filter((f) => f == link).length;
@@ -118,16 +122,15 @@ export const flowEditorInfo = StateField.define<FlowEditorInfo[]>({
         to: match.index + 4 + match[1].length,
         type: FlowEditorLinkType.Embed,
         height: existingInfo
-          ? tr.annotation(cacheFlowEditorHeight)?.[0] == id &&
-            tr.annotation(cacheFlowEditorHeight)?.[1] != 0
-            ? tr.annotation(cacheFlowEditorHeight)?.[1]
+          ? cachedHeight && cachedHeight[0] == id && cachedHeight[1] !== 0
+            ? cachedHeight[1]
             : existingInfo.height
           : -1,
         expandedState: existingInfo
-          ? tr.annotation(toggleFlowEditor)?.[0] == id
+          ? toggleAnnotation?.[0] == id
             ? reverseExpandedState(existingInfo.expandedState)
             : existingInfo.expandedState
-          : 1,
+          : FlowEditorState.AutoOpen,
       };
       newValues.push(info);
     }
@@ -187,8 +190,8 @@ class FlowEditorWidget extends WidgetType {
     div.setAttribute("id", "mk-flow-" + this.info.id);
     div.style.setProperty("height", this.info.height + "px");
     
-    if (this.info.link && view.state.field(editorInfoField, false)) {
-      const infoField = view.state.field(editorInfoField, false);
+    const infoField = view.state.field(editorInfoField, false);
+    if (this.info.link && infoField) {
       const file = infoField.file;
 
       // Step 2: For ReadOnlyEmbed, show fixed test content
@@ -242,8 +245,8 @@ export class FlowEditorSelector extends WidgetType {
     const div = document.createElement("div");
     div.classList.add("mk-floweditor-selector");
     const reactEl = createRoot(div);
-    if (this.info.link && view.state.field(editorInfoField, false)) {
-      const infoField = view.state.field(editorInfoField, false);
+    const infoField = view.state.field(editorInfoField, false);
+    if (this.info.link && infoField) {
       const file = infoField.file;
 
       reactEl.render(
@@ -296,12 +299,12 @@ export const flowEditorWidgetDecoration = (
 
 const flowEditorDecorations = (view: EditorView, plugin: BlockLinkPlus) => {
   const builder = new RangeSetBuilder<Decoration>();
-  if (!view.state.field(editorInfoField, false)) {
+  const infos = view.state.field(flowEditorInfo, false);
+  if (!infos) {
     return builder.finish();
   }
-  const infoField = view.state.field(editorInfoField, false);
 
-  for (const info of infoField.infos) {
+  for (const info of infos) {
     if (info.expandedState != FlowEditorState.Open) {
       continue;
     }
