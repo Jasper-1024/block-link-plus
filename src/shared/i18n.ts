@@ -281,7 +281,7 @@ class T {
 
       // What's New modal (shown after upgrade)
       whatsNew: {
-        titleWithVersion: "What's new in v${1}",
+        titleWithVersion: "Block Link Plus — What's new in v${1}",
         updatedFromTo: "Updated from v${1} to v${2}",
         viewChangelog: "View full changelog",
         close: "Close",
@@ -289,9 +289,11 @@ class T {
           "Inline Edit: migrated to a native leaf-based engine (ported from sync-embeds; more reliable in Live Preview).",
           "Removed legacy `!![[...]]` syntax; use `![[...]]`.",
           "Multi-line blocks: improved `^id-id` range creation (inline when safe; otherwise standalone after the block).",
-          "Multi-block mode now targets blocks (paragraphs/list items); list item IDs are inserted at the end of the item when needed.",
+          "Fix: when selection stays within a single list item, range markers stay scoped to that item (no accidental expansion to the whole list).",
+          "Fix: multi-block mode targets blocks (paragraphs/list items); list item IDs are inserted at the end of the item when needed (#22/#27).",
           "`^id-id` range embeds render consistently (including when Inline Edit is disabled).",
           "Fix: reading-mode postprocessor no longer blanks notes (#29).",
+          "New: show a What's New modal once after upgrade.",
         ],
         fallback: [
           "See the full changelog for details.",
@@ -580,7 +582,7 @@ class T {
 
       // 更新说明弹窗（升级后展示一次）
       whatsNew: {
-        titleWithVersion: "v${1} 更新内容",
+        titleWithVersion: "Block Link Plus — v${1} 更新内容",
         updatedFromTo: "已从 v${1} 更新到 v${2}",
         viewChangelog: "查看完整更新日志",
         close: "关闭",
@@ -588,9 +590,11 @@ class T {
           "内联编辑：迁移到原生 leaf 引擎（移植自 sync-embeds，Live Preview 更稳定）。",
           "移除旧版 `!![[...]]` 语法，请改用 `![[...]]`。",
           "多行块：改进 `^id-id` 范围创建（安全时行尾插入；否则在块结束后独占行插入）。",
-          "多块模式：按“块”（段落/列表项）工作；列表项有续行时，ID 插入到该项最后一行。",
+          "修复：选区在单个列表项内时，范围 marker 不再扩到整个 list。",
+          "修复：多块模式按“块”（段落/列表项）工作；列表项有续行时，ID 插入到该项最后一行（#22/#27）。",
           "`^id-id` 范围嵌入渲染一致（即使关闭内联编辑）。",
           "修复：阅读模式后处理不再导致内容被清空（#29）。",
+          "新增：升级后弹出一次更新说明（What's New）。",
         ],
         fallback: [
           "请查看完整更新日志了解详情。",
@@ -879,7 +883,7 @@ class T {
 
       // 更新說明彈窗（升級後展示一次）
       whatsNew: {
-        titleWithVersion: "v${1} 更新內容",
+        titleWithVersion: "Block Link Plus — v${1} 更新內容",
         updatedFromTo: "已從 v${1} 更新到 v${2}",
         viewChangelog: "查看完整更新日誌",
         close: "關閉",
@@ -887,9 +891,11 @@ class T {
           "內嵌編輯：遷移到原生 leaf 引擎（移植自 sync-embeds，Live Preview 更穩定）。",
           "移除舊版 `!![[...]]` 語法，請改用 `![[...]]`。",
           "多行塊：改進 `^id-id` 範圍建立（安全時行尾內嵌插入；否則在塊結束後以獨佔行插入）。",
-          "多塊模式：以「塊」（段落/清單項）為單位；清單項有續行時，ID 會插在該項最後一行。",
+          "修正：選區在單個清單項內時，範圍 marker 不再擴到整個 list。",
+          "修正：多塊模式以「塊」（段落/清單項）為單位；清單項有續行時，ID 會插在該項最後一行（#22/#27）。",
           "`^id-id` 範圍嵌入渲染一致（即使關閉內嵌編輯）。",
           "修正：閱讀模式後處理不再導致內容被清空（#29）。",
+          "新增：升級後彈出一次更新說明（What's New）。",
         ],
         fallback: [
           "請查看完整更新日誌了解詳情。",

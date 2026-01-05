@@ -48,19 +48,22 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 
 ## 🆕 What's New in v1.8.0
 
-- Inline Edit migrated to a native leaf-based engine (more reliable Live Preview)
+- Inline Edit migrated to a native leaf-based engine (ported from sync-embeds; more reliable Live Preview)
 - Removed legacy `!![[...]]` embed syntax; use `![[...]]`
 - Multi-line blocks: improved `^id-id` range creation and rendering consistency
+- Fix: list item range markers stay scoped; IDs inserted at item end when needed (#22/#27)
 - Fix: reading-mode postprocessor no longer blanks notes/embeds (#29)
 - New: show a What's New modal once after upgrade
 
 ## 📋 Changelog
 
 ### 1.8.0
-- Inline Edit migrated to a native leaf-based engine
+- Inline Edit migrated to a native leaf-based engine (ported from sync-embeds)
 - Removed legacy `!![[...]]` embed syntax
-- Multi-line blocks: improved range creation and rendering stability
+- Multi-line blocks: improved `^id-id` range creation and rendering stability
+- Fix: list item range markers stay scoped; IDs inserted at item end when needed (#22/#27)
 - Fix: reading-mode postprocessor no longer blanks notes/embeds (#29)
+- New: show a What's New modal once after upgrade
 
 ### 1.7.5
 - Enhanced multi-line block handling by extracting actual links without aliases in markdown processing and flow editor
