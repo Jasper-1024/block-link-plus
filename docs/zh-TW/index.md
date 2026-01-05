@@ -27,7 +27,8 @@
 
 Block Link Plus 參考了優秀的開源專案：
 
-- **可編輯塊功能** - 移植修改自 [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
+- **內聯編輯引擎** - 移植自 [sync-embeds](https://github.com/uthvah/sync-embeds/)
+- **早期可編輯塊基礎** - 參考 [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
 - **塊引用基礎** - 參考 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link)
 - **多塊處理** - 啟發自 [Text Transporter](https://github.com/TfTHacker/obsidian42-text-transporter)
 

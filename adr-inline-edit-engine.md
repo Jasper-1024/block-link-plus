@@ -3,7 +3,7 @@
 
 ## 背景
 - BLP 当前 inline edit/范围裁剪来自 vendored `Obsidian-Basics`（`src/basics/*`），上游停更，关键缺陷难以修复。
-- `sync-embeds` 证明了更稳的底层路径：真实 `MarkdownView`/editor leaf + re-parent + focus + 命令/热键路由。
+- [`sync-embeds`](https://github.com/uthvah/sync-embeds/) 证明了更稳的底层路径：真实 `MarkdownView`/editor leaf + re-parent + focus + 命令/热键路由。
 - BLP 必须保留 `^id-id` 多行范围语法，并让其行为尽量等同 `#Heading/#^id`。
 
 ## 约束/共识

@@ -286,7 +286,7 @@ class T {
         viewChangelog: "View full changelog",
         close: "Close",
         v1_8_0: [
-          "Inline Edit: migrated to a native leaf-based engine (more reliable in Live Preview).",
+          "Inline Edit: migrated to a native leaf-based engine (ported from sync-embeds; more reliable in Live Preview).",
           "Removed legacy `!![[...]]` syntax; use `![[...]]`.",
           "Multi-line blocks: improved `^id-id` range creation (inline when safe; otherwise standalone after the block).",
           "Multi-block mode now targets blocks (paragraphs/list items); list item IDs are inserted at the end of the item when needed.",
@@ -585,7 +585,7 @@ class T {
         viewChangelog: "查看完整更新日志",
         close: "关闭",
         v1_8_0: [
-          "内联编辑：迁移到原生 leaf 引擎（Live Preview 更稳定）。",
+          "内联编辑：迁移到原生 leaf 引擎（移植自 sync-embeds，Live Preview 更稳定）。",
           "移除旧版 `!![[...]]` 语法，请改用 `![[...]]`。",
           "多行块：改进 `^id-id` 范围创建（安全时行尾插入；否则在块结束后独占行插入）。",
           "多块模式：按“块”（段落/列表项）工作；列表项有续行时，ID 插入到该项最后一行。",
@@ -884,7 +884,7 @@ class T {
         viewChangelog: "查看完整更新日誌",
         close: "關閉",
         v1_8_0: [
-          "內嵌編輯：遷移到原生 leaf 引擎（Live Preview 更穩定）。",
+          "內嵌編輯：遷移到原生 leaf 引擎（移植自 sync-embeds，Live Preview 更穩定）。",
           "移除舊版 `!![[...]]` 語法，請改用 `![[...]]`。",
           "多行塊：改進 `^id-id` 範圍建立（安全時行尾內嵌插入；否則在塊結束後以獨佔行插入）。",
           "多塊模式：以「塊」（段落/清單項）為單位；清單項有續行時，ID 會插在該項最後一行。",

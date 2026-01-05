@@ -154,7 +154,8 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 
 Built with inspiration from excellent open-source projects:
 
-- [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics) - Editable block foundation
+- [sync-embeds](https://github.com/uthvah/sync-embeds/) - Leaf-based inline edit engine foundation
+- [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics) - Legacy editable block foundation
 - [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link) - Block reference basics
 - [Text Transporter](https://github.com/TfTHacker/obsidian42-text-transporter) - Multi-block processing
 

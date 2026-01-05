@@ -6,7 +6,7 @@ Version history and new features for Block Link Plus.
 
 ## v1.8.0 (Current)
 
-- Inline Edit: migrated to a native leaf-based engine (more reliable in Live Preview).
+- Inline Edit: migrated to a native leaf-based engine (ported from sync-embeds; more reliable in Live Preview).
 - Removed legacy `!![[...]]` embed syntax; use `![[...]]`.
 - Multi-line blocks: improved `^id-id` range creation (inline end marker when safe; otherwise inserted as a standalone line).
 - Fix: multi-block mode now targets blocks (paragraphs/list items), not individual lines (#22/#27).

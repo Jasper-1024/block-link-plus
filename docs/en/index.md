@@ -27,7 +27,8 @@ Obsidian block link enhancement plugin designed to improve note reference effici
 
 Block Link Plus is inspired by excellent open-source projects:
 
-- **Editable Block Functionality** - Adapted from [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
+- **Inline Edit Engine** - Ported from [sync-embeds](https://github.com/uthvah/sync-embeds/)
+- **Legacy Editable Block Foundation** - Adapted from [Obsidian-Basics](https://github.com/Make-md/Obsidian-Basics)
 - **Block Reference Foundation** - Inspired by [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link)
 - **Multi-block Processing** - Inspired by [Text Transporter](https://github.com/TfTHacker/obsidian42-text-transporter)
 
