@@ -173,6 +173,36 @@ describe("link-creation/gen_insert_blocklink_multiline_block", () => {
 		expect(editor.getValue()).toBe(["- item1", "  cont ^abc123", "- item2 ^abc123-abc123", "after"].join("\n"));
 	});
 
+	test("does not expand a range within a wrapped list item to the whole list block", () => {
+		jest.spyOn(Utils, "generateRandomId").mockReturnValue("abc123");
+
+		const editor = new TestEditor(
+			["- item1", "  cont", "- item2", "after"].join("\n"),
+			{ line: 0, ch: 0 },
+			{ line: 1, ch: 0 } // selection stays inside the first list item
+		);
+
+		const fileCache: any = {
+			sections: [
+				{
+					type: "list",
+					position: { start: { line: 0, col: 0 }, end: { line: 2, col: 7 } },
+				},
+			],
+			listItems: [
+				{ position: { start: { line: 0, col: 0 }, end: { line: 1, col: 6 } } },
+				{ position: { start: { line: 2, col: 0 }, end: { line: 2, col: 7 } } },
+			],
+		};
+
+		const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, DEFAULT_SETTINGS);
+
+		expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
+		expect(editor.getValue()).toBe(
+			["- item1", "  cont ^abc123", "  ^abc123-abc123", "- item2", "after"].join("\n")
+		);
+	});
+
 	test("fails without modifying the document when the start line already has a block ID", () => {
 		jest.spyOn(Utils, "generateRandomId").mockReturnValue("abc123");
 

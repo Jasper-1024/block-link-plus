@@ -388,8 +388,12 @@ export function gen_insert_blocklink_multiline_block(
 			const endPos: EditorPosition = { line: endInsertLine, ch: currentEndLineText.length };
 			editor.replaceRange(` ${endMarker}`, endPos);
 		} else {
+			const insertEndMarkerAsListItemContinuation =
+				Boolean(endListItem) && startInsertLine === endInsertLine;
 			const insertAfterLine =
-				endSection && (shouldInsertAfter(endSection) || endSection.type === "list")
+				insertEndMarkerAsListItemContinuation
+					? endInsertLine
+					: endSection && (shouldInsertAfter(endSection) || endSection.type === "list")
 					? endSection.position.end.line
 					: endInsertLine;
 			const insertAfterText = editor.getLine(insertAfterLine);
@@ -403,7 +407,14 @@ export function gen_insert_blocklink_multiline_block(
 			}
 
 			const needsBlankLineAfterMarker = isLikelyParagraphContinuationLine(nextLineText);
-			const insertText = needsBlankLineAfterMarker ? `\n${endMarker}\n` : `\n${endMarker}`;
+
+			let markerLine = endMarker;
+			if (insertEndMarkerAsListItemContinuation) {
+				const indent = editor.getLine(endInsertLine).match(/^\s*/)?.[0] ?? "";
+				markerLine = `${indent}${endMarker}`;
+			}
+
+			const insertText = needsBlankLineAfterMarker ? `\n${markerLine}\n` : `\n${markerLine}`;
 			editor.replaceRange(insertText, insertAfterPos);
 		}
 
