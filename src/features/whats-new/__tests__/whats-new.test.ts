@@ -1,4 +1,4 @@
-import { getChangelogUrl, shouldShowWhatsNew } from "../index";
+import { decideWhatsNewOnStartup, getChangelogUrl, shouldShowWhatsNew } from "../index";
 
 describe("features/whats-new", () => {
 	describe("shouldShowWhatsNew", () => {
@@ -15,6 +15,48 @@ describe("features/whats-new", () => {
 		});
 	});
 
+	describe("decideWhatsNewOnStartup", () => {
+		test("first install: records version and does not show", () => {
+			expect(
+				decideWhatsNewOnStartup({
+					currentVersion: "1.8.0",
+					lastSeenVersion: "",
+					hasExistingData: false,
+				})
+			).toEqual({ kind: "record", lastSeenVersion: "1.8.0" });
+		});
+
+		test("upgrade from older version: shows with previous version", () => {
+			expect(
+				decideWhatsNewOnStartup({
+					currentVersion: "1.8.0",
+					lastSeenVersion: "1.7.6",
+					hasExistingData: true,
+				})
+			).toEqual({ kind: "show", lastSeenVersion: "1.8.0", previousVersion: "1.7.6" });
+		});
+
+		test("upgrade from legacy data without lastSeenVersion: shows with unknown previous", () => {
+			expect(
+				decideWhatsNewOnStartup({
+					currentVersion: "1.8.0",
+					lastSeenVersion: "",
+					hasExistingData: true,
+				})
+			).toEqual({ kind: "show", lastSeenVersion: "1.8.0", previousVersion: "" });
+		});
+
+		test("already recorded: does nothing", () => {
+			expect(
+				decideWhatsNewOnStartup({
+					currentVersion: "1.8.0",
+					lastSeenVersion: "1.8.0",
+					hasExistingData: true,
+				})
+			).toEqual({ kind: "none" });
+		});
+	});
+
 	describe("getChangelogUrl", () => {
 		test("returns language-specific changelog urls", () => {
 			expect(getChangelogUrl("en")).toBe("https://obsidian-block-link-plus.jasper1024.com/en/changelog/");
@@ -23,4 +65,3 @@ describe("features/whats-new", () => {
 		});
 	});
 });
-

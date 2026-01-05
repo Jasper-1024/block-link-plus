@@ -35,7 +35,7 @@ import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
-import { shouldShowWhatsNew } from "features/whats-new";
+import { decideWhatsNewOnStartup } from "features/whats-new";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -47,6 +47,7 @@ export default class BlockLinkPlus extends Plugin {
 	editorExtensions: Extension[] = [];
 	flowEditorManager: FlowEditorManager;
 	inlineEditEngine: InlineEditEngine;
+	private hasExistingSettingsData = false;
 
 	public get enactor(): Enactor {
 		return this.flowEditorManager.enactor;
@@ -180,6 +181,8 @@ export default class BlockLinkPlus extends Plugin {
 
 	async loadSettings() {
 		const raw = (await this.loadData()) ?? {};
+		this.hasExistingSettingsData =
+			typeof raw === "object" && raw !== null && Object.keys(raw).length > 0;
 		let shouldSave = false;
 
 			if (typeof raw === "object" && raw !== null) {
@@ -223,23 +226,23 @@ export default class BlockLinkPlus extends Plugin {
 		const currentVersion = this.manifest.version;
 		const lastSeenVersion = this.settings.lastSeenVersion ?? "";
 
-		// First install: record the version, don't show.
-		if (!lastSeenVersion) {
-			this.settings.lastSeenVersion = currentVersion;
-			await this.saveData(this.settings);
-			return;
-		}
+		const decision = decideWhatsNewOnStartup({
+			currentVersion,
+			lastSeenVersion,
+			hasExistingData: this.hasExistingSettingsData,
+		});
 
-		if (!shouldShowWhatsNew(lastSeenVersion, currentVersion)) return;
+		if (decision.kind === "none") return;
 
-		// Record immediately so the modal is shown at most once per version.
-		this.settings.lastSeenVersion = currentVersion;
+		this.settings.lastSeenVersion = decision.lastSeenVersion;
 		await this.saveData(this.settings);
+
+		if (decision.kind === "record") return;
 
 		this.app.workspace.onLayoutReady(() => {
 			new WhatsNewModal(this.app, {
 				currentVersion,
-				previousVersion: lastSeenVersion,
+				previousVersion: decision.previousVersion,
 			}).open();
 		});
 	}
