@@ -102,6 +102,9 @@ export interface PluginSettings {
 	inlineEditFile: boolean;
 	inlineEditHeading: boolean;
 	inlineEditBlock: boolean;
+
+	// Internal: used to show "What's New" once after upgrade.
+	lastSeenVersion: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -138,4 +141,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	inlineEditFile: false,
 	inlineEditHeading: true,
 	inlineEditBlock: true,
-}; 
+
+	// Internal
+	lastSeenVersion: "",
+};

@@ -28,12 +28,14 @@ import "css/custom-styles.css";
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
 import { markdownPostProcessor } from 'ui/MarkdownPost';
+import { WhatsNewModal } from "ui/WhatsNewModal";
 import * as TimeSection from 'features/time-section';
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
+import { shouldShowWhatsNew } from "features/whats-new";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -99,6 +101,8 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
+
+		await this.maybeShowWhatsNew();
 
 		// Register right click menu
 		this.registerEvent(
@@ -213,5 +217,30 @@ export default class BlockLinkPlus extends Plugin {
 		// This ensures that the plugin is updated whenever settings are changed
 		this.updateViewPlugin();
 		this.inlineEditEngine?.onSettingsChanged();
+	}
+
+	private async maybeShowWhatsNew() {
+		const currentVersion = this.manifest.version;
+		const lastSeenVersion = this.settings.lastSeenVersion ?? "";
+
+		// First install: record the version, don't show.
+		if (!lastSeenVersion) {
+			this.settings.lastSeenVersion = currentVersion;
+			await this.saveData(this.settings);
+			return;
+		}
+
+		if (!shouldShowWhatsNew(lastSeenVersion, currentVersion)) return;
+
+		// Record immediately so the modal is shown at most once per version.
+		this.settings.lastSeenVersion = currentVersion;
+		await this.saveData(this.settings);
+
+		this.app.workspace.onLayoutReady(() => {
+			new WhatsNewModal(this.app, {
+				currentVersion,
+				previousVersion: lastSeenVersion,
+			}).open();
+		});
 	}
 }

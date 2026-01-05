@@ -4,6 +4,8 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
+## v1.8.0 (Current)
+
 - Inline Edit: migrated to a native leaf-based engine (more reliable in Live Preview).
 - Removed legacy `!![[...]]` embed syntax; use `![[...]]`.
 - Multi-line blocks: improved `^id-id` range creation (inline end marker when safe; otherwise inserted as a standalone line).
@@ -11,8 +13,9 @@ Version history and new features for Block Link Plus.
 - Fix: when a list item has continuation lines, insert the block ID at the end of the item so Obsidian can index it.
 - Fix: `^id-id` range embeds render consistently (including when Inline Edit is disabled).
 - Fix: reading-mode postprocessor no longer blanks notes/embeds (#29).
+- New: show a What's New modal once after upgrade.
 
-## v1.7.6 (Current)
+## v1.7.6
 
 - Fixed Timeline link matching to support full path link formats (e.g., `[[Task/path/file.md|alias]]`)
 - Improved link matching with dual strategy: path resolution + basename matching
