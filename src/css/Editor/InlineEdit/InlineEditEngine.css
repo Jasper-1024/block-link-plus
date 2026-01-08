@@ -25,6 +25,10 @@
 	display: none !important;
 }
 
+.blp-inline-edit-root .embedded-backlinks {
+	display: none !important;
+}
+
 .blp-inline-edit-root .markdown-source-view,
 .blp-inline-edit-root .cm-editor,
 .blp-inline-edit-root .cm-scroller {

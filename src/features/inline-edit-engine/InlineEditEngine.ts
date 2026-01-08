@@ -1201,6 +1201,76 @@ export class InlineEditEngine {
 		}
 	}
 
+	private getIndentWidth(text: string): number {
+		let width = 0;
+		for (let i = 0; i < text.length; i++) {
+			width += text[i] === "\t" ? 4 : 1;
+		}
+		return width;
+	}
+
+	private stripBlockquotePrefix(line: string, depth: number): { ok: boolean; text: string } {
+		if (depth <= 0) return { ok: true, text: line };
+
+		let remaining = line;
+		for (let i = 0; i < depth; i++) {
+			const match = remaining.match(/^[ \t]*>[ \t]?/);
+			if (!match) return { ok: false, text: remaining };
+			remaining = remaining.slice(match[0].length);
+		}
+
+		return { ok: true, text: remaining };
+	}
+
+	private extendListItemBlockEndLine(
+		doc: { lines: number; line: (n: number) => { text?: string } },
+		visibleStart: number,
+		visibleEnd: number
+	): number {
+		let startText = "";
+		try {
+			startText = doc.line(visibleStart).text ?? "";
+		} catch {
+			return visibleEnd;
+		}
+
+		const listItemMatch = startText.match(/^((?:[ \t]*>[ \t]*)*)([ \t]*)(?:[-+*]|\d+[.)])[ \t]+/);
+		if (!listItemMatch) return visibleEnd;
+
+		const quoteDepth = (listItemMatch[1].match(/>/g) ?? []).length;
+		const baseIndentWidth = this.getIndentWidth(listItemMatch[2] ?? "");
+
+		let endLine = visibleEnd;
+		for (let lineNumber = visibleEnd + 1; lineNumber <= doc.lines; lineNumber++) {
+			let lineText = "";
+			try {
+				lineText = doc.line(lineNumber).text ?? "";
+			} catch {
+				break;
+			}
+
+			const stripped = this.stripBlockquotePrefix(lineText, quoteDepth);
+			if (!stripped.ok) break;
+
+			const normalized = stripped.text;
+			if (normalized.trim() === "") {
+				endLine = lineNumber;
+				continue;
+			}
+
+			const leadingWhitespace = normalized.match(/^[ \t]*/)?.[0] ?? "";
+			const indentWidth = this.getIndentWidth(leadingWhitespace);
+			if (indentWidth > baseIndentWidth) {
+				endLine = lineNumber;
+				continue;
+			}
+
+			break;
+		}
+
+		return endLine;
+	}
+
 	private resolveEmbedLineRanges(
 		parsed: ParsedInlineEmbed,
 		cm: { state?: { doc?: { lines?: number; line?: (n: number) => { text?: string } } } }
@@ -1227,11 +1297,19 @@ export class InlineEditEngine {
 
 			const normalizedEditableStart = clamp(Math.max(visibleStart, editableStart));
 			const normalizedEditableEnd = clamp(Math.min(visibleEnd, editableEnd));
+
+			const extendedVisibleEnd =
+				parsed.kind === "block"
+					? this.extendListItemBlockEndLine(doc, visibleStart, visibleEnd)
+					: visibleEnd;
+			const extendedEditableEnd =
+				parsed.kind === "block" ? Math.max(normalizedEditableEnd, extendedVisibleEnd) : normalizedEditableEnd;
+
 			return {
-				visibleRange: [visibleStart, visibleEnd],
+				visibleRange: [visibleStart, extendedVisibleEnd],
 				editableRange: [
 					normalizedEditableStart,
-					Math.max(normalizedEditableStart, normalizedEditableEnd),
+					Math.max(normalizedEditableStart, Math.min(extendedVisibleEnd, extendedEditableEnd)),
 				],
 			};
 		}
