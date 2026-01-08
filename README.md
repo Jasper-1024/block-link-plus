@@ -2,7 +2,7 @@
 
 Enhances Obsidian's right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.
 
-[![Version](https://img.shields.io/badge/version-1.8.0-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-1.8.1-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ![Demo](user_case.gif)
@@ -46,16 +46,16 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 - [简体中文](https://block-link-plus.jasper1024.com/)
 - [繁體中文](https://block-link-plus.jasper1024.com/zh-TW/)
 
-## 🆕 What's New in v1.8.0
+## 🆕 What's New in v1.8.1
 
-- Inline Edit migrated to a native leaf-based engine (ported from sync-embeds; more reliable Live Preview)
-- Removed legacy `!![[...]]` embed syntax; use `![[...]]`
-- Multi-line blocks: improved `^id-id` range creation and rendering consistency
-- Fix: list item range markers stay scoped; IDs inserted at item end when needed (#22/#27)
-- Fix: reading-mode postprocessor no longer blanks notes/embeds (#29)
-- New: show a What's New modal once after upgrade
+- Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`)
+- Fix: Inline Edit no longer shows the embedded backlinks panel ("Link to current file")
 
 ## 📋 Changelog
+
+### 1.8.1
+- Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`)
+- Fix: Inline Edit no longer shows the embedded backlinks panel ("Link to current file")
 
 ### 1.8.0
 - Inline Edit migrated to a native leaf-based engine (ported from sync-embeds)

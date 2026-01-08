@@ -4,7 +4,12 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v1.8.0 (Current)
+## v1.8.1 (Current)
+
+- Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`).
+- Fix: Inline Edit no longer shows the embedded backlinks panel ("Link to current file").
+
+## v1.8.0
 
 - Inline Edit: migrated to a native leaf-based engine (ported from sync-embeds; more reliable in Live Preview).
 - Removed legacy `!![[...]]` embed syntax; use `![[...]]`.
