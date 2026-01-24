@@ -108,6 +108,7 @@ export interface PluginSettings {
 	enhancedListHideSystemLine: boolean;
 	enhancedListHandleAffordance: boolean;
 	enhancedListHandleActions: boolean;
+	enhancedListIndentCodeBlocks: boolean;
 	enhancedListDeleteSubtreeOnListItemDelete: boolean;
 
 	// blp-view (Query/View) guardrails
@@ -154,6 +155,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enhancedListHideSystemLine: true,
 	enhancedListHandleAffordance: true,
 	enhancedListHandleActions: true,
+	enhancedListIndentCodeBlocks: true,
 	enhancedListDeleteSubtreeOnListItemDelete: false,
 
 	// blp-view (Query/View) guardrails

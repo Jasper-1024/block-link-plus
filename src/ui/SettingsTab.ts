@@ -327,6 +327,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.enhancedListBlocks.handleActions.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.desc);
 
+		this.addToggleSetting("enhancedListIndentCodeBlocks")
+			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)
+			.setDesc(t.settings.enhancedListBlocks.indentCodeBlocks.desc);
+
 		this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete")
 			.setName(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.name)
 			.setDesc(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.desc);

@@ -356,10 +356,19 @@ class VerticalLinesPluginValue implements PluginValue {
       // ignore
     }
     this.contentContainer.style.height = cmSizerChildrenSumHeight + "px";
-    // Align lines to the actual content start. Obsidian's CM6 layout can have
-    // gutters + extra spacing inside the content container, so using the
-    // container offset places lines too far left (into the gutter area).
-    this.contentContainer.style.marginLeft = cmContent.offsetLeft + "px";
+    // Align lines to the actual content start. In Obsidian's CM6 layout:
+    // - `cmContent` can be shifted by horizontal scrolling, so rect-based values
+    //   need to compensate for `scrollLeft`.
+    // - list content starts after `cmContent`'s left padding (file margins).
+    // Using the wrong coordinate space places lines into the gutter area.
+    const editorRect = this.view.dom.getBoundingClientRect();
+    const contentRect = cmContent.getBoundingClientRect();
+    const contentPaddingLeft = parseFloat(
+      window.getComputedStyle(cmContent).paddingLeft || "0",
+    );
+    const contentLeft =
+      contentRect.left - editorRect.left + cmScroll.scrollLeft + contentPaddingLeft;
+    this.contentContainer.style.marginLeft = Math.round(contentLeft) + "px";
     this.contentContainer.style.marginTop =
       (cmContent.firstElementChild as HTMLElement).offsetTop - 24 + "px";
 

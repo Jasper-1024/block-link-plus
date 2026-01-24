@@ -39,6 +39,7 @@ import {
 	createEnhancedListDeleteSubtreeExtension,
 	createEnhancedListHandleAffordanceExtension,
 	createEnhancedListHandleActionsExtension,
+	createEnhancedListCodeBlockIndentExtension,
 	handleBlpView,
 	registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
@@ -172,6 +173,7 @@ export default class BlockLinkPlus extends Plugin {
 			createEnhancedListHandleAffordanceExtension(this),
 			createEnhancedListHandleActionsExtension(this),
 			createEnhancedListAutoSystemLineExtension(this),
+			createEnhancedListCodeBlockIndentExtension(this),
 			createEnhancedListDeleteSubtreeExtension(this),
 		]);
 		registerEnhancedListDuplicateIdRepair(this);

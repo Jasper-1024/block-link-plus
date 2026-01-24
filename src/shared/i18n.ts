@@ -197,6 +197,10 @@ class T {
               zoomOut: "Zoom out",
             }
           },
+          indentCodeBlocks: {
+            name: "Indent nested fenced code blocks",
+            desc: "Visually indent fenced code blocks inside list items in Live Preview (enabled files only), without changing file content."
+          },
           deleteSubtreeOnDelete: {
             name: "Delete children when deleting a list item",
             desc: "If enabled, deleting a parent list item will delete its nested children (Logseq/Roam style). If disabled, children stay and only the system line is removed."
@@ -521,6 +525,10 @@ class T {
               zoomOut: "缩小（Zoom out）",
             }
           },
+          indentCodeBlocks: {
+            name: "缩进嵌套代码块",
+            desc: "在 Live Preview 中将列表项内的围栏代码块按层级缩进显示（仅对启用文件生效），不修改文件内容。"
+          },
           deleteSubtreeOnDelete: {
             name: "删除列表项时删除子项",
             desc: "开启后：删除父列表项会一并删除其子列表（Logseq/Roam 风格）。关闭后：子项保留，仅删除系统行。"
@@ -844,6 +852,10 @@ class T {
               zoomIn: "放大（Zoom in）",
               zoomOut: "縮小（Zoom out）",
             }
+          },
+          indentCodeBlocks: {
+            name: "縮進巢狀程式碼區塊",
+            desc: "在 Live Preview 中將清單項內的圍欄程式碼區塊依層級縮進顯示（僅對啟用檔案生效），不修改檔案內容。"
           },
           deleteSubtreeOnDelete: {
             name: "刪除列表項時刪除子項",

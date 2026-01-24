@@ -4,4 +4,5 @@ export { createEnhancedListHandleActionsExtension } from "./handle-actions-exten
 export { createEnhancedListSystemLineHideExtension } from "./system-line-hide-extension";
 export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-extension";
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";
+export { createEnhancedListCodeBlockIndentExtension } from "./codeblock-indent-extension";
 export { registerEnhancedListDuplicateIdRepair } from "./duplicate-id-repair";
