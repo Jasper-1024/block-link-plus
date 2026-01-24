@@ -11,7 +11,7 @@ import {
 import { Feature } from "./Feature";
 
 import { MyEditor, getEditorFromState } from "../editor";
-import { List, Root } from "../root";
+import { List } from "../root";
 import { ObsidianSettings } from "../services/ObsidianSettings";
 import { Parser } from "../services/Parser";
 import { Settings } from "../services/Settings";
@@ -34,8 +34,8 @@ class VerticalLinesPluginValue implements PluginValue {
   private lastLine: number;
   private lines: LineData[];
   private lineElements: HTMLElement[] = [];
-  private parsedRoots: Root[] = [];
   private lineXOffsetPx = 0;
+  private resizeObserver: ResizeObserver | null = null;
   private activeConnectorSvg: SVGSVGElement | null = null;
   private activeConnectorPath: SVGPathElement | null = null;
   private isActive = false;
@@ -70,6 +70,19 @@ class VerticalLinesPluginValue implements PluginValue {
     this.settings.onChange(this.scheduleRecalculate);
 
     this.prepareDom();
+
+    // Tab switching in Obsidian can hide/show editor DOM without producing a
+    // reliable CM "geometryChanged" signal for our overlay. A ResizeObserver
+    // lets us re-measure offsets when the editor becomes visible again.
+    try {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.scheduleRecalculate();
+      });
+      this.resizeObserver.observe(this.view.dom);
+      this.resizeObserver.observe(this.view.scrollDOM);
+    } catch {
+      // ignore
+    }
     // Obsidian can restore a non-zero scrollTop on editor mount without emitting a
     // scroll event. Sync immediately to avoid "floating" lines until the next scroll.
     try {
@@ -98,6 +111,13 @@ class VerticalLinesPluginValue implements PluginValue {
       // ignore
     }
 
+    try {
+      this.resizeObserver?.disconnect();
+    } catch {
+      // ignore
+    }
+    this.resizeObserver = null;
+
     // Remove injected DOM to avoid affecting out-of-scope editors when CSS is scoped.
     try {
       if (this.scroller && this.scroller.parentElement === this.view.dom) {
@@ -111,7 +131,6 @@ class VerticalLinesPluginValue implements PluginValue {
     this.contentContainer = null;
     this.lineElements = [];
     this.lines = [];
-    this.parsedRoots = [];
     this.lineXOffsetPx = 0;
     this.activeConnectorSvg = null;
     this.activeConnectorPath = null;
@@ -206,7 +225,6 @@ class VerticalLinesPluginValue implements PluginValue {
   private calculate = () => {
     if (this.isDestroyed || !this.isActive || !this.editor) return;
     this.lines = [];
-    this.parsedRoots = [];
 
     if (
       this.settings.verticalLines &&
@@ -216,8 +234,6 @@ class VerticalLinesPluginValue implements PluginValue {
       const fromLine = this.editor.offsetToPos(this.view.viewport.from).line;
       const toLine = this.editor.offsetToPos(this.view.viewport.to).line;
       const lists = this.parser.parseRange(this.editor, fromLine, toLine);
-      // Keep parsed roots so we can map cursor -> list -> parent line for active connector.
-      this.parsedRoots = lists;
 
       for (const list of lists) {
         this.lastLine = list.getContentEnd().line;
@@ -234,61 +250,6 @@ class VerticalLinesPluginValue implements PluginValue {
 
     this.updateDom();
   };
-
-  private getActiveList(): List | null {
-    try {
-      const cursor = this.editor?.getCursor?.();
-      const cursorLine = cursor?.line;
-      if (typeof cursorLine !== "number") return null;
-
-      for (const root of this.parsedRoots ?? []) {
-        try {
-          const startLine = root.getContentStart().line;
-          const endLine = root.getContentEnd().line;
-          if (cursorLine < startLine || cursorLine > endLine) continue;
-          return root.getListUnderLine(cursorLine);
-        } catch {
-          // ignore
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    return null;
-  }
-
-  /**
-   * Prefer CM coordinates over DOM measurements.
-   *
-   * The visible bullet dot in Live Preview is often rendered via CSS pseudo-elements,
-   * so `getBoundingClientRect()` on `.list-bullet` is not a reliable "dot center".
-   * Using text coordinates keeps alignment stable across themes and list styles.
-   */
-  private getListBulletCenterClient(list: List): { x: number; y: number } | null {
-    try {
-      if (!this.editor) return null;
-
-      const line = list.getFirstLineContentStart().line;
-      const indentLen = list.getFirstLineIndent().length;
-      const bullet = (list.getBullet?.() as string) ?? "";
-      const bulletLen = Math.max(1, bullet.length || 1);
-
-      const fromOffset = this.editor.posToOffset({ line, ch: indentLen });
-      const toOffset = this.editor.posToOffset({ line, ch: indentLen + bulletLen });
-
-      const a = this.view.coordsAtPos(fromOffset, 1);
-      const b = this.view.coordsAtPos(toOffset, 1);
-      if (!a || !b) return null;
-
-      return {
-        x: (a.left + b.left) / 2,
-        y: (a.top + a.bottom) / 2,
-      };
-    } catch {
-      return null;
-    }
-  }
 
   private getNextSibling(list: List): List | null {
     let listTmp = list;
@@ -432,6 +393,8 @@ class VerticalLinesPluginValue implements PluginValue {
   }
 
   private updateDom() {
+    if (!this.scroller || !this.contentContainer) return;
+
     const cmScroll = this.view.scrollDOM;
     const cmContent = this.view.contentDOM;
     const cmContentContainer = cmContent.parentElement;
@@ -463,6 +426,9 @@ class VerticalLinesPluginValue implements PluginValue {
     // Using the wrong coordinate space places lines into the gutter area.
     const editorRect = this.view.dom.getBoundingClientRect();
     const contentRect = cmContent.getBoundingClientRect();
+    // When a leaf is hidden (inactive tab), rects can be 0 or stale; skip the
+    // update and keep the last good layout until it becomes visible again.
+    if (editorRect.width === 0 || contentRect.width === 0) return;
     const contentPaddingLeft = parseFloat(
       window.getComputedStyle(cmContent).paddingLeft || "0",
     );
@@ -506,39 +472,84 @@ class VerticalLinesPluginValue implements PluginValue {
 
   private syncLineXOffset() {
     try {
-      if (!this.contentContainer || !this.view?.dom || !this.editor) return;
+      if (!this.contentContainer || !this.view?.dom) return;
+
       const containerRect = this.contentContainer.getBoundingClientRect();
 
-      const activeList = this.getActiveList();
-      if (!activeList) return;
+      // Use DOM geometry (bullet dot + vertical line overlay). We deliberately align
+      // based on a top-level list bullet so the global offset stays stable even when
+      // the active line is a leaf item (which has no vertical line at its own level).
+      const activeLineEl = this.view.dom.querySelector(
+        ".cm-line.cm-active.HyperMD-list-line:not(.HyperMD-list-line-nobullet)",
+      ) as HTMLElement | null;
+      if (!activeLineEl) return;
 
-      // Align using the nearest list item that has a corresponding rendered line.
-      // (Leaf items don't have a vertical line at their own level.)
-      let refList: List | null = activeList;
-      let refIndex = -1;
-      while (refList) {
-        refIndex = this.lines.findIndex((l) => l.list === refList);
-        if (refIndex >= 0) break;
-        refList = refList.getParent?.() ?? null;
+      const visibleLines = this.lineElements.filter(
+        (el) => el && el.style.display !== "none",
+      );
+      if (visibleLines.length === 0) return;
+
+      // Outer-most stripe (top-level) is the minimum x among rendered stripes.
+      let minStripeX: number | null = null;
+      for (const el of visibleLines) {
+        const r = el.getBoundingClientRect();
+        const stripeX = r.left - containerRect.left + 2;
+        if (!Number.isFinite(stripeX)) continue;
+        if (minStripeX === null || stripeX < minStripeX) minStripeX = stripeX;
       }
-      if (refIndex < 0 || !refList) return;
+      if (minStripeX === null) return;
 
-      const lineEl = this.lineElements[refIndex];
-      if (!lineEl || lineEl.style.display === "none") return;
+      // Find the nearest top-level list line for the active cursor position.
+      // This keeps the offset constant across nested levels.
+      const classMatch = activeLineEl.className.match(/HyperMD-list-line-(\d+)/);
+      const activeLevel = classMatch ? parseInt(classMatch[1], 10) : 1;
+      let refLineEl: HTMLElement = activeLineEl;
 
-      const bulletCenter = this.getListBulletCenterClient(refList);
-      if (!bulletCenter) return;
-      const bulletX = bulletCenter.x - containerRect.left;
+      if (Number.isFinite(activeLevel) && activeLevel > 1) {
+        let cur: Element | null = activeLineEl.previousElementSibling;
+        while (cur) {
+          const el = cur as HTMLElement;
+          if (el.classList?.contains?.("HyperMD-list-line")) {
+            const m = el.className.match(/HyperMD-list-line-(\d+)/);
+            const lvl = m ? parseInt(m[1], 10) : null;
+            if (lvl === 1 && !el.classList.contains("HyperMD-list-line-nobullet")) {
+              refLineEl = el;
+              break;
+            }
+          }
+          cur = cur.previousElementSibling;
+        }
+      }
 
-      const lineRect = lineEl.getBoundingClientRect();
-      // The 1px stroke is drawn as a background at x=2px inside the element.
-      const stripeX = lineRect.left - containerRect.left + 2;
+      const bulletEl = refLineEl.querySelector(
+        ".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
+      ) as HTMLElement | null;
+      if (!bulletEl) return;
 
-      const dx = bulletX - stripeX;
+      const bulletRect = bulletEl.getBoundingClientRect();
+      const after = getComputedStyle(bulletEl, "::after");
+      const afterW = parseFloat(after.width || "0");
+      const afterLeft = parseFloat(after.left || "0");
+
+      // Prefer the pseudo-element dot center when present; fall back to the text box center.
+      const bulletCenterXClient =
+        afterW > 0 && Number.isFinite(afterLeft)
+          ? bulletRect.left + afterLeft + afterW / 2
+          : bulletRect.left + bulletRect.width / 2;
+      const bulletX = bulletCenterXClient - containerRect.left;
+
+      const dx = bulletX - minStripeX;
       if (!Number.isFinite(dx) || Math.abs(dx) < 0.25) return;
 
-      const next = Math.max(-200, Math.min(200, this.lineXOffsetPx + dx));
-      if (Math.abs(next - this.lineXOffsetPx) < 0.25) return;
+      const currentStr = this.view.dom.style.getPropertyValue(
+        "--blp-outliner-line-x-offset",
+      );
+      const current = Number.isFinite(parseFloat(currentStr))
+        ? parseFloat(currentStr)
+        : this.lineXOffsetPx;
+      const next = Math.max(-200, Math.min(200, current + dx));
+      if (Math.abs(next - current) < 0.25) return;
+
       this.lineXOffsetPx = next;
       this.view.dom.style.setProperty("--blp-outliner-line-x-offset", `${next}px`);
     } catch {
@@ -552,35 +563,59 @@ class VerticalLinesPluginValue implements PluginValue {
     const containerRect = this.contentContainer?.getBoundingClientRect?.();
     if (!containerRect) return;
 
-    const activeList = this.getActiveList();
-    const parent = activeList?.getParent?.();
-    // The Root's synthetic root list has no parent; no connector at top-level.
-    if (!activeList || !parent || !parent.getParent?.()) {
+    const activeLineEl = this.view.dom.querySelector(
+      ".cm-line.cm-active.HyperMD-list-line:not(.HyperMD-list-line-nobullet)",
+    ) as HTMLElement | null;
+    if (!activeLineEl) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const parentIndex = this.lines.findIndex((l) => l.list === parent);
-    if (parentIndex < 0) {
+    const bulletEl = activeLineEl.querySelector(
+      ".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
+    ) as HTMLElement | null;
+    if (!bulletEl) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const parentLineEl = this.lineElements[parentIndex];
-    if (!parentLineEl || parentLineEl.style.display === "none") {
+    const bulletRect = bulletEl.getBoundingClientRect();
+    const after = getComputedStyle(bulletEl, "::after");
+    const afterW = parseFloat(after.width || "0");
+    const afterH = parseFloat(after.height || "0");
+    const afterLeft = parseFloat(after.left || "0");
+    const afterTop = parseFloat(after.top || "0");
+
+    const bulletCenterXClient =
+      afterW > 0 && Number.isFinite(afterLeft)
+        ? bulletRect.left + afterLeft + afterW / 2
+        : bulletRect.left + bulletRect.width / 2;
+    const bulletCenterYClient =
+      afterH > 0 && Number.isFinite(afterTop)
+        ? bulletRect.top + afterTop + afterH / 2
+        : bulletRect.top + bulletRect.height / 2;
+
+    const bulletX = bulletCenterXClient - containerRect.left;
+    const bulletY = bulletCenterYClient - containerRect.top;
+
+    // Parent connector: use the nearest vertical line stripe to the left of the bullet.
+    let parentStripeX: number | null = null;
+    for (const el of this.lineElements) {
+      if (!el || el.style.display === "none") continue;
+      const r = el.getBoundingClientRect();
+      const stripeX = r.left - containerRect.left + 2;
+      if (stripeX < bulletX - 0.1 && (parentStripeX === null || stripeX > parentStripeX)) {
+        parentStripeX = stripeX;
+      }
+    }
+
+    // Top-level list items have no parent line to connect to.
+    if (parentStripeX === null) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const bulletCenter = this.getListBulletCenterClient(activeList);
-    if (!bulletCenter) {
-      this.activeConnectorSvg.style.display = "none";
-      return;
-    }
-    const bulletX = bulletCenter.x - containerRect.left;
-    const bulletY = bulletCenter.y - containerRect.top;
-    const parentRect = parentLineEl.getBoundingClientRect();
-    const startX = parentRect.left - containerRect.left + 2;
+    const startX = parentStripeX;
 
     const radius = 8;
     const endX = bulletX;

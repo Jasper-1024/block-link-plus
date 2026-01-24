@@ -9,6 +9,8 @@
 .cm-editor.blp-enhanced-list-handle {
     /* Keep handle UX as an enhancement of the original bullet dot (Logseq-like). */
     --blp-enhanced-list-handle-glow: hsla(var(--interactive-accent-hsl), 0.35);
+    /* Spread is relative to font size so the halo scales with line-height. */
+    --blp-enhanced-list-handle-glow-spread: 0.25em;
 }
 
 .cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul,
@@ -36,7 +38,7 @@
   .cm-line.cm-active
   .cm-formatting-list-ol
   .list-bullet::after {
-    box-shadow: 0 0 0 6px var(--blp-enhanced-list-handle-glow);
+    box-shadow: 0 0 0 var(--blp-enhanced-list-handle-glow-spread) var(--blp-enhanced-list-handle-glow);
 }
 
 /* Nested fenced code blocks inside Enhanced List (UI-only).
