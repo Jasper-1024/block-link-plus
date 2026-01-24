@@ -100,5 +100,22 @@ describe("enhanced-list-blocks/active-block-highlight-extension", () => {
 			parent.remove();
 		}
 	});
-});
 
+	test("sets active-block left offset to the list content column", () => {
+		const doc = ["- a", "  continuation", "- b"].join("\n");
+		const { view, parent } = createView(doc);
+
+		try {
+			// Put the caret on the continuation line so we highlight the whole multi-line block.
+			const pos = view.state.doc.line(2).from + 4;
+			view.dispatch({ selection: EditorSelection.cursor(pos) });
+
+			const raw = view.dom.style.getPropertyValue("--blp-enhanced-list-active-block-left");
+			expect(raw).not.toBe("");
+			expect(Number.parseFloat(raw)).toBeGreaterThan(0);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+});

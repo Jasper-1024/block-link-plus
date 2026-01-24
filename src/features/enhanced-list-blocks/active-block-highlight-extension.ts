@@ -6,6 +6,9 @@ import { isEnhancedListEnabledFile } from "./enable-scope";
 
 // Detect a Markdown list item prefix (bullet or ordered), including optional task checkbox.
 const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
+// Same as LIST_ITEM_PREFIX_RE but stops right after the marker + whitespace.
+// Used to align the "active block" highlight to the editable content column (incl. task checkbox).
+const LIST_ITEM_MARKER_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+/;
 
 // Detect fenced code blocks so we don't misinterpret `- foo` lines inside code fences as list items.
 const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
@@ -32,55 +35,116 @@ function findClosestCmLine(node: any): HTMLElement | null {
 	return (el?.closest?.(".cm-line") as HTMLElement | null) ?? null;
 }
 
+const ACTIVE_BLOCK_LEFT_VAR = "--blp-enhanced-list-active-block-left";
+const ACTIVE_BLOCK_LEFT_PAD_PX = 2;
+
+function measureActiveBlockContentLeftPx(view: any, active: ActiveListBlock): number | null {
+	try {
+		const bulletLine = view.state.doc.line(active.bulletLineNo);
+		const markerMatch = bulletLine.text.match(LIST_ITEM_MARKER_RE);
+		if (!markerMatch) return null;
+
+		const domAt = view.domAtPos(bulletLine.from);
+		const bulletLineEl = findClosestCmLine(domAt?.node);
+		if (!bulletLineEl) return null;
+
+		const lineRect = bulletLineEl.getBoundingClientRect();
+		const markerPos = bulletLine.from + markerMatch[0].length;
+
+		// In Live Preview the list marker is rendered via widgets. `coordsAtPos()` gives us the
+		// real editable content column (after the marker, before any task checkbox).
+		const coords = typeof view.coordsAtPos === "function" ? view.coordsAtPos(markerPos) : null;
+		let leftPx: number | null = null;
+
+		if (coords && Number.isFinite(coords.left)) {
+			leftPx = coords.left - lineRect.left;
+		} else {
+			const markerEl = bulletLineEl.querySelector(
+				".cm-formatting-list-ul, .cm-formatting-list-ol",
+			) as HTMLElement | null;
+			if (markerEl) {
+				const rect = markerEl.getBoundingClientRect();
+				leftPx = rect.right - lineRect.left;
+			}
+		}
+
+		if (leftPx == null || !Number.isFinite(leftPx)) return null;
+		leftPx = Math.max(0, leftPx - ACTIVE_BLOCK_LEFT_PAD_PX);
+		if (leftPx < ACTIVE_BLOCK_LEFT_PAD_PX) return null;
+		return Math.max(0, Math.min(2000, leftPx));
+	} catch {
+		return null;
+	}
+}
+
 function updateActiveBlockLeftOffsetVar(view: any, active: ActiveListBlock | null) {
 	const root = view?.dom as HTMLElement | null;
 	if (!root?.style) return;
 
 	if (!active) {
-		root.style.removeProperty("--blp-enhanced-list-active-block-left");
+		root.style.removeProperty(ACTIVE_BLOCK_LEFT_VAR);
 		return;
+	}
+
+	const existingRaw = root.style.getPropertyValue(ACTIVE_BLOCK_LEFT_VAR).trim();
+	const existingNum = Number.parseFloat(existingRaw);
+	const shouldSeedFallback = existingRaw.length === 0 || !Number.isFinite(existingNum) || existingNum <= 0;
+
+	// `coordsAtPos()` can return transient/incorrect values during the same update cycle that moves
+	// the selection (Obsidian Live Preview widgets/layout settle across a measure pass). Schedule a
+	// measure so we can update the highlight start to the real content column.
+	if (typeof view.requestMeasure === "function") {
+		const bulletLineNo = active.bulletLineNo;
+		let filePath: string | null = null;
+		try {
+			const info = view.state.field(editorInfoField, false);
+			filePath = info?.file?.path ?? null;
+		} catch {
+			filePath = null;
+		}
+
+		view.requestMeasure({
+			key: "blp-active-block-left",
+			read: (v: any) => {
+				const measuredActive = { ...active, bulletLineNo };
+				const leftPx = measureActiveBlockContentLeftPx(v, measuredActive);
+				return { filePath, bulletLineNo, leftPx };
+			},
+			write: (m: any, v: any) => {
+				const r = v?.dom as HTMLElement | null;
+				if (!r?.style) return;
+
+				// Ignore stale measures after selection/file changes.
+				try {
+					const info = v.state.field(editorInfoField, false);
+					const currentPath = info?.file?.path ?? null;
+					if (m?.filePath != null && currentPath !== m.filePath) return;
+				} catch {
+					// ignore
+				}
+
+				const left = m?.leftPx;
+				if (left == null || !Number.isFinite(left)) return;
+
+				const next = `${Math.round(left * 100) / 100}px`;
+				const current = r.style.getPropertyValue(ACTIVE_BLOCK_LEFT_VAR);
+				if (current !== next) r.style.setProperty(ACTIVE_BLOCK_LEFT_VAR, next);
+			},
+		});
 	}
 
 	let leftPx: number | null = null;
 
-	try {
-		const bulletLine = view.state.doc.line(active.bulletLineNo);
-		const domAt = view.domAtPos(bulletLine.from);
-		const bulletLineEl = findClosestCmLine(domAt?.node);
-		if (!bulletLineEl) throw new Error("no bullet line element");
-
-		const lineRect = bulletLineEl.getBoundingClientRect();
-
-		const bulletEl = bulletLineEl.querySelector(
-			".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
-		) as HTMLElement | null;
-
-		if (bulletEl) {
-			const bulletRect = bulletEl.getBoundingClientRect();
-			const after = getComputedStyle(bulletEl, "::after");
-			const afterW = parseFloat(after.width || "0");
-			const afterLeft = parseFloat(after.left || "0");
-
-			// Prefer the pseudo-element dot left edge when present; fall back to the span box.
-			const dotLeftClient =
-				afterW > 0 && Number.isFinite(afterLeft)
-					? bulletRect.left + afterLeft
-					: bulletRect.left;
-			leftPx = dotLeftClient - lineRect.left;
-		}
-	} catch {
-		// Ignore DOM/layout failures; we have a text-based fallback below.
-	}
-
 	// Text-based fallback (works in tests / minimal DOM environments).
-	if (leftPx === null || !Number.isFinite(leftPx)) {
+	if (shouldSeedFallback && (leftPx === null || !Number.isFinite(leftPx))) {
 		try {
 			const bulletLine = view.state.doc.line(active.bulletLineNo);
-			const m = bulletLine.text.match(LIST_ITEM_PREFIX_RE);
+			const m = bulletLine.text.match(LIST_ITEM_MARKER_RE);
 			if (m) {
-				const indentLen = (m[1] ?? "").length;
-				const cw = Number.isFinite(view?.defaultCharacterWidth) ? view.defaultCharacterWidth : 0;
-				leftPx = indentLen * cw;
+				const markerLen = m[0].length;
+				const cwRaw = Number.isFinite(view?.defaultCharacterWidth) ? view.defaultCharacterWidth : 0;
+				const cw = cwRaw > 0 ? cwRaw : 8;
+				leftPx = Math.max(0, markerLen * cw - ACTIVE_BLOCK_LEFT_PAD_PX);
 			}
 		} catch {
 			// ignore
@@ -91,8 +155,10 @@ function updateActiveBlockLeftOffsetVar(view: any, active: ActiveListBlock | nul
 	leftPx = Math.max(0, Math.min(2000, leftPx));
 
 	const next = `${Math.round(leftPx * 100) / 100}px`;
-	const current = root.style.getPropertyValue("--blp-enhanced-list-active-block-left");
-	if (current !== next) root.style.setProperty("--blp-enhanced-list-active-block-left", next);
+	if (shouldSeedFallback) {
+		const current = root.style.getPropertyValue(ACTIVE_BLOCK_LEFT_VAR);
+		if (current !== next) root.style.setProperty(ACTIVE_BLOCK_LEFT_VAR, next);
+	}
 }
 
 function buildFenceStateMap(doc: any, fromLineNo: number, toLineNo: number): Map<number, boolean> {
