@@ -16,13 +16,14 @@
   padding: 0 var(--size-4-2);
 }
 
-.zoom-plugin-bls-zoom .cm-editor .cm-formatting-list-ol,
-.zoom-plugin-bls-zoom .cm-editor .cm-formatting-list-ul {
+.zoom-plugin-bls-zoom .cm-editor.blp-vslinko-scope .cm-formatting-list-ol,
+.zoom-plugin-bls-zoom .cm-editor.blp-vslinko-scope .cm-formatting-list-ul {
   cursor: pointer;
 }
 
 .zoom-plugin-bls-zoom
   .markdown-source-view.mod-cm6
+  .cm-editor.blp-vslinko-scope
   .cm-fold-indicator
   .collapse-indicator {
   margin-right: 6px;
@@ -31,6 +32,7 @@
 
 .zoom-plugin-bls-zoom
   .markdown-source-view.mod-cm6
+  .cm-editor.blp-vslinko-scope
   .cm-line:not(.cm-active):not(.HyperMD-header):not(.HyperMD-task-line)
   .cm-fold-indicator
   .collapse-indicator {

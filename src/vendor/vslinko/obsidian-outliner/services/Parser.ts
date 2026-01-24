@@ -8,7 +8,9 @@ import { checkboxRe } from "../utils/checkboxRe";
 const bulletSignRe = `(?:[-*+]|\\d+\\.)`;
 const optionalCheckboxRe = `(?:${checkboxRe})?`;
 
-const listItemWithoutSpacesRe = new RegExp(`^${bulletSignRe}( |\t)`);
+// Markdown allows up to 3 leading spaces before the list marker. Treat those as
+// a "root" list item for start-boundary detection (vs. nested indentation).
+const listItemWithoutSpacesRe = new RegExp(`^ {0,3}${bulletSignRe}( |\t)`);
 const listItemRe = new RegExp(`^[ \t]*${bulletSignRe}( |\t)`);
 const stringWithSpacesRe = new RegExp(`^[ \t]+`);
 const parseListItemRe = new RegExp(
@@ -47,6 +49,24 @@ export class Parser {
     private logger: Logger,
     private settings: Settings,
   ) {}
+
+  // Markdown indentation rules treat tabs as wider than a single character for nesting.
+  // Upstream obsidian-outliner is strict about mixed indent chars; BLP notes often contain
+  // legacy/system lines indented with tabs, so we compare indentation by a conservative
+  // "column width" (tabs expanded) instead of raw string equality.
+  private tabWidth = 4;
+
+  private indentCols(indent: string): number {
+    let cols = 0;
+    for (const ch of indent) {
+      cols += ch === "\t" ? this.tabWidth : 1;
+    }
+    return cols;
+  }
+
+  private normalizeIndent(indent: string): string {
+    return indent.replace(/\t/g, " ".repeat(this.tabWidth));
+  }
 
   parseRange(editor: Reader, fromLine = 0, toLine = editor.lastLine()): Root[] {
     const lists: Root[] = [];
@@ -174,6 +194,7 @@ export class Parser {
     let currentParent: ParseListList = root.getRootList();
     let currentList: ParseListList | null = null;
     let currentIndent = "";
+    let currentIndentCols = 0;
 
     const foldedLines = editor.getAllFoldedLines();
 
@@ -183,6 +204,9 @@ export class Parser {
 
       if (matches) {
         const [, indent, bullet, spaceAfterBullet] = matches;
+        const indentCols = this.indentCols(indent);
+        const indentNorm = this.normalizeIndent(indent);
+        const currentIndentNorm = this.normalizeIndent(currentIndent);
         let [, , , , optionalCheckbox, content] = matches;
 
         content = optionalCheckbox + content;
@@ -190,32 +214,42 @@ export class Parser {
           optionalCheckbox = "";
         }
 
-        const compareLength = Math.min(currentIndent.length, indent.length);
-        const indentSlice = indent.slice(0, compareLength);
-        const currentIndentSlice = currentIndent.slice(0, compareLength);
+        const compareCols = Math.min(currentIndentCols, indentCols);
+        const indentSlice = indentNorm.slice(0, compareCols);
+        const currentIndentSlice = currentIndentNorm.slice(0, compareCols);
 
         if (indentSlice !== currentIndentSlice) {
-          const expected = currentIndentSlice
+          const expected = currentIndent
             .replace(/ /g, "S")
             .replace(/\t/g, "T");
-          const got = indentSlice.replace(/ /g, "S").replace(/\t/g, "T");
+          const got = indent.replace(/ /g, "S").replace(/\t/g, "T");
 
           return error(
             `Unable to parse list: expected indent "${expected}", got "${got}"`,
           );
         }
 
-        if (indent.length > currentIndent.length) {
+        // The first list item can legally start with up to 3 leading spaces in Markdown.
+        // Treat its indent as the baseline for this root list (do not nest under a null currentList).
+        if (!currentList) {
+          currentIndent = indent;
+          currentIndentCols = indentCols;
+        } else if (indentCols > currentIndentCols) {
           currentParent = currentList;
           currentIndent = indent;
-        } else if (indent.length < currentIndent.length) {
+          currentIndentCols = indentCols;
+        } else if (indentCols < currentIndentCols) {
           while (
-            currentParent.getFirstLineIndent().length >= indent.length &&
+            this.indentCols(currentParent.getFirstLineIndent()) >= indentCols &&
             currentParent.getParent()
           ) {
             currentParent = currentParent.getParent();
           }
           currentIndent = indent;
+          currentIndentCols = indentCols;
+        } else {
+          currentIndent = indent;
+          currentIndentCols = indentCols;
         }
 
         const foldRoot = foldedLines.includes(l);
@@ -238,23 +272,21 @@ export class Parser {
         }
 
         const indentToCheck = currentList.getNotesIndent() || currentIndent;
+        const indentToCheckCols = this.indentCols(indentToCheck);
+        const lineIndent = line.match(/^[ \t]*/)?.[0] ?? "";
 
-        if (line.indexOf(indentToCheck) !== 0) {
+        // Compare by indentation width (tabs expanded) instead of raw string prefix.
+        if (this.indentCols(lineIndent) < indentToCheckCols) {
           const expected = indentToCheck.replace(/ /g, "S").replace(/\t/g, "T");
-          const got = line
-            .match(/^[ \t]*/)[0]
-            .replace(/ /g, "S")
-            .replace(/\t/g, "T");
+          const got = lineIndent.replace(/ /g, "S").replace(/\t/g, "T");
 
-          return error(
-            `Unable to parse list: expected indent "${expected}", got "${got}"`,
-          );
+          return error(`Unable to parse list: expected indent "${expected}", got "${got}"`);
         }
 
         if (!currentList.getNotesIndent()) {
           const matches = line.match(/^[ \t]+/);
 
-          if (!matches || matches[0].length <= currentIndent.length) {
+          if (!matches || this.indentCols(matches[0]) <= currentIndentCols) {
             if (/^\s+$/.test(line)) {
               continue;
             }

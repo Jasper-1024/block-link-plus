@@ -39,6 +39,7 @@ import { ZoomOnClickFeature } from "../../vendor/vslinko/obsidian-zoom/features/
 import { LoggerService } from "../../vendor/vslinko/obsidian-zoom/services/LoggerService";
 import { SettingsService, type Storage as ZoomStorage } from "../../vendor/vslinko/obsidian-zoom/services/SettingsService";
 import { getEditorViewFromEditor } from "../../vendor/vslinko/obsidian-zoom/utils/getEditorViewFromEditor";
+import { createBuiltInVslinkoScopeExtension } from "./scope-extension";
 
 class BuiltInOutlinerSettingsStorage implements OutlinerStorage {
   constructor(private plugin: BlockLinkPlus) {}
@@ -317,6 +318,9 @@ export class BuiltInVslinkoManager {
   constructor(private plugin: BlockLinkPlus) {}
 
   async load() {
+    // Mark which CM editors are in-scope for vendored list UX (global or Enhanced List scoped).
+    this.plugin.registerEditorExtension([createBuiltInVslinkoScopeExtension(this.plugin)]);
+
     this.outliner = new BuiltInOutlinerModule(this.plugin);
     await this.outliner.load();
 

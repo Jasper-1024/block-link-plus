@@ -387,8 +387,12 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// Built-in vslinko plugins (vendored)
 		this.addHeading("Built-in Plugins (vslinko)").setDesc(
-			"Vendored copies of obsidian-outliner and obsidian-zoom. Enable them here to get upstream behavior (global, not scoped to Enhanced List Blocks)."
+			"Vendored copies of obsidian-outliner and obsidian-zoom. You can enable them globally (upstream behavior) or optionally scope list UX to Enhanced List Blocks enabled files."
 		);
+
+		this.addToggleSetting("builtInVslinkoScopeToEnhancedList")
+			.setName("Scope built-in list UX to Enhanced List Blocks")
+			.setDesc("When enabled, list styles and interactions from built-in Outliner/Zoom only apply to Enhanced List Blocks enabled files (Live Preview only).");
 
 		// Built-in Outliner
 		new Setting(this.containerEl)
@@ -478,7 +482,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 			new Setting(this.containerEl)
 				.setName("Improve the style of your lists")
-				.setDesc("Styles are only compatible with built-in Obsidian themes and may not be compatible with other themes.")
+				.setDesc("Uses Obsidian CSS variables and should work with most themes (visual results may vary by theme).")
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.betterListsStyles).onChange(async (value) => {
 						outlinerSettings.betterListsStyles = value;

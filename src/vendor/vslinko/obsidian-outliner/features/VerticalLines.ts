@@ -15,6 +15,7 @@ import { List } from "../root";
 import { ObsidianSettings } from "../services/ObsidianSettings";
 import { Parser } from "../services/Parser";
 import { Settings } from "../services/Settings";
+import { isEditorViewInBlpVslinkoScope } from "../../blp-scope";
 
 const VERTICAL_LINES_BODY_CLASS = "outliner-plugin-vertical-lines";
 
@@ -33,6 +34,8 @@ class VerticalLinesPluginValue implements PluginValue {
   private lastLine: number;
   private lines: LineData[];
   private lineElements: HTMLElement[] = [];
+  private isActive = false;
+  private isDestroyed = false;
 
   constructor(
     private settings: Settings,
@@ -40,6 +43,25 @@ class VerticalLinesPluginValue implements PluginValue {
     private parser: Parser,
     private view: EditorView,
   ) {
+    this.refreshScope();
+    setTimeout(this.refreshScope, 0);
+  }
+
+  private refreshScope = () => {
+    if (this.isDestroyed) return;
+
+    const next = isEditorViewInBlpVslinkoScope(this.view);
+    if (next === this.isActive) return;
+
+    this.isActive = next;
+    if (next) {
+      this.enable();
+    } else {
+      this.disable();
+    }
+  };
+
+  private enable() {
     this.view.scrollDOM.addEventListener("scroll", this.onScroll);
     this.settings.onChange(this.scheduleRecalculate);
 
@@ -47,7 +69,45 @@ class VerticalLinesPluginValue implements PluginValue {
     this.waitForEditor();
   }
 
+  private disable() {
+    try {
+      this.settings.removeCallback(this.scheduleRecalculate);
+    } catch {
+      // ignore
+    }
+    try {
+      this.view.scrollDOM.removeEventListener("scroll", this.onScroll);
+    } catch {
+      // ignore
+    }
+
+    try {
+      clearTimeout(this.scheduled);
+    } catch {
+      // ignore
+    }
+
+    // Remove injected DOM to avoid affecting out-of-scope editors when CSS is scoped.
+    try {
+      if (this.scroller && this.scroller.parentElement === this.view.dom) {
+        this.view.dom.removeChild(this.scroller);
+      }
+    } catch {
+      // ignore
+    }
+
+    this.scroller = null;
+    this.contentContainer = null;
+    this.lineElements = [];
+    this.lines = [];
+    this.editor = null;
+  }
+
   private waitForEditor = () => {
+    if (this.isDestroyed || !this.isActive) {
+      return;
+    }
+
     const editor = getEditorFromState(this.view.state);
     if (!editor) {
       setTimeout(this.waitForEditor, 0);
@@ -71,16 +131,21 @@ class VerticalLinesPluginValue implements PluginValue {
   }
 
   private onScroll = (e: Event) => {
+    if (!this.isActive || !this.scroller) return;
     const { scrollLeft, scrollTop } = e.target as HTMLElement;
     this.scroller.scrollTo(scrollLeft, scrollTop);
   };
 
   private scheduleRecalculate = () => {
+    if (this.isDestroyed || !this.isActive) return;
     clearTimeout(this.scheduled);
     this.scheduled = setTimeout(this.calculate, 0);
   };
 
   update(update: ViewUpdate) {
+    this.refreshScope();
+    if (!this.isActive) return;
+
     if (
       update.docChanged ||
       update.viewportChanged ||
@@ -92,11 +157,11 @@ class VerticalLinesPluginValue implements PluginValue {
   }
 
   private calculate = () => {
+    if (this.isDestroyed || !this.isActive || !this.editor) return;
     this.lines = [];
 
     if (
       this.settings.verticalLines &&
-      this.obsidianSettings.isDefaultThemeEnabled() &&
       this.view.viewportLineBlocks.length > 0 &&
       this.view.visibleRanges.length > 0
     ) {
@@ -311,10 +376,8 @@ class VerticalLinesPluginValue implements PluginValue {
   }
 
   destroy() {
-    this.settings.removeCallback(this.scheduleRecalculate);
-    this.view.scrollDOM.removeEventListener("scroll", this.onScroll);
-    this.view.dom.removeChild(this.scroller);
-    clearTimeout(this.scheduled);
+    this.isDestroyed = true;
+    this.disable();
   }
 }
 
@@ -353,9 +416,7 @@ export class VerticalLines implements Feature {
   }
 
   private updateBodyClass = () => {
-    const shouldExists =
-      this.obsidianSettings.isDefaultThemeEnabled() &&
-      this.settings.verticalLines;
+    const shouldExists = this.settings.verticalLines;
     const exists = document.body.classList.contains(VERTICAL_LINES_BODY_CLASS);
 
     if (shouldExists && !exists) {

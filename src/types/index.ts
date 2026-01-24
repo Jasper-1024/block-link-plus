@@ -121,6 +121,8 @@ export interface PluginSettings {
 	builtInObsidianOutlinerSettings: BuiltInObsidianOutlinerSettings;
 	builtInObsidianZoomEnabled: boolean;
 	builtInObsidianZoomSettings: BuiltInObsidianZoomSettings;
+	// When enabled, limit vendored list UX (styles + interactions) to Enhanced List Blocks enabled files.
+	builtInVslinkoScopeToEnhancedList: boolean;
 
 	// Inline Edit
 	inlineEditEnabled: boolean;
@@ -181,6 +183,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 		zoomOnClick: true,
 		zoomOnClickMobile: false,
 	},
+	builtInVslinkoScopeToEnhancedList: false,
 	
 	// Inline edit (default: enabled, but file-embed editing off)
 	inlineEditEnabled: true,

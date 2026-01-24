@@ -5,6 +5,7 @@ import { EditorView } from "@codemirror/view";
 import { isBulletPoint } from "./utils/isBulletPoint";
 
 import { SettingsService } from "../services/SettingsService";
+import { isEditorViewInBlpVslinkoScope } from "../../blp-scope";
 
 export interface ClickOnBullet {
   clickOnBullet(view: EditorView, pos: number): void;
@@ -36,6 +37,10 @@ export class DetectClickOnBullet {
       !(e.target instanceof HTMLElement) ||
       !isBulletPoint(e.target)
     ) {
+      return;
+    }
+
+    if (!isEditorViewInBlpVslinkoScope(view)) {
       return;
     }
 

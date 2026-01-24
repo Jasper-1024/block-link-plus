@@ -14,6 +14,7 @@ import { ObsidianSettings } from "../services/ObsidianSettings";
 import { OperationPerformer } from "../services/OperationPerformer";
 import { Parser } from "../services/Parser";
 import { Settings } from "../services/Settings";
+import { isEditorViewInBlpVslinkoScope } from "../../blp-scope";
 
 const BODY_CLASS = "outliner-plugin-dnd";
 
@@ -114,6 +115,10 @@ export class DragAndDrop implements Feature {
 
     const view = getEditorViewFromHTMLElement(e.target as HTMLElement);
     if (!view) {
+      return;
+    }
+
+    if (!isEditorViewInBlpVslinkoScope(view)) {
       return;
     }
 

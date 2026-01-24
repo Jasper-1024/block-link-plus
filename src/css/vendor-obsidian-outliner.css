@@ -1,20 +1,22 @@
 /* lists and bullets */
-.outliner-plugin-better-lists .cm-s-obsidian .HyperMD-list-line {
+body.outliner-plugin-better-lists .cm-editor.blp-vslinko-scope .HyperMD-list-line {
   /* padding-top: 0.4em; */
 }
 
-.outliner-plugin-better-lists .cm-formatting-list-ul {
+body.outliner-plugin-better-lists
+  .cm-editor.blp-vslinko-scope
+  .cm-formatting-list-ul {
   margin-right: 0.3em;
 }
 
-.outliner-plugin-better-lists .list-bullet::after {
+body.outliner-plugin-better-lists .cm-editor.blp-vslinko-scope .list-bullet::after {
   width: 0.4em;
   height: 0.4em;
   background-color: var(--text-muted);
 }
 
 /* lines */
-.outliner-plugin-list-lines-scroller {
+.cm-editor.blp-vslinko-scope .outliner-plugin-list-lines-scroller {
   position: absolute;
   top: 0;
   right: 0;
@@ -26,11 +28,11 @@
   overflow: hidden;
 }
 
-.outliner-plugin-list-lines-content-container {
+.cm-editor.blp-vslinko-scope .outliner-plugin-list-lines-content-container {
   position: relative;
 }
 
-.outliner-plugin-list-line {
+.cm-editor.blp-vslinko-scope .outliner-plugin-list-line {
   pointer-events: auto;
   position: absolute;
   width: 5px;
@@ -48,22 +50,25 @@
   background-repeat: no-repeat;
 }
 
-.outliner-plugin-better-bullets .outliner-plugin-list-line {
+body.outliner-plugin-better-bullets
+  .cm-editor.blp-vslinko-scope
+  .outliner-plugin-list-line {
   margin-top: 1.4em;
 }
 
 .markdown-source-view.mod-cm6.is-readable-line-width
+  .cm-editor.blp-vslinko-scope
   .outliner-plugin-list-lines-content-container {
   max-width: 700px;
   margin: auto;
 }
 
-.outliner-plugin-list-line:hover {
+.cm-editor.blp-vslinko-scope .outliner-plugin-list-line:hover {
   background: var(--text-faint);
 }
 
-.outliner-plugin-vertical-lines
-  .markdown-source-view.mod-cm6
+body.outliner-plugin-vertical-lines
+  .cm-editor.blp-vslinko-scope
   .cm-hmd-list-indent
   .cm-indent::before {
   content: none;
@@ -93,8 +98,11 @@
   height: 4px;
 }
 
-body.outliner-plugin-dnd:not(.outliner-plugin-dragging) .cm-formatting-list,
 body.outliner-plugin-dnd:not(.outliner-plugin-dragging)
+  .cm-editor.blp-vslinko-scope
+  .cm-formatting-list,
+body.outliner-plugin-dnd:not(.outliner-plugin-dragging)
+  .cm-editor.blp-vslinko-scope
   .cm-fold-indicator
   .collapse-indicator {
   cursor: grab !important;

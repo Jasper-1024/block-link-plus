@@ -27,9 +27,7 @@ export class BetterListsStyles implements Feature {
   }
 
   private updateBodyClass = () => {
-    const shouldExists =
-      this.obsidianSettings.isDefaultThemeEnabled() &&
-      this.settings.betterListsStyles;
+    const shouldExists = this.settings.betterListsStyles;
     const exists = document.body.classList.contains(BETTER_LISTS_BODY_CLASS);
 
     if (shouldExists && !exists) {
