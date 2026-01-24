@@ -56,7 +56,13 @@
 
 /* Highlight the whole active list block (Logseq-like). */
 .cm-editor .cm-line.blp-enhanced-list-active-block {
-    background-color: var(--background-modifier-hover);
+    /* Use `background` (not background-color) to override theme active-line styling
+     * (some themes add background-images that otherwise "stack" and look broken). */
+    background: linear-gradient(
+        to right,
+        transparent var(--blp-enhanced-list-active-block-left, 0px),
+        var(--background-modifier-hover) var(--blp-enhanced-list-active-block-left, 0px)
+    );
 }
 
 /* Nested fenced code blocks inside Enhanced List (UI-only).
