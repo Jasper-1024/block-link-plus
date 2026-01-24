@@ -36,6 +36,7 @@ import * as EditorMenu from 'ui/EditorMenu';
 import {
 	createEnhancedListSystemLineHideExtension,
 	createEnhancedListAutoSystemLineExtension,
+	createEnhancedListDeleteSubtreeExtension,
 	handleBlpView,
 	registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
@@ -167,6 +168,7 @@ export default class BlockLinkPlus extends Plugin {
 		this.registerEditorExtension([
 			createEnhancedListSystemLineHideExtension(this),
 			createEnhancedListAutoSystemLineExtension(this),
+			createEnhancedListDeleteSubtreeExtension(this),
 		]);
 		registerEnhancedListDuplicateIdRepair(this);
 

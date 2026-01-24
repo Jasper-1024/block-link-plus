@@ -12,6 +12,7 @@
 ## 3. Behavior wiring
 - [x] 3.1 Respect system line visibility setting in Live Preview + Reading mode
 - [x] 3.2 Apply `blp-view` guardrails: materialize allow/deny, max source files, max results (truncate + hint), optional diagnostics
+- [ ] 3.3 In Live Preview, deleting a list item deletes its subtree (including system line)
 
 ## 4. Docs
 - [x] 4.1 Update Enhanced List Blocks docs to describe new settings
@@ -19,4 +20,4 @@
 ## 5. Verification
 - [x] 5.1 Run `npm test`
 - [x] 5.2 Run `npm run build-with-types`
-- [ ] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; `blp-view` guardrails behave as expected
+- [ ] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; deletion semantics behave; `blp-view` guardrails behave as expected
