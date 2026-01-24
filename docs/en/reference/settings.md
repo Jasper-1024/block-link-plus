@@ -2,6 +2,12 @@
 
 Detailed explanation of all configuration options.
 
+## Settings UI (Tabs + Search)
+
+Since v1.9.0, Block Link Plus settings are grouped into tabs and support cross-tab search:
+- Tabs: `Basics` / `Enhanced List` / `Built-in Plugins`
+- Search: type keywords (e.g. `zoom`, `handle`, `blp-view`) to filter settings across tabs; click a tab or press `Esc` to exit search mode.
+
 ## Multi-line Block Behavior
 
 **mult_line_handle**

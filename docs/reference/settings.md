@@ -2,6 +2,12 @@
 
 所有配置选项的详细说明。
 
+## 设置页导航（Tabs + 搜索）
+
+从 v1.9.0 起，Block Link Plus 的设置页提供 Tabs 分组与跨 Tab 搜索：
+- Tabs：`基础` / `增强列表` / `内置插件`
+- 搜索：在顶部输入关键词（如 `zoom` / `handle` / `blp-view`）即可跨 Tab 过滤设置项；点击 Tab 或按 `Esc` 退出搜索模式。
+
 ## 多行块行为
 
 **mult_line_handle**

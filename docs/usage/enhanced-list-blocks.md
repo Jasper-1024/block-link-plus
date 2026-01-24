@@ -8,6 +8,10 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
 - 位于设置中配置的“启用文件夹/启用文件”范围内（路径为 vault 内部路径；文件夹匹配递归；建议用 Obsidian 右键 Copy path 获取）
 - 文件 frontmatter 含 `blp_enhanced_list: true`
 
+## 设置入口
+
+相关设置在：设置 → Block Link Plus → `增强列表` Tab（或用顶部搜索）。
+
 ## 系统行（自动生成 + 隐藏）
 
 在启用文件内，Live Preview 下当你创建“下一条” list item（例如按 Enter）时，插件会确保上一条 list item 拥有系统行：
@@ -24,28 +28,39 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
 ### 列表手柄（可选）
 
 若希望更容易发现拖拽/折叠交互，可在设置中开启：
-- Enhanced List Blocks → “显示列表手柄”
+- `增强列表` Tab → “增强 List Blocks” → “显示列表手柄”
 
 开启后，Live Preview 下无序列表的 marker 会显示为把手（仅对启用文件生效）。
 
 ### 列表手柄动作（可选）
 
 若希望把手更接近 Logseq 的 block handle 行为，可在设置中开启：
-- Enhanced List Blocks → “启用列表手柄动作”
+- `增强列表` Tab → “增强 List Blocks” → “启用列表手柄动作”
 
 开启后（仅启用文件 + Live Preview）：
 - 左键点击无序列表把手：执行已配置的动作（默认：切换折叠；需 Obsidian 设置开启“Fold indent”）。
 - 右键点击无序列表把手：始终打开把手菜单（切换折叠、复制块链接/嵌入；若 Zoom 可用则显示缩放相关动作）。
 
 可在设置中调整左键行为：
-- Enhanced List Blocks → “手柄左键动作”
+- `增强列表` Tab → “增强 List Blocks” → “手柄左键动作”
+
+### 嵌套代码块缩进（可选）
+
+默认开启（可在设置中关闭）：
+- `增强列表` Tab → “增强 List Blocks” → “缩进嵌套代码块”
+
+开启后，列表项内的围栏代码块会在 Live Preview 中按块层级缩进显示（仅渲染，不修改文件内容）。
+
+### 活跃块高亮（内置）
+
+在 Live Preview 中，当光标位于某个列表项（包含续行/代码块/系统行）内时，插件会以背景高亮整个 list block，便于识别当前块边界。
 
 ### 删除行为（可选）
 
 默认情况下（不删除子项）：当你删除父 list item（例如删除 `-`/`1.` 等 marker 或剪切整行）时，插件只会删除系统行，子列表内容会保留。
 
 如果你希望更接近 Logseq/Roam 的 outliner 行为（删父即删子树），可在设置中开启：
-- Enhanced List Blocks → “删除列表项时删除子项”
+- `增强列表` Tab → “增强 List Blocks” → “删除列表项时删除子项”
 
 ## blp-view（Query/View）
 
@@ -53,7 +68,7 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
 
 ### blp-view 护栏设置（可选）
 
-在设置页的 Enhanced List Blocks 区域中，可配置 `blp-view` 相关护栏（仅在 Dataview 可用时显示）：
+在 `增强列表` Tab 的 “增强 List Blocks” 分组中，可配置 `blp-view` 相关护栏（仅在 Dataview 可用时显示）：
 - 允许/禁用 `render.mode: materialize` 写回
 - 最大扫描文件数（`0` 表示不限制）
 - 最大输出结果数（`0` 表示不限制；超过会截断并提示）
@@ -106,4 +121,4 @@ render:
 在设置中启用即可生效；若检测到外置同名插件启用，内置模块会自动禁用以避免冲突。
 
 你也可以将内置列表样式/交互限定到 Enhanced List 启用文件：
-- Built-in Plugins (vslinko) → “将内置列表交互限定到 Enhanced List”
+- `内置插件` Tab → “内置插件（vslinko）” → “将内置列表交互限定到 Enhanced List”

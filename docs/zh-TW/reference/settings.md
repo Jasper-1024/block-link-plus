@@ -2,6 +2,12 @@
 
 所有設定選項的詳細說明。
 
+## 設定頁導覽（Tabs + 搜尋）
+
+自 v1.9.0 起，Block Link Plus 的設定頁提供 Tabs 分組與跨 Tab 搜尋：
+- Tabs：`基礎` / `增強清單` / `內建外掛`
+- 搜尋：在頂部輸入關鍵字（如 `zoom` / `handle` / `blp-view`）即可跨 Tab 篩選設定項；點擊 Tab 或按 `Esc` 退出搜尋模式。
+
 ## 多行塊行為
 
 **mult_line_handle**
