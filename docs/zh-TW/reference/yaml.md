@@ -46,7 +46,7 @@ render:
 ### render
 
 - `type`: `embed-list | table`
-- `mode`: `materialize`（可選：寫回受控區域）
+- `mode`: `materialize`（可選：寫回受控區域；可在設定中停用寫回）
 - `columns`: table 欄位定義（`{ name, field? , expr? }`）
 
 ## 範例

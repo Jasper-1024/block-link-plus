@@ -105,6 +105,13 @@ export interface PluginSettings {
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: string[];
 	enhancedListEnabledFiles: string[];
+	enhancedListHideSystemLine: boolean;
+
+	// blp-view (Query/View) guardrails
+	blpViewAllowMaterialize: boolean;
+	blpViewMaxSourceFiles: number; // 0 = unlimited
+	blpViewMaxResults: number; // 0 = unlimited
+	blpViewShowDiagnostics: boolean;
 
 	// Built-in vslinko plugins (vendored)
 	builtInObsidianOutlinerEnabled: boolean;
@@ -139,6 +146,13 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: [],
 	enhancedListEnabledFiles: [],
+	enhancedListHideSystemLine: true,
+
+	// blp-view (Query/View) guardrails
+	blpViewAllowMaterialize: true,
+	blpViewMaxSourceFiles: 0,
+	blpViewMaxResults: 0,
+	blpViewShowDiagnostics: false,
 
 	// Built-in vslinko plugins (vendored)
 	builtInObsidianOutlinerEnabled: false,

@@ -17,12 +17,20 @@ In an enabled file, when you create the “next” list item in Live Preview (e.
   [date:: 2026-01-11T14:30:25] ^abcd
 ```
 
-- The system line is hidden in Live Preview and Reading mode.
+- The system line is hidden in Live Preview and Reading mode by default (you can turn off hiding in settings for debugging).
 - The system line is placed after the parent item content and before any child list (so `^id` is associated with the parent item).
 
 ## blp-view (Query/View)
 
 `blp-view` requires the Dataview plugin.
+
+### Optional blp-view guardrails
+
+In settings (Enhanced List Blocks section), you can configure optional guardrails for `blp-view` (only shown when Dataview is available):
+- Allow/disable `render.mode: materialize` writeback
+- Max source files per execution (`0` = unlimited)
+- Max rendered results (`0` = unlimited; extra results are truncated with a warning)
+- Show diagnostics (counts + timing)
 
 ### Example: Last 7 days, linking to current file
 

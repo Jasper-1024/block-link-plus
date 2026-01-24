@@ -10,6 +10,10 @@ const SYSTEM_LINE_REGEX =
 function buildDecorations(view: any, plugin: BlockLinkPlus) {
 	const builder = new RangeSetBuilder<Decoration>();
 
+	if (!plugin.settings.enhancedListHideSystemLine) {
+		return builder.finish();
+	}
+
 	try {
 		if (view.state.field?.(editorLivePreviewField, false) !== true) {
 			return builder.finish();
@@ -48,13 +52,17 @@ export function createEnhancedListSystemLineHideExtension(plugin: BlockLinkPlus)
 	return ViewPlugin.fromClass(
 		class {
 			decorations: any;
+			private lastHideSetting: boolean;
 
 			constructor(view: any) {
 				this.decorations = buildDecorations(view, plugin);
+				this.lastHideSetting = plugin.settings.enhancedListHideSystemLine;
 			}
 
 			update(update: ViewUpdate) {
-				if (update.docChanged || update.viewportChanged) {
+				const nextHideSetting = plugin.settings.enhancedListHideSystemLine;
+				if (nextHideSetting !== this.lastHideSetting || update.docChanged || update.viewportChanged) {
+					this.lastHideSetting = nextHideSetting;
 					this.decorations = buildDecorations(update.view, plugin);
 				}
 			}

@@ -6,29 +6,79 @@ const SYSTEM_LINE_REGEX =
 	/\[date::\s*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\](?:\s*\^[a-zA-Z0-9_-]+)?/g;
 
 const ENHANCED_LIST_READING_MODE_HIDER_MARKER = "data-blp-enhanced-list-reading-mode-hider";
+const ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER = "data-blp-enhanced-list-system-line-hidden";
+const ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_TOKEN = "token";
+const ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_ELEMENT = "el";
 
-function removePreviousBr(el: HTMLElement) {
+function hidePreviousBr(el: HTMLElement) {
 	let prev: ChildNode | null = el.previousSibling;
 	while (prev && prev.nodeType === Node.TEXT_NODE && !(prev.textContent ?? "").trim()) {
 		prev = prev.previousSibling;
 	}
 
 	if (prev && prev.nodeType === Node.ELEMENT_NODE && (prev as Element).tagName === "BR") {
-		(prev as Element).remove();
+		(prev as HTMLElement).style.display = "none";
+		(prev as HTMLElement).setAttribute(ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER, ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_ELEMENT);
+	}
+}
+
+function unhideEnhancedListSystemLineInReadingMode(el: HTMLElement) {
+	const marked = el.querySelectorAll(`[${ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER}]`);
+	for (const node of Array.from(marked)) {
+		const kind = node.getAttribute(ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER);
+
+		if (node.tagName === "SPAN" && kind === ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_TOKEN) {
+			node.replaceWith(document.createTextNode(node.textContent ?? ""));
+			continue;
+		}
+
+		(node as HTMLElement).style.removeProperty("display");
+		node.removeAttribute(ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER);
 	}
 }
 
 function hideEnhancedListSystemLineInReadingMode(el: HTMLElement) {
-	// 1) Best-effort raw text stripping (works when inline fields are still text).
+	unhideEnhancedListSystemLineInReadingMode(el);
+
+	// 1) Best-effort raw text hiding (works when inline fields are still text).
 	const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+	const nodes: Text[] = [];
 	let node: Text | null = walker.nextNode() as Text | null;
 	while (node) {
-		const text = node.nodeValue ?? "";
-		const next = text.replace(SYSTEM_LINE_REGEX, "");
-		if (next !== text) {
-			node.nodeValue = next;
-		}
+		nodes.push(node);
 		node = walker.nextNode() as Text | null;
+	}
+
+	for (const textNode of nodes) {
+		if (!textNode.parentElement?.closest("li")) continue;
+
+		const text = textNode.nodeValue ?? "";
+		SYSTEM_LINE_REGEX.lastIndex = 0;
+		if (!SYSTEM_LINE_REGEX.test(text)) continue;
+
+		SYSTEM_LINE_REGEX.lastIndex = 0;
+		const frag = document.createDocumentFragment();
+		let last = 0;
+		let match: RegExpExecArray | null;
+		while ((match = SYSTEM_LINE_REGEX.exec(text)) !== null) {
+			const start = match.index;
+			const end = start + match[0].length;
+			const before = text.slice(last, start);
+			if (before) frag.append(document.createTextNode(before));
+
+			const span = document.createElement("span");
+			span.style.display = "none";
+			span.setAttribute(ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER, ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_TOKEN);
+			span.textContent = match[0];
+			frag.append(span);
+
+			last = end;
+		}
+
+		const after = text.slice(last);
+		if (after) frag.append(document.createTextNode(after));
+
+		textNode.replaceWith(frag);
 	}
 
 	// 2) Dataview-rendered inline fields (common in Reading mode).
@@ -42,23 +92,47 @@ function hideEnhancedListSystemLineInReadingMode(el: HTMLElement) {
 		// Limit to list items to avoid unexpected hiding outside Enhanced List Blocks.
 		if (!fieldEl.closest("li")) continue;
 
-		removePreviousBr(fieldEl);
-		fieldEl.remove();
+		hidePreviousBr(fieldEl);
+		fieldEl.style.display = "none";
+		fieldEl.setAttribute(ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER, ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_ELEMENT);
+	}
+
+	// Best-effort: hide the line break before the system line to avoid blank lines.
+	const hiddenTokens = el.querySelectorAll(
+		`span[${ENHANCED_LIST_SYSTEM_LINE_HIDDEN_MARKER}="${ENHANCED_LIST_SYSTEM_LINE_HIDDEN_KIND_TOKEN}"]`
+	);
+	for (const token of Array.from(hiddenTokens)) {
+		if (!token.closest("li")) continue;
+		hidePreviousBr(token as HTMLElement);
 	}
 }
 
 class EnhancedListReadingModeHiderChild extends MarkdownRenderChild {
 	private observer: MutationObserver | null = null;
+	private readonly plugin: BlockLinkPlus;
+	private lastHideSetting: boolean;
 
-	constructor(containerEl: HTMLElement) {
+	constructor(containerEl: HTMLElement, plugin: BlockLinkPlus) {
 		super(containerEl);
+		this.plugin = plugin;
+		this.lastHideSetting = plugin.settings.enhancedListHideSystemLine;
 	}
 
 	onload(): void {
-		hideEnhancedListSystemLineInReadingMode(this.containerEl);
+		if (this.plugin.settings.enhancedListHideSystemLine) {
+			hideEnhancedListSystemLineInReadingMode(this.containerEl);
+		} else {
+			unhideEnhancedListSystemLineInReadingMode(this.containerEl);
+		}
 
 		this.observer = new MutationObserver(() => {
-			hideEnhancedListSystemLineInReadingMode(this.containerEl);
+			const nextHide = this.plugin.settings.enhancedListHideSystemLine;
+			if (nextHide) {
+				hideEnhancedListSystemLineInReadingMode(this.containerEl);
+			} else if (this.lastHideSetting !== nextHide) {
+				unhideEnhancedListSystemLineInReadingMode(this.containerEl);
+			}
+			this.lastHideSetting = nextHide;
 		});
 		this.observer.observe(this.containerEl, { childList: true, subtree: true });
 	}
@@ -74,12 +148,16 @@ export function markdownPostProcessor(el: HTMLElement, ctx: MarkdownPostProcesso
 	if (!(file instanceof TFile)) return;
 	if (!isEnhancedListEnabledFile(plugin, file)) return;
 
-	// Hide the system tail line in Reading mode.
-	hideEnhancedListSystemLineInReadingMode(el);
-
 	// Dataview (and other processors) may render after us; observe and re-apply.
 	if (typeof (ctx as any)?.addChild === "function" && !el.hasAttribute(ENHANCED_LIST_READING_MODE_HIDER_MARKER)) {
 		el.setAttribute(ENHANCED_LIST_READING_MODE_HIDER_MARKER, "1");
-		ctx.addChild(new EnhancedListReadingModeHiderChild(el));
+		ctx.addChild(new EnhancedListReadingModeHiderChild(el, plugin));
+	}
+
+	// Apply once eagerly (the child observer will keep it up-to-date for late renders).
+	if (plugin.settings.enhancedListHideSystemLine) {
+		hideEnhancedListSystemLineInReadingMode(el);
+	} else {
+		unhideEnhancedListSystemLineInReadingMode(el);
 	}
 }

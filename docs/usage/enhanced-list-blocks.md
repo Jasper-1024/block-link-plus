@@ -17,12 +17,20 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
   [date:: 2026-01-11T14:30:25] ^abcd
 ```
 
-- 系统行会在 Live Preview + Reading mode 下隐藏。
+- 系统行默认会在 Live Preview + Reading mode 下隐藏（可在设置中关闭隐藏，用于调试）。
 - 系统行会被放在父项正文之后、任何子列表之前（避免 `^id` 关联到子项）。
 
 ## blp-view（Query/View）
 
 `blp-view` 需要 Dataview 插件。
+
+### blp-view 护栏设置（可选）
+
+在设置页的 Enhanced List Blocks 区域中，可配置 `blp-view` 相关护栏（仅在 Dataview 可用时显示）：
+- 允许/禁用 `render.mode: materialize` 写回
+- 最大扫描文件数（`0` 表示不限制）
+- 最大输出结果数（`0` 表示不限制；超过会截断并提示）
+- 显示诊断信息（扫描数量/匹配数量/耗时）
 
 ### 示例：最近 7 天且链接到当前文件
 

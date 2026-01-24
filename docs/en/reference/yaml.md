@@ -46,7 +46,7 @@ render:
 ### render
 
 - `type`: `embed-list | table`
-- `mode`: `materialize` (optional: write back to a managed region)
+- `mode`: `materialize` (optional: write back to a managed region; can be disabled in settings)
 - `columns`: table columns (`{ name, field? , expr? }`)
 
 ## Examples

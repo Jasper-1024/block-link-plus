@@ -17,12 +17,20 @@ Enhanced List Blocks 預設不啟用，僅在符合以下任一條件時對檔�
   [date:: 2026-01-11T14:30:25] ^abcd
 ```
 
-- 系統行會在 Live Preview + Reading mode 下隱藏。
+- 系統行預設會在 Live Preview + Reading mode 下隱藏（可在設定中關閉隱藏，用於除錯）。
 - 系統行會放在父項正文之後、任何子列表之前（避免 `^id` 關聯到子項）。
 
 ## blp-view（Query/View）
 
 `blp-view` 需要 Dataview 外掛。
+
+### blp-view 護欄設定（可選）
+
+在設定頁的 Enhanced List Blocks 區域中，可設定 `blp-view` 相關護欄（僅在 Dataview 可用時顯示）：
+- 允許/停用 `render.mode: materialize` 寫回
+- 最大掃描檔案數（`0` 表示不限制）
+- 最大輸出結果數（`0` 表示不限制；超過會截斷並提示）
+- 顯示診斷資訊（掃描數量/匹配數量/耗時）
 
 ### 範例：最近 7 天且連結到目前檔案
 

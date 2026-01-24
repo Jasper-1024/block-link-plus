@@ -617,6 +617,8 @@ export async function handleBlpView(
 	el.empty();
 
 	try {
+		const startMs = Date.now();
+
 		const dv = getDataviewApi();
 		if (!dv) {
 			el.createEl("pre", { text: "Error: Dataview plugin is not installed or enabled." });
@@ -630,6 +632,11 @@ export async function handleBlpView(
 
 		const config = resolveConfigDefaults(parseConfig(source));
 
+		const allowMaterialize = plugin.settings.blpViewAllowMaterialize;
+		const maxSourceFiles = plugin.settings.blpViewMaxSourceFiles ?? 0;
+		const maxResults = plugin.settings.blpViewMaxResults ?? 0;
+		const showDiagnostics = plugin.settings.blpViewShowDiagnostics;
+
 		const { files: sourceFiles, nonEnabledPaths } = resolveSourceFilesOrError(plugin, dv, file, config.source);
 		if (nonEnabledPaths.length > 0) {
 			el.createEl("pre", {
@@ -641,15 +648,26 @@ export async function handleBlpView(
 			return;
 		}
 
+		if (maxSourceFiles > 0 && sourceFiles.length > maxSourceFiles) {
+			el.createEl("pre", {
+				text:
+					`Error: blp-view would scan ${sourceFiles.length} files (limit: ${maxSourceFiles}).\n` +
+					`Narrow \`source\` in the code block or increase the limit in settings.`,
+			});
+			return;
+		}
+
 		// Candidate extraction
 		const flattened: Array<{ item: any; ancestorTags: string[] }> = [];
 		const pageFileByPath = new Map<string, any>();
+		let filesScanned = 0;
 		for (const f of sourceFiles) {
 			if (!isEnhancedListEnabledFile(plugin, f)) {
 				// Should not happen due to scope enforcement; fail-safe.
 				continue;
 			}
 
+			filesScanned++;
 			const page = dv.page(f.path, file.path) as any;
 			const pageFile = page?.file;
 			if (pageFile) {
@@ -700,30 +718,65 @@ export async function handleBlpView(
 		}
 
 		const sorted = stableSortItems(dv, candidates, config.sort);
-		const groups = buildGroups(dv, sorted, config);
 
-		const markdown =
+		const totalMatches = sorted.length;
+		const limited = maxResults > 0 && totalMatches > maxResults ? sorted.slice(0, maxResults) : sorted;
+		const truncated = limited.length !== totalMatches;
+
+		const groups = buildGroups(dv, limited, config);
+
+		let markdown =
 			config.render.type === "table"
 				? renderTable(dv, groups, config, pageFileByPath, file.path)
 				: renderEmbedList(groups);
 
+		if (truncated) {
+			markdown =
+				`> [!warning] blp-view output truncated\n` +
+				`> Showing ${limited.length} of ${totalMatches} items (settings max results = ${maxResults}).\n\n` +
+				markdown;
+		}
+
+		const endMs = Date.now();
+		const diagnosticsText =
+			`blp-view diagnostics:\n` +
+			`- scannedFiles: ${filesScanned}\n` +
+			`- listItems: ${flattened.length}\n` +
+			`- matched: ${totalMatches}\n` +
+			`- rendered: ${limited.length}\n` +
+			`- durationMs: ${Math.max(0, endMs - startMs)}`;
+
 		if (config.render.mode === "materialize") {
+			if (!allowMaterialize) {
+				el.createEl("pre", { text: "Error: render.mode=materialize is disabled in settings." });
+				return;
+			}
 			if (!isEnhancedListEnabledFile(plugin, file)) {
 				el.createEl("pre", { text: "Error: render.mode=materialize requires the current file to be enabled." });
 				return;
 			}
 
 			await materializeOutput(plugin, file, el, ctx, markdown);
-			el.setText("blp-view output is materialized below.");
+			el.empty();
+			el.createEl("pre", { text: "blp-view output is materialized below." });
+			if (showDiagnostics) {
+				el.createEl("pre", { text: diagnosticsText });
+			}
 			return;
 		}
 
 		if (!markdown.trim()) {
 			el.createEl("pre", { text: "No items found." });
+			if (showDiagnostics) {
+				el.createEl("pre", { text: diagnosticsText });
+			}
 			return;
 		}
 
 		await MarkdownRenderer.renderMarkdown(markdown, el, ctx.sourcePath, plugin);
+		if (showDiagnostics) {
+			el.createEl("pre", { text: diagnosticsText });
+		}
 	} catch (error: any) {
 		console.error("Block Link Plus blp-view Error:", error);
 		el.empty();

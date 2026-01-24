@@ -178,6 +178,30 @@ class T {
             name: "Enabled files",
             desc: "One file path per line (vault-relative). These Markdown files are enabled."
           },
+          hideSystemLine: {
+            name: "Hide system line",
+            desc: "Hide the system line (`[date:: ...] ^id`) in Live Preview and Reading mode. Turn off to show it for debugging."
+          },
+          blpView: {
+            title: "blp-view (Query/View)",
+            desc: "Guardrails for blp-view execution (requires Dataview).",
+            allowMaterialize: {
+              name: "Allow materialize writeback",
+              desc: "If disabled, blp-view blocks with render.mode=materialize will show an error and won't modify the file."
+            },
+            maxSourceFiles: {
+              name: "Max source files per view",
+              desc: "0 = unlimited. If the view needs to scan more files, it will stop with an error."
+            },
+            maxResults: {
+              name: "Max rendered results",
+              desc: "0 = unlimited. If more items match, the output will be truncated."
+            },
+            showDiagnostics: {
+              name: "Show blp-view diagnostics",
+              desc: "Show counts and timing info under the rendered output."
+            }
+          },
           ops: {
             title: "Enhanced List Blocks Ops",
             desc: "Outliner-like operations and UI enhancements for list-item subtrees (Live Preview only; enabled files only).",
@@ -459,6 +483,30 @@ class T {
             name: "启用文件",
             desc: "每行一个文件路径（相对 vault 根目录）。这些 Markdown 文件启用。"
           },
+          hideSystemLine: {
+            name: "隐藏系统行",
+            desc: "在 Live Preview 与 Reading mode 下隐藏系统行（`[date:: ...] ^id`）。关闭后显示系统行（用于调试）。"
+          },
+          blpView: {
+            title: "blp-view（Query/View）",
+            desc: "blp-view 执行护栏设置（需要 Dataview）。",
+            allowMaterialize: {
+              name: "允许 materialize 写回",
+              desc: "关闭后，包含 `render.mode: materialize` 的 blp-view 将报错并且不会修改文件。"
+            },
+            maxSourceFiles: {
+              name: "最大扫描文件数",
+              desc: "0 表示不限制；如果一次 view 需要扫描超过该数量的文件，将停止执行并提示报错。"
+            },
+            maxResults: {
+              name: "最大输出结果数",
+              desc: "0 表示不限制；如果匹配结果超过该数量，将截断输出并提示“已截断”。"
+            },
+            showDiagnostics: {
+              name: "显示 blp-view 诊断信息",
+              desc: "在输出下方显示扫描数量、匹配数量与耗时等信息。"
+            }
+          },
           ops: {
             title: "增强 List Blocks 操作",
             desc: "为 list item 子树提供类似 outliner 的操作与 UI 增强（仅 Live Preview，仅启用文件生效）。",
@@ -739,6 +787,30 @@ class T {
           enabledFiles: {
             name: "啟用檔案",
             desc: "每行一個檔案路徑（相對 vault 根目錄）。這些 Markdown 檔案啟用。"
+          },
+          hideSystemLine: {
+            name: "隱藏系統行",
+            desc: "在 Live Preview 與 Reading mode 下隱藏系統行（`[date:: ...] ^id`）。關閉後顯示系統行（用於除錯）。"
+          },
+          blpView: {
+            title: "blp-view（Query/View）",
+            desc: "blp-view 執行護欄設定（需要 Dataview）。",
+            allowMaterialize: {
+              name: "允許 materialize 寫回",
+              desc: "關閉後，包含 `render.mode: materialize` 的 blp-view 將報錯且不會修改檔案。"
+            },
+            maxSourceFiles: {
+              name: "最大掃描檔案數",
+              desc: "0 表示不限制；若一次 view 需要掃描超過此數量的檔案，將停止執行並提示錯誤。"
+            },
+            maxResults: {
+              name: "最大輸出結果數",
+              desc: "0 表示不限制；若匹配結果超過此數量，將截斷輸出並提示「已截斷」。"
+            },
+            showDiagnostics: {
+              name: "顯示 blp-view 診斷資訊",
+              desc: "在輸出下方顯示掃描數量、匹配數量與耗時等資訊。"
+            }
           },
           ops: {
             title: "增強 List Blocks 操作",

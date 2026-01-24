@@ -315,6 +315,56 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
+		this.addToggleSetting("enhancedListHideSystemLine")
+			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
+			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
+
+		if (dataviewStatus.functioning) {
+			this.addHeading(t.settings.enhancedListBlocks.blpView.title).setDesc(t.settings.enhancedListBlocks.blpView.desc);
+
+			this.addToggleSetting("blpViewAllowMaterialize")
+				.setName(t.settings.enhancedListBlocks.blpView.allowMaterialize.name)
+				.setDesc(t.settings.enhancedListBlocks.blpView.allowMaterialize.desc);
+
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.blpView.maxSourceFiles.name)
+				.setDesc(t.settings.enhancedListBlocks.blpView.maxSourceFiles.desc)
+				.addText((text) => {
+					text.inputEl.type = "number";
+					text
+						.setPlaceholder("0")
+						.setValue(String(this.plugin.settings.blpViewMaxSourceFiles ?? 0))
+						.onChange(async (value) => {
+							const trimmed = value.trim();
+							const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
+							if (!Number.isFinite(next) || next < 0) return;
+							this.plugin.settings.blpViewMaxSourceFiles = next;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.blpView.maxResults.name)
+				.setDesc(t.settings.enhancedListBlocks.blpView.maxResults.desc)
+				.addText((text) => {
+					text.inputEl.type = "number";
+					text
+						.setPlaceholder("0")
+						.setValue(String(this.plugin.settings.blpViewMaxResults ?? 0))
+						.onChange(async (value) => {
+							const trimmed = value.trim();
+							const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
+							if (!Number.isFinite(next) || next < 0) return;
+							this.plugin.settings.blpViewMaxResults = next;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			this.addToggleSetting("blpViewShowDiagnostics")
+				.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
+				.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
+		}
+
 		const isThirdPartyPluginEnabled = (pluginId: string): boolean => {
 			try {
 				return Boolean((this.plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
