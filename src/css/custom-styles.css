@@ -65,5 +65,12 @@
     );
 }
 
+/* When nested code blocks are shifted via margin-left, the active-block gradient
+ * (which starts after the bullet dot) would "cut into" the code block background.
+ * Use a solid active-block background for those lines (Logseq-like). */
+.cm-editor .cm-line.blp-enhanced-list-active-block.blp-enhanced-list-codeblock-indented {
+    background: var(--background-modifier-hover) !important;
+}
+
 /* Nested fenced code blocks inside Enhanced List (UI-only).
  * Indentation is applied via CM decorations. Keep this class as a styling hook. */
