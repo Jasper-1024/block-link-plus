@@ -1,0 +1,85 @@
+.blp-settings-title {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.blp-settings-title h2 {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* Remove the default top border from the search Setting row. */
+.blp-settings-search .setting-item {
+	border-top: none;
+	padding-top: 0;
+}
+
+.blp-settings-header {
+	margin-top: 10px;
+	margin-bottom: 16px;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.blp-settings-tab-group {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding-left: 2px;
+	padding-right: 2px;
+	border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.blp-settings-nav-item {
+	cursor: pointer;
+	background-color: var(--background-primary-secondary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px 8px 2px 2px;
+	padding: 4px 8px;
+	font-weight: 600;
+	font-size: 14px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.blp-settings-nav-item:hover {
+	border-color: var(--interactive-accent-hover);
+	border-bottom: 0;
+}
+
+.blp-settings-nav-item.blp-settings-nav-item-selected {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: 1px solid var(--background-modifier-border);
+	border-bottom: 0;
+	padding: 4px 10px;
+}
+
+.blp-settings-tab-content {
+	/* Keep the tab content aligned with Obsidian settings padding. */
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+.blp-settings-tab-heading {
+	/* Use the same typography as settings headings, but without extra borders. */
+	font-weight: 700;
+	margin-top: 18px;
+	margin-bottom: 6px;
+}
+
+.blp-settings-zero-state {
+	text-align: center;
+	font-weight: 600;
+	padding: 18px 0;
+}
+
+/* Hide elements (avoid keyboard focus inside inactive tabs / filtered items). */
+.blp-visually-hidden {
+	display: none !important;
+}

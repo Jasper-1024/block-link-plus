@@ -1,11 +1,22 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
 import { detectDataviewStatus } from "../utils/dataview-detector";
+import {
+	BLP_VISUALLY_HIDDEN_CLASS,
+	SettingsTabPane,
+	SettingsTabsController,
+	hideEl,
+	unhideEl,
+} from "./settings-tabs";
+
+type SettingsTabName = "basics" | "enhanced-list" | "built-in-plugins";
 
 export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	plugin: BlockLinkPlus;
+	private selectedTabName: SettingsTabName = "basics";
+	private searchQuery = "";
 
 	constructor(app: App, plugin: BlockLinkPlus) {
 		super(app, plugin);
@@ -14,9 +25,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 	addToggleSetting(
 		settingName: KeysOfType<PluginSettings, boolean>,
-		extraOnChange?: (value: boolean) => void
+		extraOnChange?: (value: boolean) => void,
+		containerEl?: HTMLElement
 	) {
-		return new Setting(this.containerEl).addToggle((toggle) => {
+		const rootEl = containerEl ?? this.containerEl;
+		return new Setting(rootEl).addToggle((toggle) => {
 			toggle
 				.setValue(this.plugin.settings[settingName])
 				.onChange(async (value) => {
@@ -29,11 +42,9 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	}
 
 	// 文本输入框
-	addTextInputSetting(
-		settingName: KeysOfType<PluginSettings, string>,
-		placeholder: string
-	) {
-		return new Setting(this.containerEl).addText((text) =>
+	addTextInputSetting(settingName: KeysOfType<PluginSettings, string>, placeholder: string, containerEl?: HTMLElement) {
+		const rootEl = containerEl ?? this.containerEl;
+		return new Setting(rootEl).addText((text) =>
 			text
 				.setPlaceholder(placeholder)
 				.setValue(this.plugin.settings[settingName])
@@ -50,9 +61,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	addDropdownSetting(
 		settingName: KeysOfType<PluginSettings, string>,
 		options: string[],
-		display?: (option: string) => string
+		display?: (option: string) => string,
+		containerEl?: HTMLElement
 	) {
-		return new Setting(this.containerEl).addDropdown((dropdown) => {
+		const rootEl = containerEl ?? this.containerEl;
+		return new Setting(rootEl).addDropdown((dropdown) => {
 			const displayNames = new Set<string>();
 			for (const option of options) {
 				const displayName = display?.(option) ?? option;
@@ -75,9 +88,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		settingName: KeysOfType<PluginSettings, number>,
 		min: number,
 		max: number,
-		step: number
+		step: number,
+		containerEl?: HTMLElement
 	) {
-		return new Setting(this.containerEl).addSlider((slider) => {
+		const rootEl = containerEl ?? this.containerEl;
+		return new Setting(rootEl).addSlider((slider) => {
 			slider
 				.setLimits(min, max, step)
 				.setValue(this.plugin.settings[settingName])
@@ -90,24 +105,199 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		});
 	}
 
-	addHeading(heading: string) {
-		return new Setting(this.containerEl).setName(heading).setHeading();
+	addHeading(heading: string, containerEl?: HTMLElement) {
+		const rootEl = containerEl ?? this.containerEl;
+		return new Setting(rootEl).setName(heading).setHeading();
 	}
 
 	display(): void {
 		const { containerEl } = this;
+		const uiText = this.getSettingsUiText();
 
 		containerEl.empty();
 
-		// title
-		containerEl.createEl("h2", { text: t.settings.pluginTitle });
+		const titleEl = containerEl.createDiv({ cls: "blp-settings-title" });
+		titleEl.createEl("h2", { text: t.settings.pluginTitle });
 
-		// Multi-line block behavior with dynamic descriptions
-		const multiLineHandleSetting = new Setting(this.containerEl)
+		const searchContainerEl = titleEl.createDiv({ cls: "search-input-container" });
+		const searchInputEl = searchContainerEl.createEl("input", {
+			type: "search",
+			placeholder: uiText.searchPlaceholder,
+		});
+		searchInputEl.classList.add("search-input");
+
+		const headerEl = containerEl.createDiv({ cls: "blp-settings-header" });
+		const navEl = headerEl.createDiv({ cls: "blp-settings-tab-group" });
+
+		const contentRootEl = containerEl.createDiv();
+		const zeroStateEl = containerEl.createDiv({ cls: "blp-settings-zero-state" });
+		zeroStateEl.textContent = uiText.emptyState;
+
+		const controller = new SettingsTabsController({ zeroStateEl });
+
+		const tabs: Record<SettingsTabName, SettingsTabPane> = {
+			basics: new SettingsTabPane({ navEl, contentRootEl, name: "basics", label: uiText.tabs.basics }),
+			"enhanced-list": new SettingsTabPane({
+				navEl,
+				contentRootEl,
+				name: "enhanced-list",
+				label: uiText.tabs.enhancedList,
+			}),
+			"built-in-plugins": new SettingsTabPane({
+				navEl,
+				contentRootEl,
+				name: "built-in-plugins",
+				label: uiText.tabs.builtInPlugins,
+			}),
+		};
+
+		const allTabs = Object.values(tabs);
+		for (const tab of allTabs) controller.addTab(tab);
+
+		if (!controller.getTab(this.selectedTabName)) {
+			this.selectedTabName = "basics";
+		}
+		controller.init(this.selectedTabName);
+
+		this.renderBasicsTab(tabs.basics.contentEl);
+		this.renderEnhancedListTab(tabs["enhanced-list"].contentEl);
+		this.renderBuiltInPluginsTab(tabs["built-in-plugins"].contentEl);
+
+		for (const tab of allTabs) this.buildSearchIndex(tab);
+
+		const syncSectionHeadings = () => {
+			for (const tab of allTabs) this.syncSettingSectionHeadings(tab);
+		};
+
+		const applySearch = () => {
+			controller.enterSearchMode();
+			controller.applySearch(searchInputEl.value);
+			syncSectionHeadings();
+		};
+
+		for (const tab of allTabs) {
+			tab.navButton.addEventListener("click", () => {
+				if (controller.isSearchMode()) {
+					searchInputEl.value = "";
+					this.searchQuery = "";
+				}
+
+				this.selectedTabName = tab.name as SettingsTabName;
+				controller.selectTab(tab.name);
+			});
+		}
+
+		searchInputEl.value = this.searchQuery;
+
+		searchInputEl.addEventListener("focus", () => {
+			this.searchQuery = searchInputEl.value;
+			applySearch();
+		});
+
+		searchInputEl.addEventListener("input", () => {
+			this.searchQuery = searchInputEl.value;
+			applySearch();
+		});
+
+		searchInputEl.addEventListener("keydown", (evt) => {
+			if (evt.key !== "Escape") return;
+			searchInputEl.value = "";
+			this.searchQuery = "";
+			if (controller.isSearchMode()) controller.leaveSearchMode(this.selectedTabName);
+		});
+
+		if (this.searchQuery.trim()) applySearch();
+	}
+
+	private getSettingsUiText(): {
+		searchPlaceholder: string;
+		emptyState: string;
+		tabs: { basics: string; enhancedList: string; builtInPlugins: string };
+	} {
+		switch (t.lang) {
+			case "zh":
+				return {
+					searchPlaceholder: "搜索设置...",
+					emptyState: "没有匹配的设置。",
+					tabs: {
+						basics: "基础",
+						enhancedList: "增强列表",
+						builtInPlugins: "内置插件",
+					},
+				};
+			case "zh-TW":
+				return {
+					searchPlaceholder: "搜尋設定...",
+					emptyState: "沒有匹配的設定。",
+					tabs: {
+						basics: "基礎",
+						enhancedList: "增強清單",
+						builtInPlugins: "內建外掛",
+					},
+				};
+			default:
+				return {
+					searchPlaceholder: "Search settings...",
+					emptyState: "No matching settings.",
+					tabs: {
+						basics: "Basics",
+						enhancedList: "Enhanced List",
+						builtInPlugins: "Built-in Plugins",
+					},
+				};
+		}
+	}
+
+	private buildSearchIndex(tab: SettingsTabPane) {
+		const tabLabel = tab.headingEl.textContent ?? "";
+		const items = Array.from(tab.contentEl.querySelectorAll<HTMLElement>(".setting-item"));
+
+		let currentSection = "";
+		for (const item of items) {
+			const name = item.querySelector<HTMLElement>(".setting-item-name")?.textContent ?? "";
+			const desc = item.querySelector<HTMLElement>(".setting-item-description")?.textContent ?? "";
+
+			if (item.classList.contains("setting-item-heading")) {
+				currentSection = `${name} ${desc}`.trim();
+			}
+
+			// Include tab + section labels so searching for category names works.
+			tab.addSearchItem(item, [tabLabel, currentSection, name, desc]);
+		}
+	}
+
+	private syncSettingSectionHeadings(tab: SettingsTabPane) {
+		const items = Array.from(tab.contentEl.querySelectorAll<HTMLElement>(".setting-item"));
+		let currentHeading: HTMLElement | null = null;
+		let hasVisibleChild = false;
+
+		const flush = () => {
+			if (!currentHeading) return;
+			if (hasVisibleChild) unhideEl(currentHeading);
+			else hideEl(currentHeading);
+		};
+
+		for (const item of items) {
+			if (item.classList.contains("setting-item-heading")) {
+				flush();
+				currentHeading = item;
+				hasVisibleChild = false;
+				continue;
+			}
+
+			if (currentHeading && !item.classList.contains(BLP_VISUALLY_HIDDEN_CLASS)) {
+				hasVisibleChild = true;
+			}
+		}
+
+		flush();
+	}
+
+	private renderBasicsTab(rootEl: HTMLElement) {
+		const multiLineHandleSetting = new Setting(rootEl)
 			.setName(t.settings.multiLineHandle.name)
 			.setDesc(t.settings.multiLineHandle.desc);
 
-		// Create a function to get the current description based on the setting value
 		const getMultiLineDescription = (value: string) => {
 			switch (parseInt(value)) {
 				case MultLineHandle.oneline:
@@ -123,50 +313,42 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			}
 		};
 
-		// Add dropdown with dynamic description updates
 		multiLineHandleSetting.addDropdown((dropdown) => {
 			const options = [
 				{ value: MultLineHandle.oneline.toString(), display: t.settings.multiLineHandle.options.default },
 				{ value: MultLineHandle.heading.toString(), display: t.settings.multiLineHandle.options.addHeading },
 				{ value: MultLineHandle.multblock.toString(), display: t.settings.multiLineHandle.options.addMultiBlock },
-				{ value: MultLineHandle.multilineblock.toString(), display: t.settings.multiLineHandle.options.addMultilineBlock }
+				{
+					value: MultLineHandle.multilineblock.toString(),
+					display: t.settings.multiLineHandle.options.addMultilineBlock,
+				},
 			];
-			
-			options.forEach(option => {
+
+			options.forEach((option) => {
 				dropdown.addOption(option.value, option.display);
 			});
-			
-			dropdown
-				.setValue(this.plugin.settings.mult_line_handle.toString())
-				.onChange(async (value) => {
-					this.plugin.settings.mult_line_handle = parseInt(value);
-					await this.plugin.saveSettings();
-					
-					// Update the description dynamically
-					const descEl = multiLineHandleSetting.descEl;
-					if (descEl) {
-						descEl.textContent = getMultiLineDescription(value);
-					}
-				});
+
+			dropdown.setValue(this.plugin.settings.mult_line_handle.toString()).onChange(async (value) => {
+				this.plugin.settings.mult_line_handle = parseInt(value);
+				await this.plugin.saveSettings();
+
+				const descEl = multiLineHandleSetting.descEl;
+				if (descEl) descEl.textContent = getMultiLineDescription(value);
+			});
 		});
 
-		// Set initial description based on current setting
 		const initialDescription = getMultiLineDescription(this.plugin.settings.mult_line_handle.toString());
-		if (multiLineHandleSetting.descEl) {
-			multiLineHandleSetting.descEl.textContent = initialDescription;
-		}
+		if (multiLineHandleSetting.descEl) multiLineHandleSetting.descEl.textContent = initialDescription;
 
-		// Block link	
-		this.addHeading(t.settings.blockLink.title).setDesc(t.settings.blockLink.desc);
-		this.addToggleSetting("enable_right_click_block").setName(t.settings.blockLink.enableRightClick.name);
-		this.addToggleSetting("enable_block_notification").setName(t.settings.blockLink.enableNotification.name);
+		// Block link
+		this.addHeading(t.settings.blockLink.title, rootEl).setDesc(t.settings.blockLink.desc);
+		this.addToggleSetting("enable_right_click_block", undefined, rootEl).setName(t.settings.blockLink.enableRightClick.name);
+		this.addToggleSetting("enable_block_notification", undefined, rootEl).setName(t.settings.blockLink.enableNotification.name);
 
-		// Alias style with dynamic descriptions
-		const aliasStyleSetting = new Setting(this.containerEl)
+		const aliasStyleSetting = new Setting(rootEl)
 			.setName(t.settings.blockLink.aliasStyle.name)
 			.setDesc(t.settings.blockLink.aliasStyle.desc);
 
-		// Create a function to get the current description based on the alias style value
 		const getAliasStyleDescription = (value: string) => {
 			switch (parseInt(value)) {
 				case BlockLinkAliasType.Default:
@@ -182,90 +364,71 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			}
 		};
 
-		// Add dropdown with dynamic description updates
 		aliasStyleSetting.addDropdown((dropdown) => {
 			const options = [
 				{ value: BlockLinkAliasType.Default.toString(), display: t.settings.blockLink.aliasStyle.options.noAlias },
 				{ value: BlockLinkAliasType.FirstChars.toString(), display: t.settings.blockLink.aliasStyle.options.firstChars },
 				{ value: BlockLinkAliasType.Heading.toString(), display: t.settings.blockLink.aliasStyle.options.parentHeading },
-				{ value: BlockLinkAliasType.SelectedText.toString(), display: t.settings.blockLink.aliasStyle.options.selectedText }
+				{ value: BlockLinkAliasType.SelectedText.toString(), display: t.settings.blockLink.aliasStyle.options.selectedText },
 			];
-			
-			options.forEach(option => {
+
+			options.forEach((option) => {
 				dropdown.addOption(option.value, option.display);
 			});
-			
-			dropdown
-				.setValue(this.plugin.settings.alias_type.toString())
-				.onChange(async (value) => {
-					this.plugin.settings.alias_type = parseInt(value);
-					await this.plugin.saveSettings();
-					
-					// Update the description dynamically
-					const descEl = aliasStyleSetting.descEl;
-					if (descEl) {
-						descEl.textContent = getAliasStyleDescription(value);
-					}
-				});
+
+			dropdown.setValue(this.plugin.settings.alias_type.toString()).onChange(async (value) => {
+				this.plugin.settings.alias_type = parseInt(value);
+				await this.plugin.saveSettings();
+
+				const descEl = aliasStyleSetting.descEl;
+				if (descEl) descEl.textContent = getAliasStyleDescription(value);
+			});
 		});
 
-		// Set initial description based on current setting
 		const initialAliasDescription = getAliasStyleDescription(this.plugin.settings.alias_type.toString());
-		if (aliasStyleSetting.descEl) {
-			aliasStyleSetting.descEl.textContent = initialAliasDescription;
-		}
+		if (aliasStyleSetting.descEl) aliasStyleSetting.descEl.textContent = initialAliasDescription;
 
-		this.addSliderSetting("alias_length", 1, 100, 1)
+		this.addSliderSetting("alias_length", 1, 100, 1, rootEl)
 			.setName(t.settings.blockLink.aliasLength.name)
 			.setDesc(t.settings.blockLink.aliasLength.desc);
 
-		this.addToggleSetting("heading_id_newline")
+		this.addToggleSetting("heading_id_newline", undefined, rootEl)
 			.setName(t.settings.blockLink.headingIdNewline.name)
 			.setDesc(t.settings.blockLink.headingIdNewline.desc);
 
 		// Embed link
-		this.addHeading(t.settings.embedLink.title).setDesc(t.settings.embedLink.desc);
-		this.addToggleSetting("enable_right_click_embed").setName(t.settings.embedLink.enableRightClick.name);
-		this.addToggleSetting("enable_embed_notification").setName(t.settings.embedLink.enableNotification.name);
+		this.addHeading(t.settings.embedLink.title, rootEl).setDesc(t.settings.embedLink.desc);
+		this.addToggleSetting("enable_right_click_embed", undefined, rootEl).setName(t.settings.embedLink.enableRightClick.name);
+		this.addToggleSetting("enable_embed_notification", undefined, rootEl).setName(t.settings.embedLink.enableNotification.name);
 
 		// Obsidian URI
-		this.addHeading(t.settings.obsidianUri.title).setDesc(t.settings.obsidianUri.desc);
-		this.addToggleSetting("enable_right_click_url").setName(t.settings.obsidianUri.enableRightClick.name);
-		this.addToggleSetting("enable_url_notification").setName(t.settings.obsidianUri.enableNotification.name);
+		this.addHeading(t.settings.obsidianUri.title, rootEl).setDesc(t.settings.obsidianUri.desc);
+		this.addToggleSetting("enable_right_click_url", undefined, rootEl).setName(t.settings.obsidianUri.enableRightClick.name);
+		this.addToggleSetting("enable_url_notification", undefined, rootEl).setName(t.settings.obsidianUri.enableNotification.name);
 
-		// block id
-		this.addHeading(t.settings.blockId.title).setDesc(t.settings.blockId.desc);
-		this.addSliderSetting("id_length", 3, 7, 1)
+		// Block ID
+		this.addHeading(t.settings.blockId.title, rootEl).setDesc(t.settings.blockId.desc);
+		this.addSliderSetting("id_length", 3, 7, 1, rootEl)
 			.setName(t.settings.blockId.maxLength.name)
 			.setDesc(t.settings.blockId.maxLength.desc);
 
-		this.addToggleSetting("enable_prefix").setName(t.settings.blockId.enablePrefix.name);
-
-		this.addTextInputSetting("id_prefix", "")
-			.setName(t.settings.blockId.prefix.name)
-			.setDesc(t.settings.blockId.prefix.desc);
+		this.addToggleSetting("enable_prefix", undefined, rootEl).setName(t.settings.blockId.enablePrefix.name);
+		this.addTextInputSetting("id_prefix", "", rootEl).setName(t.settings.blockId.prefix.name).setDesc(t.settings.blockId.prefix.desc);
 
 		// Inline edit
-		this.addHeading(t.settings.inlineEdit.title).setDesc(t.settings.inlineEdit.desc);
-		this.addToggleSetting("inlineEditEnabled")
-			.setName(t.settings.inlineEdit.enable.name)
-			.setDesc(t.settings.inlineEdit.enable.desc);
-		this.addToggleSetting("inlineEditFile")
-			.setName(t.settings.inlineEdit.file.name)
-			.setDesc(t.settings.inlineEdit.file.desc);
-		this.addToggleSetting("inlineEditHeading")
-			.setName(t.settings.inlineEdit.heading.name)
-			.setDesc(t.settings.inlineEdit.heading.desc);
-		this.addToggleSetting("inlineEditBlock")
-			.setName(t.settings.inlineEdit.block.name)
-			.setDesc(t.settings.inlineEdit.block.desc);
+		this.addHeading(t.settings.inlineEdit.title, rootEl).setDesc(t.settings.inlineEdit.desc);
+		this.addToggleSetting("inlineEditEnabled", undefined, rootEl).setName(t.settings.inlineEdit.enable.name).setDesc(t.settings.inlineEdit.enable.desc);
+		this.addToggleSetting("inlineEditFile", undefined, rootEl).setName(t.settings.inlineEdit.file.name).setDesc(t.settings.inlineEdit.file.desc);
+		this.addToggleSetting("inlineEditHeading", undefined, rootEl).setName(t.settings.inlineEdit.heading.name).setDesc(t.settings.inlineEdit.heading.desc);
+		this.addToggleSetting("inlineEditBlock", undefined, rootEl).setName(t.settings.inlineEdit.block.name).setDesc(t.settings.inlineEdit.block.desc);
+	}
 
-		// Enhanced List Blocks
-		this.addHeading(t.settings.enhancedListBlocks.title).setDesc(t.settings.enhancedListBlocks.desc);
+	private renderEnhancedListTab(rootEl: HTMLElement) {
+		this.addHeading(t.settings.enhancedListBlocks.title, rootEl).setDesc(t.settings.enhancedListBlocks.desc);
 
 		// Dataview status hint (used by blp-view Query/View).
 		const dataviewStatus = detectDataviewStatus();
-		const statusEl = this.containerEl.createEl("div", {
+		const statusEl = rootEl.createEl("div", {
 			cls: dataviewStatus.functioning ? "setting-item-description" : "setting-item-description mod-warning",
 		});
 
@@ -285,7 +448,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				.filter(Boolean)
 				.map((l) => l.replace(/\\/g, "/"));
 
-		new Setting(this.containerEl)
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
 			.setDesc(t.settings.enhancedListBlocks.enabledFolders.desc)
 			.addTextArea((text) => {
@@ -300,7 +463,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		new Setting(this.containerEl)
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFiles.name)
 			.setDesc(t.settings.enhancedListBlocks.enabledFiles.desc)
 			.addTextArea((text) => {
@@ -315,24 +478,28 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		this.addToggleSetting("enhancedListHideSystemLine")
+		this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
 			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
 
-		this.addToggleSetting("enhancedListHandleAffordance")
+		this.addToggleSetting("enhancedListHandleAffordance", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.handleAffordance.name)
 			.setDesc(t.settings.enhancedListBlocks.handleAffordance.desc);
 
 		let handleClickActionDropdown: any | null = null;
 
-		this.addToggleSetting("enhancedListHandleActions", (enabled) => {
-			// Keep the dropdown in sync without a full re-render.
-			handleClickActionDropdown?.setDisabled?.(!enabled);
-		})
+		this.addToggleSetting(
+			"enhancedListHandleActions",
+			(enabled) => {
+				// Keep the dropdown in sync without a full re-render.
+				handleClickActionDropdown?.setDisabled?.(!enabled);
+			},
+			rootEl
+		)
 			.setName(t.settings.enhancedListBlocks.handleActions.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.desc);
 
-		new Setting(this.containerEl)
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.handleActions.clickAction.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.clickAction.desc)
 			.addDropdown((dropdown) => {
@@ -352,22 +519,22 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		this.addToggleSetting("enhancedListIndentCodeBlocks")
+		this.addToggleSetting("enhancedListIndentCodeBlocks", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)
 			.setDesc(t.settings.enhancedListBlocks.indentCodeBlocks.desc);
 
-		this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete")
+		this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.name)
 			.setDesc(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.desc);
 
 		if (dataviewStatus.functioning) {
-			this.addHeading(t.settings.enhancedListBlocks.blpView.title).setDesc(t.settings.enhancedListBlocks.blpView.desc);
+			this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(t.settings.enhancedListBlocks.blpView.desc);
 
-			this.addToggleSetting("blpViewAllowMaterialize")
+			this.addToggleSetting("blpViewAllowMaterialize", undefined, rootEl)
 				.setName(t.settings.enhancedListBlocks.blpView.allowMaterialize.name)
 				.setDesc(t.settings.enhancedListBlocks.blpView.allowMaterialize.desc);
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.blpView.maxSourceFiles.name)
 				.setDesc(t.settings.enhancedListBlocks.blpView.maxSourceFiles.desc)
 				.addText((text) => {
@@ -384,7 +551,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.blpView.maxResults.name)
 				.setDesc(t.settings.enhancedListBlocks.blpView.maxResults.desc)
 				.addText((text) => {
@@ -401,11 +568,13 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						});
 				});
 
-			this.addToggleSetting("blpViewShowDiagnostics")
+			this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
 				.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
 				.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
 		}
+	}
 
+	private renderBuiltInPluginsTab(rootEl: HTMLElement) {
 		const isThirdPartyPluginEnabled = (pluginId: string): boolean => {
 			try {
 				return Boolean((this.plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
@@ -414,16 +583,15 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			}
 		};
 
-		// Built-in vslinko plugins (vendored)
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.title).setDesc(t.settings.enhancedListBlocks.builtIn.desc);
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.title, rootEl).setDesc(t.settings.enhancedListBlocks.builtIn.desc);
 
-		this.addToggleSetting("builtInVslinkoScopeToEnhancedList")
+		this.addToggleSetting("builtInVslinkoScopeToEnhancedList", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.name)
 			.setDesc(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.desc);
 
 		// Built-in Outliner
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.outliner.title);
-		new Setting(this.containerEl)
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.outliner.title, rootEl);
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.builtIn.outliner.enable.name)
 			.setDesc(
 				isThirdPartyPluginEnabled("obsidian-outliner")
@@ -449,7 +617,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		const outlinerSettings = this.plugin.getBuiltInOutlinerSettings();
 		if (this.plugin.settings.builtInObsidianOutlinerEnabled && outlinerSettings) {
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.desc)
 				.addDropdown((dropdown) => {
@@ -467,7 +635,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.desc)
 				.addToggle((toggle) => {
@@ -477,7 +645,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.desc)
 				.addToggle((toggle) => {
@@ -487,7 +655,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.vimO.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.vimO.desc)
 				.addToggle((toggle) => {
@@ -497,7 +665,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.desc)
 				.addToggle((toggle) => {
@@ -507,7 +675,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.desc)
 				.addToggle((toggle) => {
@@ -517,43 +685,43 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.desc)
 				.addToggle((toggle) => {
-				toggle.setValue(outlinerSettings.verticalLines).onChange(async (value) => {
-					outlinerSettings.verticalLines = value;
-					await outlinerSettings.save();
-				});
-			});
-
-			new Setting(this.containerEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.name)
-				.addDropdown((dropdown) => {
-				dropdown
-					.addOptions({
-						none: t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.none,
-						"zoom-in": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.zoomIn,
-						"toggle-folding": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.toggleFolding,
-					} as any)
-					.setValue(outlinerSettings.verticalLinesAction)
-					.onChange(async (value: any) => {
-						outlinerSettings.verticalLinesAction = value;
+					toggle.setValue(outlinerSettings.verticalLines).onChange(async (value) => {
+						outlinerSettings.verticalLines = value;
 						await outlinerSettings.save();
 					});
-			});
+				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.name)
+				.addDropdown((dropdown) => {
+					dropdown
+						.addOptions({
+							none: t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.none,
+							"zoom-in": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.zoomIn,
+							"toggle-folding": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.toggleFolding,
+						} as any)
+						.setValue(outlinerSettings.verticalLinesAction)
+						.onChange(async (value: any) => {
+							outlinerSettings.verticalLinesAction = value;
+							await outlinerSettings.save();
+						});
+				});
+
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.desc)
 				.addToggle((toggle) => {
-				toggle.setValue(outlinerSettings.dragAndDrop).onChange(async (value) => {
-					outlinerSettings.dragAndDrop = value;
-					await outlinerSettings.save();
+					toggle.setValue(outlinerSettings.dragAndDrop).onChange(async (value) => {
+						outlinerSettings.dragAndDrop = value;
+						await outlinerSettings.save();
+					});
 				});
-			});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.outliner.debug.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.debug.desc)
 				.addToggle((toggle) => {
@@ -565,8 +733,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		}
 
 		// Built-in Zoom
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.zoom.title);
-		new Setting(this.containerEl)
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.zoom.title, rootEl);
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.builtIn.zoom.enable.name)
 			.setDesc(
 				isThirdPartyPluginEnabled("obsidian-zoom")
@@ -592,7 +760,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		const zoomSettings = this.plugin.getBuiltInZoomSettings();
 		if (this.plugin.settings.builtInObsidianZoomEnabled && zoomSettings) {
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.desc)
 				.addToggle((toggle) => {
@@ -602,7 +770,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl)
+			new Setting(rootEl)
 				.setName(t.settings.enhancedListBlocks.builtIn.zoom.debug.name)
 				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.debug.desc)
 				.addToggle((toggle) => {
@@ -613,5 +781,5 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 		}
 	}
-
 }
+

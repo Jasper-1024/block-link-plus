@@ -23,6 +23,7 @@ import { Enactor } from "basics/enactor/enactor";
 import "css/DefaultVibe.css";
 import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
+import "css/Obsidian/SettingsTabs.css";
 import "css/vendor-obsidian-outliner.css";
 import "css/vendor-obsidian-zoom.css";
 import "css/custom-styles.css";
