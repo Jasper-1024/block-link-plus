@@ -26,7 +26,7 @@ interface LineData {
   list: List;
 }
 
-class VerticalLinesPluginValue implements PluginValue {
+export class VerticalLinesPluginValue implements PluginValue {
   private scheduled: ReturnType<typeof setTimeout>;
   private scheduledActiveUpdate: ReturnType<typeof setTimeout> | null = null;
   private scroller: HTMLElement;
@@ -322,6 +322,18 @@ class VerticalLinesPluginValue implements PluginValue {
     }
 
     const coords = this.view.coordsAtPos(fromOffset, 1);
+    // `coordsAtPos` can return null during initial mount/tab switches when CM
+    // can't measure layout yet. This is a best-effort overlay, so just skip
+    // the current list and keep recursing into visible children.
+    if (!coords) {
+      for (const child of children) {
+        if (!child.isEmpty()) {
+          this.recursive(child, parentCtx);
+        }
+      }
+      return;
+    }
+
     if (parentCtx.rootLeft === undefined) {
       parentCtx.rootLeft = coords.left;
     }
