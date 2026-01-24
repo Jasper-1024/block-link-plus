@@ -8,16 +8,19 @@
 - [x] 2.1 Add settings fields + defaults (system line visibility + blp-view guardrails)
 - [x] 2.2 Update settings UI: show system line toggle; show `blp-view` settings only when Dataview is available
 - [x] 2.3 Update i18n strings (en/zh/zh-TW) for new settings
+- [x] 2.4 Add setting: delete subtree on list item deletion (default off)
 
 ## 3. Behavior wiring
 - [x] 3.1 Respect system line visibility setting in Live Preview + Reading mode
 - [x] 3.2 Apply `blp-view` guardrails: materialize allow/deny, max source files, max results (truncate + hint), optional diagnostics
 - [x] 3.3 In Live Preview, deleting a list item deletes its subtree (including system line)
+- [x] 3.4 Respect setting: delete subtree vs keep children (always remove system line)
 
 ## 4. Docs
 - [x] 4.1 Update Enhanced List Blocks docs to describe new settings
+- [x] 4.2 Document deletion toggle (subtree delete) and its implications
 
 ## 5. Verification
 - [x] 5.1 Run `npm test`
 - [x] 5.2 Run `npm run build-with-types`
-- [ ] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; deletion semantics behave; `blp-view` guardrails behave as expected
+- [ ] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; deletion toggle behaves; `blp-view` guardrails behave as expected

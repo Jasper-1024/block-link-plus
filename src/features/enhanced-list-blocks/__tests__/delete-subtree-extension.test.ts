@@ -3,7 +3,7 @@ import { EditorView } from "@codemirror/view";
 import { App, editorInfoField, editorLivePreviewField } from "obsidian";
 import { createEnhancedListDeleteSubtreeExtension } from "../delete-subtree-extension";
 
-function createView(docText: string) {
+function createView(docText: string, options?: { deleteSubtree?: boolean }) {
 	const app = new App();
 	const file = (app.vault as any)._addFile("test.md", docText);
 
@@ -12,6 +12,7 @@ function createView(docText: string) {
 		settings: {
 			enhancedListEnabledFolders: [],
 			enhancedListEnabledFiles: [file.path],
+			enhancedListDeleteSubtreeOnListItemDelete: options?.deleteSubtree === true,
 		},
 	} as any;
 
@@ -34,7 +35,7 @@ function createView(docText: string) {
 }
 
 describe("enhanced-list-blocks/delete-subtree-extension", () => {
-	test("deletes subtree when list marker is removed", () => {
+	test("removes system line (keeps children) when list marker is removed (default)", () => {
 		const { view, parent } = createView(
 			[
 				"- parent",
@@ -49,14 +50,14 @@ describe("enhanced-list-blocks/delete-subtree-extension", () => {
 				selection: EditorSelection.cursor(0),
 			});
 
-			expect(view.state.doc.toString()).toBe("- next");
+			expect(view.state.doc.toString()).toBe([" parent", "  - child", "- next"].join("\n"));
 		} finally {
 			view.destroy();
 			parent.remove();
 		}
 	});
 
-	test("deletes subtree when parent line is removed (cut line)", () => {
+	test("removes system line (keeps children) when parent line is removed (cut line, default)", () => {
 		const initial = [
 			"- parent",
 			"  [date:: 2026-01-10T00:00:00] ^abc",
@@ -65,6 +66,52 @@ describe("enhanced-list-blocks/delete-subtree-extension", () => {
 		].join("\n");
 
 		const { view, parent } = createView(initial);
+		try {
+			const firstNewline = initial.indexOf("\n");
+			view.dispatch({
+				changes: { from: 0, to: firstNewline + 1, insert: "" },
+				selection: EditorSelection.cursor(0),
+			});
+
+			expect(view.state.doc.toString()).toBe(["  - child", "- next"].join("\n"));
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("deletes subtree when enabled and list marker is removed", () => {
+		const { view, parent } = createView(
+			[
+				"- parent",
+				"  [date:: 2026-01-10T00:00:00] ^abc",
+				"  - child",
+				"- next",
+			].join("\n"),
+			{ deleteSubtree: true }
+		);
+		try {
+			view.dispatch({
+				changes: { from: 0, to: 1, insert: "" },
+				selection: EditorSelection.cursor(0),
+			});
+
+			expect(view.state.doc.toString()).toBe("- next");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("deletes subtree when enabled and parent line is removed (cut line)", () => {
+		const initial = [
+			"- parent",
+			"  [date:: 2026-01-10T00:00:00] ^abc",
+			"  - child",
+			"- next",
+		].join("\n");
+
+		const { view, parent } = createView(initial, { deleteSubtree: true });
 		try {
 			const firstNewline = initial.indexOf("\n");
 			view.dispatch({
@@ -135,4 +182,3 @@ describe("enhanced-list-blocks/delete-subtree-extension", () => {
 		}
 	});
 });
-

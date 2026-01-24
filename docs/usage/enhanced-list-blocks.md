@@ -19,6 +19,14 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
 
 - 系统行默认会在 Live Preview + Reading mode 下隐藏（可在设置中关闭隐藏，用于调试）。
 - 系统行会被放在父项正文之后、任何子列表之前（避免 `^id` 关联到子项）。
+- 删除 list item 时，插件会清理该 list item 的系统行，避免留下“孤儿系统行”。
+
+### 删除行为（可选）
+
+默认情况下（不删除子项）：当你删除父 list item（例如删除 `-`/`1.` 等 marker 或剪切整行）时，插件只会删除系统行，子列表内容会保留。
+
+如果你希望更接近 Logseq/Roam 的 outliner 行为（删父即删子树），可在设置中开启：
+- Enhanced List Blocks → “删除列表项时删除子项”
 
 ## blp-view（Query/View）
 

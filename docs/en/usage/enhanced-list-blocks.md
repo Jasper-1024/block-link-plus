@@ -19,6 +19,14 @@ In an enabled file, when you create the “next” list item in Live Preview (e.
 
 - The system line is hidden in Live Preview and Reading mode by default (you can turn off hiding in settings for debugging).
 - The system line is placed after the parent item content and before any child list (so `^id` is associated with the parent item).
+- When a list item is deleted, the plugin cleans up its system line to avoid leaving orphan lines behind.
+
+### Deletion behavior (optional)
+
+By default (keep children): when you delete a parent list item (e.g. remove the `-`/`1.` marker or cut the line), the plugin only removes the system line and keeps the nested children.
+
+If you prefer a more Logseq/Roam-like outliner behavior (delete parent = delete subtree), enable:
+- Enhanced List Blocks → “Delete children when deleting a list item”
 
 ## blp-view (Query/View)
 

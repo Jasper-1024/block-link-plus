@@ -106,6 +106,7 @@ export interface PluginSettings {
 	enhancedListEnabledFolders: string[];
 	enhancedListEnabledFiles: string[];
 	enhancedListHideSystemLine: boolean;
+	enhancedListDeleteSubtreeOnListItemDelete: boolean;
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -147,6 +148,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enhancedListEnabledFolders: [],
 	enhancedListEnabledFiles: [],
 	enhancedListHideSystemLine: true,
+	enhancedListDeleteSubtreeOnListItemDelete: false,
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,

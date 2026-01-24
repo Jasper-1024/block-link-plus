@@ -182,6 +182,10 @@ class T {
             name: "Hide system line",
             desc: "Hide the system line (`[date:: ...] ^id`) in Live Preview and Reading mode. Turn off to show it for debugging."
           },
+          deleteSubtreeOnDelete: {
+            name: "Delete children when deleting a list item",
+            desc: "If enabled, deleting a parent list item will delete its nested children (Logseq/Roam style). If disabled, children stay and only the system line is removed."
+          },
           blpView: {
             title: "blp-view (Query/View)",
             desc: "Guardrails for blp-view execution (requires Dataview).",
@@ -487,6 +491,10 @@ class T {
             name: "隐藏系统行",
             desc: "在 Live Preview 与 Reading mode 下隐藏系统行（`[date:: ...] ^id`）。关闭后显示系统行（用于调试）。"
           },
+          deleteSubtreeOnDelete: {
+            name: "删除列表项时删除子项",
+            desc: "开启后：删除父列表项会一并删除其子列表（Logseq/Roam 风格）。关闭后：子项保留，仅删除系统行。"
+          },
           blpView: {
             title: "blp-view（Query/View）",
             desc: "blp-view 执行护栏设置（需要 Dataview）。",
@@ -791,6 +799,10 @@ class T {
           hideSystemLine: {
             name: "隱藏系統行",
             desc: "在 Live Preview 與 Reading mode 下隱藏系統行（`[date:: ...] ^id`）。關閉後顯示系統行（用於除錯）。"
+          },
+          deleteSubtreeOnDelete: {
+            name: "刪除列表項時刪除子項",
+            desc: "開啟後：刪除父列表項會一併刪除其子列表（Logseq/Roam 風格）。關閉後：子項保留，僅刪除系統行。"
           },
           blpView: {
             title: "blp-view（Query/View）",

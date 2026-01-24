@@ -319,6 +319,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
 			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
 
+		this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete")
+			.setName(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.name)
+			.setDesc(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.desc);
+
 		if (dataviewStatus.functioning) {
 			this.addHeading(t.settings.enhancedListBlocks.blpView.title).setDesc(t.settings.enhancedListBlocks.blpView.desc);
 

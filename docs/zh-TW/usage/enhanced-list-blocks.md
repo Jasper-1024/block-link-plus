@@ -19,6 +19,14 @@ Enhanced List Blocks 預設不啟用，僅在符合以下任一條件時對檔�
 
 - 系統行預設會在 Live Preview + Reading mode 下隱藏（可在設定中關閉隱藏，用於除錯）。
 - 系統行會放在父項正文之後、任何子列表之前（避免 `^id` 關聯到子項）。
+- 刪除 list item 時，外掛會清理該 list item 的系統行，避免留下「孤兒系統行」。
+
+### 刪除行為（可選）
+
+預設情況（不刪除子項）：當你刪除父 list item（例如刪除 `-`/`1.` 等 marker 或剪下整行）時，外掛只會刪除系統行，子列表內容會保留。
+
+若你希望更接近 Logseq/Roam 的 outliner 行為（刪父即刪子樹），可在設定中開啟：
+- Enhanced List Blocks →「刪除列表項時刪除子項」
 
 ## blp-view（Query/View）
 

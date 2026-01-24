@@ -36,11 +36,20 @@
 - **WHEN** `blp-view` 的匹配结果数大于 `N`
 - **THEN** 插件输出前 `N` 条结果并提示“已截断”
 
-### Requirement: Deleting a list item deletes its subtree (Live Preview)
-在启用 Enhanced List Blocks 的文件内，插件 SHALL 在 Live Preview 下对“删除 list item”补齐删除语义：当用户删除某条 list item 时，插件 MUST 同时删除该 list item 的系统行与所有嵌套子列表内容，避免出现孤儿系统行或子项被错误地重新归属。
+### Requirement: List item deletion cleanup is configurable (Live Preview)
+在启用 Enhanced List Blocks 的文件内，插件 SHALL 在 Live Preview 下对“删除 list item”补齐删除语义，并提供设置项控制是否删除子列表：
+- 插件 MUST 在删除 list item 时清理其系统行，避免孤儿系统行或错误的子项归属。
+- 插件 MUST 提供设置项允许用户选择：删除父 list item 时是否同时删除其子列表（Logseq/Roam 风格）。该开关默认关闭。
 
-#### Scenario: Deleting parent list item removes children and system line
+#### Scenario: Deleting list marker removes system line (default behavior)
 - **GIVEN** 当前文件已启用 Enhanced List Blocks
-- **AND** 某父 list item 下存在子列表
-- **WHEN** 用户删除该父 list item（仅删除父节点本身，不显式选中子节点内容）
+- **AND** 用户保持默认设置（不删除子列表）
+- **WHEN** 用户删除某父 list item 的 list marker（仅删除父节点本身，不显式选中子节点内容）
+- **THEN** 插件删除该父 list item 的系统行
+- **AND** 插件不删除其子列表内容
+
+#### Scenario: Deleting parent list item removes children when enabled
+- **GIVEN** 当前文件已启用 Enhanced List Blocks
+- **AND** 用户在设置中开启“删除父节点时一并删除子列表”
+- **WHEN** 用户删除某父 list item（仅删除父节点本身，不显式选中子节点内容）
 - **THEN** 插件删除该父 list item 的整棵子树（包含系统行与所有子列表）
