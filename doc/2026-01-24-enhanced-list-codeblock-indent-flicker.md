@@ -31,6 +31,11 @@ In Live Preview, the opening fence line is often rendered as a "header widget" (
 list indentation styles can transiently settle across ticks right after an edit. Sampling the opening fence line
 caused the computed delta to briefly be wrong (often near-zero), producing a visible "jump left" flicker.
 
+A second (rarer) transient state was also observed: right after certain edits, the fenced code line's own padding
+(used to compute `margin-left = listIndent - codePadding`) could momentarily be missing. If we sampled during that
+moment, we'd compute a too-large `margin-left`, and when the padding "snapped back" the code block would appear
+shifted until the next editor update (e.g., cursor move).
+
 ## Fix
 
 - Sample the *code block indentation padding* from the first content line after the opening fence (when available),
@@ -38,6 +43,7 @@ caused the computed delta to briefly be wrong (often near-zero), producing a vis
 - Improve `readListPaddingInlineStartPx()` to treat `0` as "unset" and fall through to other style sources
   (notably `padding-inline-start` which Obsidian uses).
 - Add guards/caching so transient tiny indent values don't overwrite stable measurements.
+- Cache the last known *code line padding* so transient "0px" reads after edits don't cause a visible jump.
 
 Files:
 - `src/features/enhanced-list-blocks/codeblock-indent-extension.ts`
@@ -50,4 +56,3 @@ Files:
 
 Files:
 - `src/features/enhanced-list-blocks/__tests__/codeblock-indent-extension.test.ts`
-

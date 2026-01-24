@@ -119,6 +119,7 @@ function buildDecorations(
 	plugin: BlockLinkPlus,
 	indentWidthCache: Map<string, number>,
 	markerDeltaPxCache: { value: number | null },
+	codePadPxCache: { value: number | null },
 	listIndentProbe?: { didRead: boolean },
 	listIndentCache?: Map<number, number>,
 ) {
@@ -244,7 +245,16 @@ function buildDecorations(
 							} catch {
 								// ignore
 							}
-							const codePadPx = readListPaddingInlineStartPx(view, sampleFrom) ?? 0;
+							// The code block line's own padding can also settle across ticks right
+							// after edits in Live Preview. If we sample during that transient state,
+							// we'd compute a too-large margin-left that "snaps" later.
+							//
+							// Cache the last known positive padding so we can avoid jumpy deltas.
+							const measuredCodePadPx = readListPaddingInlineStartPx(view, sampleFrom);
+							if (measuredCodePadPx != null && measuredCodePadPx > 0) {
+								codePadPxCache.value = Math.max(codePadPxCache.value ?? 0, measuredCodePadPx);
+							}
+							const codePadPx = measuredCodePadPx ?? codePadPxCache.value ?? 0;
 							blockIndentPx = Math.max(0, listIndentPx - codePadPx);
 						} else {
 							// Fallback: approximate based on raw indentation + marker delta.
@@ -352,6 +362,7 @@ export function createEnhancedListCodeBlockIndentExtension(plugin: BlockLinkPlus
 			private lastEnabled: boolean;
 			private indentWidthCache = new Map<string, number>();
 			private markerDeltaPxCache: { value: number | null } = { value: null };
+			private codePadPxCache: { value: number | null } = { value: null };
 			private listIndentProbe: { didRead: boolean } = { didRead: false };
 			private hasMeasuredListIndent = false;
 			private listIndentCache = new Map<number, number>();
@@ -363,6 +374,7 @@ export function createEnhancedListCodeBlockIndentExtension(plugin: BlockLinkPlus
 					plugin,
 					this.indentWidthCache,
 					this.markerDeltaPxCache,
+					this.codePadPxCache,
 					this.listIndentProbe,
 					this.listIndentCache,
 				);
@@ -396,6 +408,7 @@ export function createEnhancedListCodeBlockIndentExtension(plugin: BlockLinkPlus
 				if (fileChanged || (enabledChanged && nextEnabled)) {
 					this.indentWidthCache.clear();
 					this.markerDeltaPxCache.value = null;
+					this.codePadPxCache.value = null;
 					this.hasMeasuredListIndent = false;
 					this.listIndentCache.clear();
 					this.lastFilePath = filePath;
@@ -407,6 +420,11 @@ export function createEnhancedListCodeBlockIndentExtension(plugin: BlockLinkPlus
 				if (geometryChanged) {
 					this.indentWidthCache.clear();
 					this.markerDeltaPxCache.value = null;
+					// Code block padding is DOM/CSS-driven and can transiently disappear right after
+					// edits (even when geometry changes). Keep a last-known value across edits so
+					// we don't compute a "jump right" margin-left. Only reset it on non-edit
+					// geometry changes (e.g. theme/font changes).
+					if (!update.docChanged) this.codePadPxCache.value = null;
 				}
 
 				// Reading list indentation relies on DOM styles that may not be available during
@@ -422,6 +440,7 @@ export function createEnhancedListCodeBlockIndentExtension(plugin: BlockLinkPlus
 						plugin,
 						this.indentWidthCache,
 						this.markerDeltaPxCache,
+						this.codePadPxCache,
 						this.listIndentProbe,
 						this.listIndentCache,
 					);

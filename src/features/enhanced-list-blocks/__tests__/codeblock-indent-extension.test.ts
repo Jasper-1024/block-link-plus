@@ -142,4 +142,92 @@ describe("enhanced-list-blocks/codeblock-indent-extension", () => {
 			spy.mockRestore();
 		}
 	});
+
+	test("keeps stable indent when code line padding is temporarily missing after an edit", () => {
+		const doc = [
+			"- parent",
+			"  line2",
+			"  ```bash",
+			"  ls -alth",
+			"  ```",
+			"- sibling",
+		].join("\n");
+
+		// Simulate a transient Live Preview state right after an edit where the fenced code line's
+		// own padding hasn't been applied yet (0px), but the list indentation is stable.
+		const origGetComputedStyle = window.getComputedStyle.bind(window);
+		let phase: "stable" | "transient" = "stable";
+		const spy = jest.spyOn(window, "getComputedStyle").mockImplementation((elt: any, pseudoElt?: any) => {
+			const cs: any = origGetComputedStyle(elt, pseudoElt);
+			if (pseudoElt) return cs;
+
+			try {
+				if (elt?.classList?.contains?.("cm-line")) {
+					const text = (elt as HTMLElement).textContent ?? "";
+					let pad = "0px";
+					if (text.includes("line2")) pad = "40px";
+					if (text.includes("ls -alth") || text.includes("echo hi")) {
+						pad = phase === "stable" ? "16px" : "0px";
+					}
+
+					return new Proxy(cs, {
+						get(target, prop) {
+							if (prop === "paddingLeft" || prop === "paddingInlineStart") return pad;
+							if (prop === "paddingRight") return "0px";
+							if (prop === "direction") return "ltr";
+
+							const value = (target as any)[prop as any];
+							return typeof value === "function" ? value.bind(target) : value;
+						},
+					});
+				}
+			} catch {
+				// ignore
+			}
+
+			return cs;
+		});
+
+		const { view, parent } = createView(doc);
+		try {
+			// Put cursor inside the code block so active-block class is present too.
+			view.dispatch({ selection: EditorSelection.cursor(view.state.doc.line(4).from + 4) });
+
+			const findCodeLine = () =>
+				(Array.from(view.dom.querySelectorAll(".cm-line")).find((el) =>
+					(el as HTMLElement).textContent?.includes("ls -alth"),
+				) as HTMLElement | undefined);
+
+			const codeLine1 = findCodeLine();
+			expect(codeLine1).toBeDefined();
+			expect(codeLine1?.classList.contains("blp-enhanced-list-codeblock-indented")).toBe(true);
+
+			const indent1 =
+				parsePx((codeLine1 as any).style?.marginLeft) ??
+				parsePx(getComputedStyle(codeLine1 as HTMLElement).marginLeft);
+			expect(indent1).not.toBeNull();
+			// listIndent (40) - codePad (16) = 24
+			expect(Math.abs((indent1 as number) - 24)).toBeLessThan(2);
+
+			phase = "transient";
+			const insertAt = view.state.doc.line(4).to;
+			view.dispatch({ changes: { from: insertAt, to: insertAt, insert: "\n  echo hi" } });
+
+			const codeLine2 = findCodeLine();
+			expect(codeLine2).toBeDefined();
+
+			const indent2 =
+				parsePx((codeLine2 as any).style?.marginLeft) ??
+				parsePx(getComputedStyle(codeLine2 as HTMLElement).marginLeft);
+			expect(indent2).not.toBeNull();
+
+			// Even though the measured code padding is 0 in the transient phase, we should use the
+			// previously-seen (stable) padding to avoid a visible jump.
+			expect(Math.abs((indent2 as number) - 24)).toBeLessThan(2);
+		} finally {
+			view.destroy();
+			parent.remove();
+			spy.mockRestore();
+		}
+	});
 });
