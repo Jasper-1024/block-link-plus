@@ -3,7 +3,7 @@
 ## 目标
 
 - 把 Obsidian 的 list item 作为“最小 block 单元”，补齐 Roam/Logseq 式的 block-first：可引用（ID）→ 可索引（字段）→ 可聚合/筛选/查询（View）。
-- Timeline 退化为某个 View 的 preset；本 memo 主要讨论 Query/View；Enhanced List Blocks Ops（zoom/move/indent/dnd/vertical-lines/threading）现状与参考插件差异见 `doc/compare-enhanced-list-ops-vs-vslinko.md`。
+- Timeline 退化为某个 View 的 preset；本 memo 主要讨论 Query/View + list-item 元数据契约；列表操作（zoom/outliner/dnd/垂直线…）已完全交给内置（vendored）vslinko 插件，不再作为 Enhanced List Blocks 的实现范围（原则见 `doc/compare-enhanced-list-ops-vs-vslinko.md`）。
 
 ## 事实基础（已验证）
 
@@ -92,7 +92,8 @@
 
 ## 当前实现状态（2026-01-09）
 
-- 已实现：启用范围（文件夹/文件列表/`blp_enhanced_list: true` 任一命中即启用）、系统行隐藏、保存时重复 `^id` 修复、`blp-view`（含 materialize 受控区域写回）、Enhanced List Blocks Ops（仅 Live Preview；仅启用文件；与 `obsidian-zoom/obsidian-outliner` 冲突检测）。
+- 已实现（Enhanced List Blocks）：启用范围（文件夹/文件列表/`blp_enhanced_list: true` 任一命中即启用）、系统行隐藏、保存时重复 `^id` 修复、`blp-view`（含 materialize 受控区域写回）。
+- 已实现（Built-in Outliner/Zoom）：可在 BLP 设置中启用内置 `obsidian-outliner@4.9.0` / `obsidian-zoom@1.1.2`；全局生效（不走启用范围）；检测到外置插件时自动禁用内置以避免双注册。
 - 已实现：在 Live Preview 中创建“下一条” list item 时自动写入系统行（无需等待保存）。
 
 ## 手动测试清单
