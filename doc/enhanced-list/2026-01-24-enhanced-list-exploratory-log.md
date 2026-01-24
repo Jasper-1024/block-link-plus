@@ -29,9 +29,9 @@ unexpected behaviors into fixes + regression tests.
 
 ## Bugs Found
 
-- 2026-01-24: Drag/move could consume EOL newline (line-join) (fixed): `doc/2026-01-25-outliner-eol-newline-join.md`
-- 2026-01-24: Code block indent flicker after edits (fixed): `doc/2026-01-24-enhanced-list-codeblock-indent-flicker.md`
-- 2026-01-25: Active block highlight left boundary too far left (fixed): `doc/2026-01-25-enhanced-list-active-highlight-left-offset.md`
+- 2026-01-24: Drag/move could consume EOL newline (line-join) (fixed): `doc/debug/2026-01-25-outliner-eol-newline-join.md`
+- 2026-01-24: Code block indent flicker after edits (fixed): `doc/enhanced-list/2026-01-24-enhanced-list-codeblock-indent-flicker.md`
+- 2026-01-25: Active block highlight left boundary too far left (fixed): `doc/enhanced-list/2026-01-25-enhanced-list-active-highlight-left-offset.md`
 
 ## Scenarios Exercised (No Issues Found Yet)
 
