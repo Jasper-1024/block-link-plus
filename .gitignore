@@ -25,3 +25,6 @@ package-lock.json
 
 # Local research scratch space
 _research/
+
+# CDP debug artifacts (screenshots, dumps, etc.)
+doc/_cdp-*

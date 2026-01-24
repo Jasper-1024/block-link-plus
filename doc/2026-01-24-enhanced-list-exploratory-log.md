@@ -6,6 +6,17 @@ unexpected behaviors into fixes + regression tests.
 ## Test Workbench Notes
 
 - `Review/_blp-ai-debug-codeblock.md`: nested list + fenced code block cases
+- `Review/_blp-ai-workbench.md`: mixed list + callout + code block
+- `Review/_blp-ai-drag-edge.md`: drag-and-drop edge cases
+- `Review/_blp-ai-tasks.md`: task list (checkbox) cases
+
+## Automation / Harness
+
+- CDP helper: `scripts/obsidian-cdp.js`
+- Baseline note content (used with `write-note`):
+  - `doc/_blp-ai-workbench-baseline.md`
+  - `doc/_blp-ai-drag-edge-baseline.md`
+  - `doc/_blp-ai-tasks-baseline.md`
 
 ## Scenarios To Exercise
 
@@ -18,5 +29,11 @@ unexpected behaviors into fixes + regression tests.
 
 ## Bugs Found
 
-- 2026-01-24: Code block indent flicker after edits (fixed) → `doc/2026-01-24-enhanced-list-codeblock-indent-flicker.md`
+- 2026-01-24: Code block indent flicker after edits (fixed): `doc/2026-01-24-enhanced-list-codeblock-indent-flicker.md`
+
+## Scenarios Exercised (No Issues Found Yet)
+
+- Drag list item containing a callout out of a parent list (indent/outdent) -> callout lines re-indent correctly
+- Drag list item containing a fenced code block out of a parent list -> fence lines re-indent correctly
+- Drag a checkbox task item to EOF -> no line-join; structure preserved
 
