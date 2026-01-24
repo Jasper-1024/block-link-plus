@@ -37,6 +37,7 @@ import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
 import {
 	createEnhancedListSystemLineHideExtension,
+	createEnhancedListAutoSystemLineExtension,
 	handleBlpView,
 	registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
@@ -196,7 +197,10 @@ export default class BlockLinkPlus extends Plugin {
 
 		// for live preview
 		this.updateViewPlugin();
-		this.registerEditorExtension([createEnhancedListSystemLineHideExtension(this)]);
+		this.registerEditorExtension([
+			createEnhancedListSystemLineHideExtension(this),
+			createEnhancedListAutoSystemLineExtension(this),
+		]);
 		registerEnhancedListDuplicateIdRepair(this);
 
 		// Initialize Flow Editor Manager

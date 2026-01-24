@@ -9,6 +9,8 @@
 - [x] 2.2 Hide system line in Live Preview + Reading mode
 - [x] 2.3 On-save repair: detect duplicate `^id` in the same file and rewrite duplicates (+ rewrite `date` to repair time)
 - [x] 2.4 Enable scope: opt-in via settings folders/files or frontmatter `blp_enhanced_list: true`
+- [x] 2.5 Auto-generate system line when creating the next list item (Live Preview)
+- [x] 2.6 Ensure system line is inserted before child lists (and relocate if needed)
 
 ## 3. Query engine (Dataview-backed)
 - [x] 3.1 Parse `blp-view` YAML blocks and apply defaults
@@ -29,3 +31,4 @@
 - [x] 5.2 Duplicate ID repair tests
 - [x] 5.3 Filter/group/sort behavior tests
 - [x] 5.4 Materialize overwrite/no-op tests
+- [x] 5.5 Auto system line insertion/relocation tests

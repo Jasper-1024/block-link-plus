@@ -2,7 +2,7 @@
 
 ## Glossary
 - **Block**: a list item that has Obsidian native `^id` and a required system field `date`.
-- **System line**: the last line of an enhanced list item: `[date:: <YYYY-MM-DDTHH:mm:ss>] ^<id>`
+- **System line**: a required line inside an enhanced list item: `[date:: <YYYY-MM-DDTHH:mm:ss>] ^<id>`. It MUST be placed after the item's own content and before any nested list so Obsidian associates the `^id` with the parent item.
 - **View**: a `blp-view` code block that queries blocks and renders results.
 
 ## Enable scope (opt-in)
@@ -83,3 +83,7 @@ Defaults:
   - generate a new `^id`
   - rewrite the system line `date` to the repair time
 - MUST avoid infinite save loops and SHOULD no-op when the computed rewrite results in identical file content.
+
+## Auto-generate system line (Live Preview)
+- In enabled files, when the user creates the next list item (typically via Enter), the plugin writes the system line for the previous list item immediately (no save required).
+- If a system line exists but is placed after a nested list (so Obsidian won't associate it with the parent item), the plugin SHOULD relocate it before the nested list.

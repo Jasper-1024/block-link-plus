@@ -29,10 +29,33 @@
 插件 SHALL 以 Obsidian 原生 `^id` 作为 list item 的唯一身份，并要求增强 list item 末尾包含系统行：
 `[date:: <YYYY-MM-DDTHH:mm:ss>] ^<id>`，且 `^<id>` MUST 是该行最后一个 token。
 
+系统行 MUST 放置在该 list item 的“正文内容”之后、任何子列表（nested list）之前，以确保 Obsidian 将 `^id` 关联到父 list item（而不是子项）。
+对于不包含子列表的 list item，系统行即为该 list item 的最后一行。
+
 #### Scenario: System line format is stable
 - **WHEN** 插件为 list item 生成系统行
 - **THEN** 系统行使用 `date` key，日期为 `YYYY-MM-DDTHH:mm:ss`（带 `T`）
 - **AND** `^id` 位于系统行末尾
+
+#### Scenario: System line is inserted before child list
+- **WHEN** 一个 list item 存在子列表
+- **AND** 插件为该父 list item 生成系统行
+- **THEN** 系统行位于父 list item 的正文之后、第一条子列表项之前
+
+### Requirement: Auto-generate system line on list item completion (Live Preview)
+在启用 Enhanced List Blocks 的文件内，插件 SHALL 在 Live Preview 下自动补齐系统行。
+当用户创建“下一条” list item（例如按 Enter 产生新的同级/子级 list item）时，插件 MUST 确保上一条 list item 拥有系统行；若缺失则插入。
+
+若系统行存在但位于子列表之后（导致 Obsidian 无法将 `^id` 关联到父项），插件 SHOULD 将该系统行移动到子列表之前（保留原 `date` 与 `^id`）。
+
+#### Scenario: Auto-generate without saving
+- **GIVEN** 当前文件已启用 Enhanced List Blocks
+- **WHEN** 用户在 Live Preview 中创建下一条 list item
+- **THEN** 上一条 list item 立即拥有系统行（无需等待保存）
+
+#### Scenario: Do nothing when already present
+- **WHEN** 上一条 list item 已存在且位置正确的系统行
+- **THEN** 插件不修改该 list item
 
 ### Requirement: Candidate gating for Query/View
 插件 SHALL 仅把同时具备 `blockId` 与可解析为 Dataview DateTime 的 `date` 的 list item 作为 Query/View 候选；不满足条件的 list item MUST 被跳过。
