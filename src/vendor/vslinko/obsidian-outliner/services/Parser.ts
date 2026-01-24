@@ -68,6 +68,16 @@ export class Parser {
     return indent.replace(/\t/g, " ".repeat(this.tabWidth));
   }
 
+  private isBlpSystemLine(trimmedLine: string): boolean {
+    // BLP daily notes often include hidden "system lines" like Dataview inline fields
+    // and block ids. These lines are not user-authored content and may have
+    // inconsistent indentation (e.g. tabs) compared to the list marker line.
+    // Treat them as tolerant notes so the list parser doesn't abort the whole tree.
+    if (trimmedLine.startsWith("[") && trimmedLine.includes("::")) return true;
+    if (/^\^[A-Za-z0-9_-]+$/.test(trimmedLine)) return true;
+    return false;
+  }
+
   parseRange(editor: Reader, fromLine = 0, toLine = editor.lastLine()): Root[] {
     const lists: Root[] = [];
 
@@ -274,9 +284,10 @@ export class Parser {
         const indentToCheck = currentList.getNotesIndent() || currentIndent;
         const indentToCheckCols = this.indentCols(indentToCheck);
         const lineIndent = line.match(/^[ \t]*/)?.[0] ?? "";
+        const isSystemLine = this.isBlpSystemLine(line.trimStart());
 
         // Compare by indentation width (tabs expanded) instead of raw string prefix.
-        if (this.indentCols(lineIndent) < indentToCheckCols) {
+        if (this.indentCols(lineIndent) < indentToCheckCols && !isSystemLine) {
           const expected = indentToCheck.replace(/ /g, "S").replace(/\t/g, "T");
           const got = lineIndent.replace(/ /g, "S").replace(/\t/g, "T");
 
@@ -286,7 +297,7 @@ export class Parser {
         if (!currentList.getNotesIndent()) {
           const matches = line.match(/^[ \t]+/);
 
-          if (!matches || this.indentCols(matches[0]) <= currentIndentCols) {
+          if (!matches || (!isSystemLine && this.indentCols(matches[0]) <= currentIndentCols)) {
             if (/^\s+$/.test(line)) {
               continue;
             }

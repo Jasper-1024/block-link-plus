@@ -66,6 +66,13 @@ class VerticalLinesPluginValue implements PluginValue {
     this.settings.onChange(this.scheduleRecalculate);
 
     this.prepareDom();
+    // Obsidian can restore a non-zero scrollTop on editor mount without emitting a
+    // scroll event. Sync immediately to avoid "floating" lines until the next scroll.
+    try {
+      this.scroller.scrollTo(this.view.scrollDOM.scrollLeft, this.view.scrollDOM.scrollTop);
+    } catch {
+      // ignore
+    }
     this.waitForEditor();
   }
 
@@ -342,6 +349,12 @@ class VerticalLinesPluginValue implements PluginValue {
     }
 
     this.scroller.style.top = cmScroll.offsetTop + "px";
+    // Keep overlay aligned even when scroll position changes without a scroll event.
+    try {
+      this.scroller.scrollTo(cmScroll.scrollLeft, cmScroll.scrollTop);
+    } catch {
+      // ignore
+    }
     this.contentContainer.style.height = cmSizerChildrenSumHeight + "px";
     this.contentContainer.style.marginLeft =
       cmContentContainer.offsetLeft + "px";
