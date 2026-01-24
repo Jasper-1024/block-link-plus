@@ -245,7 +245,9 @@ class VerticalLinesPluginValue implements PluginValue {
     if (parentCtx.rootLeft === undefined) {
       parentCtx.rootLeft = coords.left;
     }
-    const left = Math.floor(coords.right - parentCtx.rootLeft);
+    // Keep sub-pixel precision. Obsidian's tab stops and some fonts produce
+    // fractional coordinates; rounding here makes nested lines drift left.
+    const left = coords.right - parentCtx.rootLeft;
 
     const top =
       visibleFrom > 0 && fromOffset < visibleFrom
@@ -368,7 +370,8 @@ class VerticalLinesPluginValue implements PluginValue {
     );
     const contentLeft =
       contentRect.left - editorRect.left + cmScroll.scrollLeft + contentPaddingLeft;
-    this.contentContainer.style.marginLeft = Math.round(contentLeft) + "px";
+    // Keep fractional px to avoid accumulating alignment errors.
+    this.contentContainer.style.marginLeft = contentLeft + "px";
     this.contentContainer.style.marginTop =
       (cmContent.firstElementChild as HTMLElement).offsetTop - 24 + "px";
 

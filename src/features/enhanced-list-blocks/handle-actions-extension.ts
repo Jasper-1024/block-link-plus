@@ -21,6 +21,45 @@ type HandleActionsDeps = {
 	onShowMenu?: (view: any, line: number, event: MouseEvent) => void;
 };
 
+/**
+ * vslinko Outliner DnD uses a document-level mousedown + mousemove workflow and
+ * toggles `body.outliner-plugin-dragging` during a drag. This means:
+ * - CM's own mousedown handlers may not run (event stopped in capture phase),
+ * - a click can still fire after a drag ends, which would accidentally toggle folding.
+ *
+ * Track recent DnD drags globally (per app) and suppress handle click actions
+ * right after a drag gesture.
+ */
+let dndClassObserver: MutationObserver | null = null;
+let dndObserverRefCount = 0;
+let lastOutlinerDndTs = 0;
+
+function ensureDndTracker() {
+	dndObserverRefCount++;
+	if (dndClassObserver) return;
+
+	let wasDragging = document.body.classList.contains("outliner-plugin-dragging");
+	dndClassObserver = new MutationObserver(() => {
+		const isDragging = document.body.classList.contains("outliner-plugin-dragging");
+		if (wasDragging && !isDragging) {
+			lastOutlinerDndTs = Date.now();
+		}
+		wasDragging = isDragging;
+	});
+	dndClassObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+}
+
+function releaseDndTracker() {
+	dndObserverRefCount = Math.max(0, dndObserverRefCount - 1);
+	if (dndObserverRefCount !== 0) return;
+	dndClassObserver?.disconnect();
+	dndClassObserver = null;
+}
+
+function wasRecentlyDraggingViaOutliner(): boolean {
+	return lastOutlinerDndTs > 0 && Date.now() - lastOutlinerDndTs < 600;
+}
+
 function shouldEnableHandleActions(
 	view: any,
 	plugin: BlockLinkPlus,
@@ -187,11 +226,11 @@ export function createEnhancedListHandleActionsExtension(
 		class {
 			private view: any;
 			private isActive = false;
-			private mouseDownOnHandle = false;
 			private lastDragTs = 0;
 
 			constructor(view: any) {
 				this.view = view;
+				ensureDndTracker();
 				this.refresh();
 			}
 
@@ -211,6 +250,7 @@ export function createEnhancedListHandleActionsExtension(
 			private handleClick(event: MouseEvent): boolean {
 				if (!this.isActive) return false;
 				if (!this.isHandleEvent(event)) return false;
+				if (wasRecentlyDraggingViaOutliner()) return false;
 				if (this.lastDragTs && Date.now() - this.lastDragTs < 600) return false;
 
 				const line = resolveHandleLine(this.view, event);
@@ -247,35 +287,19 @@ export function createEnhancedListHandleActionsExtension(
 				return true;
 			}
 
-			private handleMouseDown(event: MouseEvent) {
-				if (!this.isActive) return;
-				if (event.button !== 0) return;
-				if (!this.isHandleEvent(event)) return;
-				this.mouseDownOnHandle = true;
-			}
-
-			private handleMouseUp() {
-				this.mouseDownOnHandle = false;
-			}
-
 			private handleDragStart(event: DragEvent) {
 				if (!this.isActive) return;
-				if (!this.mouseDownOnHandle) return;
 				const target = event.target as HTMLElement | null;
 				if (!target?.closest?.(HANDLE_SELECTOR)) return;
 				this.lastDragTs = Date.now();
 			}
 
-			destroy() {}
+			destroy() {
+				releaseDndTracker();
+			}
 		},
 		{
 			eventHandlers: {
-				mousedown(event) {
-					(this as any).handleMouseDown(event as any);
-				},
-				mouseup() {
-					(this as any).handleMouseUp();
-				},
 				dragstart(event) {
 					(this as any).handleDragStart(event as any);
 				},

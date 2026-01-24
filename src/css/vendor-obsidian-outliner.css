@@ -50,6 +50,19 @@ body.outliner-plugin-better-lists .cm-editor.blp-vslinko-scope .list-bullet::aft
   background-repeat: no-repeat;
 }
 
+/* Enhanced List handle renders the list marker wider than the raw Markdown.
+ * The vertical line positions are computed from text coordinates (bullet start),
+ * so we offset the decoration to stay centered under the handle.
+ *
+ * Math: handleCenter = handleSize/2; currentLineX = margin-left (0.5ch) + bgPosX (2px)
+ * => delta = handleSize/2 - currentLineX.
+ */
+.cm-editor.blp-vslinko-scope.blp-enhanced-list-handle .outliner-plugin-list-line {
+  transform: translateX(
+    calc(var(--blp-enhanced-list-handle-size) / 2 - 0.5ch - 2px)
+  );
+}
+
 body.outliner-plugin-better-bullets
   .cm-editor.blp-vslinko-scope
   .outliner-plugin-list-line {

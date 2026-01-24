@@ -6,15 +6,21 @@
     overflow: hidden;
 }
 
+.cm-editor.blp-enhanced-list-handle {
+    --blp-enhanced-list-handle-size: 1.1em;
+}
+
 .cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul {
     position: relative;
     display: inline-block;
-    width: 1.1em;
-    height: 1.1em;
+    width: var(--blp-enhanced-list-handle-size);
+    height: var(--blp-enhanced-list-handle-size);
     margin-right: 0.2em;
     color: transparent;
     border-radius: 4px;
     cursor: grab;
+    z-index: 2;
+    vertical-align: middle;
     background-image: radial-gradient(circle, var(--text-muted) 1px, transparent 1.5px);
     background-size: 3px 3px;
     background-position: center;
@@ -50,4 +56,10 @@
 
 .cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
     background-image: radial-gradient(circle, var(--interactive-accent) 1px, transparent 1.5px);
+}
+
+/* Nested fenced code blocks (UI-only): give a bit of left padding so the code
+ * block doesn't look flush after we hide the structural indentation whitespace. */
+.cm-editor .blp-enhanced-list-codeblock-indented {
+    padding-left: 0.6em !important;
 }
