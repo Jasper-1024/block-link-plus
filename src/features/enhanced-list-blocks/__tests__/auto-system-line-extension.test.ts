@@ -1,4 +1,4 @@
-import { EditorSelection, EditorState } from "@codemirror/state";
+import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { App, editorInfoField, editorLivePreviewField } from "obsidian";
 import { Settings } from "luxon";
@@ -175,6 +175,31 @@ describe("enhanced-list-blocks/auto-system-line-extension", () => {
 
 			expect(line.text).toBe("  - ");
 			expect(head - line.from).toBe(4);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("prevents cursor from entering hidden system line when backspacing blank line", () => {
+		const { view, parent } = createView(
+			["- hi", "  [date:: 2026-01-12T23:14:50] ^zqio", ""].join("\n")
+		);
+		try {
+			view.dispatch({
+				selection: EditorSelection.cursor(view.state.doc.length),
+			});
+
+			view.dispatch({
+				changes: { from: view.state.doc.length - 1, to: view.state.doc.length, insert: "" },
+				annotations: Transaction.userEvent.of("delete.backward"),
+			});
+
+			const head = view.state.selection.main.head;
+			const line = view.state.doc.lineAt(head);
+
+			expect(line.text).toBe("- hi");
+			expect(head).toBe(line.to);
 		} finally {
 			view.destroy();
 			parent.remove();

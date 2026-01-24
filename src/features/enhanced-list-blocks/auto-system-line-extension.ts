@@ -154,6 +154,86 @@ function computeCursorFixSelection(doc: Text, head: number): { anchor: number; h
 	return { anchor: pos, head: pos };
 }
 
+type SystemLineEscapeDirection = "up" | "down";
+
+function computeSystemLineEscapeSelection(
+	doc: Text,
+	head: number,
+	direction: SystemLineEscapeDirection,
+	opts: { preferLineEnd?: boolean; preferLineStart?: boolean }
+): { anchor: number; head: number } | null {
+	const headLine = doc.lineAt(head);
+	if (!SYSTEM_LINE_EXACT_RE.test(headLine.text)) return null;
+
+	const headCh = head - headLine.from;
+
+	const findCandidate = (dir: SystemLineEscapeDirection) => {
+		if (dir === "up") {
+			for (let n = headLine.number - 1; n >= 1; n--) {
+				const line = doc.line(n);
+				if (SYSTEM_LINE_EXACT_RE.test(line.text)) continue;
+				return { line, dir };
+			}
+			return null;
+		}
+
+		for (let n = headLine.number + 1; n <= doc.lines; n++) {
+			const line = doc.line(n);
+			if (SYSTEM_LINE_EXACT_RE.test(line.text)) continue;
+			return { line, dir };
+		}
+
+		return null;
+	};
+
+	let candidate = findCandidate(direction);
+	if (!candidate) candidate = findCandidate(direction === "up" ? "down" : "up");
+	if (!candidate) return null;
+
+	const { line, dir } = candidate;
+
+	let pos: number;
+	if (opts.preferLineEnd && dir === "up") {
+		pos = line.to;
+	} else if (opts.preferLineStart && dir === "down") {
+		pos = line.from;
+	} else {
+		pos = line.from + Math.min(headCh, line.text.length);
+	}
+
+	return { anchor: pos, head: pos };
+}
+
+function inferSystemLineEscapeIntent(tr: Transaction): {
+	direction: SystemLineEscapeDirection;
+	preferLineEnd: boolean;
+	preferLineStart: boolean;
+} {
+	const preferLineStart = tr.isUserEvent("delete.forward");
+	const preferLineEnd = tr.isUserEvent("delete") && !preferLineStart;
+
+	if (!tr.docChanged) {
+		const startHead = tr.startState.selection.main.head;
+		const newHead = tr.newSelection.main.head;
+
+		if (newHead > startHead) {
+			return { direction: "down", preferLineEnd: false, preferLineStart: false };
+		}
+		if (newHead < startHead) {
+			return { direction: "up", preferLineEnd: false, preferLineStart: false };
+		}
+	}
+
+	if (preferLineStart) {
+		return { direction: "down", preferLineEnd, preferLineStart };
+	}
+	if (preferLineEnd) {
+		return { direction: "up", preferLineEnd, preferLineStart };
+	}
+
+	return { direction: "up", preferLineEnd: false, preferLineStart: false };
+}
+
 export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus) {
 	return EditorState.transactionFilter.of((tr: Transaction): Transaction | readonly TransactionSpec[] => {
 		if (tr.effects.some((e) => e.is(autoSystemLineEffect) || e.is(autoSystemLineCursorFixEffect))) {
@@ -173,32 +253,33 @@ export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus)
 		if (!file) return tr;
 		if (!isEnhancedListEnabledFile(plugin, file as any)) return tr;
 
-		if (!tr.docChanged) {
-			if (plugin.settings.enhancedListHideSystemLine !== true) return tr;
-			if (!tr.selection) return tr;
+		if (plugin.settings.enhancedListHideSystemLine === true) {
+			const selection = tr.newSelection;
+			if (selection.ranges.length === 1 && selection.main.empty) {
+				const main = selection.main;
 
-			const main = tr.newSelection.main;
-			if (!main.empty) return tr;
+				const intent = inferSystemLineEscapeIntent(tr);
+				const desiredSelection =
+					computeCursorFixSelection(tr.newDoc, main.head) ??
+					computeSystemLineEscapeSelection(tr.newDoc, main.head, intent.direction, intent);
 
-			const startMain = tr.startState.selection.main;
-			if (startMain.anchor === main.anchor && startMain.head === main.head) return tr;
-
-			const desiredSelection = computeCursorFixSelection(tr.newDoc, main.head);
-			if (!desiredSelection) return tr;
-
-			if (desiredSelection.anchor === main.anchor && desiredSelection.head === main.head) {
-				return tr;
+				if (
+					desiredSelection &&
+					(desiredSelection.anchor !== main.anchor || desiredSelection.head !== main.head)
+				) {
+					return [
+						tr,
+						{
+							sequential: true,
+							effects: [autoSystemLineCursorFixEffect.of()],
+							selection: desiredSelection,
+						},
+					];
+				}
 			}
-
-			return [
-				tr,
-				{
-					sequential: true,
-					effects: [autoSystemLineCursorFixEffect.of()],
-					selection: desiredSelection,
-				},
-			];
 		}
+
+		if (!tr.docChanged) return tr;
 
 		const doc = tr.newDoc;
 		const head = tr.newSelection.main.head;
