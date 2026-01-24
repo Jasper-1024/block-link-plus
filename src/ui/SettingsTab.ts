@@ -428,18 +428,17 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// Dataview status hint (used by blp-view Query/View).
 		const dataviewStatus = detectDataviewStatus();
-		const statusEl = rootEl.createEl("div", {
-			cls: dataviewStatus.functioning ? "setting-item-description" : "setting-item-description mod-warning",
-		});
+		const statusText = dataviewStatus.functioning
+			? t.settings.enhancedListBlocks.dataviewStatus.available.replace(
+					"${version}",
+					dataviewStatus.version || "unknown"
+			  )
+			: t.settings.enhancedListBlocks.dataviewStatus.unavailable;
 
-		statusEl.createEl("span", {
-			text: dataviewStatus.functioning
-				? t.settings.enhancedListBlocks.dataviewStatus.available.replace(
-						"${version}",
-						dataviewStatus.version || "unknown"
-				  )
-				: t.settings.enhancedListBlocks.dataviewStatus.unavailable,
-		});
+		const statusSetting = new Setting(rootEl).setDesc(statusText);
+		statusSetting.settingEl.classList.add("blp-settings-dataview-status");
+		hideEl(statusSetting.nameEl);
+		if (!dataviewStatus.functioning) statusSetting.descEl.classList.add("mod-warning");
 
 		const parseScopeLines = (value: string): string[] =>
 			value
@@ -782,4 +781,3 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		}
 	}
 }
-

@@ -79,6 +79,13 @@
 	padding: 18px 0;
 }
 
+.blp-settings-dataview-status.setting-item {
+	/* Keep the Dataview status as a lightweight hint (not a full "setting" row). */
+	border-top: none;
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
 /* Hide elements (avoid keyboard focus inside inactive tabs / filtered items). */
 .blp-visually-hidden {
 	display: none !important;
