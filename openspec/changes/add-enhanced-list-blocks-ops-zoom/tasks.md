@@ -21,6 +21,6 @@
 
 ## 5. Tests & validation
 - [x] 5.1 Update/remove tests that covered removed custom ops
-- [ ] 5.2 Add smoke tests for built-in module gating (enabled/disabled + conflict)
+- [x] 5.2 Add smoke tests for built-in module gating (enabled/disabled + conflict)
 - [x] 5.3 Run `npm test`
 - [x] 5.4 Run `npm run build-with-types`

@@ -1,5 +1,6 @@
-import { Editor, Notice } from "obsidian";
+import { Editor } from "obsidian";
 import type BlockLinkPlus from "../../main";
+import { isThirdPartyPluginEnabled, syncBuiltInEnabledSettingWithExternalConflict } from "./gating";
 
 import { setBuiltInOutlinerEnabled } from "../../vendor/vslinko/obsidian-outliner/integration/enabled";
 import type { Feature as OutlinerFeature } from "../../vendor/vslinko/obsidian-outliner/features/Feature";
@@ -38,14 +39,6 @@ import { ZoomOnClickFeature } from "../../vendor/vslinko/obsidian-zoom/features/
 import { LoggerService } from "../../vendor/vslinko/obsidian-zoom/services/LoggerService";
 import { SettingsService, type Storage as ZoomStorage } from "../../vendor/vslinko/obsidian-zoom/services/SettingsService";
 import { getEditorViewFromEditor } from "../../vendor/vslinko/obsidian-zoom/utils/getEditorViewFromEditor";
-
-function isThirdPartyPluginEnabled(plugin: BlockLinkPlus, pluginId: string): boolean {
-  try {
-    return Boolean((plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
-  } catch {
-    return false;
-  }
-}
 
 class BuiltInOutlinerSettingsStorage implements OutlinerStorage {
   constructor(private plugin: BlockLinkPlus) {}
@@ -165,19 +158,13 @@ class BuiltInOutlinerModule {
   syncEnabledState(options: { showNotice: boolean }) {
     if (!this.settings) return;
 
-    const externalEnabled = isThirdPartyPluginEnabled(this.plugin, "obsidian-outliner");
-    const desired = Boolean(this.plugin.settings.builtInObsidianOutlinerEnabled) && !externalEnabled;
-
-    if (externalEnabled && this.plugin.settings.builtInObsidianOutlinerEnabled) {
-      this.plugin.settings.builtInObsidianOutlinerEnabled = false;
-      void this.plugin.saveSettings();
-      if (options.showNotice) {
-        new Notice(
-          "Block Link Plus: Built-in Outliner is disabled because external plugin 'obsidian-outliner' is enabled.",
-          5000,
-        );
-      }
-    }
+    const { desiredEnabled: desired } = syncBuiltInEnabledSettingWithExternalConflict({
+      plugin: this.plugin as any,
+      externalPluginId: "obsidian-outliner",
+      settingsFlagKey: "builtInObsidianOutlinerEnabled",
+      showNotice: options.showNotice,
+      noticeText: "Block Link Plus: Built-in Outliner is disabled because external plugin 'obsidian-outliner' is enabled.",
+    });
 
     this.settings.setEnabled(desired);
     setBuiltInOutlinerEnabled(desired);
@@ -270,19 +257,13 @@ class BuiltInZoomModule {
   syncEnabledState(options: { showNotice: boolean }) {
     if (!this.settings) return;
 
-    const externalEnabled = isThirdPartyPluginEnabled(this.plugin, "obsidian-zoom");
-    const desired = Boolean(this.plugin.settings.builtInObsidianZoomEnabled) && !externalEnabled;
-
-    if (externalEnabled && this.plugin.settings.builtInObsidianZoomEnabled) {
-      this.plugin.settings.builtInObsidianZoomEnabled = false;
-      void this.plugin.saveSettings();
-      if (options.showNotice) {
-        new Notice(
-          "Block Link Plus: Built-in Zoom is disabled because external plugin 'obsidian-zoom' is enabled.",
-          5000,
-        );
-      }
-    }
+    const { desiredEnabled: desired } = syncBuiltInEnabledSettingWithExternalConflict({
+      plugin: this.plugin as any,
+      externalPluginId: "obsidian-zoom",
+      settingsFlagKey: "builtInObsidianZoomEnabled",
+      showNotice: options.showNotice,
+      noticeText: "Block Link Plus: Built-in Zoom is disabled because external plugin 'obsidian-zoom' is enabled.",
+    });
 
     if (this.lastEnabled === true && desired === false) {
       this.zoomOutAllOpenEditors();
