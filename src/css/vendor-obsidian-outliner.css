@@ -50,7 +50,8 @@ body.outliner-plugin-better-bullets
 
 .cm-editor.blp-vslinko-scope .outliner-plugin-list-line:hover {
   opacity: 0.9;
-  background: transparent;
+  /* Keep the 1px gradient stripe; only bump visibility on hover. */
+  background-color: transparent;
 }
 
 .cm-editor.blp-vslinko-scope .blp-outliner-active-connector {
@@ -62,8 +63,9 @@ body.outliner-plugin-better-bullets
 
 .cm-editor.blp-vslinko-scope .blp-outliner-active-connector-path {
   fill: none;
-  stroke: hsla(var(--interactive-accent-hsl), 0.6);
-  stroke-width: 2px;
+  /* Slightly more prominent than the baseline vertical lines (Logseq-like). */
+  stroke: hsla(var(--interactive-accent-hsl), 0.75);
+  stroke-width: 2.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

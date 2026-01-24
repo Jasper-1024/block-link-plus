@@ -479,9 +479,7 @@ class VerticalLinesPluginValue implements PluginValue {
       // Use DOM geometry (bullet dot + vertical line overlay). We deliberately align
       // based on a top-level list bullet so the global offset stays stable even when
       // the active line is a leaf item (which has no vertical line at its own level).
-      const activeLineEl = this.view.dom.querySelector(
-        ".cm-line.cm-active.HyperMD-list-line:not(.HyperMD-list-line-nobullet)",
-      ) as HTMLElement | null;
+      const activeLineEl = this.getActiveListBulletLine();
       if (!activeLineEl) return;
 
       const visibleLines = this.lineElements.filter(
@@ -557,73 +555,169 @@ class VerticalLinesPluginValue implements PluginValue {
     }
   }
 
+  // When the cursor is inside a multi-line list item (e.g. a hidden system line or a
+  // fenced code line), CM's `.cm-active` is often on a `HyperMD-list-line-nobullet`.
+  // For outliner alignment/highlight we want the owning bullet line.
+  private getActiveListBulletLine(): HTMLElement | null {
+    const activeDomLine = this.view?.dom?.querySelector?.(".cm-line.cm-active") as
+      | HTMLElement
+      | null;
+    if (!activeDomLine) return null;
+
+    if (
+      activeDomLine.classList.contains("HyperMD-list-line") &&
+      !activeDomLine.classList.contains("HyperMD-list-line-nobullet")
+    ) {
+      return activeDomLine;
+    }
+
+    if (!activeDomLine.classList.contains("HyperMD-list-line")) {
+      return null;
+    }
+
+    const m = activeDomLine.className.match(/HyperMD-list-line-(\d+)/);
+    const level = m ? parseInt(m[1], 10) : null;
+    if (!Number.isFinite(level) || level === null) return null;
+
+    let prev: Element | null = activeDomLine.previousElementSibling;
+    while (prev) {
+      const el = prev as HTMLElement;
+      if (el.classList?.contains?.("HyperMD-list-line")) {
+        const m2 = el.className.match(/HyperMD-list-line-(\d+)/);
+        const lvl = m2 ? parseInt(m2[1], 10) : null;
+        if (lvl === level && !el.classList.contains("HyperMD-list-line-nobullet")) {
+          return el;
+        }
+        // If we crossed into a shallower indentation level, we've left this item.
+        if (lvl !== null && Number.isFinite(lvl) && lvl < level) break;
+      }
+      prev = prev.previousElementSibling;
+    }
+
+    return null;
+  }
+
   private updateActiveConnector() {
     if (!this.activeConnectorSvg || !this.activeConnectorPath) return;
 
     const containerRect = this.contentContainer?.getBoundingClientRect?.();
     if (!containerRect) return;
 
-    const activeLineEl = this.view.dom.querySelector(
-      ".cm-line.cm-active.HyperMD-list-line:not(.HyperMD-list-line-nobullet)",
-    ) as HTMLElement | null;
+    const activeLineEl = this.getActiveListBulletLine();
     if (!activeLineEl) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const bulletEl = activeLineEl.querySelector(
-      ".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
-    ) as HTMLElement | null;
-    if (!bulletEl) {
+    const getBulletCenter = (lineEl: HTMLElement) => {
+      const bulletEl = lineEl.querySelector(
+        ".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
+      ) as HTMLElement | null;
+      if (!bulletEl) return null;
+
+      const bulletRect = bulletEl.getBoundingClientRect();
+      const after = getComputedStyle(bulletEl, "::after");
+      const afterW = parseFloat(after.width || "0");
+      const afterH = parseFloat(after.height || "0");
+      const afterLeft = parseFloat(after.left || "0");
+      const afterTop = parseFloat(after.top || "0");
+
+      // Prefer the pseudo-element dot center when present; fall back to the span box center.
+      const cxClient =
+        afterW > 0 && Number.isFinite(afterLeft)
+          ? bulletRect.left + afterLeft + afterW / 2
+          : bulletRect.left + bulletRect.width / 2;
+      const cyClient =
+        afterH > 0 && Number.isFinite(afterTop)
+          ? bulletRect.top + afterTop + afterH / 2
+          : bulletRect.top + bulletRect.height / 2;
+
+      return {
+        x: cxClient - containerRect.left,
+        y: cyClient - containerRect.top,
+      };
+    };
+
+    // Build the active block "path" (Logseq-like): current bullet + its ancestors.
+    const classMatch = activeLineEl.className.match(/HyperMD-list-line-(\d+)/);
+    const activeLevel = classMatch ? parseInt(classMatch[1], 10) : 1;
+
+    // If it's a top-level item, there's nothing to connect to.
+    if (!Number.isFinite(activeLevel) || activeLevel <= 1) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const bulletRect = bulletEl.getBoundingClientRect();
-    const after = getComputedStyle(bulletEl, "::after");
-    const afterW = parseFloat(after.width || "0");
-    const afterH = parseFloat(after.height || "0");
-    const afterLeft = parseFloat(after.left || "0");
-    const afterTop = parseFloat(after.top || "0");
+    const chain: { level: number; x: number; y: number }[] = [];
+    let curEl: HTMLElement | null = activeLineEl;
+    let curLevel: number = activeLevel;
 
-    const bulletCenterXClient =
-      afterW > 0 && Number.isFinite(afterLeft)
-        ? bulletRect.left + afterLeft + afterW / 2
-        : bulletRect.left + bulletRect.width / 2;
-    const bulletCenterYClient =
-      afterH > 0 && Number.isFinite(afterTop)
-        ? bulletRect.top + afterTop + afterH / 2
-        : bulletRect.top + bulletRect.height / 2;
-
-    const bulletX = bulletCenterXClient - containerRect.left;
-    const bulletY = bulletCenterYClient - containerRect.top;
-
-    // Parent connector: use the nearest vertical line stripe to the left of the bullet.
-    let parentStripeX: number | null = null;
-    for (const el of this.lineElements) {
-      if (!el || el.style.display === "none") continue;
-      const r = el.getBoundingClientRect();
-      const stripeX = r.left - containerRect.left + 2;
-      if (stripeX < bulletX - 0.1 && (parentStripeX === null || stripeX > parentStripeX)) {
-        parentStripeX = stripeX;
+    while (curEl && curLevel >= 1) {
+      const center = getBulletCenter(curEl);
+      if (center && Number.isFinite(center.x) && Number.isFinite(center.y)) {
+        chain.unshift({ level: curLevel, x: center.x, y: center.y });
       }
+
+      if (curLevel === 1) break;
+
+      // Find the nearest parent list item (previous sibling at level-1).
+      let prev: Element | null = curEl.previousElementSibling;
+      let found: HTMLElement | null = null;
+      while (prev) {
+        const el = prev as HTMLElement;
+        if (
+          el.classList?.contains?.("HyperMD-list-line") &&
+          !el.classList.contains("HyperMD-list-line-nobullet")
+        ) {
+          const m = el.className.match(/HyperMD-list-line-(\d+)/);
+          const lvl = m ? parseInt(m[1], 10) : null;
+          if (lvl === curLevel - 1) {
+            found = el;
+            break;
+          }
+        }
+        prev = prev.previousElementSibling;
+      }
+      if (!found) break;
+      curEl = found;
+      curLevel = curLevel - 1;
     }
 
-    // Top-level list items have no parent line to connect to.
-    if (parentStripeX === null) {
+    // Need at least root + active.
+    if (chain.length < 2) {
       this.activeConnectorSvg.style.display = "none";
       return;
     }
 
-    const startX = parentStripeX;
+    // Draw a single multi-elbow path: root bullet -> ... -> active bullet.
+    let d = `M ${chain[0].x} ${chain[0].y}`;
+    for (let i = 1; i < chain.length; i++) {
+      const prev = chain[i - 1];
+      const next = chain[i];
 
-    const radius = 8;
-    const endX = bulletX;
-    const y0 = bulletY - radius;
-    const y1 = bulletY;
+      const dx = next.x - prev.x;
+      const dy = next.y - prev.y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) continue;
 
-    // Draw a short vertical segment, then a rounded corner into the bullet.
-    const d = `M ${startX} ${y0} V ${y1} Q ${startX} ${y1} ${startX + radius} ${y1} H ${endX}`;
+      // Cap radius by both dx and dy so we don't overshoot short segments.
+      const maxR = 8;
+      let r = Math.min(maxR, Math.abs(dx), Math.abs(dy) / 2);
+      if (!Number.isFinite(r)) r = 0;
+      if (r < 3) r = 0; // too small to be worth a curve
+
+      if (r === 0 || Math.abs(dx) < 0.5) {
+        d += ` V ${next.y} H ${next.x}`;
+        continue;
+      }
+
+      const dir = dx >= 0 ? 1 : -1;
+      const cornerY = next.y - r;
+      const cornerX = prev.x + dir * r;
+
+      // Vertical down, rounded elbow, then horizontal into the next bullet.
+      d += ` V ${cornerY} Q ${prev.x} ${next.y} ${cornerX} ${next.y} H ${next.x}`;
+    }
+
     this.activeConnectorPath.setAttribute("d", d);
     this.activeConnectorSvg.style.display = "block";
   }
