@@ -182,6 +182,21 @@ class T {
             name: "Hide system line",
             desc: "Hide the system line (`[date:: ...] ^id`) in Live Preview and Reading mode. Turn off to show it for debugging."
           },
+          handleAffordance: {
+            name: "Show list handle affordance",
+            desc: "Render unordered list markers as a handle in Live Preview (enabled files only) to make drag/fold interactions easier to discover."
+          },
+          handleActions: {
+            name: "Enable list handle actions",
+            desc: "Enable click-to-fold and a right-click handle menu for unordered list handles in Live Preview (enabled files only).",
+            menu: {
+              toggleFolding: "Toggle folding",
+              copyBlockLink: "Copy block link",
+              copyBlockEmbed: "Copy block embed",
+              zoomIn: "Zoom in",
+              zoomOut: "Zoom out",
+            }
+          },
           deleteSubtreeOnDelete: {
             name: "Delete children when deleting a list item",
             desc: "If enabled, deleting a parent list item will delete its nested children (Logseq/Roam style). If disabled, children stay and only the system line is removed."
@@ -491,6 +506,21 @@ class T {
             name: "隐藏系统行",
             desc: "在 Live Preview 与 Reading mode 下隐藏系统行（`[date:: ...] ^id`）。关闭后显示系统行（用于调试）。"
           },
+          handleAffordance: {
+            name: "显示列表手柄",
+            desc: "在 Live Preview 中将无序列表符号渲染为手柄（仅对启用文件生效），便于发现拖拽/折叠等交互。"
+          },
+          handleActions: {
+            name: "启用列表手柄动作",
+            desc: "在 Live Preview 中启用无序列表手柄的点击折叠与右键手柄菜单（仅对启用文件生效）。",
+            menu: {
+              toggleFolding: "切换折叠",
+              copyBlockLink: "复制块链接",
+              copyBlockEmbed: "复制块嵌入",
+              zoomIn: "放大（Zoom in）",
+              zoomOut: "缩小（Zoom out）",
+            }
+          },
           deleteSubtreeOnDelete: {
             name: "删除列表项时删除子项",
             desc: "开启后：删除父列表项会一并删除其子列表（Logseq/Roam 风格）。关闭后：子项保留，仅删除系统行。"
@@ -799,6 +829,21 @@ class T {
           hideSystemLine: {
             name: "隱藏系統行",
             desc: "在 Live Preview 與 Reading mode 下隱藏系統行（`[date:: ...] ^id`）。關閉後顯示系統行（用於除錯）。"
+          },
+          handleAffordance: {
+            name: "顯示列表把手",
+            desc: "在 Live Preview 中將無序列表符號渲染為把手（僅對啟用檔案生效），方便發現拖曳/折疊等互動。"
+          },
+          handleActions: {
+            name: "啟用列表把手動作",
+            desc: "在 Live Preview 中啟用無序清單把手的點擊折疊與右鍵把手選單（僅對啟用檔案生效）。",
+            menu: {
+              toggleFolding: "切換折疊",
+              copyBlockLink: "複製區塊連結",
+              copyBlockEmbed: "複製區塊嵌入",
+              zoomIn: "放大（Zoom in）",
+              zoomOut: "縮小（Zoom out）",
+            }
           },
           deleteSubtreeOnDelete: {
             name: "刪除列表項時刪除子項",

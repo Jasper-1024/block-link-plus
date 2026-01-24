@@ -37,6 +37,10 @@ Detailed explanation of all configuration options.
 
 - **enhancedListEnabledFolders** - Enabled folders (vault-relative paths)
 - **enhancedListEnabledFiles** - Enabled files (vault-relative paths)
+- **enhancedListHideSystemLine** - Hide the system line in Live Preview/Reading mode
+- **enhancedListHandleAffordance** - Show list handle affordance (Live Preview + enabled files only)
+- **enhancedListHandleActions** - Enable list handle actions (Live Preview + enabled files only)
+- **enhancedListDeleteSubtreeOnListItemDelete** - Delete children when deleting a list item
 
 ## Built-in Outliner / Zoom
 
@@ -71,6 +75,10 @@ Detailed explanation of all configuration options.
   "enable_url_notification": true,
   "enhancedListEnabledFolders": [],
   "enhancedListEnabledFiles": [],
+  "enhancedListHideSystemLine": true,
+  "enhancedListHandleAffordance": true,
+  "enhancedListHandleActions": true,
+  "enhancedListDeleteSubtreeOnListItemDelete": false,
   "builtInObsidianOutlinerEnabled": false,
   "builtInObsidianOutlinerSettings": {
     "styleLists": true,

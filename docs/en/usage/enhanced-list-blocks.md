@@ -21,6 +21,22 @@ In an enabled file, when you create the “next” list item in Live Preview (e.
 - The system line is placed after the parent item content and before any child list (so `^id` is associated with the parent item).
 - When a list item is deleted, the plugin cleans up its system line to avoid leaving orphan lines behind.
 
+### List handle affordance (optional)
+
+To make drag/fold interactions easier to discover, enable:
+- Enhanced List Blocks → “Show list handle affordance”
+
+When enabled, unordered list markers render as a handle in Live Preview (enabled files only).
+
+### List handle actions (optional)
+
+To make the handle behave more like a Logseq-style block handle, enable:
+- Enhanced List Blocks → “Enable list handle actions”
+
+When enabled (enabled files + Live Preview only):
+- Left-click the unordered list handle toggles folding for the current list item (requires Obsidian setting: “Fold indent”).
+- Right-click the unordered list handle opens a handle menu (toggle folding, copy block link/embed, and zoom actions when Zoom is available).
+
 ### Deletion behavior (optional)
 
 By default (keep children): when you delete a parent list item (e.g. remove the `-`/`1.` marker or cut the line), the plugin only removes the system line and keeps the nested children.

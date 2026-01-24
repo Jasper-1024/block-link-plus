@@ -37,6 +37,10 @@
 
 - **enhancedListEnabledFolders** - 启用的文件夹列表（vault 相对路径）
 - **enhancedListEnabledFiles** - 启用的文件列表（vault 相对路径）
+- **enhancedListHideSystemLine** - 在 Live Preview/Reading mode 隐藏系统行
+- **enhancedListHandleAffordance** - 显示列表手柄（仅 Live Preview + 启用文件）
+- **enhancedListHandleActions** - 启用列表手柄动作（仅 Live Preview + 启用文件）
+- **enhancedListDeleteSubtreeOnListItemDelete** - 删除列表项时是否连带删除子项
 
 ## Built-in Outliner / Zoom
 
@@ -71,6 +75,10 @@
   "enable_url_notification": true,
   "enhancedListEnabledFolders": [],
   "enhancedListEnabledFiles": [],
+  "enhancedListHideSystemLine": true,
+  "enhancedListHandleAffordance": true,
+  "enhancedListHandleActions": true,
+  "enhancedListDeleteSubtreeOnListItemDelete": false,
   "builtInObsidianOutlinerEnabled": false,
   "builtInObsidianOutlinerSettings": {
     "styleLists": true,
