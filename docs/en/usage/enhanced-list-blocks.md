@@ -34,8 +34,11 @@ To make the handle behave more like a Logseq-style block handle, enable:
 - Enhanced List Blocks → “Enable list handle actions”
 
 When enabled (enabled files + Live Preview only):
-- Left-click the unordered list handle toggles folding for the current list item (requires Obsidian setting: “Fold indent”).
-- Right-click the unordered list handle opens a handle menu (toggle folding, copy block link/embed, and zoom actions when Zoom is available).
+- Left-click the unordered list handle does the configured action (default: toggle folding; requires Obsidian setting: “Fold indent”).
+- Right-click the unordered list handle always opens the handle menu (toggle folding, copy block link/embed, and zoom actions when Zoom is available).
+
+You can configure the left-click behavior in settings:
+- Enhanced List Blocks → “Handle left-click action”
 
 ### Deletion behavior (optional)
 
@@ -101,3 +104,6 @@ List operations are out of scope for Enhanced List Blocks. This plugin provides 
 - Built-in Zoom (`obsidian-zoom@1.1.2`)
 
 Enable them in settings; if an external plugin with the same ID is enabled, the built-in module will auto-disable to avoid conflicts.
+
+Optionally, you can scope built-in list UX (styles + interactions) to Enhanced List enabled files:
+- Built-in Plugins (vslinko) → “Scope built-in list UX to Enhanced List”

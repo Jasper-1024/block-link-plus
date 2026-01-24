@@ -40,7 +40,13 @@ Detailed explanation of all configuration options.
 - **enhancedListHideSystemLine** - Hide the system line in Live Preview/Reading mode
 - **enhancedListHandleAffordance** - Show list handle affordance (Live Preview + enabled files only)
 - **enhancedListHandleActions** - Enable list handle actions (Live Preview + enabled files only)
+- **enhancedListHandleClickAction** - List handle left-click action (`toggle-folding` | `menu` | `none`)
+- **enhancedListIndentCodeBlocks** - Indent nested fenced code blocks (Live Preview + enabled files only)
 - **enhancedListDeleteSubtreeOnListItemDelete** - Delete children when deleting a list item
+- **blpViewAllowMaterialize** - Allow `render.mode: materialize` writeback
+- **blpViewMaxSourceFiles** - Max source files per view (`0` = unlimited)
+- **blpViewMaxResults** - Max rendered results (`0` = unlimited)
+- **blpViewShowDiagnostics** - Show diagnostics (counts + timing) under output
 
 ## Built-in Outliner / Zoom
 
@@ -48,6 +54,7 @@ Detailed explanation of all configuration options.
 - **builtInObsidianOutlinerSettings** - Built-in Outliner settings object (kept compatible with upstream)
 - **builtInObsidianZoomEnabled** - Enable built-in Zoom (vendored `obsidian-zoom@1.1.2`)
 - **builtInObsidianZoomSettings** - Built-in Zoom settings object (kept compatible with upstream)
+- **builtInVslinkoScopeToEnhancedList** - Scope built-in list UX to Enhanced List enabled files (Live Preview only)
 
 ## Inline Edit
 
@@ -78,7 +85,13 @@ Detailed explanation of all configuration options.
   "enhancedListHideSystemLine": true,
   "enhancedListHandleAffordance": true,
   "enhancedListHandleActions": true,
+  "enhancedListHandleClickAction": "toggle-folding",
+  "enhancedListIndentCodeBlocks": true,
   "enhancedListDeleteSubtreeOnListItemDelete": false,
+  "blpViewAllowMaterialize": true,
+  "blpViewMaxSourceFiles": 0,
+  "blpViewMaxResults": 0,
+  "blpViewShowDiagnostics": false,
   "builtInObsidianOutlinerEnabled": false,
   "builtInObsidianOutlinerSettings": {
     "styleLists": true,
@@ -99,9 +112,11 @@ Detailed explanation of all configuration options.
     "zoomOnClick": true,
     "zoomOnClickMobile": false
   },
+  "builtInVslinkoScopeToEnhancedList": false,
   "inlineEditEnabled": true,
   "inlineEditFile": false,
   "inlineEditHeading": true,
-  "inlineEditBlock": true
+  "inlineEditBlock": true,
+  "lastSeenVersion": ""
 }
 ```

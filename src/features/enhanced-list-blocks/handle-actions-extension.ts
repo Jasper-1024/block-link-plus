@@ -253,15 +253,26 @@ export function createEnhancedListHandleActionsExtension(
 				if (wasRecentlyDraggingViaOutliner()) return false;
 				if (this.lastDragTs && Date.now() - this.lastDragTs < 600) return false;
 
+				const clickAction = plugin.settings.enhancedListHandleClickAction ?? "toggle-folding";
+				if (clickAction === "none") return false;
+
 				const line = resolveHandleLine(this.view, event);
 				if (line === null) return false;
 
 				setCursorToLine(this.view, infoField, line);
 
-				if (deps.onToggleFold) {
-					deps.onToggleFold(this.view, line);
+				if (clickAction === "menu") {
+					if (deps.onShowMenu) {
+						deps.onShowMenu(this.view, line, event);
+					} else {
+						showHandleMenu(plugin, this.view, infoField, line, event);
+					}
 				} else {
-					toggleFoldingAtLine(plugin, this.view.state, line);
+					if (deps.onToggleFold) {
+						deps.onToggleFold(this.view, line);
+					} else {
+						toggleFoldingAtLine(plugin, this.view.state, line);
+					}
 				}
 
 				event.preventDefault();

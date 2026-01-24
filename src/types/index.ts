@@ -108,6 +108,8 @@ export interface PluginSettings {
 	enhancedListHideSystemLine: boolean;
 	enhancedListHandleAffordance: boolean;
 	enhancedListHandleActions: boolean;
+	// What a left-click on the list handle does when handle actions are enabled.
+	enhancedListHandleClickAction: "toggle-folding" | "menu" | "none";
 	enhancedListIndentCodeBlocks: boolean;
 	enhancedListDeleteSubtreeOnListItemDelete: boolean;
 
@@ -155,6 +157,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enhancedListHideSystemLine: true,
 	enhancedListHandleAffordance: true,
 	enhancedListHandleActions: true,
+	enhancedListHandleClickAction: "toggle-folding",
 	enhancedListIndentCodeBlocks: true,
 	enhancedListDeleteSubtreeOnListItemDelete: false,
 

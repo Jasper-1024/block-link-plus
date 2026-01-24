@@ -323,9 +323,34 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.enhancedListBlocks.handleAffordance.name)
 			.setDesc(t.settings.enhancedListBlocks.handleAffordance.desc);
 
-		this.addToggleSetting("enhancedListHandleActions")
+		let handleClickActionDropdown: any | null = null;
+
+		this.addToggleSetting("enhancedListHandleActions", (enabled) => {
+			// Keep the dropdown in sync without a full re-render.
+			handleClickActionDropdown?.setDisabled?.(!enabled);
+		})
 			.setName(t.settings.enhancedListBlocks.handleActions.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.desc);
+
+		new Setting(this.containerEl)
+			.setName(t.settings.enhancedListBlocks.handleActions.clickAction.name)
+			.setDesc(t.settings.enhancedListBlocks.handleActions.clickAction.desc)
+			.addDropdown((dropdown) => {
+				handleClickActionDropdown = dropdown;
+
+				dropdown
+					.addOptions({
+						"toggle-folding": t.settings.enhancedListBlocks.handleActions.clickAction.options.toggleFolding,
+						menu: t.settings.enhancedListBlocks.handleActions.clickAction.options.menu,
+						none: t.settings.enhancedListBlocks.handleActions.clickAction.options.none,
+					} as any)
+					.setValue(this.plugin.settings.enhancedListHandleClickAction ?? "toggle-folding")
+					.setDisabled(!this.plugin.settings.enhancedListHandleActions)
+					.onChange(async (value: any) => {
+						this.plugin.settings.enhancedListHandleClickAction = value;
+						await this.plugin.saveSettings();
+					});
+			});
 
 		this.addToggleSetting("enhancedListIndentCodeBlocks")
 			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)
@@ -390,21 +415,20 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		};
 
 		// Built-in vslinko plugins (vendored)
-		this.addHeading("Built-in Plugins (vslinko)").setDesc(
-			"Vendored copies of obsidian-outliner and obsidian-zoom. You can enable them globally (upstream behavior) or optionally scope list UX to Enhanced List Blocks enabled files."
-		);
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.title).setDesc(t.settings.enhancedListBlocks.builtIn.desc);
 
 		this.addToggleSetting("builtInVslinkoScopeToEnhancedList")
-			.setName("Scope built-in list UX to Enhanced List Blocks")
-			.setDesc("When enabled, list styles and interactions from built-in Outliner/Zoom only apply to Enhanced List Blocks enabled files (Live Preview only).");
+			.setName(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.name)
+			.setDesc(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.desc);
 
 		// Built-in Outliner
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.outliner.title);
 		new Setting(this.containerEl)
-			.setName("Enable Built-in Outliner (obsidian-outliner)")
+			.setName(t.settings.enhancedListBlocks.builtIn.outliner.enable.name)
 			.setDesc(
 				isThirdPartyPluginEnabled("obsidian-outliner")
-					? "Disabled because external plugin 'obsidian-outliner' is enabled."
-					: "Enables a vendored copy of obsidian-outliner (commands, key overrides, drag-and-drop, vertical lines, styles)."
+					? t.settings.enhancedListBlocks.builtIn.outliner.enable.conflictDesc
+					: t.settings.enhancedListBlocks.builtIn.outliner.enable.desc
 			)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.builtInObsidianOutlinerEnabled).onChange(async (value) => {
@@ -426,14 +450,15 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const outlinerSettings = this.plugin.getBuiltInOutlinerSettings();
 		if (this.plugin.settings.builtInObsidianOutlinerEnabled && outlinerSettings) {
 			new Setting(this.containerEl)
-				.setName("Stick the cursor to the content")
-				.setDesc("Don't let the cursor move to the bullet position.")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.desc)
 				.addDropdown((dropdown) => {
 					dropdown
 						.addOptions({
-							never: "Never",
-							"bullet-only": "Stick cursor out of bullets",
-							"bullet-and-checkbox": "Stick cursor out of bullets and checkboxes",
+							never: t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.never,
+							"bullet-only": t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.bulletOnly,
+							"bullet-and-checkbox":
+								t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.bulletAndCheckbox,
 						} as any)
 						.setValue(outlinerSettings.keepCursorWithinContent)
 						.onChange(async (value: any) => {
@@ -443,8 +468,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("Enhance the Tab key")
-				.setDesc("Make Tab and Shift-Tab behave the same as other outliners.")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.overrideTabBehaviour).onChange(async (value) => {
 						outlinerSettings.overrideTabBehaviour = value;
@@ -453,8 +478,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("Enhance the Enter key")
-				.setDesc("Make the Enter key behave the same as other outliners.")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.overrideEnterBehaviour).onChange(async (value) => {
 						outlinerSettings.overrideEnterBehaviour = value;
@@ -463,8 +488,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("Vim-mode o/O inserts bullets")
-				.setDesc("Create a bullet when pressing o or O in Vim mode.")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.vimO.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.vimO.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.overrideVimOBehaviour).onChange(async (value) => {
 						outlinerSettings.overrideVimOBehaviour = value;
@@ -473,10 +498,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("Enhance the Ctrl+A or Cmd+A behavior")
-				.setDesc(
-					"Press the hotkey once to select the current list item. Press the hotkey twice to select the entire list."
-				)
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.overrideSelectAllBehaviour).onChange(async (value) => {
 						outlinerSettings.overrideSelectAllBehaviour = value;
@@ -485,8 +508,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("Improve the style of your lists")
-				.setDesc("Uses Obsidian CSS variables and should work with most themes (visual results may vary by theme).")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.betterListsStyles).onChange(async (value) => {
 						outlinerSettings.betterListsStyles = value;
@@ -494,19 +517,24 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl).setName("Draw vertical indentation lines").addToggle((toggle) => {
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.desc)
+				.addToggle((toggle) => {
 				toggle.setValue(outlinerSettings.verticalLines).onChange(async (value) => {
 					outlinerSettings.verticalLines = value;
 					await outlinerSettings.save();
 				});
 			});
 
-			new Setting(this.containerEl).setName("Vertical indentation line click action").addDropdown((dropdown) => {
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.name)
+				.addDropdown((dropdown) => {
 				dropdown
 					.addOptions({
-						none: "None",
-						"zoom-in": "Zoom In",
-						"toggle-folding": "Toggle Folding",
+						none: t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.none,
+						"zoom-in": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.zoomIn,
+						"toggle-folding": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.toggleFolding,
 					} as any)
 					.setValue(outlinerSettings.verticalLinesAction)
 					.onChange(async (value: any) => {
@@ -515,7 +543,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-			new Setting(this.containerEl).setName("Drag-and-Drop").addToggle((toggle) => {
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.desc)
+				.addToggle((toggle) => {
 				toggle.setValue(outlinerSettings.dragAndDrop).onChange(async (value) => {
 					outlinerSettings.dragAndDrop = value;
 					await outlinerSettings.save();
@@ -523,8 +554,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			});
 
 			new Setting(this.containerEl)
-				.setName("Debug mode")
-				.setDesc("Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.")
+				.setName(t.settings.enhancedListBlocks.builtIn.outliner.debug.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.debug.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(outlinerSettings.debug).onChange(async (value) => {
 						outlinerSettings.debug = value;
@@ -534,12 +565,13 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		}
 
 		// Built-in Zoom
+		this.addHeading(t.settings.enhancedListBlocks.builtIn.zoom.title);
 		new Setting(this.containerEl)
-			.setName("Enable Built-in Zoom (obsidian-zoom)")
+			.setName(t.settings.enhancedListBlocks.builtIn.zoom.enable.name)
 			.setDesc(
 				isThirdPartyPluginEnabled("obsidian-zoom")
-					? "Disabled because external plugin 'obsidian-zoom' is enabled."
-					: "Enables a vendored copy of obsidian-zoom (commands, click-to-zoom, header, guardrails)."
+					? t.settings.enhancedListBlocks.builtIn.zoom.enable.conflictDesc
+					: t.settings.enhancedListBlocks.builtIn.zoom.enable.desc
 			)
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.builtInObsidianZoomEnabled).onChange(async (value) => {
@@ -560,16 +592,19 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		const zoomSettings = this.plugin.getBuiltInZoomSettings();
 		if (this.plugin.settings.builtInObsidianZoomEnabled && zoomSettings) {
-			new Setting(this.containerEl).setName("Zooming in when clicking on the bullet").addToggle((toggle) => {
-				toggle.setValue(zoomSettings.zoomOnClick).onChange(async (value) => {
-					zoomSettings.zoomOnClick = value;
-					await zoomSettings.save();
+			new Setting(this.containerEl)
+				.setName(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.desc)
+				.addToggle((toggle) => {
+					toggle.setValue(zoomSettings.zoomOnClick).onChange(async (value) => {
+						zoomSettings.zoomOnClick = value;
+						await zoomSettings.save();
+					});
 				});
-			});
 
 			new Setting(this.containerEl)
-				.setName("Debug mode")
-				.setDesc("Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.")
+				.setName(t.settings.enhancedListBlocks.builtIn.zoom.debug.name)
+				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.debug.desc)
 				.addToggle((toggle) => {
 					toggle.setValue(zoomSettings.debug).onChange(async (value) => {
 						zoomSettings.debug = value;

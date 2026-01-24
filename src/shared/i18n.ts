@@ -164,7 +164,7 @@ class T {
 
         // Enhanced List Blocks section
         enhancedListBlocks: {
-          title: "Enhanced List Blocks",
+          title: "Enhanced List",
           desc: "Opt-in scope for Enhanced List Blocks features (blp-view, system line hiding, duplicate ^id repair). A file is enabled if it matches any enabled folder/file below, or has frontmatter `blp_enhanced_list: true`.",
           dataviewStatus: {
             available: "✅ Dataview plugin is installed and enabled (v${version})",
@@ -189,6 +189,15 @@ class T {
           handleActions: {
             name: "Enable list handle actions",
             desc: "Enable click-to-fold and a right-click handle menu for unordered list handles in Live Preview (enabled files only).",
+            clickAction: {
+              name: "Handle left-click action",
+              desc: "Choose what a left-click on the list handle does. Right-click always opens the handle menu.",
+              options: {
+                toggleFolding: "Toggle folding",
+                menu: "Open handle menu",
+                none: "None",
+              },
+            },
             menu: {
               toggleFolding: "Toggle folding",
               copyBlockLink: "Copy block link",
@@ -224,6 +233,91 @@ class T {
               name: "Show blp-view diagnostics",
               desc: "Show counts and timing info under the rendered output."
             }
+          },
+          builtIn: {
+            title: "Built-in Plugins (vslinko)",
+            desc: "Vendored copies of obsidian-outliner and obsidian-zoom. You can enable them globally (upstream behavior) or optionally scope list UX to Enhanced List enabled files.",
+            scopeToEnhancedList: {
+              name: "Scope built-in list UX to Enhanced List",
+              desc: "When enabled, list styles and interactions from built-in Outliner/Zoom only apply to Enhanced List enabled files (Live Preview only).",
+            },
+            outliner: {
+              title: "Built-in Outliner (obsidian-outliner)",
+              enable: {
+                name: "Enable Built-in Outliner (obsidian-outliner)",
+                desc: "Enables a vendored copy of obsidian-outliner (commands, key overrides, drag-and-drop, vertical lines, styles).",
+                conflictDesc: "Disabled because external plugin 'obsidian-outliner' is enabled.",
+              },
+              stickCursor: {
+                name: "Stick the cursor to the content",
+                desc: "Don't let the cursor move to the bullet position.",
+                options: {
+                  never: "Never",
+                  bulletOnly: "Stick cursor out of bullets",
+                  bulletAndCheckbox: "Stick cursor out of bullets and checkboxes",
+                },
+              },
+              enhanceTab: {
+                name: "Enhance the Tab key",
+                desc: "Make Tab and Shift-Tab behave the same as other outliners.",
+              },
+              enhanceEnter: {
+                name: "Enhance the Enter key",
+                desc: "Make the Enter key behave the same as other outliners.",
+              },
+              vimO: {
+                name: "Vim-mode o/O inserts bullets",
+                desc: "Create a bullet when pressing o or O in Vim mode.",
+              },
+              enhanceSelectAll: {
+                name: "Enhance the Ctrl+A or Cmd+A behavior",
+                desc: "Press the hotkey once to select the current list item. Press the hotkey twice to select the entire list.",
+              },
+              betterListStyles: {
+                name: "Improve the style of your lists",
+                desc: "Uses Obsidian CSS variables and should work with most themes (visual results may vary by theme).",
+              },
+              verticalLines: {
+                name: "Draw vertical indentation lines",
+                desc: "",
+              },
+              verticalLinesAction: {
+                name: "Vertical indentation line click action",
+                options: {
+                  none: "None",
+                  zoomIn: "Zoom In",
+                  toggleFolding: "Toggle Folding",
+                },
+              },
+              dragAndDrop: {
+                name: "Drag-and-Drop",
+                desc: "",
+              },
+              debug: {
+                name: "Debug mode",
+                desc: "Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.",
+              },
+            },
+            zoom: {
+              title: "Built-in Zoom (obsidian-zoom)",
+              enable: {
+                name: "Enable Built-in Zoom (obsidian-zoom)",
+                desc: "Enables a vendored copy of obsidian-zoom (commands, click-to-zoom, header, guardrails).",
+                conflictDesc: "Disabled because external plugin 'obsidian-zoom' is enabled.",
+              },
+              zoomOnClick: {
+                name: "Zooming in when clicking on the bullet",
+                desc: "",
+              },
+              zoomOnClickMobile: {
+                name: "Zooming in when clicking on the bullet (mobile)",
+                desc: "",
+              },
+              debug: {
+                name: "Debug mode",
+                desc: "Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.",
+              },
+            },
           },
           ops: {
             title: "Enhanced List Blocks Ops",
@@ -517,6 +611,15 @@ class T {
           handleActions: {
             name: "启用列表手柄动作",
             desc: "在 Live Preview 中启用无序列表手柄的点击折叠与右键手柄菜单（仅对启用文件生效）。",
+            clickAction: {
+              name: "手柄左键动作",
+              desc: "选择左键点击列表手柄时执行的动作。右键始终打开手柄菜单。",
+              options: {
+                toggleFolding: "切换折叠",
+                menu: "打开手柄菜单",
+                none: "无",
+              },
+            },
             menu: {
               toggleFolding: "切换折叠",
               copyBlockLink: "复制块链接",
@@ -552,6 +655,91 @@ class T {
               name: "显示 blp-view 诊断信息",
               desc: "在输出下方显示扫描数量、匹配数量与耗时等信息。"
             }
+          },
+          builtIn: {
+            title: "内置插件（vslinko）",
+            desc: "内置 obsidian-outliner 与 obsidian-zoom 的 vendored 版本。你可以全局启用（与上游一致），也可以将列表样式/交互限定到 Enhanced List 启用范围。",
+            scopeToEnhancedList: {
+              name: "将内置列表交互限定到 Enhanced List",
+              desc: "开启后，内置 Outliner/Zoom 的列表样式与交互仅在 Enhanced List 启用文件中生效（仅 Live Preview）。",
+            },
+            outliner: {
+              title: "内置 Outliner（obsidian-outliner）",
+              enable: {
+                name: "启用内置 Outliner（obsidian-outliner）",
+                desc: "启用内置的 obsidian-outliner（命令、按键增强、拖拽、垂直缩进线、样式）。",
+                conflictDesc: "已禁用：检测到外部插件 'obsidian-outliner' 已启用。",
+              },
+              stickCursor: {
+                name: "将光标限制在内容区域",
+                desc: "防止光标移动到项目符号位置。",
+                options: {
+                  never: "从不",
+                  bulletOnly: "避开项目符号",
+                  bulletAndCheckbox: "避开项目符号与复选框",
+                },
+              },
+              enhanceTab: {
+                name: "增强 Tab 键",
+                desc: "让 Tab / Shift-Tab 的行为更接近其他 outliner。",
+              },
+              enhanceEnter: {
+                name: "增强 Enter 键",
+                desc: "让 Enter 的行为更接近其他 outliner。",
+              },
+              vimO: {
+                name: "Vim 模式 o/O 自动插入项目符号",
+                desc: "在 Vim 模式下按 o 或 O 时创建一个 bullet。",
+              },
+              enhanceSelectAll: {
+                name: "增强 Ctrl+A / Cmd+A 行为",
+                desc: "按一次选中当前列表项；按两次选中整个列表。",
+              },
+              betterListStyles: {
+                name: "优化列表样式",
+                desc: "使用 Obsidian CSS 变量，尽量适配大多数主题（视觉效果可能因主题而异）。",
+              },
+              verticalLines: {
+                name: "绘制垂直缩进线",
+                desc: "",
+              },
+              verticalLinesAction: {
+                name: "垂直缩进线点击动作",
+                options: {
+                  none: "无",
+                  zoomIn: "放大（Zoom In）",
+                  toggleFolding: "切换折叠",
+                },
+              },
+              dragAndDrop: {
+                name: "拖拽（Drag-and-Drop）",
+                desc: "",
+              },
+              debug: {
+                name: "调试模式",
+                desc: "打开开发者工具（Command+Option+I / Control+Shift+I）查看或复制调试日志。",
+              },
+            },
+            zoom: {
+              title: "内置 Zoom（obsidian-zoom）",
+              enable: {
+                name: "启用内置 Zoom（obsidian-zoom）",
+                desc: "启用内置的 obsidian-zoom（命令、点击缩放、标题导航、护栏）。",
+                conflictDesc: "已禁用：检测到外部插件 'obsidian-zoom' 已启用。",
+              },
+              zoomOnClick: {
+                name: "点击项目符号时缩放",
+                desc: "",
+              },
+              zoomOnClickMobile: {
+                name: "点击项目符号时缩放（移动端）",
+                desc: "",
+              },
+              debug: {
+                name: "调试模式",
+                desc: "打开开发者工具（Command+Option+I / Control+Shift+I）查看或复制调试日志。",
+              },
+            },
           },
           ops: {
             title: "增强 List Blocks 操作",
@@ -845,6 +1033,15 @@ class T {
           handleActions: {
             name: "啟用列表把手動作",
             desc: "在 Live Preview 中啟用無序清單把手的點擊折疊與右鍵把手選單（僅對啟用檔案生效）。",
+            clickAction: {
+              name: "把手左鍵動作",
+              desc: "選擇左鍵點擊列表把手時執行的動作。右鍵一律開啟把手選單。",
+              options: {
+                toggleFolding: "切換折疊",
+                menu: "開啟把手選單",
+                none: "無",
+              },
+            },
             menu: {
               toggleFolding: "切換折疊",
               copyBlockLink: "複製區塊連結",
@@ -880,6 +1077,91 @@ class T {
               name: "顯示 blp-view 診斷資訊",
               desc: "在輸出下方顯示掃描數量、匹配數量與耗時等資訊。"
             }
+          },
+          builtIn: {
+            title: "內建外掛（vslinko）",
+            desc: "內建 obsidian-outliner 與 obsidian-zoom 的 vendored 版本。你可以全域啟用（與上游一致），也可以將列表樣式/互動限定到 Enhanced List 啟用範圍。",
+            scopeToEnhancedList: {
+              name: "將內建列表互動限定到 Enhanced List",
+              desc: "開啟後，內建 Outliner/Zoom 的列表樣式與互動僅在 Enhanced List 啟用檔案中生效（僅 Live Preview）。",
+            },
+            outliner: {
+              title: "內建 Outliner（obsidian-outliner）",
+              enable: {
+                name: "啟用內建 Outliner（obsidian-outliner）",
+                desc: "啟用內建的 obsidian-outliner（命令、按鍵增強、拖曳、垂直縮排線、樣式）。",
+                conflictDesc: "已停用：偵測到外部外掛 'obsidian-outliner' 已啟用。",
+              },
+              stickCursor: {
+                name: "將游標限制在內容區域",
+                desc: "避免游標移動到項目符號位置。",
+                options: {
+                  never: "永不",
+                  bulletOnly: "避開項目符號",
+                  bulletAndCheckbox: "避開項目符號與核取方塊",
+                },
+              },
+              enhanceTab: {
+                name: "增強 Tab 鍵",
+                desc: "讓 Tab / Shift-Tab 的行為更接近其他 outliner。",
+              },
+              enhanceEnter: {
+                name: "增強 Enter 鍵",
+                desc: "讓 Enter 的行為更接近其他 outliner。",
+              },
+              vimO: {
+                name: "Vim 模式 o/O 自動插入項目符號",
+                desc: "在 Vim 模式下按 o 或 O 時建立一個 bullet。",
+              },
+              enhanceSelectAll: {
+                name: "增強 Ctrl+A / Cmd+A 行為",
+                desc: "按一次選取目前列表項；按兩次選取整個列表。",
+              },
+              betterListStyles: {
+                name: "最佳化列表樣式",
+                desc: "使用 Obsidian CSS 變數，盡量適配多數主題（視覺效果可能因主題而異）。",
+              },
+              verticalLines: {
+                name: "繪製垂直縮排線",
+                desc: "",
+              },
+              verticalLinesAction: {
+                name: "垂直縮排線點擊動作",
+                options: {
+                  none: "無",
+                  zoomIn: "放大（Zoom In）",
+                  toggleFolding: "切換折疊",
+                },
+              },
+              dragAndDrop: {
+                name: "拖曳（Drag-and-Drop）",
+                desc: "",
+              },
+              debug: {
+                name: "除錯模式",
+                desc: "開啟開發者工具（Command+Option+I / Control+Shift+I）查看或複製除錯日誌。",
+              },
+            },
+            zoom: {
+              title: "內建 Zoom（obsidian-zoom）",
+              enable: {
+                name: "啟用內建 Zoom（obsidian-zoom）",
+                desc: "啟用內建的 obsidian-zoom（命令、點擊縮放、標題導覽、護欄）。",
+                conflictDesc: "已停用：偵測到外部外掛 'obsidian-zoom' 已啟用。",
+              },
+              zoomOnClick: {
+                name: "點擊項目符號時縮放",
+                desc: "",
+              },
+              zoomOnClickMobile: {
+                name: "點擊項目符號時縮放（行動裝置）",
+                desc: "",
+              },
+              debug: {
+                name: "除錯模式",
+                desc: "開啟開發者工具（Command+Option+I / Control+Shift+I）查看或複製除錯日誌。",
+              },
+            },
           },
           ops: {
             title: "增強 List Blocks 操作",

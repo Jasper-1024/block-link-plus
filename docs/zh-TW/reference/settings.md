@@ -40,7 +40,13 @@
 - **enhancedListHideSystemLine** - 在 Live Preview/Reading mode 隱藏系統行
 - **enhancedListHandleAffordance** - 顯示列表把手（僅 Live Preview + 啟用檔案）
 - **enhancedListHandleActions** - 啟用列表把手動作（僅 Live Preview + 啟用檔案）
+- **enhancedListHandleClickAction** - 把手左鍵動作（`toggle-folding` | `menu` | `none`）
+- **enhancedListIndentCodeBlocks** - 縮排巢狀圍欄程式碼區塊（僅 Live Preview + 啟用檔案）
 - **enhancedListDeleteSubtreeOnListItemDelete** - 刪除列表項時是否連帶刪除子項
+- **blpViewAllowMaterialize** - 允許 `render.mode: materialize` 寫回
+- **blpViewMaxSourceFiles** - 最大掃描檔案數（`0` = 不限）
+- **blpViewMaxResults** - 最大輸出結果數（`0` = 不限）
+- **blpViewShowDiagnostics** - 輸出下方顯示診斷資訊（計數 + 耗時）
 
 ## Built-in Outliner / Zoom
 
@@ -48,6 +54,7 @@
 - **builtInObsidianOutlinerSettings** - 內建 Outliner 的設定物件（保持與上游一致）
 - **builtInObsidianZoomEnabled** - 啟用內建 Zoom（vendored `obsidian-zoom@1.1.2`）
 - **builtInObsidianZoomSettings** - 內建 Zoom 的設定物件（保持與上游一致）
+- **builtInVslinkoScopeToEnhancedList** - 將內建列表互動限定到 Enhanced List 啟用檔案（僅 Live Preview）
 
 ## 內嵌編輯 (Inline Edit)
 
@@ -78,7 +85,13 @@
   "enhancedListHideSystemLine": true,
   "enhancedListHandleAffordance": true,
   "enhancedListHandleActions": true,
+  "enhancedListHandleClickAction": "toggle-folding",
+  "enhancedListIndentCodeBlocks": true,
   "enhancedListDeleteSubtreeOnListItemDelete": false,
+  "blpViewAllowMaterialize": true,
+  "blpViewMaxSourceFiles": 0,
+  "blpViewMaxResults": 0,
+  "blpViewShowDiagnostics": false,
   "builtInObsidianOutlinerEnabled": false,
   "builtInObsidianOutlinerSettings": {
     "styleLists": true,
@@ -99,9 +112,11 @@
     "zoomOnClick": true,
     "zoomOnClickMobile": false
   },
+  "builtInVslinkoScopeToEnhancedList": false,
   "inlineEditEnabled": true,
   "inlineEditFile": false,
   "inlineEditHeading": true,
-  "inlineEditBlock": true
+  "inlineEditBlock": true,
+  "lastSeenVersion": ""
 }
 ```

@@ -34,8 +34,11 @@ Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文�
 - Enhanced List Blocks → “启用列表手柄动作”
 
 开启后（仅启用文件 + Live Preview）：
-- 左键点击无序列表把手：切换折叠（需 Obsidian 设置开启“Fold indent”）。
-- 右键点击无序列表把手：打开把手菜单（切换折叠、复制块链接/嵌入；若 Zoom 可用则显示缩放相关动作）。
+- 左键点击无序列表把手：执行已配置的动作（默认：切换折叠；需 Obsidian 设置开启“Fold indent”）。
+- 右键点击无序列表把手：始终打开把手菜单（切换折叠、复制块链接/嵌入；若 Zoom 可用则显示缩放相关动作）。
+
+可在设置中调整左键行为：
+- Enhanced List Blocks → “手柄左键动作”
 
 ### 删除行为（可选）
 
@@ -101,3 +104,6 @@ render:
 - Built-in Zoom（`obsidian-zoom@1.1.2`）
 
 在设置中启用即可生效；若检测到外置同名插件启用，内置模块会自动禁用以避免冲突。
+
+你也可以将内置列表样式/交互限定到 Enhanced List 启用文件：
+- Built-in Plugins (vslinko) → “将内置列表交互限定到 Enhanced List”

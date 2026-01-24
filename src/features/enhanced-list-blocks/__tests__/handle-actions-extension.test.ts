@@ -7,6 +7,7 @@ type ViewOptions = {
 	enabled: boolean;
 	livePreview: boolean;
 	actionsEnabled: boolean;
+	clickAction?: "toggle-folding" | "menu" | "none";
 };
 
 function createView(options: ViewOptions) {
@@ -19,6 +20,7 @@ function createView(options: ViewOptions) {
 			enhancedListEnabledFolders: [],
 			enhancedListEnabledFiles: options.enabled ? [file.path] : [],
 			enhancedListHandleActions: options.actionsEnabled,
+			enhancedListHandleClickAction: options.clickAction ?? "toggle-folding",
 		},
 	} as any;
 
@@ -67,6 +69,7 @@ describe("enhanced-list-blocks/handle-actions-extension", () => {
 			enabled: true,
 			livePreview: true,
 			actionsEnabled: true,
+			clickAction: "toggle-folding",
 		});
 
 		try {
@@ -87,6 +90,43 @@ describe("enhanced-list-blocks/handle-actions-extension", () => {
 
 		try {
 			handleEl.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+			expect(menus).toEqual([0]);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("clicking the handle opens menu when click action is menu", () => {
+		const { view, parent, handleEl, toggled, menus } = createView({
+			enabled: true,
+			livePreview: true,
+			actionsEnabled: true,
+			clickAction: "menu",
+		});
+
+		try {
+			handleEl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+			expect(toggled).toEqual([]);
+			expect(menus).toEqual([0]);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("clicking the handle does nothing when click action is none (but right-click still works)", () => {
+		const { view, parent, handleEl, toggled, menus } = createView({
+			enabled: true,
+			livePreview: true,
+			actionsEnabled: true,
+			clickAction: "none",
+		});
+
+		try {
+			handleEl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+			handleEl.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+			expect(toggled).toEqual([]);
 			expect(menus).toEqual([0]);
 		} finally {
 			view.destroy();
@@ -148,4 +188,3 @@ describe("enhanced-list-blocks/handle-actions-extension", () => {
 		}
 	});
 });
-
