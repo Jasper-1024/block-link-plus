@@ -11,7 +11,7 @@ import {
 import { Feature } from "./Feature";
 
 import { MyEditor, getEditorFromState } from "../editor";
-import { List } from "../root";
+import { List, Root } from "../root";
 import { ObsidianSettings } from "../services/ObsidianSettings";
 import { Parser } from "../services/Parser";
 import { Settings } from "../services/Settings";
@@ -34,6 +34,10 @@ class VerticalLinesPluginValue implements PluginValue {
   private lastLine: number;
   private lines: LineData[];
   private lineElements: HTMLElement[] = [];
+  private parsedRoots: Root[] = [];
+  private lineXOffsetPx = 0;
+  private activeConnectorSvg: SVGSVGElement | null = null;
+  private activeConnectorPath: SVGPathElement | null = null;
   private isActive = false;
   private isDestroyed = false;
 
@@ -107,6 +111,15 @@ class VerticalLinesPluginValue implements PluginValue {
     this.contentContainer = null;
     this.lineElements = [];
     this.lines = [];
+    this.parsedRoots = [];
+    this.lineXOffsetPx = 0;
+    this.activeConnectorSvg = null;
+    this.activeConnectorPath = null;
+    try {
+      this.view?.dom?.style?.removeProperty?.("--blp-outliner-line-x-offset");
+    } catch {
+      // ignore
+    }
     this.editor = null;
   }
 
@@ -133,8 +146,26 @@ class VerticalLinesPluginValue implements PluginValue {
     this.scroller = document.createElement("div");
     this.scroller.classList.add("outliner-plugin-list-lines-scroller");
 
+    // Active block connector (Logseq-like): a rounded elbow that highlights the
+    // current list item against the vertical lines overlay.
+    this.activeConnectorSvg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    );
+    this.activeConnectorSvg.classList.add("blp-outliner-active-connector");
+    this.activeConnectorSvg.setAttribute("width", "100%");
+    this.activeConnectorSvg.setAttribute("height", "100%");
+
+    this.activeConnectorPath = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path",
+    );
+    this.activeConnectorPath.classList.add("blp-outliner-active-connector-path");
+    this.activeConnectorSvg.appendChild(this.activeConnectorPath);
+
     this.scroller.appendChild(this.contentContainer);
     this.view.dom.appendChild(this.scroller);
+    this.contentContainer.appendChild(this.activeConnectorSvg);
   }
 
   private onScroll = (e: Event) => {
@@ -160,12 +191,22 @@ class VerticalLinesPluginValue implements PluginValue {
       update.transactions.some((tr) => tr.reconfigured)
     ) {
       this.scheduleRecalculate();
+      return;
+    }
+
+    // Cursor/selection moves don't change the document, but we still need to:
+    // - keep vertical lines aligned to the active bullet
+    // - update the active block connector highlight
+    if (update.selectionSet) {
+      this.syncLineXOffset();
+      this.updateActiveConnector();
     }
   }
 
   private calculate = () => {
     if (this.isDestroyed || !this.isActive || !this.editor) return;
     this.lines = [];
+    this.parsedRoots = [];
 
     if (
       this.settings.verticalLines &&
@@ -175,6 +216,8 @@ class VerticalLinesPluginValue implements PluginValue {
       const fromLine = this.editor.offsetToPos(this.view.viewport.from).line;
       const toLine = this.editor.offsetToPos(this.view.viewport.to).line;
       const lists = this.parser.parseRange(this.editor, fromLine, toLine);
+      // Keep parsed roots so we can map cursor -> list -> parent line for active connector.
+      this.parsedRoots = lists;
 
       for (const list of lists) {
         this.lastLine = list.getContentEnd().line;
@@ -191,6 +234,61 @@ class VerticalLinesPluginValue implements PluginValue {
 
     this.updateDom();
   };
+
+  private getActiveList(): List | null {
+    try {
+      const cursor = this.editor?.getCursor?.();
+      const cursorLine = cursor?.line;
+      if (typeof cursorLine !== "number") return null;
+
+      for (const root of this.parsedRoots ?? []) {
+        try {
+          const startLine = root.getContentStart().line;
+          const endLine = root.getContentEnd().line;
+          if (cursorLine < startLine || cursorLine > endLine) continue;
+          return root.getListUnderLine(cursorLine);
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
+  }
+
+  /**
+   * Prefer CM coordinates over DOM measurements.
+   *
+   * The visible bullet dot in Live Preview is often rendered via CSS pseudo-elements,
+   * so `getBoundingClientRect()` on `.list-bullet` is not a reliable "dot center".
+   * Using text coordinates keeps alignment stable across themes and list styles.
+   */
+  private getListBulletCenterClient(list: List): { x: number; y: number } | null {
+    try {
+      if (!this.editor) return null;
+
+      const line = list.getFirstLineContentStart().line;
+      const indentLen = list.getFirstLineIndent().length;
+      const bullet = (list.getBullet?.() as string) ?? "";
+      const bulletLen = Math.max(1, bullet.length || 1);
+
+      const fromOffset = this.editor.posToOffset({ line, ch: indentLen });
+      const toOffset = this.editor.posToOffset({ line, ch: indentLen + bulletLen });
+
+      const a = this.view.coordsAtPos(fromOffset, 1);
+      const b = this.view.coordsAtPos(toOffset, 1);
+      if (!a || !b) return null;
+
+      return {
+        x: (a.left + b.left) / 2,
+        y: (a.top + a.bottom) / 2,
+      };
+    } catch {
+      return null;
+    }
+  }
 
   private getNextSibling(list: List): List | null {
     let listTmp = list;
@@ -400,6 +498,99 @@ class VerticalLinesPluginValue implements PluginValue {
       e.style.height = "0px";
       e.style.display = "none";
     }
+
+    // Keep vertical lines horizontally aligned to the real bullet dot center.
+    this.syncLineXOffset();
+    this.updateActiveConnector();
+  }
+
+  private syncLineXOffset() {
+    try {
+      if (!this.contentContainer || !this.view?.dom || !this.editor) return;
+      const containerRect = this.contentContainer.getBoundingClientRect();
+
+      const activeList = this.getActiveList();
+      if (!activeList) return;
+
+      // Align using the nearest list item that has a corresponding rendered line.
+      // (Leaf items don't have a vertical line at their own level.)
+      let refList: List | null = activeList;
+      let refIndex = -1;
+      while (refList) {
+        refIndex = this.lines.findIndex((l) => l.list === refList);
+        if (refIndex >= 0) break;
+        refList = refList.getParent?.() ?? null;
+      }
+      if (refIndex < 0 || !refList) return;
+
+      const lineEl = this.lineElements[refIndex];
+      if (!lineEl || lineEl.style.display === "none") return;
+
+      const bulletCenter = this.getListBulletCenterClient(refList);
+      if (!bulletCenter) return;
+      const bulletX = bulletCenter.x - containerRect.left;
+
+      const lineRect = lineEl.getBoundingClientRect();
+      // The 1px stroke is drawn as a background at x=2px inside the element.
+      const stripeX = lineRect.left - containerRect.left + 2;
+
+      const dx = bulletX - stripeX;
+      if (!Number.isFinite(dx) || Math.abs(dx) < 0.25) return;
+
+      const next = Math.max(-200, Math.min(200, this.lineXOffsetPx + dx));
+      if (Math.abs(next - this.lineXOffsetPx) < 0.25) return;
+      this.lineXOffsetPx = next;
+      this.view.dom.style.setProperty("--blp-outliner-line-x-offset", `${next}px`);
+    } catch {
+      // ignore
+    }
+  }
+
+  private updateActiveConnector() {
+    if (!this.activeConnectorSvg || !this.activeConnectorPath) return;
+
+    const containerRect = this.contentContainer?.getBoundingClientRect?.();
+    if (!containerRect) return;
+
+    const activeList = this.getActiveList();
+    const parent = activeList?.getParent?.();
+    // The Root's synthetic root list has no parent; no connector at top-level.
+    if (!activeList || !parent || !parent.getParent?.()) {
+      this.activeConnectorSvg.style.display = "none";
+      return;
+    }
+
+    const parentIndex = this.lines.findIndex((l) => l.list === parent);
+    if (parentIndex < 0) {
+      this.activeConnectorSvg.style.display = "none";
+      return;
+    }
+
+    const parentLineEl = this.lineElements[parentIndex];
+    if (!parentLineEl || parentLineEl.style.display === "none") {
+      this.activeConnectorSvg.style.display = "none";
+      return;
+    }
+
+    const bulletCenter = this.getListBulletCenterClient(activeList);
+    if (!bulletCenter) {
+      this.activeConnectorSvg.style.display = "none";
+      return;
+    }
+    const bulletX = bulletCenter.x - containerRect.left;
+    const bulletY = bulletCenter.y - containerRect.top;
+    const parentRect = parentLineEl.getBoundingClientRect();
+    const startX = parentRect.left - containerRect.left + 2;
+
+    const radius = 8;
+    const endX = bulletX;
+    const y0 = bulletY - radius;
+    const y1 = bulletY;
+
+    // Draw a short vertical segment, then a rounded corner into the bullet.
+    const d = `M ${startX} ${y0} V ${y1} Q ${startX} ${y1} ${startX + radius} ${y1} H ${endX}`;
+    this.activeConnectorPath.setAttribute("d", d);
+    this.activeConnectorSvg.style.display = "block";
   }
 
   destroy() {

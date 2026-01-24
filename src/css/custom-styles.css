@@ -7,59 +7,37 @@
 }
 
 .cm-editor.blp-enhanced-list-handle {
-    --blp-enhanced-list-handle-size: 1.1em;
+    /* Keep handle UX as an enhancement of the original bullet dot (Logseq-like). */
+    --blp-enhanced-list-handle-glow: hsla(var(--interactive-accent-hsl), 0.35);
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul {
-    position: relative;
-    display: inline-block;
-    width: var(--blp-enhanced-list-handle-size);
-    height: var(--blp-enhanced-list-handle-size);
-    margin-right: 0.2em;
-    color: transparent;
-    border-radius: 4px;
+.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul,
+.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ol {
     cursor: grab;
-    z-index: 2;
-    vertical-align: middle;
-    background-image: radial-gradient(circle, var(--text-muted) 1px, transparent 1.5px);
-    background-size: 3px 3px;
-    background-position: center;
-    background-repeat: repeat;
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul:active {
+.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul:active,
+.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ol:active {
     cursor: grabbing;
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-line:hover:has(.cm-formatting-list-ul) {
-    background-color: var(--background-modifier-hover);
+/* Glow the original bullet dot on hover/active (Logseq-like). */
+.cm-editor.blp-enhanced-list-handle
+  .cm-formatting-list-ul:hover
+  .list-bullet::after,
+.cm-editor.blp-enhanced-list-handle
+  .cm-formatting-list-ol:hover
+  .list-bullet::after,
+.cm-editor.blp-enhanced-list-handle
+  .cm-line.cm-active
+  .cm-formatting-list-ul
+  .list-bullet::after,
+.cm-editor.blp-enhanced-list-handle
+  .cm-line.cm-active
+  .cm-formatting-list-ol
+  .list-bullet::after {
+    box-shadow: 0 0 0 6px var(--blp-enhanced-list-handle-glow);
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active:has(.cm-formatting-list-ul) {
-    background-color: hsla(var(--interactive-accent-hsl), 0.06);
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-line:hover .cm-formatting-list-ul,
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
-    background-color: var(--background-modifier-hover);
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-line:hover .cm-formatting-list-ul,
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
-    background-image: radial-gradient(circle, var(--text-normal) 1px, transparent 1.5px);
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
-    background-color: hsla(var(--interactive-accent-hsl), 0.15);
-    box-shadow: 0 0 0 1px hsla(var(--interactive-accent-hsl), 0.35);
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
-    background-image: radial-gradient(circle, var(--interactive-accent) 1px, transparent 1.5px);
-}
-
-/* Nested fenced code blocks (UI-only): give a bit of left padding so the code
- * block doesn't look flush after we hide the structural indentation whitespace. */
-.cm-editor .blp-enhanced-list-codeblock-indented {
-    padding-left: 0.6em !important;
-}
+/* Nested fenced code blocks inside Enhanced List (UI-only).
+ * Indentation is applied via CM decorations. Keep this class as a styling hook. */

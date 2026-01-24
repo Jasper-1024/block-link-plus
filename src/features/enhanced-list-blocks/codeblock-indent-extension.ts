@@ -13,8 +13,8 @@ function escapeRegex(s: string): string {
 
 function measureIndentPx(view: EditorView, indentText: string): number {
 	// Measure the rendered width of the indent prefix using the editor's font + tab-size.
-	// We cannot rely on coordsAtPos because this extension hides the prefix, which would
-	// make coords-based measurement unstable across updates.
+	// We cannot rely on coordsAtPos because nested indentation can be tokenized/styled
+	// differently across editors/themes; a probe gives stable px widths.
 	const probe = document.createElement("span");
 	probe.style.position = "absolute";
 	probe.style.visibility = "hidden";
@@ -131,8 +131,8 @@ function buildDecorations(
 										return measured;
 									})();
 
-						// Indent by the structural whitespace plus the extra delta that
-						// comes from rendering list markers as a handle.
+						// Replace the structural indentation (whitespace) with a pixel-precise
+						// indentation that matches the styled list marker width (handle).
 						blockIndentPx = Math.max(0, indentPx + markerDeltaPx);
 					} else {
 						blockIndentPx = 0;
