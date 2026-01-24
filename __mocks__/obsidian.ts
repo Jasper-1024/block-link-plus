@@ -4,6 +4,8 @@
  */
 
 // 基本类型定义
+import { StateEffect, StateField } from "@codemirror/state";
+
 export interface Position {
   line: number;
   col: number;
@@ -296,7 +298,48 @@ export const MarkdownRenderer = {
   renderMarkdown: function() { return null; }
 };
 
-export const editorLivePreviewField = {};
+export class Notice {
+  static instances: Notice[] = [];
+  message: string;
+  timeout?: number;
+
+  constructor(message: string, timeout?: number) {
+    this.message = message;
+    this.timeout = timeout;
+    Notice.instances.push(this);
+  }
+}
+
+export const Platform = {
+  isDesktop: true,
+};
+
+export type EditorInfo = {
+  file?: TFile | null;
+  editor?: Editor | null;
+};
+
+export const setEditorInfoEffect = StateEffect.define<EditorInfo | null>();
+export const editorInfoField = StateField.define<EditorInfo | null>({
+  create: () => null,
+  update: (value, tr) => {
+    for (const e of tr.effects) {
+      if (e.is(setEditorInfoEffect)) return e.value;
+    }
+    return value;
+  },
+});
+
+export const setEditorLivePreviewEffect = StateEffect.define<boolean>();
+export const editorLivePreviewField = StateField.define<boolean>({
+  create: () => false,
+  update: (value, tr) => {
+    for (const e of tr.effects) {
+      if (e.is(setEditorLivePreviewEffect)) return e.value;
+    }
+    return value;
+  },
+});
 
 export const MarkdownPostProcessorContext = class {
   sourcePath: string;

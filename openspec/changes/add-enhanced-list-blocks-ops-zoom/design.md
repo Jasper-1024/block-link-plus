@@ -1,43 +1,35 @@
-# Design: Enhanced List Blocks Ops (Zoom/Outliner UI)
+# Design: Embed vslinko Outliner/Zoom as Built-in Modules
 
-## Scope rules (hard)
-- All behaviors in this change only apply to **enabled files**:
-  - enabled via plugin settings (folders/files), or
-  - enabled via frontmatter `blp_enhanced_list: true`
-- No cross-file operations.
+## High-level approach
+- Vendor upstream source code into this repository:
+  - `obsidian-outliner@4.9.0` (MIT)
+  - `obsidian-zoom@1.1.2` (MIT)
+- Add a thin BLP integration layer that:
+  - persists each plugin’s settings inside BLP’s storage
+  - exposes each plugin as a toggleable “built-in module”
+  - applies upstream CSS (scoped by upstream body classes)
+  - keeps `window.ObsidianZoomPlugin` compatible so Outliner can call Zoom
 
-## Compatibility
-- BLP ops modules are opt-in and MUST be off by default.
-- If `obsidian-zoom` is enabled, BLP MUST refuse enabling BLP zoom (clear message).
-- If `obsidian-outliner` is enabled, BLP MUST refuse enabling BLP outliner-like modules (move/indent/dnd/vertical-lines/threading).
+## Enablement & conflicts
+- Built-in modules are opt-in and MUST default to off.
+- Conflict handling:
+  - If external `obsidian-outliner` is enabled, BLP MUST default-disable built-in Outliner.
+  - If external `obsidian-zoom` is enabled, BLP MUST default-disable built-in Zoom.
+- Built-in modules MUST NOT use Enhanced List Blocks “enabled file scope”; they behave like the upstream plugins (global).
 
-## CM6 integration strategy
-- Use Obsidian's `editorInfoField` to access `file` and `editor` from an `EditorState`, so UI and ops can be scoped per-file.
-- Zoom implementation can follow the proven pattern:
-  - compute a `{from,to}` range for the current heading or list subtree
-  - hide content outside the range using `Decoration.replace({ block: true })`
-  - optional breadcrumbs panel for navigation
+## Storage strategy
+- Store each upstream plugin’s settings under a dedicated subtree in BLP settings data.
+- The integration layer provides a small `Storage` adapter compatible with upstream settings services (`loadData()` / `saveData()`).
 
-## Zoom range for list subtree
-- For a list item line, treat the zoom target as:
-  - the current list item line, plus
-  - its children subtree (based on foldable/list indentation boundary).
+## Runtime lifecycle
+- On BLP `onload()`:
+  - load BLP settings
+  - load built-in module settings
+  - evaluate conflicts and update effective enablement
+  - register upstream features (commands/extensions/CSS hooks)
+- On BLP `onunload()`:
+  - run built-in modules’ `unload()` to remove event listeners and clean globals/classes where possible.
 
-## List subtree ops (move/indent/outdent)
-- Operations MUST treat a list subtree as atomic:
-  - move up/down reorders the subtree among siblings
-  - indent/outdent moves the subtree into/out of adjacent siblings (toggleable)
-- Enhanced block contract MUST be preserved:
-  - system line remains the last content line of the list item
-  - no empty lines introduced within enhanced list blocks
-
-## Drag and Drop
-- Dragging the bullet/handle moves the list subtree.
-- Drops are allowed only inside the same file and only into list contexts.
-- Drop positions MAY change hierarchy (indent/outdent by dropping as child/parent).
-- Provide clear visual drop zones; behavior should be no-op if target is invalid.
-
-## Vertical lines + bullet threading
-- Vertical lines render indentation guides for list structure.
-- Bullet threading highlights the active block path (current block + its ancestor chain).
-- Visual features are best-effort across themes and MUST be toggleable.
+## Removal of custom Enhanced List Blocks Ops
+- Remove BLP’s custom list ops implementation (zoom/move/indent/dnd/vertical-lines/threading) to avoid divergence and double behavior.
+- Keep Enhanced List Blocks Query/View (`blp-view`) and any BLP-specific list-block utilities that are not part of outliner/zoom.

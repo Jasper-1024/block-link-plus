@@ -36,5 +36,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx"
+  ],
+  "exclude": [
+    "_research/**"
   ]
 }

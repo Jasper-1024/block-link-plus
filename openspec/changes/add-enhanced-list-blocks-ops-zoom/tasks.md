@@ -1,29 +1,26 @@
-# Tasks: Add Enhanced List Blocks Ops (Zoom/Outliner UI)
+# Tasks: Embed vslinko Outliner/Zoom as Built-in Modules
 
 ## 1. OpenSpec
-- [x] 1.1 Finalize settings + behavior requirements in spec
+- [x] 1.1 Update proposal/design/specs for built-in modules
 - [x] 1.2 Run `openspec validate add-enhanced-list-blocks-ops-zoom --strict`
 
-## 2. Enable scope + conflicts
-- [x] 2.1 Reuse enable-scope gate (folders/files/frontmatter `blp_enhanced_list: true`)
-- [x] 2.2 Detect conflicts with `obsidian-zoom` / `obsidian-outliner` and refuse enabling corresponding BLP modules
+## 2. Vendor code + licensing
+- [ ] 2.1 Vendor `obsidian-outliner@4.9.0` source + `styles.css`
+- [ ] 2.2 Vendor `obsidian-zoom@1.1.2` source + `styles.css`
+- [ ] 2.3 Add/refresh MIT notices and license files in `THIRD_PARTY_NOTICES.md` + `third_party/licenses/`
 
-## 3. Zoom
-- [x] 3.1 Implement zoom-in/out for current list subtree (Live Preview)
-- [ ] 3.2 (Optional) Breadcrumbs header in zoom mode
+## 3. Integration layer
+- [ ] 3.1 Add BLP settings: enable built-in Outliner/Zoom + persist upstream settings
+- [ ] 3.2 Implement external-plugin conflict detection and auto-disable built-in modules
+- [ ] 3.3 Wire built-in Outliner module (register extensions/commands, apply CSS)
+- [ ] 3.4 Wire built-in Zoom module (register extensions/commands, apply CSS, expose `window.ObsidianZoomPlugin`)
 
-## 4. Subtree ops (current file)
-- [x] 4.1 Move subtree up/down commands
-- [x] 4.2 Indent/outdent subtree commands (toggleable)
+## 4. Remove custom Enhanced List Blocks Ops
+- [ ] 4.1 Remove BLP custom ops code (zoom/move/indent/dnd/vertical-lines/threading) and related settings UI
+- [ ] 4.2 Ensure remaining Enhanced List Blocks features (`blp-view`, id repair, etc) still work
 
-## 5. Drag and Drop (current file)
-- [x] 5.1 Drag subtree by bullet area
-- [x] 5.2 Drop zones + reorder within lists
-
-## 6. UI (toggleable)
-- [x] 6.1 Vertical indentation lines (scoped to enabled files)
-- [x] 6.2 Bullet threading (highlight active block path)
-
-## 7. Tests
-- [x] 7.1 Ops + zoom range tests
-- [x] 7.2 Scope/conflict tests
+## 5. Tests & validation
+- [ ] 5.1 Update/remove tests that covered removed custom ops
+- [ ] 5.2 Add smoke tests for built-in module gating (enabled/disabled + conflict)
+- [ ] 5.3 Run `npm test`
+- [ ] 5.4 Run `npm run build-with-types`

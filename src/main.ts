@@ -23,6 +23,8 @@ import { Enactor } from "basics/enactor/enactor";
 import "css/DefaultVibe.css";
 import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
+import "css/vendor-obsidian-outliner.css";
+import "css/vendor-obsidian-zoom.css";
 import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
@@ -35,16 +37,13 @@ import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
 import {
 	createEnhancedListSystemLineHideExtension,
-	createEnhancedListZoomExtension,
-	createEnhancedListOpsUiExtension,
-	createEnhancedListDragDropExtension,
 	handleBlpView,
 	registerEnhancedListDuplicateIdRepair,
-	registerEnhancedListOpsCommands,
 } from "features/enhanced-list-blocks";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
+import { BuiltInVslinkoManager } from "features/built-in-vslinko";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -57,6 +56,7 @@ export default class BlockLinkPlus extends Plugin {
 	flowEditorManager: FlowEditorManager;
 	inlineEditEngine: InlineEditEngine;
 	private hasExistingSettingsData = false;
+	private builtInVslinko: BuiltInVslinkoManager | null = null;
 
 	public get enactor(): Enactor {
 		return this.flowEditorManager.enactor;
@@ -85,6 +85,14 @@ export default class BlockLinkPlus extends Plugin {
 		getEnactor: () => this.flowEditorManager.enactor
 	};
 
+	public getBuiltInOutlinerSettings() {
+		return this.builtInVslinko?.getOutlinerSettings() ?? null;
+	}
+
+	public getBuiltInZoomSettings() {
+		return this.builtInVslinko?.getZoomSettings() ?? null;
+	}
+
 	/**
 	 * Update the view plugin
 	 */
@@ -111,6 +119,10 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
+
+		// Built-in vendored plugins (vslinko).
+		this.builtInVslinko = new BuiltInVslinkoManager(this);
+		await this.builtInVslinko.load();
 
 		await this.maybeShowWhatsNew();
 
@@ -185,11 +197,7 @@ export default class BlockLinkPlus extends Plugin {
 		// for live preview
 		this.updateViewPlugin();
 		this.registerEditorExtension([createEnhancedListSystemLineHideExtension(this)]);
-		this.registerEditorExtension([createEnhancedListZoomExtension(this)]);
-		this.registerEditorExtension([createEnhancedListOpsUiExtension(this)]);
-		this.registerEditorExtension([createEnhancedListDragDropExtension(this)]);
 		registerEnhancedListDuplicateIdRepair(this);
-		registerEnhancedListOpsCommands(this);
 
 		// Initialize Flow Editor Manager
 		this.flowEditorManager = new FlowEditorManager(this);
@@ -245,6 +253,14 @@ export default class BlockLinkPlus extends Plugin {
 		// This ensures that the plugin is updated whenever settings are changed
 		this.updateViewPlugin();
 		this.inlineEditEngine?.onSettingsChanged();
+		this.builtInVslinko?.onSettingsChanged(false);
+	}
+
+	async onunload() {
+		if (this.builtInVslinko) {
+			await this.builtInVslinko.unload();
+			this.builtInVslinko = null;
+		}
 	}
 
 	private async maybeShowWhatsNew() {

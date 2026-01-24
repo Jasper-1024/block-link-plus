@@ -372,9 +372,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		// Enhanced List Blocks Ops
-		this.addHeading(t.settings.enhancedListBlocks.ops.title).setDesc(t.settings.enhancedListBlocks.ops.desc);
-
 		const isThirdPartyPluginEnabled = (pluginId: string): boolean => {
 			try {
 				return Boolean((this.plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
@@ -383,73 +380,190 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			}
 		};
 
-		const addOpsToggle = (
-			settingName: KeysOfType<PluginSettings, boolean>,
-			name: string,
-			desc: string,
-			blockReason?: () => string | null
-		) => {
-			new Setting(this.containerEl)
-				.setName(name)
-				.setDesc(desc)
-				.addToggle((toggle) => {
-					toggle.setValue(this.plugin.settings[settingName]).onChange(async (value) => {
-						if (value) {
-							const reason = blockReason?.();
-							if (reason) {
-								new Notice(reason);
-								toggle.setValue(false);
-								return;
-							}
-						}
+		// Built-in vslinko plugins (vendored)
+		this.addHeading("Built-in Plugins (vslinko)").setDesc(
+			"Vendored copies of obsidian-outliner and obsidian-zoom. Enable them here to get upstream behavior (global, not scoped to Enhanced List Blocks)."
+		);
 
-						// @ts-ignore
-						this.plugin.settings[settingName] = value;
-						await this.plugin.saveSettings();
+		// Built-in Outliner
+		new Setting(this.containerEl)
+			.setName("Enable Built-in Outliner (obsidian-outliner)")
+			.setDesc(
+				isThirdPartyPluginEnabled("obsidian-outliner")
+					? "Disabled because external plugin 'obsidian-outliner' is enabled."
+					: "Enables a vendored copy of obsidian-outliner (commands, key overrides, drag-and-drop, vertical lines, styles)."
+			)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.builtInObsidianOutlinerEnabled).onChange(async (value) => {
+					if (value && isThirdPartyPluginEnabled("obsidian-outliner")) {
+						new Notice(
+							"Block Link Plus: Built-in Outliner is disabled because external plugin 'obsidian-outliner' is enabled.",
+							5000
+						);
+						toggle.setValue(false);
+						return;
+					}
+
+					this.plugin.settings.builtInObsidianOutlinerEnabled = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
+
+		const outlinerSettings = this.plugin.getBuiltInOutlinerSettings();
+		if (this.plugin.settings.builtInObsidianOutlinerEnabled && outlinerSettings) {
+			new Setting(this.containerEl)
+				.setName("Stick the cursor to the content")
+				.setDesc("Don't let the cursor move to the bullet position.")
+				.addDropdown((dropdown) => {
+					dropdown
+						.addOptions({
+							never: "Never",
+							"bullet-only": "Stick cursor out of bullets",
+							"bullet-and-checkbox": "Stick cursor out of bullets and checkboxes",
+						} as any)
+						.setValue(outlinerSettings.keepCursorWithinContent)
+						.onChange(async (value: any) => {
+							outlinerSettings.keepCursorWithinContent = value;
+							await outlinerSettings.save();
+						});
+				});
+
+			new Setting(this.containerEl)
+				.setName("Enhance the Tab key")
+				.setDesc("Make Tab and Shift-Tab behave the same as other outliners.")
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.overrideTabBehaviour).onChange(async (value) => {
+						outlinerSettings.overrideTabBehaviour = value;
+						await outlinerSettings.save();
 					});
 				});
-		};
 
-		addOpsToggle(
-			"enhancedListOpsZoom",
-			t.settings.enhancedListBlocks.ops.zoom.name,
-			t.settings.enhancedListBlocks.ops.zoom.desc,
-			() => (isThirdPartyPluginEnabled("obsidian-zoom") ? t.notices.enhancedListZoomConflict : null)
-		);
+			new Setting(this.containerEl)
+				.setName("Enhance the Enter key")
+				.setDesc("Make the Enter key behave the same as other outliners.")
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.overrideEnterBehaviour).onChange(async (value) => {
+						outlinerSettings.overrideEnterBehaviour = value;
+						await outlinerSettings.save();
+					});
+				});
 
-		const outlinerConflictReason = () =>
-			isThirdPartyPluginEnabled("obsidian-outliner") ? t.notices.enhancedListOutlinerConflict : null;
+			new Setting(this.containerEl)
+				.setName("Vim-mode o/O inserts bullets")
+				.setDesc("Create a bullet when pressing o or O in Vim mode.")
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.overrideVimOBehaviour).onChange(async (value) => {
+						outlinerSettings.overrideVimOBehaviour = value;
+						await outlinerSettings.save();
+					});
+				});
 
-		addOpsToggle(
-			"enhancedListOpsMove",
-			t.settings.enhancedListBlocks.ops.move.name,
-			t.settings.enhancedListBlocks.ops.move.desc,
-			outlinerConflictReason
-		);
-		addOpsToggle(
-			"enhancedListOpsIndent",
-			t.settings.enhancedListBlocks.ops.indent.name,
-			t.settings.enhancedListBlocks.ops.indent.desc,
-			outlinerConflictReason
-		);
-		addOpsToggle(
-			"enhancedListOpsDragDrop",
-			t.settings.enhancedListBlocks.ops.dragDrop.name,
-			t.settings.enhancedListBlocks.ops.dragDrop.desc,
-			outlinerConflictReason
-		);
-		addOpsToggle(
-			"enhancedListOpsVerticalLines",
-			t.settings.enhancedListBlocks.ops.verticalLines.name,
-			t.settings.enhancedListBlocks.ops.verticalLines.desc,
-			outlinerConflictReason
-		);
-		addOpsToggle(
-			"enhancedListOpsBulletThreading",
-			t.settings.enhancedListBlocks.ops.bulletThreading.name,
-			t.settings.enhancedListBlocks.ops.bulletThreading.desc,
-			outlinerConflictReason
-		);
+			new Setting(this.containerEl)
+				.setName("Enhance the Ctrl+A or Cmd+A behavior")
+				.setDesc(
+					"Press the hotkey once to select the current list item. Press the hotkey twice to select the entire list."
+				)
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.overrideSelectAllBehaviour).onChange(async (value) => {
+						outlinerSettings.overrideSelectAllBehaviour = value;
+						await outlinerSettings.save();
+					});
+				});
+
+			new Setting(this.containerEl)
+				.setName("Improve the style of your lists")
+				.setDesc("Styles are only compatible with built-in Obsidian themes and may not be compatible with other themes.")
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.betterListsStyles).onChange(async (value) => {
+						outlinerSettings.betterListsStyles = value;
+						await outlinerSettings.save();
+					});
+				});
+
+			new Setting(this.containerEl).setName("Draw vertical indentation lines").addToggle((toggle) => {
+				toggle.setValue(outlinerSettings.verticalLines).onChange(async (value) => {
+					outlinerSettings.verticalLines = value;
+					await outlinerSettings.save();
+				});
+			});
+
+			new Setting(this.containerEl).setName("Vertical indentation line click action").addDropdown((dropdown) => {
+				dropdown
+					.addOptions({
+						none: "None",
+						"zoom-in": "Zoom In",
+						"toggle-folding": "Toggle Folding",
+					} as any)
+					.setValue(outlinerSettings.verticalLinesAction)
+					.onChange(async (value: any) => {
+						outlinerSettings.verticalLinesAction = value;
+						await outlinerSettings.save();
+					});
+			});
+
+			new Setting(this.containerEl).setName("Drag-and-Drop").addToggle((toggle) => {
+				toggle.setValue(outlinerSettings.dragAndDrop).onChange(async (value) => {
+					outlinerSettings.dragAndDrop = value;
+					await outlinerSettings.save();
+				});
+			});
+
+			new Setting(this.containerEl)
+				.setName("Debug mode")
+				.setDesc("Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.")
+				.addToggle((toggle) => {
+					toggle.setValue(outlinerSettings.debug).onChange(async (value) => {
+						outlinerSettings.debug = value;
+						await outlinerSettings.save();
+					});
+				});
+		}
+
+		// Built-in Zoom
+		new Setting(this.containerEl)
+			.setName("Enable Built-in Zoom (obsidian-zoom)")
+			.setDesc(
+				isThirdPartyPluginEnabled("obsidian-zoom")
+					? "Disabled because external plugin 'obsidian-zoom' is enabled."
+					: "Enables a vendored copy of obsidian-zoom (commands, click-to-zoom, header, guardrails)."
+			)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.builtInObsidianZoomEnabled).onChange(async (value) => {
+					if (value && isThirdPartyPluginEnabled("obsidian-zoom")) {
+						new Notice(
+							"Block Link Plus: Built-in Zoom is disabled because external plugin 'obsidian-zoom' is enabled.",
+							5000
+						);
+						toggle.setValue(false);
+						return;
+					}
+
+					this.plugin.settings.builtInObsidianZoomEnabled = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
+
+		const zoomSettings = this.plugin.getBuiltInZoomSettings();
+		if (this.plugin.settings.builtInObsidianZoomEnabled && zoomSettings) {
+			new Setting(this.containerEl).setName("Zooming in when clicking on the bullet").addToggle((toggle) => {
+				toggle.setValue(zoomSettings.zoomOnClick).onChange(async (value) => {
+					zoomSettings.zoomOnClick = value;
+					await zoomSettings.save();
+				});
+			});
+
+			new Setting(this.containerEl)
+				.setName("Debug mode")
+				.setDesc("Open DevTools (Command+Option+I or Control+Shift+I) to copy the debug logs.")
+				.addToggle((toggle) => {
+					toggle.setValue(zoomSettings.debug).onChange(async (value) => {
+						zoomSettings.debug = value;
+						await zoomSettings.save();
+					});
+				});
+		}
 	}
 
 }

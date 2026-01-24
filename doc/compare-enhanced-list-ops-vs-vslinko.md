@@ -1,6 +1,23 @@
-# Enhanced List Blocks Ops：与 vslinko 插件的“效果差异”对比（现状记录）
+# Enhanced List Blocks Ops：与 vslinko 插件的“效果差异”对比（历史记录）
 
-> 目的：不追求 1:1 对齐实现，而是把当前 BLP Enhanced List Blocks Ops 与参考插件（`obsidian-zoom` / `obsidian-outliner`）的**可见效果/交互差异**记录清楚，方便后续评估与取舍。
+> 目的：记录 BLP 自研 Enhanced List Blocks Ops 与参考插件（`obsidian-zoom` / `obsidian-outliner`）的**可见效果/交互差异**，用于回溯“为什么要切换路线/做取舍”。
+
+## 路线变更（2026-01-10）
+
+- BLP 不再维护自研 Enhanced List Blocks Ops（Zoom/Move/Indent/Drag&Drop/Vertical lines/Bullet threading）。
+- 改为在 BLP 内置（vendor）`obsidian-zoom@1.1.2` 与 `obsidian-outliner@4.9.0`（MIT 保留），以获得与原插件一致的交互手感，并把后续 bugfix 建立在上游实现之上。
+- 因此，“剩余差异”从“效果/手感差异”转为“集成差异”：
+  - 命令与热键的命名空间不同（BLP 内置的命令 ID 归属于 `block-link-plus:*`）。
+  - 设置入口/存储位置不同（集中在 BLP 设置页；检测到外置插件启用时会自动禁用内置版本以避免双注册）。
+  - 样式加载方式不同（vendor CSS 由 BLP 统一引入，可能与主题/其他插件的覆盖优先级不同，需要手工校验）。
+
+## 更新（2026-01-09）
+
+- Zoom：已补齐 selection clamp + 越界编辑自动 zoom-out（对齐 `obsidian-zoom` 的 guardrails）。
+- Zoom：已加入顶部 breadcrumb header（可点击：zoom out / zoom 到祖先 subtree）。
+- Drag & Drop：已补齐 `Escape` 取消、拖拽期间内容变化拒绝 drop、并用 `Platform.isDesktop` 做桌面端 gate。
+- Zoom 隐藏实现已改为 StateField 提供 block decorations（避免 CodeMirror 抛 `Block decorations may not be specified via plugins`）。
+- 相关测试已补：`src/features/enhanced-list-blocks/ops/__tests__/zoom-guardrails.test.ts`、`src/features/enhanced-list-blocks/ops/__tests__/drag-drop-guardrails.test.ts`。
 
 ## 对比基准（参考版本）
 
@@ -31,9 +48,9 @@
 - **触发方式**：仅命令触发（`Enhanced List: Zoom in to subtree` / `Enhanced List: Zoom out`）；不提供“点 bullet 触发 zoom”。
 - **前置条件**：不要求 Obsidian 开启 fold indent / fold heading。
 - **UI 表现**：
-  - 隐藏范围外内容（CodeMirror `Decoration.replace({ block: true })` + 隐藏 widget）
-  - 不提供 breadcrumb/header（顶栏导航）。
-- **交互约束/保护**：未实现“选区限制”“越界编辑自动 reset zoom”“range-before 变动自动更新 breadcrumb”等防护（参考 `obsidian-zoom` 的一系列 transaction filters/extenders）。
+  - 隐藏范围外内容（StateField 提供 CodeMirror block decorations）
+  - 顶部 breadcrumb header（可点击：zoom out / zoom 到祖先 subtree）
+- **交互约束/保护**：已补齐 selection clamp + 越界编辑自动 zoom-out（复用 `obsidian-zoom` guardrails）。
 
 ### `obsidian-zoom`（参考效果）
 
@@ -88,10 +105,12 @@
 
 - **触发区域**：每条 list line 左侧会渲染一个拖拽把手（`⋮⋮`），hover 时显示；通过 HTML5 drag events 实现。
 - **拖拽范围限制**：
+  - 仅桌面端（`Platform.isDesktop` gate；移动端不启用）。
   - 不支持跨文件（gate 要求同一 filePath）。
   - 仅在“启用增强文件 + Live Preview”内启用 UI 与事件监听。
   - 额外做了“同 list group”限制：通过 `metadataCache.listItems` 沿 `parent` 向上找到顶层祖先后计算 `groupKey`，拖拽与目标 `groupKey` 不一致则拒绝。
     - 注：该 `groupKey` 的区分能力取决于 Obsidian listItems 的 `parent` 语义；对“多个顶层 list 分组”的隔离可能并不严格（需要手动验证）。
+- **安全护栏**：`Escape` 可取消拖拽；拖拽期间内容变化会拒绝 drop 并提示。
 - **放置逻辑（影响体验的核心差异）**：
   - 默认：根据鼠标 y 与目标行中点，决定 above/below。
   - `Shift`：强制 drop 为 child（目标层级 +1）。
@@ -128,4 +147,3 @@
 
 - **BLP（当前实现）**：高亮“当前 list item + 祖先链”行（左侧竖条），类似 Logseq bullet threading 的“active path”概念，但目前仅做最小 UI（不做更复杂的侧边高亮/交互）。
 - **vslinko 插件**：`obsidian-zoom` / `obsidian-outliner` 均不提供同等的 bullet-threading 样式；`obsidian-outliner` 的“竖线 overlay”更偏向结构提示与折叠/zoom 操作入口。
-

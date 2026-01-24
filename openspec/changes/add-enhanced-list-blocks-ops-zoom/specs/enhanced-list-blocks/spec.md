@@ -1,47 +1,33 @@
 ## ADDED Requirements
 
-### Requirement: Enable scoped outliner-like operations for enhanced list blocks
-插件 SHALL 在显式启用增强的文件内，为增强 list blocks 提供类似 outliner 的操作能力（仅当前文件内），并提供设置开关用于启用/禁用各项功能。
+### Requirement: Built-in `obsidian-outliner` module (vendored)
+插件 SHALL 在 BLP 内提供一个可选启用的“Built-in Outliner”模块，其行为 SHOULD 尽可能与 `obsidian-outliner@4.9.0` 一致（命令、键盘行为覆盖、拖拽、垂直线、样式增强等）。
 
-#### Scenario: Ops are scoped to enabled files
-- **WHEN** 当前文件未启用增强（不在设置的文件夹/文件范围内且无 `blp_enhanced_list: true`）
-- **THEN** 插件不启用任何 outliner/zoom UI 与操作（命令执行为 no-op 或提示）
+#### Scenario: Built-in Outliner can be enabled/disabled
+- **WHEN** 用户在 BLP 设置中启用 Built-in Outliner
+- **THEN** outliner 行为在编辑器中生效（与上游插件一致的可见效果/交互）
+- **WHEN** 用户在 BLP 设置中关闭 Built-in Outliner
+- **THEN** outliner 不再影响编辑器行为（不应再改变 Tab/Enter/Backspace/Drag 等默认交互）
 
-### Requirement: Zoom in/out to current list subtree
-插件 SHALL 支持对当前 list item 子树进行 zoom（隐藏其他内容，仅展示该子树范围），并支持 zoom out 恢复全文显示。
+### Requirement: Built-in `obsidian-zoom` module (vendored)
+插件 SHALL 在 BLP 内提供一个可选启用的“Built-in Zoom”模块，其行为 SHOULD 尽可能与 `obsidian-zoom@1.1.2` 一致（命令、点击 bullet/marker 触发 zoom、breadcrumb header、selection clamp、越界编辑自动 zoom-out 等）。
 
-#### Scenario: Zoom only shows current subtree
-- **WHEN** 光标位于某个 list item 内并执行 zoom-in
-- **THEN** 编辑器仅显示该 list item 及其子树内容
+#### Scenario: Click bullet/marker zoom works
+- **WHEN** Built-in Zoom 已启用且用户点击 list 的 bullet/marker
+- **THEN** 插件触发 zoom-in（与上游插件一致的交互）
 
-### Requirement: Subtree movement and indentation
-插件 SHALL 支持对当前 list item 子树进行移动与缩进操作：
-- Move subtree up/down
-- Indent/outdent subtree（可通过设置开关启用/禁用）
+### Requirement: Upstream settings are persisted inside BLP storage
+插件 SHALL 持久化保存 built-in Outliner/Zoom 的设置（作为 BLP 设置数据的一部分），以便重启后保持一致行为。
 
-#### Scenario: Indent/outdent is toggleable
-- **WHEN** 用户关闭 indent/outdent 开关
-- **THEN** indent/outdent 命令不生效（no-op 或提示）
+#### Scenario: Built-in module settings persist
+- **WHEN** 用户修改 built-in Outliner/Zoom 的任一设置并重启 Obsidian
+- **THEN** 设置值保持不变
 
-### Requirement: Drag-and-drop subtree within current file
-插件 SHALL 支持在当前文件内对 list item 子树进行拖拽（drag-and-drop），允许通过 drop 位置改变层级（拖成子项/父项），并且 MUST NOT 支持跨文件拖拽。
+### Requirement: Conflict handling with external plugins
+当检测到外置插件 `obsidian-outliner` / `obsidian-zoom` 已启用时，插件 SHALL 自动禁用 BLP 内置的对应模块，以避免双重注册导致的不可预测行为。
 
-#### Scenario: Drag-and-drop is file-local
-- **WHEN** 用户拖拽 list item 子树
-- **THEN** 插件仅允许在当前文件内完成移动
-
-### Requirement: Vertical indentation lines and bullet threading UI
-插件 SHALL 提供可选的 UI 增强：
-- 垂直缩进线（visual indentation guides）
-- Bullet threading（高亮当前编辑 block 及其祖先链路径）
-
-#### Scenario: Bullet threading highlights active path
-- **WHEN** 光标移动到不同 list item
-- **THEN** 高亮样式随之更新到新的 active block 路径
-
-### Requirement: Prevent conflicts with third-party zoom/outliner plugins
-当检测到第三方插件 `obsidian-zoom` 或 `obsidian-outliner` 已启用时，插件 SHALL 阻止用户启用 BLP 内置的对应 zoom/outliner 模块，并给出明确提示（包含冲突插件名称与处理建议）。
-
-#### Scenario: Refuse enabling when conflict plugin is enabled
-- **WHEN** 检测到 `obsidian-outliner` 已启用且用户尝试启用 BLP outliner 模块
-- **THEN** 插件拒绝启用并提示冲突原因
+#### Scenario: External plugin disables built-in counterpart
+- **WHEN** 检测到外置 `obsidian-outliner` 已启用
+- **THEN** BLP 内置 Outliner 自动禁用（或保持关闭），并提示原因
+- **WHEN** 检测到外置 `obsidian-zoom` 已启用
+- **THEN** BLP 内置 Zoom 自动禁用（或保持关闭），并提示原因

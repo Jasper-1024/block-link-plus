@@ -68,6 +68,26 @@ export type BlockLinkPlusViewPlugin = ViewPlugin<{
 	update(u: ViewUpdate): void;
 }>;
 
+export type BuiltInObsidianOutlinerSettings = {
+	styleLists: boolean;
+	debug: boolean;
+	stickCursor: "never" | "bullet-only" | "bullet-and-checkbox" | boolean;
+	betterEnter: boolean;
+	betterVimO: boolean;
+	betterTab: boolean;
+	selectAll: boolean;
+	listLines: boolean;
+	listLineAction: "none" | "zoom-in" | "toggle-folding";
+	dnd: boolean;
+	previousRelease: string | null;
+};
+
+export type BuiltInObsidianZoomSettings = {
+	debug: boolean;
+	zoomOnClick: boolean;
+	zoomOnClickMobile: boolean;
+};
+
 export interface PluginSettings {
 	mult_line_handle: MultLineHandle;
 	alias_type: BlockLinkAliasType;
@@ -100,12 +120,12 @@ export interface PluginSettings {
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: string[];
 	enhancedListEnabledFiles: string[];
-	enhancedListOpsZoom: boolean;
-	enhancedListOpsMove: boolean;
-	enhancedListOpsIndent: boolean;
-	enhancedListOpsDragDrop: boolean;
-	enhancedListOpsVerticalLines: boolean;
-	enhancedListOpsBulletThreading: boolean;
+
+	// Built-in vslinko plugins (vendored)
+	builtInObsidianOutlinerEnabled: boolean;
+	builtInObsidianOutlinerSettings: BuiltInObsidianOutlinerSettings;
+	builtInObsidianZoomEnabled: boolean;
+	builtInObsidianZoomSettings: BuiltInObsidianZoomSettings;
 
 	// Inline Edit
 	inlineEditEnabled: boolean;
@@ -149,12 +169,28 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: [],
 	enhancedListEnabledFiles: [],
-	enhancedListOpsZoom: false,
-	enhancedListOpsMove: false,
-	enhancedListOpsIndent: false,
-	enhancedListOpsDragDrop: false,
-	enhancedListOpsVerticalLines: false,
-	enhancedListOpsBulletThreading: false,
+
+	// Built-in vslinko plugins (vendored)
+	builtInObsidianOutlinerEnabled: false,
+	builtInObsidianOutlinerSettings: {
+		styleLists: true,
+		debug: false,
+		stickCursor: "bullet-and-checkbox",
+		betterEnter: true,
+		betterVimO: true,
+		betterTab: true,
+		selectAll: true,
+		listLines: false,
+		listLineAction: "toggle-folding",
+		dnd: true,
+		previousRelease: null,
+	},
+	builtInObsidianZoomEnabled: false,
+	builtInObsidianZoomSettings: {
+		debug: false,
+		zoomOnClick: true,
+		zoomOnClickMobile: false,
+	},
 	
 	// Inline edit (default: enabled, but file-embed editing off)
 	inlineEditEnabled: true,

@@ -37,7 +37,7 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
 global.MutationObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   disconnect: jest.fn(),
-  takeRecords: jest.fn(),
+  takeRecords: jest.fn(() => []),
 }));
 
 // 模拟 requestAnimationFrame

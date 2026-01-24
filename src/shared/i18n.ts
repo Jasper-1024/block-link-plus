@@ -345,9 +345,6 @@ class T {
       // Notices
       notices: {
         timelineRequiresDataview: "Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin.",
-        enhancedListZoomConflict: "Block Link Plus: Cannot enable Enhanced List Zoom because plugin 'obsidian-zoom' is enabled. Disable one of them to avoid conflicts.",
-        enhancedListOutlinerConflict: "Block Link Plus: Cannot enable Enhanced List Ops because plugin 'obsidian-outliner' is enabled. Disable one of them to avoid conflicts.",
-        enhancedListOpsRequiresLivePreview: "Block Link Plus: Enhanced List Ops require Live Preview."
       }
     },
     zh: {
@@ -691,9 +688,6 @@ class T {
       // Notices
       notices: {
         timelineRequiresDataview: "Block Link Plus: 时间轴功能需要 Dataview 插件。请安装并启用 Dataview 插件。",
-        enhancedListZoomConflict: "Block Link Plus：检测到已启用 `obsidian-zoom`，无法同时启用 BLP 的 Zoom 模块。请关闭其中一个以避免冲突。",
-        enhancedListOutlinerConflict: "Block Link Plus：检测到已启用 `obsidian-outliner`，无法同时启用 BLP 的 Outliner 模块。请关闭其中一个以避免冲突。",
-        enhancedListOpsRequiresLivePreview: "Block Link Plus：增强 List Blocks 操作仅支持 Live Preview。"
       }
     },
     "zh-TW": {
@@ -1037,9 +1031,6 @@ class T {
       // Notices
       notices: {
         timelineRequiresDataview: "Block Link Plus: 時間軸功能需要 Dataview 插件。請安裝並啟用 Dataview 插件。",
-        enhancedListZoomConflict: "Block Link Plus：偵測到已啟用 `obsidian-zoom`，無法同時啟用 BLP 的 Zoom 模組。請關閉其中一個以避免衝突。",
-        enhancedListOutlinerConflict: "Block Link Plus：偵測到已啟用 `obsidian-outliner`，無法同時啟用 BLP 的 Outliner 模組。請關閉其中一個以避免衝突。",
-        enhancedListOpsRequiresLivePreview: "Block Link Plus：增強 List Blocks 操作僅支援 Live Preview。"
       }
     },
   };
