@@ -19,13 +19,6 @@
 - **功能**: 复制URI链接用于外部访问
 - **快捷键**: 可在设置中自定义
 
-## 时间命令
-
-### Insert Time Section
-- **ID**: `insert-time-section`
-- **功能**: 插入当前时间作为标题
-- **快捷键**: 建议设置为 `Ctrl+T`
-
 ## 使用方式
 
 ### 命令面板
@@ -44,7 +37,6 @@
 Ctrl+Shift+B  → Copy Block Link
 Ctrl+Shift+E  → Copy Block as Embed
 Ctrl+Shift+U  → Copy Block as URI
-Ctrl+T        → Insert Time Section
 ```
 
 ## 执行条件

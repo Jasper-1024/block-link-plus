@@ -4,12 +4,10 @@ Optimize daily note workflow with Block Link Plus.
 
 ## Basic Settings
 
-### Time Section Configuration
+### Enhanced List Blocks Configuration
 ```
-Time Format: HH:mm
-Daily Pattern: \d{4}-\d{1,2}-\d{1,2}
-Heading Level: 2
-Plain Text Style: Yes
+Enable scope: add folders/files in settings, or set blp_enhanced_list: true in file frontmatter
+Dataview: required (for blp-view Query/View)
 ```
 
 ### Multi-line Block Configuration
@@ -23,24 +21,20 @@ ID Prefix: diary
 ## Daily Note Template
 
 ```markdown
+---
+blp_enhanced_list: true
+---
+
 # 2024-01-15
 
 ## Morning Planning
 - [ ] Review yesterday's summary
 - [ ] Plan today's priorities
 
-## 09:00 Morning Meeting
-Attendees: John, Jane
-Main Topics:
-- Project progress sync
-- Next week planning
-
-Decisions: ^diary-abc123
-1. Complete design draft one day early
-2. Technical review meeting on Wednesday
-
-## 14:30 Client Communication
-Client feedback summary...
+## Log
+- 09:00 Morning Meeting [[Project A]] #project/A
+- 14:30 Client Communication [[Project A]] #client/key
+  - Client feedback summary...
 
 ## 18:00 Daily Review
 Today's achievements:
@@ -48,35 +42,36 @@ Today's issues:
 Tomorrow's priorities:
 ```
 
-## Timeline Aggregation
+## Aggregate with blp-view (instead of Timeline)
 
-Create timeline in monthly or project summaries:
+Create a View in monthly or project summaries:
 
 ````markdown
 # Project A - January Summary
 
 ## Key Timeline
 
-```blp-timeline
----
-source_folders:
-  - "Daily Notes/2024-01"
-heading_level: 2
-time_pattern: '(\\d{2}:\\d{2})'
+```blp-view
+source:
+  folders:
+    - "Daily Notes/2024-01"
 filters:
-  links:
-    relation: OR
-    items:
+  date:
+    within_days: 30
+  outlinks:
+    any:
       - "[[Project A]]"
----
+group:
+  by: day(date)
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
 
 ## Quick Operations
-
-### Insert Time Point
-1. Press hotkey `Ctrl+T`
-2. Auto-insert current time as level 2 heading
 
 ### Create Important Content Blocks
 1. Select important paragraph
@@ -92,27 +87,25 @@ Yesterday's important decision: ![[2024-01-14#^diary-abc123]]
 
 ### Tag System
 ```markdown
-## 09:00 Project Meeting #project/A #meeting/important
-## 14:30 Client Communication #client/key #status/followup
+- 09:00 Project Meeting #project/A #meeting/important
+- 14:30 Client Communication #client/key #status/followup
 ```
 
 ### Link Network
 ```markdown
-## 09:00 [[Project A]] Progress Sync
-Discussed [[Technical Solution]] with [[John]]
+- 09:00 [[Project A]] Progress Sync
+- Discussed [[Technical Solution]] with [[John]]
 ```
 
-### Multi-dimensional Aggregation
-```yaml
-# Aggregate by tags
+### Multi-dimensional Query/View (Example)
+
+````markdown
+```blp-view
 filters:
   tags:
-    items:
-      - '#project/A'
-
-# Aggregate by links  
-filters:
-  links:
-    items:
-      - "[[Project A]]"
+    any:
+      - "#project/A"
+render:
+  type: table
 ```
+````

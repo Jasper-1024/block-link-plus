@@ -102,21 +102,6 @@ export interface PluginSettings {
 	enable_block_notification: boolean;
 	enable_embed_notification: boolean;
 	enable_url_notification: boolean;
-	// Time Section
-	enable_time_section: boolean;
-	time_section_format: string;
-	time_section_title_pattern: string;
-	daily_note_pattern: string;
-	insert_heading_level: boolean;
-	daily_note_heading_level: number;
-	enable_time_section_in_menu: boolean;
-	time_section_plain_style: boolean; // Controls whether time sections should be displayed as plain text
-
-	// Timeline Feature
-	enableTimeline: boolean;
-	timelineDefaultHeadingLevel: number;
-	timelineDefaultSortOrder: 'asc' | 'desc';
-
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: string[];
 	enhancedListEnabledFiles: string[];
@@ -151,21 +136,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enable_block_notification: true,
 	enable_embed_notification: true,
 	enable_url_notification: true,
-	// Time Section
-	enable_time_section: true,
-	time_section_format: "HH:mm",
-	time_section_title_pattern: "\\d{1,2}:\\d{1,2}",
-	daily_note_pattern: "\\d{4}-\\d{1,2}-\\d{1,2}",
-	insert_heading_level: true,
-	daily_note_heading_level: 2,
-	enable_time_section_in_menu: false,
-	time_section_plain_style: false, // Default: use standard heading style for time sections
-	
-	// Timeline Feature
-	enableTimeline: true,
-	timelineDefaultHeadingLevel: 4,
-	timelineDefaultSortOrder: 'desc',
-
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: [],
 	enhancedListEnabledFiles: [],

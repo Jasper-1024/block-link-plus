@@ -23,41 +23,6 @@ export function shouldInsertAfter(block: ListItemCache | SectionCache) {
 	}
 }
 
-export function formatCurrentTime(format: string): string {
-	const now = new Date();
-	const hours = now.getHours().toString().padStart(2, '0');
-	const minutes = now.getMinutes().toString().padStart(2, '0');
-
-	// 简单的格式替换
-	return format
-		.replace('HH', hours)
-		.replace('mm', minutes);
-}
-
-export function isTimeSection(text: string, pattern: string = "\\d{1,2}:\\d{1,2}"): boolean {
-	// Heading pattern: #+ {pattern}
-	// This regex matches strings like "## 19:19" or "# 09:05" based on the provided pattern
-	try {
-		const regex = new RegExp(`^(#{1,6})\\s+(${pattern})$`);
-		return regex.test(text);
-	} catch (e) {
-		console.error("Invalid regex pattern for time section:", e);
-		return false;
-	}
-}
-
-export function isDailyNote(fileName: string, pattern: string): boolean {
-	try {
-		const regex = new RegExp(pattern);
-		const isMatch = regex.test(fileName);
-		// console.log(`isDailyNote result: ${isMatch ? "MATCH" : "NO MATCH"}`);
-		return isMatch;
-	} catch (e) {
-		console.error("Invalid regex pattern for daily note:", e);
-		return false;
-	}
-}
-
 export function processLineContent(line: string): string {
 	// empty line
 	if (!line.trim()) return '';

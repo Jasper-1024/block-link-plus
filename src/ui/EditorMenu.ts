@@ -5,7 +5,6 @@ import { analyzeHeadings } from '../features/heading-analysis';
 import * as LinkCreation from '../features/link-creation';
 import * as Clipboard from '../features/clipboard-handler';
 import BlockLinkPlus from '../main';
-import * as TimeSection from '../features/time-section';
 
 
 function handleSingleLine(
@@ -229,13 +228,4 @@ export function handleEditorMenu(
         );
     }
 
-    if (plugin.settings.enable_time_section && plugin.settings.enable_time_section_in_menu) {
-        menu.addItem((item) => {
-            item.setTitle("Insert Time Section")
-                .setIcon("clock")
-                .onClick(() => {
-                    TimeSection.handleInsertTimeSection(plugin, editor, view, head_analysis);
-                });
-        });
-    }
 } 

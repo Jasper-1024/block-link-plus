@@ -6,22 +6,11 @@ import {
 import { BlockLinkPlusViewPlugin } from "../types";
 
 export function createViewPlugin(
-	rule: string = "(^| )˅[a-zA-Z0-9_]+$",
-	timePattern: string = "\\d{1,2}:\\d{1,2}"
+	rule: string = "(^| )˅[a-zA-Z0-9_]+$"
 ): BlockLinkPlusViewPlugin {
 	let decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
-		decoration: (match) => {
-			// Check if this is a time section heading using the configurable pattern
-			try {
-				const timeSectionRegex = new RegExp(`^#{1,6}\\s+${timePattern}$`);
-				if (timeSectionRegex.test(match[0])) {
-					return Decoration.mark({ class: "time-section-plain" });
-				}
-			} catch (e) {
-				console.error("Invalid time pattern in ViewPlugin:", e);
-			}
-			// Default decoration for block IDs
+		decoration: () => {
 			return Decoration.mark({ class: "small-font" });
 		}
 	});

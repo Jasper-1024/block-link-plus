@@ -18,7 +18,7 @@
 
 ## Dependencies Installation
 
-Timeline feature requires Dataview plugin:
+`blp-view` (Query/View) requires Dataview plugin:
 
 1. Search "Dataview" in Community Plugins
 2. Install and enable

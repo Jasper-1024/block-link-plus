@@ -1,13 +1,12 @@
 # Block Link Plus
 
-增强 Obsidian 块引用功能的插件，支持多行文本、时间线聚合和内联编辑。
+增强 Obsidian 块引用功能的插件，支持多行块引用、Enhanced List Blocks（`blp-view`）和内联编辑。
 
 ## 核心功能
 
 - **多行块引用** - 创新的 `^abc123-abc123` 范围标识符，实现多行引用
-- **时间线聚合** - 从多个文件提取时间标题，按时间排序显示
+- **Enhanced List Blocks** - 以 list item 为最小 block，自动生成隐藏系统行（`[date:: ...] ^id`），并提供 `blp-view` 查询/视图
 - **内联编辑** - 直接编辑嵌入块内容，无需跳转原文件
-- **时间章节** - 插入当前时间作为标题，自动判断标题级别
 - **智能别名** - 块链接显示内容摘要而非随机ID
 
 ## 快速开始
@@ -36,4 +35,4 @@ Block Link Plus 参考了优秀的开源项目：
 
 ## 依赖
 
-时间线功能需要 [Dataview](https://github.com/blacksmithgu/obsidian-dataview) 插件。
+`blp-view`（Query/View）需要 [Dataview](https://github.com/blacksmithgu/obsidian-dataview) 插件。

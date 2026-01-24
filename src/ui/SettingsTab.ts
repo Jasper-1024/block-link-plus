@@ -259,81 +259,24 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("inlineEditBlock")
 			.setName(t.settings.inlineEdit.block.name)
 			.setDesc(t.settings.inlineEdit.block.desc);
-		// 时间章节设置
-		this.addHeading(t.settings.timeSection.title).setDesc(t.settings.timeSection.desc);
-
-		this.addToggleSetting("enable_time_section")
-			.setName(t.settings.timeSection.enable.name);
-
-		this.addToggleSetting("enable_time_section_in_menu")
-			.setName(t.settings.timeSection.enableInMenu.name)
-			.setDesc(t.settings.timeSection.enableInMenu.desc);
-
-		this.addTextInputSetting("time_section_format", "HH:mm")
-			.setName(t.settings.timeSection.timeFormat.name)
-			.setDesc(t.settings.timeSection.timeFormat.desc);
-
-		this.addTextInputSetting("time_section_title_pattern", "\\d{1,2}:\\d{1,2}")
-			.setName(t.settings.timeSection.titlePattern.name)
-			.setDesc(t.settings.timeSection.titlePattern.desc);
-
-		this.addToggleSetting("insert_heading_level")
-			.setName(t.settings.timeSection.insertAsHeading.name)
-			.setDesc(t.settings.timeSection.insertAsHeading.desc);
-
-		this.addToggleSetting("time_section_plain_style", (value) => {
-			// Update view plugin when setting changes
-			this.plugin.updateViewPlugin();
-		})
-			.setName(t.settings.timeSection.plainStyle.name)
-			.setDesc(t.settings.timeSection.plainStyle.desc);
-
-		this.addTextInputSetting("daily_note_pattern", "\\d{4}-\\d{1,2}-\\d{1,2}")
-			.setName(t.settings.timeSection.dailyNotePattern.name)
-			.setDesc(t.settings.timeSection.dailyNotePattern.desc);
-
-		this.addSliderSetting("daily_note_heading_level", 1, 6, 1)
-			.setName(t.settings.timeSection.headingLevel.name)
-			.setDesc(t.settings.timeSection.headingLevel.desc);
-
-		// Timeline 功能设置
-		this.addHeading(t.settings.timeline.title).setDesc(t.settings.timeline.desc);
-		
-		// 显示 Dataview 插件状态 - 按需检测，不使用缓存
-		const dataviewStatus = detectDataviewStatus();
-		const statusEl = this.containerEl.createEl("div", {
-			cls: dataviewStatus.functioning ? "setting-item-description" : "setting-item-description mod-warning"
-		});
-		
-		statusEl.createEl("span", {
-			text: dataviewStatus.functioning 
-				? t.settings.timeline.dataviewStatus.available.replace('${version}', dataviewStatus.version || 'unknown')
-				: t.settings.timeline.dataviewStatus.unavailable,
-		});
-		
-		this.addToggleSetting("enableTimeline", async (value) => {
-			if (value && !dataviewStatus.functioning) {
-				new Notice(t.notices.timelineRequiresDataview);
-			}
-		})
-			.setName(t.settings.timeline.enable.name)
-			.setDesc(t.settings.timeline.enable.desc);
-		
-		this.addSliderSetting("timelineDefaultHeadingLevel", 1, 6, 1)
-			.setName(t.settings.timeline.defaultHeadingLevel.name)
-			.setDesc(t.settings.timeline.defaultHeadingLevel.desc);
-		
-		
-		this.addDropdownSetting(
-			"timelineDefaultSortOrder",
-			["asc", "desc"],
-			(option) => option === "asc" ? t.settings.timeline.defaultSortOrder.options.ascending : t.settings.timeline.defaultSortOrder.options.descending
-		)
-			.setName(t.settings.timeline.defaultSortOrder.name)
-			.setDesc(t.settings.timeline.defaultSortOrder.desc);
 
 		// Enhanced List Blocks
 		this.addHeading(t.settings.enhancedListBlocks.title).setDesc(t.settings.enhancedListBlocks.desc);
+
+		// Dataview status hint (used by blp-view Query/View).
+		const dataviewStatus = detectDataviewStatus();
+		const statusEl = this.containerEl.createEl("div", {
+			cls: dataviewStatus.functioning ? "setting-item-description" : "setting-item-description mod-warning",
+		});
+
+		statusEl.createEl("span", {
+			text: dataviewStatus.functioning
+				? t.settings.enhancedListBlocks.dataviewStatus.available.replace(
+						"${version}",
+						dataviewStatus.version || "unknown"
+				  )
+				: t.settings.enhancedListBlocks.dataviewStatus.unavailable,
+		});
 
 		const parseScopeLines = (value: string): string[] =>
 			value

@@ -73,23 +73,31 @@ Block ID = 前缀-随机字符
 
 现在这个功能尚未有更多的实际用途, 或许可以通过 block ID 的前缀进行更多的聚合操作.
 
-### 时间章节
+### Enhanced List Blocks（blp-view）
 
-时间章节功能允许您快速插入时间戳作为标题，这对于日记和会议记录特别有用：
+Enhanced List Blocks 把 Obsidian 的 list item 当作可引用/可查询的最小 block 单元：
 
-- 插入可配置格式的时间戳（默认：HH:mm）
-- 对日记笔记进行特殊处理，支持自定义文件名模式检测
-- 基于文档结构自动确定标题级别
-- 选项可在预览模式下将时间章节显示为纯文本
-- 可通过命令面板和右键菜单访问（可选）
+- 在启用文件内自动补齐系统行（`[date:: ...] ^id`），并在 Live Preview/阅读模式下隐藏
+- 提供 `blp-view` 代码块（需要 Dataview）用于查询/分组/渲染
+- 列表操作（缩进/拖拽/缩放等）交由内置 `obsidian-outliner` / `obsidian-zoom`（可选启用）处理
 
-```bash
-## 09:30
-会议记录...
+启用方式：
+- 在设置页配置启用文件夹/文件
+- 或在文件 frontmatter 写入 `blp_enhanced_list: true`
 
-## 14:15
-后续讨论...
+示例（最近 7 天按天分组）：
+
+````markdown
+```blp-view
+filters:
+  date:
+    within_days: 7
+group:
+  by: day(date)
+render:
+  type: embed-list
 ```
+````
 
 ### 内联编辑嵌入块 (Embed Block Editing)
 此功能允许您直接在笔记中对嵌入的块或标题进行实时编辑，无需跳转到原始文件，提供了流畅的写作体验。
@@ -98,111 +106,12 @@ Block ID = 前缀-随机字符
 - **minimal (简约)**: 为编辑区域提供更清晰的边界。
 - **seamless (无缝)**: 使嵌入的块看起来就像是当前笔记的自然组成部分。
 
-### 创建动态时间线 (Timeline)
-`blp-timeline` 是一个强大的查询和聚合工具。它可以自动从您的笔记库中（特别是日记文件）根据标题、标签、链接等条件，抓取相关章节，并以时间线的方式聚合展示。
+### 查询/视图（blp-view）
 
-**工作流:**
-1.  **记录 (生产):** 使用"时间章节"功能或手动在您的日记文件中创建带时间的标题（例如, `#### 10:30 项目会议`）。
-2.  **聚合 (消费):** 在任何笔记页面，创建一个 `blp-timeline` 代码块，通过书写 `YAML` 配置来定义聚合规则。这将生成一个动态、自动更新的时间线。
+`blp-view` 使用 Dataview 作为索引来源，读取启用范围内的 list item，并按 YAML 配置进行筛选/分组/排序与渲染。
 
-**配置:**
-以下是一个展示所有可用选项的高级 `YAML` 配置示例:
-```yaml
----
-# === 基础配置 ===
-# 要搜索笔记的文件夹
-source_folders:
-  - "journal/daily"
-  - "meeting_notes/"
-
-# 只包含最近 30 天内的笔记
-within_days: 30
-
-# 笔记的排序顺序: 'asc' (旧的在前), 'desc' (新的在前)
-sort_order: desc
-
-# === 章节匹配 ===
-# 要查找的标题级别 (1-6)
-heading_level: 4 
-
-# (可选) 用于从标题中提取时间以在一天内排序的正则表达式
-# 此示例匹配 "#### 14:30 项目更新" 中的 "14:30"
-time_pattern: '(\\d{2}:\\d{2})'
-
-# === 高级过滤 ===
-# 如何组合 'links' 和 'tags' 过滤块，可以是 'AND' 或 'OR'
-filters:
-  relation: AND
-
-  # 按链接过滤。'relation' 可以是 'AND' 或 'OR'
-  links:
-    relation: OR
-    items:
-      - "[[项目A]]"
-      - "[[内部会议]]"
-    # 如果为 true, 自动包含链接到当前笔记的章节
-    link_to_current_file: true
-  
-  # 按标签过滤。'relation' 可以是 'AND' 或 'OR'
-  tags:
-    relation: AND
-    items:
-      - '#status/review'
-      - '#important'
-    
-    # (可选) 同时从 frontmatter 的键中提取标签
-    from_frontmatter:
-      key: "project_tags"
-      # (可选) 您可以从 frontmatter 源中排除某些标签
-      exclude:
-        - "archive"
----
-```
-**YAML 选项:**
-- `source_folders`: (必填) 指定要在哪些文件夹中进行搜索。
-- `heading_level`: (可选, 默认: 4) 指定要抓取的标题级别 (1-6)。
-- `time_pattern`: (可选) 一个正则表达式，用于从标题文本中提取时间。例如，对于标题 `#### 14:30 会议`，您可以使用 `(\\d{2}:\\d{2})` 来匹配 `14:30`。
-- `sort_order`: (可选, 默认: `desc`) 按日期先后顺序 (`asc`) 或倒序 (`desc`) 排列。
-- `within_days`: (可选) 只包含最近N天内的笔记。
-- `filters`: (可选) 用于高级过滤的容器。
-  - `relation`: 定义 `links` 和 `tags` 块如何组合 (`AND` 或 `OR`)。
-  - `links`: 根据链接过滤章节。包含 `relation`, `items`, 和 `link_to_current_file`。
-  - `tags`: 根据标签过滤章节。包含 `relation`, `items`, 和一个可选的 `from_frontmatter` 对象，用于从 YAML frontmatter 中提取标签。
-
-**输出格式:**
-从版本 1.5.3 开始，Timeline 的输出格式已更新为更加结构化的格式：
-
-```
-%% blp-timeline-start data-hash="..." %%
-[[文件路径1]]
-
-![[文件路径1#标题1]]
-
-![[文件路径1#标题2]]
-
----
-[[文件路径2]]
-
-![[文件路径2#标题1]]
-%% blp-timeline-end %%
-```
-
-新格式的特点：
-- 每个文件有一个普通链接作为入口
-- 文件之间用 `---` 分隔
-- 每个内容行之间有空行
-- 用户对嵌入链接的自定义修改会被保留
-
-**调试模式:**
-为了帮助排查问题，您可以在时间线配置中添加 `debug: true`，查看查询过程的详细信息：
-
-```yaml
-debug: true
-source_folders: ["日记"]
-heading_level: 4
-```
-
-这将显示一个包含解析配置、解析筛选器、查询结果和筛选统计信息的 JSON 输出。
+更多用法与配置项请参考文档站点：
+https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/
 
 ## 更新日志
 

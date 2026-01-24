@@ -18,7 +18,7 @@
 
 ## 相依套件安裝
 
-時間線功能需要 Dataview 外掛：
+`blp-view`（Query/View）需要 Dataview 外掛：
 
 1. 在社群外掛中搜尋 "Dataview"
 2. 安裝並啟用

@@ -33,22 +33,17 @@ Detailed explanation of all configuration options.
 - **id_length** - Block ID length (3-7)
 - **heading_id_newline** - Heading block ID newline (experimental)
 
-## Time Sections
+## Enhanced List Blocks
 
-- **enable_time_section** - Enable time section functionality
-- **enable_time_section_in_menu** - Show in right-click menu
-- **time_section_format** - Time format (e.g. "HH:mm")
-- **time_section_title_pattern** - Title matching pattern
-- **time_section_plain_style** - Use plain text style in preview
-- **insert_heading_level** - Enable automatic heading level
-- **daily_note_pattern** - Daily note filename pattern
-- **daily_note_heading_level** - Heading level in daily notes (1-6)
+- **enhancedListEnabledFolders** - Enabled folders (vault-relative paths)
+- **enhancedListEnabledFiles** - Enabled files (vault-relative paths)
 
-## Timeline
+## Built-in Outliner / Zoom
 
-- **enableTimeline** - Enable timeline functionality
-- **timelineDefaultHeadingLevel** - Default heading level (1-6)
-- **timelineDefaultSortOrder** - Default sort order ('asc' or 'desc')
+- **builtInObsidianOutlinerEnabled** - Enable built-in Outliner (vendored `obsidian-outliner@4.9.0`)
+- **builtInObsidianOutlinerSettings** - Built-in Outliner settings object (kept compatible with upstream)
+- **builtInObsidianZoomEnabled** - Enable built-in Zoom (vendored `obsidian-zoom@1.1.2`)
+- **builtInObsidianZoomSettings** - Built-in Zoom settings object (kept compatible with upstream)
 
 ## Inline Edit
 
@@ -74,17 +69,28 @@ Detailed explanation of all configuration options.
   "enable_block_notification": true,
   "enable_embed_notification": true,
   "enable_url_notification": true,
-  "enable_time_section": true,
-  "enable_time_section_in_menu": false,
-  "time_section_format": "HH:mm",
-  "time_section_title_pattern": "\\\\d{1,2}:\\\\d{1,2}",
-  "daily_note_pattern": "\\\\d{4}-\\\\d{1,2}-\\\\d{1,2}",
-  "daily_note_heading_level": 2,
-  "insert_heading_level": true,
-  "time_section_plain_style": false,
-  "enableTimeline": true,
-  "timelineDefaultHeadingLevel": 4,
-  "timelineDefaultSortOrder": "desc",
+  "enhancedListEnabledFolders": [],
+  "enhancedListEnabledFiles": [],
+  "builtInObsidianOutlinerEnabled": false,
+  "builtInObsidianOutlinerSettings": {
+    "styleLists": true,
+    "debug": false,
+    "stickCursor": "bullet-and-checkbox",
+    "betterEnter": true,
+    "betterVimO": true,
+    "betterTab": true,
+    "selectAll": true,
+    "listLines": false,
+    "listLineAction": "toggle-folding",
+    "dnd": true,
+    "previousRelease": null
+  },
+  "builtInObsidianZoomEnabled": false,
+  "builtInObsidianZoomSettings": {
+    "debug": false,
+    "zoomOnClick": true,
+    "zoomOnClickMobile": false
+  },
   "inlineEditEnabled": true,
   "inlineEditFile": false,
   "inlineEditHeading": true,

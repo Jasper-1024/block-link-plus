@@ -1,7 +1,6 @@
 import { MarkdownPostProcessorContext, MarkdownRenderChild, TFile } from "obsidian";
 import type BlockLinkPlus from "../main";
 import { isEnhancedListEnabledFile } from "../features/enhanced-list-blocks/enable-scope";
-import { isTimeSection } from "../utils";
 
 const SYSTEM_LINE_REGEX =
 	/\[date::\s*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\](?:\s*\^[a-zA-Z0-9_-]+)?/g;
@@ -71,20 +70,6 @@ class EnhancedListReadingModeHiderChild extends MarkdownRenderChild {
 }
 
 export function markdownPostProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext, plugin: BlockLinkPlus) {
-	// Process time section headings if enabled
-	if (plugin.settings.time_section_plain_style) {
-		const headings = el.querySelectorAll("h1, h2, h3, h4, h5, h6");
-		headings.forEach((heading) => {
-			if (
-				heading.textContent &&
-				isTimeSection(heading.textContent.trim(), plugin.settings.time_section_title_pattern)
-			) {
-				// Add a special class to style time sections as plain text
-				heading.classList.add("time-section-plain");
-			}
-		});
-	}
-
 	const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
 	if (!(file instanceof TFile)) return;
 	if (!isEnhancedListEnabledFile(plugin, file)) return;

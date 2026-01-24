@@ -5,9 +5,8 @@ Obsidian block link enhancement plugin designed to improve note reference effici
 ## Core Features
 
 - **Multi-line Block References** - Innovative `^abc123-abc123` range identifier for multi-line references
-- **Timeline Aggregation** - Extract time headings from multiple files, display in chronological order
+- **Enhanced List Blocks** - Treat list items as the smallest block unit, auto-insert hidden system lines (`[date:: ...] ^id`), and provide `blp-view` Query/View
 - **Inline Editing** - Edit embedded block content directly without jumping to original file
-- **Time Sections** - Insert current time as heading with automatic level detection
 - **Smart Aliases** - Display block content summary instead of random IDs
 
 ## Quick Start
@@ -36,4 +35,4 @@ Thanks to all open-source contributors for their efforts in the Obsidian ecosyst
 
 ## Dependencies
 
-Timeline functionality requires the [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin.
+`blp-view` (Query/View) requires the [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin.

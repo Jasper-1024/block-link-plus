@@ -37,8 +37,7 @@ nav:
   - User Guide:
     - Block Links: usage/block-links.md
     - Multi-line Blocks: usage/multiline.md
-    - Timeline: usage/timeline.md
-    - Time Sections: usage/time-sections.md
+    - Enhanced List Blocks: usage/enhanced-list-blocks.md
     - Flow Editor: usage/flow-editor.md
   - Reference:
     - Settings: reference/settings.md
@@ -71,8 +70,7 @@ plugins:
             "User Guide": "使用指南"
             "Block Links": "块链接"
             "Multi-line Blocks": "多行块"
-            "Timeline": "时间线"
-            "Time Sections": "时间章节"
+            "Enhanced List Blocks": "增强列表块"
             "Flow Editor": "流式编辑器"
             "Reference": "参考手册"
             "Settings": "设置选项"
@@ -95,8 +93,7 @@ plugins:
             "User Guide": "使用指南"
             "Block Links": "區塊連結"
             "Multi-line Blocks": "多行區塊"
-            "Timeline": "時間軸"
-            "Time Sections": "時間章節"
+            "Enhanced List Blocks": "增強列表區塊"
             "Flow Editor": "流式編輯器"
             "Reference": "參考手冊"
             "Settings": "設定選項"

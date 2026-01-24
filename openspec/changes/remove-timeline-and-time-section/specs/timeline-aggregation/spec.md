@@ -1,11 +1,11 @@
 ## ADDED Requirements
 ### Requirement: Deprecate `blp-timeline` in favor of `blp-view`
-插件 MUST NOT 再提供 `blp-timeline` 的时间线聚合/写入能力；应引导用户使用 `blp-view`（Enhanced List Blocks Query/View）实现查询与渲染。
+插件 MUST NOT 再提供 `blp-timeline` 的时间线聚合/写入能力；应引导用户使用 `blp-view`（Enhanced List Blocks Query/View）实现查询与渲染（例如通过文档/变更说明）。
 
 #### Scenario: `blp-timeline` becomes non-operative
 - **WHEN** 用户在笔记中使用 `blp-timeline` 代码块
 - **THEN** 插件不再执行查询/聚合，也不写入任何动态区域
-- **AND** 插件以可理解的方式提示该功能已移除，并指向 `blp-view`
+- **AND** 该代码块按 Obsidian 默认方式作为普通代码块渲染
 
 ## REMOVED Requirements
 ### Requirement: Process `blp-timeline` code blocks with YAML config
@@ -57,4 +57,3 @@
 #### Scenario: Timeline output uses ![[]] only
 - **WHEN** YAML 配置中存在 legacy `embed_format: '!![[]]'`
 - **THEN** timeline 仍生成 `![[...]]` 形式的嵌入链接（不生成 `!![[...]]`）
-

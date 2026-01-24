@@ -33,22 +33,17 @@
 - **id_length** - 塊 ID 長度 (3-7)
 - **heading_id_newline** - 標題塊 ID 換行 (實驗性)
 
-## 時間章節
+## Enhanced List Blocks
 
-- **enable_time_section** - 啟用時間章節功能
-- **enable_time_section_in_menu** - 在右鍵選單中顯示
-- **time_section_format** - 時間格式 (如 "HH:mm")
-- **time_section_title_pattern** - 標題比對模式
-- **time_section_plain_style** - 預覽中使用純文字樣式
-- **insert_heading_level** - 啟用自動標題層級
-- **daily_note_pattern** - 日記檔案名稱模式
-- **daily_note_heading_level** - 日記中的標題層級 (1-6)
+- **enhancedListEnabledFolders** - 啟用的資料夾清單（vault 相對路徑）
+- **enhancedListEnabledFiles** - 啟用的檔案清單（vault 相對路徑）
 
-## 時間線
+## Built-in Outliner / Zoom
 
-- **enableTimeline** - 啟用時間線功能
-- **timelineDefaultHeadingLevel** - 預設標題層級 (1-6)
-- **timelineDefaultSortOrder** - 預設排序 ('asc' 或 'desc')
+- **builtInObsidianOutlinerEnabled** - 啟用內建 Outliner（vendored `obsidian-outliner@4.9.0`）
+- **builtInObsidianOutlinerSettings** - 內建 Outliner 的設定物件（保持與上游一致）
+- **builtInObsidianZoomEnabled** - 啟用內建 Zoom（vendored `obsidian-zoom@1.1.2`）
+- **builtInObsidianZoomSettings** - 內建 Zoom 的設定物件（保持與上游一致）
 
 ## 內嵌編輯 (Inline Edit)
 
@@ -74,17 +69,28 @@
   "enable_block_notification": true,
   "enable_embed_notification": true,
   "enable_url_notification": true,
-  "enable_time_section": true,
-  "enable_time_section_in_menu": false,
-  "time_section_format": "HH:mm",
-  "time_section_title_pattern": "\\\\d{1,2}:\\\\d{1,2}",
-  "daily_note_pattern": "\\\\d{4}-\\\\d{1,2}-\\\\d{1,2}",
-  "daily_note_heading_level": 2,
-  "insert_heading_level": true,
-  "time_section_plain_style": false,
-  "enableTimeline": true,
-  "timelineDefaultHeadingLevel": 4,
-  "timelineDefaultSortOrder": "desc",
+  "enhancedListEnabledFolders": [],
+  "enhancedListEnabledFiles": [],
+  "builtInObsidianOutlinerEnabled": false,
+  "builtInObsidianOutlinerSettings": {
+    "styleLists": true,
+    "debug": false,
+    "stickCursor": "bullet-and-checkbox",
+    "betterEnter": true,
+    "betterVimO": true,
+    "betterTab": true,
+    "selectAll": true,
+    "listLines": false,
+    "listLineAction": "toggle-folding",
+    "dnd": true,
+    "previousRelease": null
+  },
+  "builtInObsidianZoomEnabled": false,
+  "builtInObsidianZoomSettings": {
+    "debug": false,
+    "zoomOnClick": true,
+    "zoomOnClickMobile": false
+  },
   "inlineEditEnabled": true,
   "inlineEditFile": false,
   "inlineEditHeading": true,

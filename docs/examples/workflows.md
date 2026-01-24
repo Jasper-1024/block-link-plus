@@ -36,23 +36,32 @@ Block Link Plus 在不同场景下的应用方法。
 ![[2024-01-15-项目A会议#^meeting-plan]]
 ```
 
-### 时间线跟踪
+### 进度聚合（blp-view）
 
 ````markdown
-# 项目A - 进度时间线
+# 项目A - 进度视图
 
-```blp-timeline
----
-source_folders:
-  - "会议记录"
-  - "日记/2024-01"
-heading_level: 2
+```blp-view
+source:
+  folders:
+    - "团队日报"
 filters:
-  links:
-    items:
+  date:
+    within_days: 30
+  outlinks:
+    any:
       - "[[项目A]]"
-within_days: 30
----
+  tags:
+    any:
+      - "#进展"
+      - "#问题"
+group:
+  by: day(date)
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
 
@@ -117,22 +126,19 @@ Transformer架构的改进 ^paper-innovation
 
 ### 实验记录
 
-使用时间章节记录实验过程：
+使用 list item 记录实验过程（可搭配 Enhanced List Blocks）：
 
 ```markdown
+---
+blp_enhanced_list: true
+---
+
 # 实验记录 - 2024-01-15
 
-## 09:00 环境准备
-配置GPU环境，安装依赖
-
-## 10:30 模型训练
-开始第一轮训练，batch_size=32
-
-## 14:00 结果分析
-准确率达到85%，loss收敛良好
-
-## 16:30 参数调优
-调整学习率为0.001，重新训练
+- 09:00 环境准备
+- 10:30 模型训练（batch_size=32）
+- 14:00 结果分析（accuracy=85%）
+- 16:30 参数调优（lr=0.001）
 ```
 
 ## 团队协作
@@ -175,20 +181,26 @@ Transformer架构的改进 ^paper-innovation
 
 ### 进度汇总
 
-使用时间线汇总团队进度：
+使用 blp-view 汇总团队进度：
 
 ````markdown
-```blp-timeline
----
-source_folders:
-  - "团队日报"
-heading_level: 3
+```blp-view
+source:
+  folders:
+    - "团队日报"
 filters:
+  date:
+    within_days: 7
   tags:
-    items:
-      - '#完成'
-      - '#进展'
-within_days: 7
----
+    any:
+      - "#完成"
+      - "#进展"
+group:
+  by: file
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````

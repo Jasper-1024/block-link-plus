@@ -19,13 +19,6 @@
 - **功能**: 複製 URI 連結用於外部存取
 - **快速鍵**: 可在設定中自訂
 
-## 時間命令
-
-### Insert Time Section
-- **ID**: `insert-time-section`
-- **功能**: 插入目前時間作為標題
-- **快速鍵**: 建議設定為 `Ctrl+T`
-
 ## 使用方式
 
 ### 命令面板
@@ -44,7 +37,6 @@
 Ctrl+Shift+B  → Copy Block Link
 Ctrl+Shift+E  → Copy Block as Embed
 Ctrl+Shift+U  → Copy Block as URI
-Ctrl+T        → Insert Time Section
 ```
 
 ## 執行條件

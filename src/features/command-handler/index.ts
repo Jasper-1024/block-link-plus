@@ -5,7 +5,6 @@ import { analyzeHeadings } from '../heading-analysis';
 import * as LinkCreation from '../link-creation';
 import * as Clipboard from '../clipboard-handler';
 import BlockLinkPlus from '../../main';
-import * as TimeSection from '../time-section';
 
 function handleSingleLine(
     plugin: BlockLinkPlus,

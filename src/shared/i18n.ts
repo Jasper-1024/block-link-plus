@@ -162,74 +162,14 @@ class T {
           }
         },
 
-        // Time section
-        timeSection: {
-          title: "Time Block",
-          desc: "Insert time-based headings",
-          enable: {
-            name: "Enable time block feature",
-            desc: ""
-          },
-          enableInMenu: {
-            name: "Show in context menu",
-            desc: "If enabled, adds time block option to the right-click menu"
-          },
-          timeFormat: {
-            name: "Time format",
-            desc: "Format for the time block (HH:mm = 24-hour format)"
-          },
-          titlePattern: {
-            name: "Title recognition pattern",
-            desc: "Regular expression pattern to recognize time headings (default: \\d{1,2}:\\d{1,2} for HH:mm format)"
-          },
-          insertAsHeading: {
-            name: "Insert as heading",
-            desc: "If enabled, inserts time with heading marks (#), otherwise inserts just the time"
-          },
-          plainStyle: {
-            name: "Plain text style in preview",
-            desc: "If enabled, time blocks will appear as plain text in preview mode, even when inserted as headings"
-          },
-          dailyNotePattern: {
-            name: "Daily note pattern",
-            desc: "Regular expression to identify daily note filenames (default: YYYY-MM-DD)"
-          },
-          headingLevel: {
-            name: "Daily note heading level",
-            desc: "Heading level to use in daily notes (1-6, corresponds to #-######)"
-          }
-        },
-
-        // Timeline section
-        timeline: {
-          title: "Timeline Feature",
-          desc: "Settings for the blp-timeline code block functionality",
-          dataviewStatus: {
-            available: "✅ Dataview plugin is installed and enabled (v${version})",
-            unavailable: "❌ Dataview plugin is not installed or not enabled. Timeline feature will not work."
-          },
-          enable: {
-            name: "Enable Timeline feature",
-            desc: "Enable the blp-timeline code block functionality. Requires Dataview plugin."
-          },
-          defaultHeadingLevel: {
-            name: "Default heading level",
-            desc: "Default heading level to use for timeline sections (1-6). Can be overridden in code block."
-          },
-          defaultSortOrder: {
-            name: "Default sort order", 
-            desc: "Default sort order for timeline entries. Can be overridden in code block.",
-            options: {
-              ascending: "Ascending (oldest first)",
-              descending: "Descending (newest first)"
-            }
-          }
-        },
-
         // Enhanced List Blocks section
         enhancedListBlocks: {
           title: "Enhanced List Blocks",
           desc: "Opt-in scope for Enhanced List Blocks features (blp-view, system line hiding, duplicate ^id repair). A file is enabled if it matches any enabled folder/file below, or has frontmatter `blp_enhanced_list: true`.",
+          dataviewStatus: {
+            available: "✅ Dataview plugin is installed and enabled (v${version})",
+            unavailable: "❌ Dataview plugin is not installed or not enabled. blp-view will not work.",
+          },
           enabledFolders: {
             name: "Enabled folders",
             desc: "One folder path per line (vault-relative). Markdown files under these folders are enabled."
@@ -343,9 +283,7 @@ class T {
       },
 
       // Notices
-      notices: {
-        timelineRequiresDataview: "Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin.",
-      }
+      notices: {}
     },
     zh: {
       // Flow Editor buttons - 流程编辑器按钮文本
@@ -505,74 +443,14 @@ class T {
           }
         },
 
-        // 时间
-        timeSection: {
-          title: "时间区块",
-          desc: "插入基于时间的标题",
-          enable: {
-            name: "启用时间区块功能",
-            desc: ""
-          },
-          enableInMenu: {
-            name: "在上下文菜单中显示",
-            desc: "如果启用，将在右键菜单中添加时间区块选项"
-          },
-          timeFormat: {
-            name: "时间格式",
-            desc: "时间区块标题的格式(HH:mm = 24小时格式)"
-          },
-          titlePattern: {
-            name: "标题识别模式",
-            desc: "用于识别时间标题的正则表达式模式(默认: \\d{1,2}:\\d{1,2} for HH:mm格式)"
-          },
-          insertAsHeading: {
-            name: "作为标题插入",
-            desc: "如果启用，使用标题标记（#）插入时间，否则只插入时间"
-          },
-          plainStyle: {
-            name: "预览中的纯文本样式",
-            desc: "如果启用，时间区块在预览模式中将显示为纯文本，即使作为标题插入"
-          },
-          dailyNotePattern: {
-            name: "日记模式",
-            desc: "用于识别日记文件名的正则表达式(默认: YYYY-MM-DD)"
-          },
-          headingLevel: {
-            name: "日记标题级别",
-            desc: "在日记中使用的标题级别(1-6, 对应 #-######)"
-          }
-        },
-
-        // 时间轴部分
-        timeline: {
-          title: "时间线功能",
-          desc: "blp-timeline 代码块功能的设置",
-          dataviewStatus: {
-            available: "✅ Dataview 插件已安装并启用 (v${version})",
-            unavailable: "❌ Dataview 插件未安装或未启用, 时间线功能将无法工作."
-          },
-          enable: {
-            name: "启用时间线功能",
-            desc: "启用 blp-timeline 代码块功能。需要 Dataview 插件。"
-          },
-          defaultHeadingLevel: {
-            name: "默认标题级别",
-            desc: "时间线部分使用的默认标题级别(1-6). 可在代码块中覆盖."
-          },
-          defaultSortOrder: {
-            name: "默认排序顺序", 
-            desc: "时间线条目的默认排序顺序. 可在代码块中覆盖.",
-            options: {
-              ascending: "升序(最旧的在前)",
-              descending: "降序(最新的在前)"
-            }
-          }
-        },
-
         // 增强 List Blocks
         enhancedListBlocks: {
           title: "增强 List Blocks",
           desc: "配置增强 List Blocks 的启用范围（blp-view、系统行隐藏、重复 ^id 修复仅在启用文件内生效）。满足任一条件即启用：位于启用文件夹/启用文件列表，或文件 frontmatter 含 `blp_enhanced_list: true`。",
+          dataviewStatus: {
+            available: "✅ Dataview 插件已安装并启用 (v${version})",
+            unavailable: "❌ Dataview 插件未安装或未启用，blp-view 将无法工作。",
+          },
           enabledFolders: {
             name: "启用文件夹",
             desc: "每行一个文件夹路径（相对 vault 根目录）。该文件夹下的 Markdown 文件启用。"
@@ -686,9 +564,7 @@ class T {
       },
 
       // Notices
-      notices: {
-        timelineRequiresDataview: "Block Link Plus: 时间轴功能需要 Dataview 插件。请安装并启用 Dataview 插件。",
-      }
+      notices: {}
     },
     "zh-TW": {
       // Flow Editor buttons - 流程編輯器按鈕文字
@@ -848,74 +724,14 @@ class T {
           }
         },
 
-        // 時間部分
-        timeSection: {
-          title: "時間區塊",
-          desc: "插入基於時間的標題",
-          enable: {
-            name: "啟用時間區塊功能",
-            desc: ""
-          },
-          enableInMenu: {
-            name: "在上下文選單中顯示",
-            desc: "如果啟用，將在右鍵選單中新增時間區塊選項"
-          },
-          timeFormat: {
-            name: "時間格式",
-            desc: "時間區塊的格式(HH:mm = 24小時格式)"
-          },
-          titlePattern: {
-            name: "標題識別模式",
-            desc: "用於識別時間標題的正則表達式模式(預設: \\d{1,2}:\\d{1,2} for HH:mm格式)"
-          },
-          insertAsHeading: {
-            name: "作為標題插入",
-            desc: "如果啟用，使用標題標記（#）插入時間，否則只插入時間"
-          },
-          plainStyle: {
-            name: "預覽中的純文字樣式",
-            desc: "如果啟用，時間區塊在預覽模式中將顯示為純文字，即使作為標題插入"
-          },
-          dailyNotePattern: {
-            name: "日記模式",
-            desc: "用於識別日記檔案名稱的正規表達式(預設: YYYY-MM-DD)"
-          },
-          headingLevel: {
-            name: "日記標題級別",
-            desc: "在日記中使用的標題級別(1-6, 對應 #-######)"
-          }
-        },
-
-        // 時間軸部分
-        timeline: {
-          title: "時間軸功能",
-          desc: "blp-timeline 程式碼區塊功能的設定",
-          dataviewStatus: {
-            available: "✅ Dataview 插件已安裝並啟用(版本 ${version})",
-            unavailable: "❌ Dataview 插件未安裝或未啟用. 時間軸功能將無法運作."
-          },
-          enable: {
-            name: "啟用時間軸功能",
-            desc: "啟用 blp-timeline 程式碼區塊功能. 需要 Dataview 插件."
-          },
-          defaultHeadingLevel: {
-            name: "預設標題級別",
-            desc: "時間軸部分使用的預設標題級別(1-6). 可在程式碼區塊中覆蓋."
-          },
-          defaultSortOrder: {
-            name: "預設排序順序", 
-            desc: "時間軸條目的預設排序順序. 可在程式碼區塊中覆蓋.",
-            options: {
-              ascending: "升序(最舊的在前)",
-              descending: "降序(最新的在前)"
-            }
-          }
-        },
-
         // 增強 List Blocks
         enhancedListBlocks: {
           title: "增強 List Blocks",
           desc: "設定增強 List Blocks 的啟用範圍（blp-view、系統行隱藏、重複 ^id 修復僅在啟用檔案內生效）。滿足任一條件即啟用：位於啟用資料夾/啟用檔案清單，或檔案 frontmatter 含 `blp_enhanced_list: true`。",
+          dataviewStatus: {
+            available: "✅ Dataview 插件已安裝並啟用(版本 ${version})",
+            unavailable: "❌ Dataview 插件未安裝或未啟用，blp-view 將無法運作。",
+          },
           enabledFolders: {
             name: "啟用資料夾",
             desc: "每行一個資料夾路徑（相對 vault 根目錄）。該資料夾下的 Markdown 檔案啟用。"
@@ -1029,9 +845,7 @@ class T {
       },
 
       // Notices
-      notices: {
-        timelineRequiresDataview: "Block Link Plus: 時間軸功能需要 Dataview 插件。請安裝並啟用 Dataview 插件。",
-      }
+      notices: {}
     },
   };
 

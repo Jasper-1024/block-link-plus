@@ -36,23 +36,32 @@ Block Link Plus 在不同場景下的應用方法。
 ![[2024-01-15-專案A會議#^meeting-plan]]
 ```
 
-### 時間線追蹤
+### 進度聚合（blp-view）
 
 ````markdown
-# 專案A - 進度時間線
+# 專案A - 進度檢視
 
-```blp-timeline
----
-source_folders:
-  - "會議記錄"
-  - "日記/2024-01"
-heading_level: 2
+```blp-view
+source:
+  folders:
+    - "團隊日報"
 filters:
-  links:
-    items:
+  date:
+    within_days: 30
+  outlinks:
+    any:
       - "[[專案A]]"
-within_days: 30
----
+  tags:
+    any:
+      - "#進展"
+      - "#問題"
+group:
+  by: day(date)
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
 
@@ -117,22 +126,19 @@ Transformer架構的改進 ^paper-innovation
 
 ### 實驗記錄
 
-使用時間章節記錄實驗過程：
+使用 list item 記錄實驗過程（可搭配 Enhanced List Blocks）：
 
 ```markdown
+---
+blp_enhanced_list: true
+---
+
 # 實驗記錄 - 2024-01-15
 
-## 09:00 環境準備
-設定GPU環境，安裝相依套件
-
-## 10:30 模型訓練
-開始第一輪訓練，batch_size=32
-
-## 14:00 結果分析
-準確率達到85%，loss收斂良好
-
-## 16:30 參數調優
-調整學習率為0.001，重新訓練
+- 09:00 環境準備
+- 10:30 模型訓練（batch_size=32）
+- 14:00 結果分析（accuracy=85%）
+- 16:30 參數調優（lr=0.001）
 ```
 
 ## 團隊協作
@@ -175,20 +181,26 @@ Transformer架構的改進 ^paper-innovation
 
 ### 進度匯總
 
-使用時間線匯總團隊進度：
+使用 blp-view 匯總團隊進度：
 
 ````markdown
-```blp-timeline
----
-source_folders:
-  - "團隊日報"
-heading_level: 3
+```blp-view
+source:
+  folders:
+    - "團隊日報"
 filters:
+  date:
+    within_days: 7
   tags:
-    items:
-      - '#完成'
-      - '#進展'
-within_days: 7
----
+    any:
+      - "#完成"
+      - "#進展"
+group:
+  by: file
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````

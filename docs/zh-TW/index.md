@@ -1,13 +1,12 @@
 # Block Link Plus
 
-增強 Obsidian 塊引用功能的外掛，支援多行文字、時間線聚合和內聯編輯。
+增強 Obsidian 塊引用功能的外掛，支援多行塊引用、Enhanced List Blocks（`blp-view`）和內聯編輯。
 
 ## 核心功能
 
 - **多行塊引用** - 創新的 `^abc123-abc123` 範圍標識符，實現多行引用
-- **時間線聚合** - 從多個檔案提取時間標題，按時間排序顯示
+- **Enhanced List Blocks** - 以 list item 為最小 block，自動產生隱藏系統行（`[date:: ...] ^id`），並提供 `blp-view` 查詢/檢視
 - **內聯編輯** - 直接編輯嵌入塊內容，無需跳轉原檔案
-- **時間章節** - 插入當前時間作為標題，自動判斷標題級別
 - **智慧別名** - 塊連結顯示內容摘要而非隨機ID
 
 ## 快速開始
@@ -36,4 +35,4 @@ Block Link Plus 參考了優秀的開源專案：
 
 ## 相依套件
 
-時間線功能需要 [Dataview](https://github.com/blacksmithgu/obsidian-dataview) 外掛。
+`blp-view`（Query/View）需要 [Dataview](https://github.com/blacksmithgu/obsidian-dataview) 外掛。

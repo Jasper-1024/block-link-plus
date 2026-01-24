@@ -4,12 +4,10 @@
 
 ## 基礎設定
 
-### 時間章節設定
+### Enhanced List Blocks 設定
 ```
-時間格式: HH:mm
-日記模式: \d{4}-\d{1,2}-\d{1,2}
-標題層級: 2
-啟用純文字樣式: 是
+啟用範圍: 在設定中加入日記資料夾/檔案，或在檔案 frontmatter 寫入 blp_enhanced_list: true
+Dataview: 需要安裝並啟用（用於 blp-view 查詢/檢視）
 ```
 
 ### 多行塊設定
@@ -23,24 +21,20 @@ ID前綴: diary
 ## 日記範本
 
 ```markdown
+---
+blp_enhanced_list: true
+---
+
 # 2024-01-15
 
 ## 晨間規劃
 - [ ] 回顧昨日總結
 - [ ] 安排今日重點
 
-## 09:00 晨會
-參會人員：張三、李四
-主要議題：
-- 專案進度同步
-- 下週計劃確認
-
-決定事項： ^diary-abc123
-1. 提前一天完成設計稿
-2. 週三開技術評審會
-
-## 14:30 客戶溝通
-客戶回饋整理...
+## Log
+- 09:00 晨會 [[專案A]] #專案/A
+- 14:30 客戶溝通 [[專案A]] #客戶/重點
+  - 客戶回饋整理...
 
 ## 18:00 日結
 今日完成：
@@ -48,35 +42,36 @@ ID前綴: diary
 明日重點：
 ```
 
-## 時間線聚合
+## 使用 blp-view 聚合（取代時間線）
 
-在月度或專案總結中建立時間線：
+在月度或專案總結中建立 View：
 
 ````markdown
 # 專案A - 一月總結
 
 ## 關鍵時間點
 
-```blp-timeline
----
-source_folders:
-  - "日記/2024-01"
-heading_level: 2
-time_pattern: '(\\d{2}:\\d{2})'
+```blp-view
+source:
+  folders:
+    - "日記/2024-01"
 filters:
-  links:
-    relation: OR
-    items:
+  date:
+    within_days: 30
+  outlinks:
+    any:
       - "[[專案A]]"
----
+group:
+  by: day(date)
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
 
 ## 快速操作
-
-### 插入時間點
-1. 按快速鍵 `Ctrl+T`
-2. 自動插入目前時間作為二級標題
 
 ### 建立重要內容塊
 1. 選取重要段落
@@ -92,27 +87,25 @@ filters:
 
 ### 標籤體系
 ```markdown
-## 09:00 專案會議 #專案/A #會議/重要
-## 14:30 客戶溝通 #客戶/重點 #狀態/待跟進
+- 09:00 專案會議 #專案/A #會議/重要
+- 14:30 客戶溝通 #客戶/重點 #狀態/待跟進
 ```
 
 ### 連結網路
 ```markdown
-## 09:00 [[專案A]] 進度同步
-與 [[張三]] 討論 [[技術方案]]
+- 09:00 [[專案A]] 進度同步
+- 與 [[張三]] 討論 [[技術方案]]
 ```
 
-### 多維度聚合
-```yaml
-# 按標籤聚合
+### 多維度 Query/View（範例）
+
+````markdown
+```blp-view
 filters:
   tags:
-    items:
-      - '#專案/A'
-
-# 按連結聚合  
-filters:
-  links:
-    items:
-      - "[[專案A]]"
+    any:
+      - "#專案/A"
+render:
+  type: table
 ```
+````

@@ -10,9 +10,9 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 ## 🚀 Key Features
 
 - **Multi-line Block References** - Innovative `^abc123-abc123` format for precise multi-line references
-- **Timeline Aggregation** - Extract and organize time-based content from multiple files
+- **Enhanced List Blocks** - List-item blocks with hidden system lines (`[date:: ...] ^id`) and a Dataview-backed `blp-view` Query/View
 - **Inline Editing** - Edit embedded blocks directly without file switching
-- **Time Sections** - Quick timestamp insertion with auto-level detection
+- **Built-in Outliner/Zoom (Optional)** - Vendored `obsidian-outliner` and `obsidian-zoom` for list editing ops
 - **Smart Aliases** - Content-based link descriptions
 
 ## 📦 Installation
@@ -38,7 +38,7 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 
 - [Installation Guide](https://block-link-plus.jasper1024.com/install/)
 - [Multi-line Blocks](https://block-link-plus.jasper1024.com/usage/multiline/)
-- [Timeline Feature](https://block-link-plus.jasper1024.com/usage/timeline/)
+- [Enhanced List Blocks](https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/)
 - [Settings Reference](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ### Language Support
@@ -151,7 +151,7 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 ## 📋 Requirements
 
 - Obsidian 0.15.0+
-- [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin (for Timeline feature)
+- [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin (for `blp-view` Query/View)
 
 ## 🙏 Acknowledgments
 

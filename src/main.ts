@@ -31,10 +31,8 @@ import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
 import { markdownPostProcessor } from 'ui/MarkdownPost';
 import { WhatsNewModal } from "ui/WhatsNewModal";
-import * as TimeSection from 'features/time-section';
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
-import { handleTimeline } from 'features/dataview-timeline';
 import {
 	createEnhancedListSystemLineHideExtension,
 	createEnhancedListAutoSystemLineExtension,
@@ -98,16 +96,8 @@ export default class BlockLinkPlus extends Plugin {
 	 * Update the view plugin
 	 */
 	public updateViewPlugin() {
-		// Create regex for both block IDs and time sections if enabled
-		let rule = "(^| )˅[a-zA-Z0-9_]+$";
-		const timePattern = this.settings.time_section_title_pattern || "\\d{1,2}:\\d{1,2}";
-
-		if (this.settings.time_section_plain_style) {
-			// Add time section pattern to the regex using the configurable pattern
-			rule = `(${rule})|(^#{1,6}\\s+${timePattern}$)`;
-		}
-
-		this.viewPlugin = createViewPlugin(rule, timePattern);
+		const rule = "(^| )˅[a-zA-Z0-9_]+$";
+		this.viewPlugin = createViewPlugin(rule);
 		this.registerEditorExtension([this.viewPlugin]);
 	}
 
@@ -134,21 +124,6 @@ export default class BlockLinkPlus extends Plugin {
 				(menu, editor, view) => EditorMenu.handleEditorMenu(this, menu, editor, view)
 			)
 		);
-
-		// Register post-processor for blp-timeline blocks
-		// run when setting enableTimeline is true
-		this.registerMarkdownCodeBlockProcessor('blp-timeline', (source, el, ctx) => {
-			if (this.settings.enableTimeline && isDataviewAvailable()) {
-				handleTimeline(this, source, el, ctx);
-			} else {
-				el.empty();
-				if (!this.settings.enableTimeline) {
-					el.createEl("pre", { text: "Timeline feature is disabled." });
-				} else {
-					el.createEl("pre", { text: "Timeline feature requires Dataview plugin." });
-				}
-			}
-		});
 
 		// Register post-processor for blp-view blocks (Enhanced List Blocks Query/View)
 		this.registerMarkdownCodeBlockProcessor("blp-view", (source, el, ctx) => {
@@ -182,14 +157,6 @@ export default class BlockLinkPlus extends Plugin {
 			editorCheckCallback: (isChecking, editor, view) => {
 				return CommandHandler.handleCommand(this, isChecking, editor, view, false, true);
 			},
-		});
-
-		// Insert time section
-		this.addCommand({
-			id: "insert-time-section",
-			name: "Insert Time Section",
-			editorCheckCallback: (isChecking, editor, view) =>
-				TimeSection.handleTimeCommand(this, isChecking, editor, view)
 		});
 
 		// for reading mode
@@ -232,6 +199,17 @@ export default class BlockLinkPlus extends Plugin {
 				"editorFlow",
 				"editorFlowStyle",
 				"timelineDefaultEmbedFormat",
+				"enableTimeline",
+				"timelineDefaultHeadingLevel",
+				"timelineDefaultSortOrder",
+				"enable_time_section",
+				"time_section_format",
+				"time_section_title_pattern",
+				"daily_note_pattern",
+				"insert_heading_level",
+				"daily_note_heading_level",
+				"enable_time_section_in_menu",
+				"time_section_plain_style",
 				"enable_right_click_editable_embed",
 				"enable_editable_embed_notification",
 			] as const;

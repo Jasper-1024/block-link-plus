@@ -18,7 +18,7 @@
 
 ## 依赖安装
 
-时间线功能需要 Dataview 插件：
+`blp-view`（Query/View）需要 Dataview 插件：
 
 1. 在社区插件中搜索 "Dataview"
 2. 安装并启用

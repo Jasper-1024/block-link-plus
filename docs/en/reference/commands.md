@@ -19,13 +19,6 @@ All available commands and their purposes.
 - **Function**: Copy URI link for external access
 - **Hotkey**: Customizable in settings
 
-## Time Commands
-
-### Insert Time Section
-- **ID**: `insert-time-section`
-- **Function**: Insert current time as heading
-- **Hotkey**: Suggest setting to `Ctrl+T`
-
 ## Usage Methods
 
 ### Command Palette
@@ -44,7 +37,6 @@ All available commands and their purposes.
 Ctrl+Shift+B  → Copy Block Link
 Ctrl+Shift+E  → Copy Block as Embed
 Ctrl+Shift+U  → Copy Block as URI
-Ctrl+T        → Insert Time Section
 ```
 
 ## Execution Requirements

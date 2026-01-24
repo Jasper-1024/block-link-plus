@@ -36,23 +36,32 @@ Database performance needs optimization ^meeting-issue
 ![[2024-01-15-Project-A-Meeting#^meeting-plan]]
 ```
 
-### Timeline Tracking
+### Progress View (blp-view)
 
 ````markdown
-# Project A - Progress Timeline
+# Project A - Progress View
 
-```blp-timeline
----
-source_folders:
-  - "Meeting Notes"
-  - "Daily Notes/2024-01"
-heading_level: 2
+```blp-view
+source:
+  folders:
+    - "Team Daily Reports"
 filters:
-  links:
-    items:
+  date:
+    within_days: 30
+  outlinks:
+    any:
       - "[[Project A]]"
-within_days: 30
----
+  tags:
+    any:
+      - "#progress"
+      - "#issue"
+group:
+  by: day(date)
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
 
@@ -117,22 +126,19 @@ Multimodal capability expansion ^paper-application
 
 ### Experiment Records
 
-Use time sections to record experiment process:
+Use list items to record experiment progress (works well with Enhanced List Blocks):
 
 ```markdown
+---
+blp_enhanced_list: true
+---
+
 # Experiment Log - 2024-01-15
 
-## 09:00 Environment Setup
-Configure GPU environment, install dependencies
-
-## 10:30 Model Training
-Start first round training, batch_size=32
-
-## 14:00 Result Analysis
-Accuracy reaches 85%, loss converges well
-
-## 16:30 Parameter Tuning
-Adjust learning rate to 0.001, retrain
+- 09:00 Environment Setup
+- 10:30 Model Training (batch_size=32)
+- 14:00 Result Analysis (accuracy=85%)
+- 16:30 Parameter Tuning (lr=0.001)
 ```
 
 ## Team Collaboration
@@ -175,20 +181,26 @@ Each person's task file references assigned tasks:
 
 ### Progress Summary
 
-Use timeline to aggregate team progress:
+Use blp-view to aggregate team progress:
 
 ````markdown
-```blp-timeline
----
-source_folders:
-  - "Team Daily Reports"
-heading_level: 3
+```blp-view
+source:
+  folders:
+    - "Team Daily Reports"
 filters:
+  date:
+    within_days: 7
   tags:
-    items:
-      - '#completed'
-      - '#progress'
-within_days: 7
----
+    any:
+      - "#completed"
+      - "#progress"
+group:
+  by: file
+sort:
+  by: date
+  order: desc
+render:
+  type: embed-list
 ```
 ````
