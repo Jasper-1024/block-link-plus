@@ -28,6 +28,7 @@ interface LineData {
 
 class VerticalLinesPluginValue implements PluginValue {
   private scheduled: ReturnType<typeof setTimeout>;
+  private scheduledActiveUpdate: ReturnType<typeof setTimeout> | null = null;
   private scroller: HTMLElement;
   private contentContainer: HTMLElement;
   private editor: MyEditor;
@@ -110,6 +111,12 @@ class VerticalLinesPluginValue implements PluginValue {
     } catch {
       // ignore
     }
+    try {
+      if (this.scheduledActiveUpdate) clearTimeout(this.scheduledActiveUpdate);
+    } catch {
+      // ignore
+    }
+    this.scheduledActiveUpdate = null;
 
     try {
       this.resizeObserver?.disconnect();
@@ -199,6 +206,21 @@ class VerticalLinesPluginValue implements PluginValue {
     this.scheduled = setTimeout(this.calculate, 0);
   };
 
+  private scheduleActiveUpdate = () => {
+    if (this.isDestroyed || !this.isActive) return;
+
+    // We need DOM to be fully updated (including decorations from other CM plugins)
+    // before we can reliably query for the active bullet line.
+    if (this.scheduledActiveUpdate) {
+      clearTimeout(this.scheduledActiveUpdate);
+    }
+    this.scheduledActiveUpdate = setTimeout(() => {
+      this.scheduledActiveUpdate = null;
+      this.syncLineXOffset();
+      this.updateActiveConnector();
+    }, 0);
+  };
+
   update(update: ViewUpdate) {
     this.refreshScope();
     if (!this.isActive) return;
@@ -217,8 +239,7 @@ class VerticalLinesPluginValue implements PluginValue {
     // - keep vertical lines aligned to the active bullet
     // - update the active block connector highlight
     if (update.selectionSet) {
-      this.syncLineXOffset();
-      this.updateActiveConnector();
+      this.scheduleActiveUpdate();
     }
   }
 
@@ -559,6 +580,14 @@ class VerticalLinesPluginValue implements PluginValue {
   // fenced code line), CM's `.cm-active` is often on a `HyperMD-list-line-nobullet`.
   // For outliner alignment/highlight we want the owning bullet line.
   private getActiveListBulletLine(): HTMLElement | null {
+    // Prefer the Enhanced List Blocks "active bullet" marker when available.
+    // This persists across continuation lines (e.g. code fences) and is more reliable
+    // than relying on `.cm-active` being on the bullet line.
+    const activeBulletMarked = this.view?.dom?.querySelector?.(
+      ".cm-line.blp-enhanced-list-active-bullet",
+    ) as HTMLElement | null;
+    if (activeBulletMarked) return activeBulletMarked;
+
     const activeDomLine = this.view?.dom?.querySelector?.(".cm-line.cm-active") as
       | HTMLElement
       | null;

@@ -41,5 +41,23 @@
     box-shadow: 0 0 0 var(--blp-enhanced-list-handle-glow-spread) var(--blp-enhanced-list-handle-glow);
 }
 
+/* Keep the bullet glow + affordance even when the caret is on a continuation line
+ * of the same list item (e.g., fenced code, hidden system line). */
+.cm-editor.blp-enhanced-list-handle
+  .cm-line.blp-enhanced-list-active-bullet
+  .cm-formatting-list-ul
+  .list-bullet::after,
+.cm-editor.blp-enhanced-list-handle
+  .cm-line.blp-enhanced-list-active-bullet
+  .cm-formatting-list-ol
+  .list-bullet::after {
+    box-shadow: 0 0 0 var(--blp-enhanced-list-handle-glow-spread) var(--blp-enhanced-list-handle-glow);
+}
+
+/* Highlight the whole active list block (Logseq-like). */
+.cm-editor .cm-line.blp-enhanced-list-active-block {
+    background-color: var(--background-modifier-hover);
+}
+
 /* Nested fenced code blocks inside Enhanced List (UI-only).
  * Indentation is applied via CM decorations. Keep this class as a styling hook. */

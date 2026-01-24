@@ -5,4 +5,5 @@ export { createEnhancedListSystemLineHideExtension } from "./system-line-hide-ex
 export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-extension";
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";
 export { createEnhancedListCodeBlockIndentExtension } from "./codeblock-indent-extension";
+export { createEnhancedListActiveBlockHighlightExtension } from "./active-block-highlight-extension";
 export { registerEnhancedListDuplicateIdRepair } from "./duplicate-id-repair";
