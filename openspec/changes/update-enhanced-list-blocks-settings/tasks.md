@@ -12,7 +12,7 @@
 ## 3. Behavior wiring
 - [x] 3.1 Respect system line visibility setting in Live Preview + Reading mode
 - [x] 3.2 Apply `blp-view` guardrails: materialize allow/deny, max source files, max results (truncate + hint), optional diagnostics
-- [ ] 3.3 In Live Preview, deleting a list item deletes its subtree (including system line)
+- [x] 3.3 In Live Preview, deleting a list item deletes its subtree (including system line)
 
 ## 4. Docs
 - [x] 4.1 Update Enhanced List Blocks docs to describe new settings
