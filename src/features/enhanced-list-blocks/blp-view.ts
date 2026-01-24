@@ -151,12 +151,17 @@ function isPathInFolder(path: string, folder: string): boolean {
 	return path === normalizedFolder || path.startsWith(normalizedFolder + "/");
 }
 
-function resolveSourceFilesOrError(
+export function resolveSourceFilesOrError(
 	plugin: BlockLinkPlus,
 	dv: DataviewApi,
 	currentFile: TFile,
 	source: BlpViewConfig["source"]
-): { files: TFile[]; nonEnabledPaths: string[] } {
+): {
+	files: TFile[];
+	nonEnabledPaths: string[];
+	missingPaths: string[];
+	ambiguousFiles: Array<{ input: string; matches: string[] }>;
+} {
 	const allMarkdownFiles = plugin.app.vault
 		.getFiles()
 		.filter((f): f is TFile => f instanceof TFile && f.extension?.toLowerCase() === "md");
@@ -164,7 +169,7 @@ function resolveSourceFilesOrError(
 	const enabledPathSet = new Set(enabledFiles.map((f) => f.path));
 
 	if (!source) {
-		return { files: enabledFiles, nonEnabledPaths: [] };
+		return { files: enabledFiles, nonEnabledPaths: [], missingPaths: [], ambiguousFiles: [] };
 	}
 
 	const folders = source.folders ?? [];
@@ -176,6 +181,8 @@ function resolveSourceFilesOrError(
 	}
 
 	let candidatePaths: string[] = [];
+	const missingPaths: string[] = [];
+	const ambiguousFiles: Array<{ input: string; matches: string[] }> = [];
 
 	if (dvSource) {
 		const pages = dv.pages(dvSource, currentFile.path);
@@ -190,27 +197,88 @@ function resolveSourceFilesOrError(
 			? allMarkdownFiles.filter((f) => folders.some((folder) => isPathInFolder(f.path, folder))).map((f) => f.path)
 			: [];
 
-		const fileMatches = files.map((p) => {
-			const cleaned = p.replace(/^\[\[|\]\]$/g, "").split("|")[0].trim();
-			const resolved = plugin.app.metadataCache.getFirstLinkpathDest(cleaned, currentFile.path)?.path;
-			return resolved ?? cleaned;
-		});
+		const markdownPaths = new Set(allMarkdownFiles.map((f) => f.path));
+		const basenameToPaths = new Map<string, string[]>();
+		for (const f of allMarkdownFiles) {
+			const base = f.basename || f.path.split("/").pop()?.replace(/\.md$/i, "") || "";
+			if (!base) continue;
+			const list = basenameToPaths.get(base) ?? [];
+			list.push(f.path);
+			basenameToPaths.set(base, list);
+		}
+
+		const normalizeInput = (raw: string): string => {
+			let s = raw.trim();
+			if (s.startsWith("[[") && s.endsWith("]]")) {
+				s = s.slice(2, -2);
+			}
+			s = s.split("|")[0].trim();
+			return s.replace(/\\/g, "/").replace(/^\/+/, "");
+		};
+
+		const resolveFileInput = (raw: unknown): string | null => {
+			if (typeof raw !== "string") {
+				throw new Error("blp-view: source.files entries must be strings.");
+			}
+
+			const cleaned = normalizeInput(raw);
+			if (!cleaned) return null;
+
+			const resolved = (plugin.app.metadataCache as any)?.getFirstLinkpathDest?.(cleaned, currentFile.path)?.path;
+			if (typeof resolved === "string" && resolved) {
+				return resolved;
+			}
+
+			const isPathLike = cleaned.includes("/") || cleaned.toLowerCase().endsWith(".md");
+			if (isPathLike) {
+				const path = cleaned.toLowerCase().endsWith(".md") ? cleaned : `${cleaned}.md`;
+				if (markdownPaths.has(path)) {
+					return path;
+				}
+				missingPaths.push(cleaned);
+				return null;
+			}
+
+			const matches = basenameToPaths.get(cleaned) ?? [];
+			if (matches.length === 1) {
+				return matches[0];
+			}
+			if (matches.length > 1) {
+				ambiguousFiles.push({ input: cleaned, matches: [...matches].sort() });
+				return null;
+			}
+
+			missingPaths.push(cleaned);
+			return null;
+		};
+
+		const fileMatches = files.map(resolveFileInput).filter((p): p is string => typeof p === "string" && p.length > 0);
 
 		candidatePaths = [...folderMatches, ...fileMatches].filter(Boolean);
 	}
 
 	const uniqueCandidatePaths = [...new Set(candidatePaths)];
-	const nonEnabledPaths = uniqueCandidatePaths.filter((p) => !enabledPathSet.has(p));
 
 	const resolvedFiles: TFile[] = [];
+	const resolvedPaths: string[] = [];
 	for (const path of uniqueCandidatePaths) {
 		const af = plugin.app.vault.getAbstractFileByPath(path);
 		if (af instanceof TFile) {
 			resolvedFiles.push(af);
+			resolvedPaths.push(path);
+		} else {
+			missingPaths.push(path);
 		}
 	}
 
-	return { files: resolvedFiles, nonEnabledPaths };
+	const nonEnabledPaths = resolvedPaths.filter((p) => !enabledPathSet.has(p));
+
+	return {
+		files: resolvedFiles,
+		nonEnabledPaths,
+		missingPaths: [...new Set(missingPaths)].sort(),
+		ambiguousFiles,
+	};
 }
 
 function flattenListItems(items: any[], ancestorTags: string[], out: Array<{ item: any; ancestorTags: string[] }>) {
@@ -637,13 +705,43 @@ export async function handleBlpView(
 		const maxResults = plugin.settings.blpViewMaxResults ?? 0;
 		const showDiagnostics = plugin.settings.blpViewShowDiagnostics;
 
-		const { files: sourceFiles, nonEnabledPaths } = resolveSourceFilesOrError(plugin, dv, file, config.source);
+		const { files: sourceFiles, nonEnabledPaths, missingPaths, ambiguousFiles } = resolveSourceFilesOrError(
+			plugin,
+			dv,
+			file,
+			config.source
+		);
+
+		if (missingPaths.length > 0) {
+			el.createEl("pre", {
+				text:
+					`Error: blp-view source includes missing/unresolved files:\n` +
+					missingPaths.map((p) => `- ${p}`).join("\n") +
+					`\n\nTip: use vault-relative paths (right click file → Copy path) or ensure the files exist.`,
+			});
+			return;
+		}
+
+		if (ambiguousFiles.length > 0) {
+			const lines: string[] = ["Error: blp-view source includes ambiguous file names:"];
+			for (const a of ambiguousFiles) {
+				lines.push(`- ${a.input}`);
+				for (const p of a.matches) {
+					lines.push(`  - ${p}`);
+				}
+			}
+			lines.push("");
+			lines.push("Tip: use a full vault-relative path in `source.files` to disambiguate.");
+			el.createEl("pre", { text: lines.join("\n") });
+			return;
+		}
+
 		if (nonEnabledPaths.length > 0) {
 			el.createEl("pre", {
 				text:
 					`Error: blp-view source includes non-enabled files:\n` +
 					nonEnabledPaths.map((p) => `- ${p}`).join("\n") +
-					`\n\nEnable them via settings folders/files or frontmatter \`${"blp_enhanced_list: true"}\`.`,
+					`\n\nEnable them via settings folders/files (vault-relative) or frontmatter \`${"blp_enhanced_list: true"}\`.`,
 			});
 			return;
 		}

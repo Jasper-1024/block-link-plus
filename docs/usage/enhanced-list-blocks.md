@@ -5,7 +5,7 @@
 ## 启用范围（默认关闭）
 
 Enhanced List Blocks 默认不启用，仅在以下任一条件满足时对文件生效：
-- 位于设置中配置的“启用文件夹/启用文件”范围内
+- 位于设置中配置的“启用文件夹/启用文件”范围内（路径为 vault 内部路径；文件夹匹配递归；建议用 Obsidian 右键 Copy path 获取）
 - 文件 frontmatter 含 `blp_enhanced_list: true`
 
 ## 系统行（自动生成 + 隐藏）

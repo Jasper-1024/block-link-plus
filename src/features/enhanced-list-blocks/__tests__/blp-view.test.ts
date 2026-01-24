@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { TFile } from "obsidian";
+import { App, TFile } from "obsidian";
 import crypto from "crypto";
 import {
 	buildGroups,
@@ -10,6 +10,7 @@ import {
 	matchesSectionFilter,
 	matchesTagFilter,
 	parseConfig,
+	resolveSourceFilesOrError,
 	resolveConfigDefaults,
 	stableSortItems,
 } from "../blp-view";
@@ -283,5 +284,89 @@ describe("enhanced-list-blocks/blp-view materialize", () => {
 		expect(written).toContain("%% blp-view-start");
 		expect(written).toContain(markdown);
 		expect(written).toContain("%% blp-view-end %%");
+	});
+});
+
+describe("enhanced-list-blocks/blp-view source resolution", () => {
+	test("resolves source.files by basename via vault fallback when metadataCache cannot resolve", () => {
+		const app = new App();
+		const dataPath = "Review/day/2026/1/BLP/data/BLP Data 01 - Daily Logs A.md";
+		(app.vault as any)._addFile(dataPath, "");
+
+		const currentFile = new TFile();
+		currentFile.path = "Review/day/2026/1/BLP/10 - blp-view.md";
+
+		(app.metadataCache as any).getFirstLinkpathDest = jest.fn(() => null);
+
+		const plugin = {
+			app,
+			settings: {
+				enhancedListEnabledFolders: ["Review"],
+				enhancedListEnabledFiles: [],
+			},
+		} as any;
+
+		const res = resolveSourceFilesOrError(plugin, {} as any, currentFile as any, {
+			files: ["[[BLP Data 01 - Daily Logs A]]"],
+		} as any);
+
+		expect(res.missingPaths).toEqual([]);
+		expect(res.ambiguousFiles).toEqual([]);
+		expect(res.nonEnabledPaths).toEqual([]);
+		expect(res.files.map((f: any) => f.path)).toEqual([dataPath]);
+	});
+
+	test("reports missingPaths when source.files cannot be resolved", () => {
+		const app = new App();
+		const currentFile = new TFile();
+		currentFile.path = "Review/day/2026/1/BLP/10 - blp-view.md";
+		(app.metadataCache as any).getFirstLinkpathDest = jest.fn(() => null);
+
+		const plugin = {
+			app,
+			settings: {
+				enhancedListEnabledFolders: ["Review"],
+				enhancedListEnabledFiles: [],
+			},
+		} as any;
+
+		const res = resolveSourceFilesOrError(plugin, {} as any, currentFile as any, {
+			files: ["[[Does Not Exist]]"],
+		} as any);
+
+		expect(res.files).toEqual([]);
+		expect(res.ambiguousFiles).toEqual([]);
+		expect(res.missingPaths).toEqual(["Does Not Exist"]);
+	});
+
+	test("reports ambiguousFiles when basename matches multiple files", () => {
+		const app = new App();
+		(app.vault as any)._addFile("Review/A/Same Name.md", "");
+		(app.vault as any)._addFile("Review/B/Same Name.md", "");
+
+		const currentFile = new TFile();
+		currentFile.path = "Review/day/2026/1/BLP/10 - blp-view.md";
+		(app.metadataCache as any).getFirstLinkpathDest = jest.fn(() => null);
+
+		const plugin = {
+			app,
+			settings: {
+				enhancedListEnabledFolders: ["Review"],
+				enhancedListEnabledFiles: [],
+			},
+		} as any;
+
+		const res = resolveSourceFilesOrError(plugin, {} as any, currentFile as any, {
+			files: ["[[Same Name]]"],
+		} as any);
+
+		expect(res.files).toEqual([]);
+		expect(res.missingPaths).toEqual([]);
+		expect(res.ambiguousFiles).toEqual([
+			{
+				input: "Same Name",
+				matches: ["Review/A/Same Name.md", "Review/B/Same Name.md"],
+			},
+		]);
 	});
 });

@@ -5,7 +5,7 @@ Treat Obsidian list items as the smallest block unit: auto-insert a hidden syste
 ## Enable Scope (Opt-in)
 
 Enhanced List Blocks is disabled by default, and only applies to files that match **any** of the following:
-- Included in the “enabled folders/files” scope in settings
+- Included in the “enabled folders/files” scope in settings (vault-relative path; folders are recursive; use Obsidian “Copy path”)
 - File frontmatter contains `blp_enhanced_list: true`
 
 ## System Line (Auto + Hidden)
