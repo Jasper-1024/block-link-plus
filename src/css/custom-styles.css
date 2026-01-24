@@ -1,3 +1,7 @@
 .cm-line.blp-enhanced-list-system-line-hidden {
     display: none !important;
 }
+
+.markdown-source-view.mod-cm6 .cm-lineNumbers .cm-gutterElement {
+    overflow: hidden;
+}
