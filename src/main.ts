@@ -33,6 +33,15 @@ import * as TimeSection from 'features/time-section';
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleTimeline } from 'features/dataview-timeline';
+import {
+	createEnhancedListSystemLineHideExtension,
+	createEnhancedListZoomExtension,
+	createEnhancedListOpsUiExtension,
+	createEnhancedListDragDropExtension,
+	handleBlpView,
+	registerEnhancedListDuplicateIdRepair,
+	registerEnhancedListOpsCommands,
+} from "features/enhanced-list-blocks";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
@@ -128,6 +137,16 @@ export default class BlockLinkPlus extends Plugin {
 			}
 		});
 
+		// Register post-processor for blp-view blocks (Enhanced List Blocks Query/View)
+		this.registerMarkdownCodeBlockProcessor("blp-view", (source, el, ctx) => {
+			if (isDataviewAvailable()) {
+				void handleBlpView(this, source, el, ctx);
+			} else {
+				el.empty();
+				el.createEl("pre", { text: "blp-view requires Dataview plugin." });
+			}
+		});
+
 		this.addCommand({
 			id: "copy-link-to-block",
 			name: "Copy Block Link",
@@ -161,10 +180,16 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		// for reading mode
-		this.registerMarkdownPostProcessor((el) => markdownPostProcessor(el, this));
+		this.registerMarkdownPostProcessor((el, ctx) => markdownPostProcessor(el, ctx, this));
 
 		// for live preview
 		this.updateViewPlugin();
+		this.registerEditorExtension([createEnhancedListSystemLineHideExtension(this)]);
+		this.registerEditorExtension([createEnhancedListZoomExtension(this)]);
+		this.registerEditorExtension([createEnhancedListOpsUiExtension(this)]);
+		this.registerEditorExtension([createEnhancedListDragDropExtension(this)]);
+		registerEnhancedListDuplicateIdRepair(this);
+		registerEnhancedListOpsCommands(this);
 
 		// Initialize Flow Editor Manager
 		this.flowEditorManager = new FlowEditorManager(this);

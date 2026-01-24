@@ -225,6 +225,48 @@ class T {
             }
           }
         },
+
+        // Enhanced List Blocks section
+        enhancedListBlocks: {
+          title: "Enhanced List Blocks",
+          desc: "Opt-in scope for Enhanced List Blocks features (blp-view, system line hiding, duplicate ^id repair). A file is enabled if it matches any enabled folder/file below, or has frontmatter `blp_enhanced_list: true`.",
+          enabledFolders: {
+            name: "Enabled folders",
+            desc: "One folder path per line (vault-relative). Markdown files under these folders are enabled."
+          },
+          enabledFiles: {
+            name: "Enabled files",
+            desc: "One file path per line (vault-relative). These Markdown files are enabled."
+          },
+          ops: {
+            title: "Enhanced List Blocks Ops",
+            desc: "Outliner-like operations and UI enhancements for list-item subtrees (Live Preview only; enabled files only).",
+            zoom: {
+              name: "Enable zoom (Live Preview)",
+              desc: "Zoom in/out to the current list subtree. Conflicts with third-party plugin: obsidian-zoom."
+            },
+            move: {
+              name: "Enable move subtree up/down",
+              desc: "Move the current list subtree up/down among siblings (current file only). Conflicts with obsidian-outliner."
+            },
+            indent: {
+              name: "Enable indent/outdent subtree",
+              desc: "Indent/outdent the current list subtree (toggleable). Conflicts with obsidian-outliner."
+            },
+            dragDrop: {
+              name: "Enable drag-and-drop subtree",
+              desc: "Drag-and-drop list subtrees within the current file (no cross-file). Conflicts with obsidian-outliner."
+            },
+            verticalLines: {
+              name: "Enable vertical indentation lines",
+              desc: "Render indentation guides in Live Preview (best-effort across themes). Conflicts with obsidian-outliner."
+            },
+            bulletThreading: {
+              name: "Enable bullet threading",
+              desc: "Highlight the active list block path (current block + ancestors). Conflicts with obsidian-outliner."
+            }
+          }
+        },
       },
 
       // Only used translations - Commands
@@ -302,7 +344,10 @@ class T {
 
       // Notices
       notices: {
-        timelineRequiresDataview: "Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin."
+        timelineRequiresDataview: "Block Link Plus: Timeline feature requires Dataview plugin. Please install and enable Dataview plugin.",
+        enhancedListZoomConflict: "Block Link Plus: Cannot enable Enhanced List Zoom because plugin 'obsidian-zoom' is enabled. Disable one of them to avoid conflicts.",
+        enhancedListOutlinerConflict: "Block Link Plus: Cannot enable Enhanced List Ops because plugin 'obsidian-outliner' is enabled. Disable one of them to avoid conflicts.",
+        enhancedListOpsRequiresLivePreview: "Block Link Plus: Enhanced List Ops require Live Preview."
       }
     },
     zh: {
@@ -526,6 +571,48 @@ class T {
             }
           }
         },
+
+        // 增强 List Blocks
+        enhancedListBlocks: {
+          title: "增强 List Blocks",
+          desc: "配置增强 List Blocks 的启用范围（blp-view、系统行隐藏、重复 ^id 修复仅在启用文件内生效）。满足任一条件即启用：位于启用文件夹/启用文件列表，或文件 frontmatter 含 `blp_enhanced_list: true`。",
+          enabledFolders: {
+            name: "启用文件夹",
+            desc: "每行一个文件夹路径（相对 vault 根目录）。该文件夹下的 Markdown 文件启用。"
+          },
+          enabledFiles: {
+            name: "启用文件",
+            desc: "每行一个文件路径（相对 vault 根目录）。这些 Markdown 文件启用。"
+          },
+          ops: {
+            title: "增强 List Blocks 操作",
+            desc: "为 list item 子树提供类似 outliner 的操作与 UI 增强（仅 Live Preview，仅启用文件生效）。",
+            zoom: {
+              name: "启用 Zoom（Live Preview）",
+              desc: "Zoom in/out 到当前 list 子树。与第三方插件 `obsidian-zoom` 冲突，不可同时启用。"
+            },
+            move: {
+              name: "启用子树上移/下移",
+              desc: "在当前文件内，将当前 list 子树在兄弟节点之间上移/下移。与 `obsidian-outliner` 冲突。"
+            },
+            indent: {
+              name: "启用子树缩进/反缩进",
+              desc: "缩进/反缩进当前 list 子树（可开关）。与 `obsidian-outliner` 冲突。"
+            },
+            dragDrop: {
+              name: "启用拖拽（Drag & Drop）",
+              desc: "在当前文件内拖拽 list 子树进行排序/改变层级（不支持跨文件）。与 `obsidian-outliner` 冲突。"
+            },
+            verticalLines: {
+              name: "启用垂直缩进线",
+              desc: "在 Live Preview 下渲染缩进导引线（受主题影响，best-effort）。与 `obsidian-outliner` 冲突。"
+            },
+            bulletThreading: {
+              name: "启用 Bullet Threading",
+              desc: "高亮当前 list block 及其祖先路径（active path）。与 `obsidian-outliner` 冲突。"
+            }
+          }
+        },
       },
 
       // 命令翻译
@@ -603,7 +690,10 @@ class T {
 
       // Notices
       notices: {
-        timelineRequiresDataview: "Block Link Plus: 时间轴功能需要 Dataview 插件。请安装并启用 Dataview 插件。"
+        timelineRequiresDataview: "Block Link Plus: 时间轴功能需要 Dataview 插件。请安装并启用 Dataview 插件。",
+        enhancedListZoomConflict: "Block Link Plus：检测到已启用 `obsidian-zoom`，无法同时启用 BLP 的 Zoom 模块。请关闭其中一个以避免冲突。",
+        enhancedListOutlinerConflict: "Block Link Plus：检测到已启用 `obsidian-outliner`，无法同时启用 BLP 的 Outliner 模块。请关闭其中一个以避免冲突。",
+        enhancedListOpsRequiresLivePreview: "Block Link Plus：增强 List Blocks 操作仅支持 Live Preview。"
       }
     },
     "zh-TW": {
@@ -827,6 +917,48 @@ class T {
             }
           }
         },
+
+        // 增強 List Blocks
+        enhancedListBlocks: {
+          title: "增強 List Blocks",
+          desc: "設定增強 List Blocks 的啟用範圍（blp-view、系統行隱藏、重複 ^id 修復僅在啟用檔案內生效）。滿足任一條件即啟用：位於啟用資料夾/啟用檔案清單，或檔案 frontmatter 含 `blp_enhanced_list: true`。",
+          enabledFolders: {
+            name: "啟用資料夾",
+            desc: "每行一個資料夾路徑（相對 vault 根目錄）。該資料夾下的 Markdown 檔案啟用。"
+          },
+          enabledFiles: {
+            name: "啟用檔案",
+            desc: "每行一個檔案路徑（相對 vault 根目錄）。這些 Markdown 檔案啟用。"
+          },
+          ops: {
+            title: "增強 List Blocks 操作",
+            desc: "為 list item 子樹提供類似 outliner 的操作與 UI 增強（僅 Live Preview，僅啟用檔案生效）。",
+            zoom: {
+              name: "啟用 Zoom（Live Preview）",
+              desc: "Zoom in/out 到當前 list 子樹。與第三方插件 `obsidian-zoom` 衝突，不可同時啟用。"
+            },
+            move: {
+              name: "啟用子樹上移/下移",
+              desc: "在當前檔案內，將當前 list 子樹在兄弟節點之間上移/下移。與 `obsidian-outliner` 衝突。"
+            },
+            indent: {
+              name: "啟用子樹縮排/反縮排",
+              desc: "縮排/反縮排當前 list 子樹（可開關）。與 `obsidian-outliner` 衝突。"
+            },
+            dragDrop: {
+              name: "啟用拖曳（Drag & Drop）",
+              desc: "在當前檔案內拖曳 list 子樹進行排序/改變層級（不支援跨檔案）。與 `obsidian-outliner` 衝突。"
+            },
+            verticalLines: {
+              name: "啟用垂直縮排線",
+              desc: "在 Live Preview 下渲染縮排導引線（受主題影響，best-effort）。與 `obsidian-outliner` 衝突。"
+            },
+            bulletThreading: {
+              name: "啟用 Bullet Threading",
+              desc: "高亮當前 list block 及其祖先路徑（active path）。與 `obsidian-outliner` 衝突。"
+            }
+          }
+        },
       },
 
       // 命令翻譯
@@ -904,7 +1036,10 @@ class T {
 
       // Notices
       notices: {
-        timelineRequiresDataview: "Block Link Plus: 時間軸功能需要 Dataview 插件。請安裝並啟用 Dataview 插件。"
+        timelineRequiresDataview: "Block Link Plus: 時間軸功能需要 Dataview 插件。請安裝並啟用 Dataview 插件。",
+        enhancedListZoomConflict: "Block Link Plus：偵測到已啟用 `obsidian-zoom`，無法同時啟用 BLP 的 Zoom 模組。請關閉其中一個以避免衝突。",
+        enhancedListOutlinerConflict: "Block Link Plus：偵測到已啟用 `obsidian-outliner`，無法同時啟用 BLP 的 Outliner 模組。請關閉其中一個以避免衝突。",
+        enhancedListOpsRequiresLivePreview: "Block Link Plus：增強 List Blocks 操作僅支援 Live Preview。"
       }
     },
   };

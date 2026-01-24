@@ -1,0 +1,66 @@
+import { RangeSetBuilder } from "@codemirror/state";
+import { Decoration, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { editorInfoField, editorLivePreviewField } from "obsidian";
+import type BlockLinkPlus from "../../main";
+import { isEnhancedListEnabledFile } from "./enable-scope";
+
+const SYSTEM_LINE_REGEX =
+	/^\s*\[date::\s*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\]\s*\^[a-zA-Z0-9_-]+\s*$/;
+
+function buildDecorations(view: any, plugin: BlockLinkPlus) {
+	const builder = new RangeSetBuilder<Decoration>();
+
+	try {
+		if (view.state.field?.(editorLivePreviewField, false) !== true) {
+			return builder.finish();
+		}
+	} catch {
+		return builder.finish();
+	}
+
+	const info = view.state.field(editorInfoField, false);
+	const file = info?.file;
+	if (!file) return builder.finish();
+	if (!isEnhancedListEnabledFile(plugin, file)) return builder.finish();
+
+	for (const { from, to } of view.visibleRanges) {
+		let pos = from;
+		while (pos <= to) {
+			const line = view.state.doc.lineAt(pos);
+			if (SYSTEM_LINE_REGEX.test(line.text)) {
+				builder.add(
+					line.from,
+					line.from,
+					Decoration.line({
+						class: "blp-enhanced-list-system-line-hidden",
+						attributes: { style: "display: none !important;" },
+					})
+				);
+			}
+			pos = line.to + 1;
+		}
+	}
+
+	return builder.finish();
+}
+
+export function createEnhancedListSystemLineHideExtension(plugin: BlockLinkPlus) {
+	return ViewPlugin.fromClass(
+		class {
+			decorations: any;
+
+			constructor(view: any) {
+				this.decorations = buildDecorations(view, plugin);
+			}
+
+			update(update: ViewUpdate) {
+				if (update.docChanged || update.viewportChanged) {
+					this.decorations = buildDecorations(update.view, plugin);
+				}
+			}
+		},
+		{
+			decorations: (v) => v.decorations,
+		}
+	);
+}

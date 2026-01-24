@@ -3,7 +3,7 @@
 ## 目标
 
 - 把 Obsidian 的 list item 作为“最小 block 单元”，补齐 Roam/Logseq 式的 block-first：可引用（ID）→ 可索引（字段）→ 可聚合/筛选/查询（View）。
-- Timeline 退化为某个 View 的 preset；本阶段只讨论 Query/View，不讨论 Block Ops（zoom/backlinks/move/reindent/跨文件移动等）。
+- Timeline 退化为某个 View 的 preset；本 memo 主要讨论 Query/View；Enhanced List Blocks Ops（zoom/move/indent/dnd/vertical-lines/threading）现状与参考插件差异见 `doc/compare-enhanced-list-ops-vs-vslinko.md`。
 
 ## 事实基础（已验证）
 
@@ -11,6 +11,14 @@
 - Dataview 的 `file.lists/file.tasks` 暴露 `blockId`，来源是 Obsidian `metadata.listItems[].id`；并把 list item 的 `link` 指向 `Link.block(path, id)`（`_research/obsidian-dataview/src/data-import/markdown-file.ts:221`、`_research/obsidian-dataview/src/data-import/markdown-file.ts:242`）。
 - Dataview 对 list item 的字段提取，稳定入口是 inline field：`[key:: value]` / `(key:: value)`；full-line `Key:: Value` 在 list item 场景不作为契约（`_research/obsidian-dataview/docs/docs/annotation/add-metadata.md:70`、`_research/obsidian-dataview/src/data-import/markdown-file.ts:259`）。
 - Dataview 的 inline field 值若要被解析为 DateTime，需要 `YYYY-MM-DDTHH:mm:ss`（`T` 分隔）；`YYYY-MM-DD HH:mm:ss`（空格分隔）会落为普通字符串（`_research/obsidian-dataview/src/expression/parse.ts:314`、`_research/obsidian-dataview/src/expression/parse.ts:325`）。
+
+## 启用范围（显式开启）
+
+- 默认不启用；只有满足以下任一条件的文件才启用增强：
+  - 位于插件设置指定的文件夹/文件
+  - 文件 frontmatter 含 `blp_enhanced_list: true`
+- Query/View 的 `source`（即便显式配置）也只能落在启用范围内；命中未启用文件则明确报错并停止渲染。
+- 仅对启用文件执行：系统行隐藏、保存时重复 `^id` 修复、Query/View 候选扫描。
 
 ## 契约 1：增强 list item 的尾部格式（写入约定）
 
@@ -25,7 +33,10 @@
 ## 契约 2：展示/隐藏（渲染约定）
 
 - 系统行必须在 Live Preview + Reading mode 下隐藏，且用户不可直接编辑（避免误改导致引用漂移、查询失效）。
-- 用户字段行是否默认隐藏：待定（倾向“默认隐藏 + 可切换显示”，以减少噪音）。
+- 用户字段不隐藏（用户可见、可编辑）。
+- 实现备注：
+  - Live Preview：通过 CodeMirror 行装饰隐藏整行。
+  - Reading mode：若 Dataview 将 `[date:: ...]` 渲染为 `dataview inline-field`，插件会移除该 `date` 字段节点（`^id` 在 Reading mode 下通常已被 Obsidian 自带隐藏）。
 
 ## 契约 3：ID / date 生成与复制粘贴
 
@@ -42,6 +53,8 @@
   - 存在 `blockId`
   - 存在 `date`，且可被 Dataview 解析为 DateTime（即 `YYYY-MM-DDTHH:mm:ss`）
 - 不满足者：**跳过**（Query/View 阶段不做隐式写回；增强 list 的写入由单独入口负责）。
+- 过滤语义（对齐 Logseq/Roam）：`tags/outlinks/fields/section/date` 等过滤**只作用于当前 list item**（不从祖先继承，也不从子树聚合）。
+- 可选增强（低成本）：支持“排除带某 tag 的祖先块的所有后代”的过滤（依赖 Dataview `children` 子树结构即可实现）。
 - 过滤能力（至少）：
   - `date`（after/before/between/within_days）
   - 用户自定义字段（has / 比较 / in / contains）
@@ -66,17 +79,26 @@
   - `filters.section: { any? all? none? }`（值为 heading/section 名称列表）
   - `group: { by: none|day(date)|file|field, field? }`
   - `sort: { by: date|file.path|line, order: asc|desc }`
-  - `render: { type: embed-list|table, mode?: render|materialize, columns?: Column[] }`
+  - `render: { type: embed-list|table, mode?: materialize, columns?: Column[] }`
     - `Column: { name, field? , expr? }`（二选一；`expr` 为 Dataview 表达式）
 
 默认值（降低上手成本）：
-- `source` 省略：默认全局（等价于 Dataview 的全库 pages/lists 范围，后续再由 filters 收敛）。
+- `source` 省略：默认“启用范围内全部文件”。
+- `sort` 省略：默认按 `date desc`（今天/最新在前），并用 `file.path` + `line` 做稳定排序。
 - `render.type` 省略：默认 `embed-list`。
+- `render.mode` 通常省略（纯渲染，不写回文件）；只有显式配置 `render.mode: materialize` 才启用受控区域写回。
 - `render.type: table` 且 `columns` 省略：默认列为 `File`（文件名/文件链接）与 `Date`（系统字段 `date`）；用户显式写了 `columns` 则完全按用户配置渲染。
 
-## 待定项（下一轮需要拍板）
+## 当前实现状态（2026-01-09）
 
-- YAML 的默认值与必填项（目标：用户复制最小模板即可用）：
-  - `render.mode` 默认 `render`
-  - `sort.by/order` 的默认策略（建议：`date desc` + `file.path` + `line` 的稳定排序）
-  - `source` 为空时的默认（是否默认为当前文件夹 / 当前文件反链等）
+- 已实现：启用范围（文件夹/文件列表/`blp_enhanced_list: true` 任一命中即启用）、系统行隐藏、保存时重复 `^id` 修复、`blp-view`（含 materialize 受控区域写回）、Enhanced List Blocks Ops（仅 Live Preview；仅启用文件；与 `obsidian-zoom/obsidian-outliner` 冲突检测）。
+- 暂未实现：自动写入系统行/自动生成 `date`/`^id`（目前需要手动输入，或通过复制已有行来制造/验证修复）。
+
+## 手动测试清单
+
+- Enable scope：仅 frontmatter 启用是否生效；`blp-view` 显式 `source` 命中未启用文件是否明确报错并停止输出。
+- 系统行隐藏：Live Preview/Reading mode 下均不显示系统行；Reading mode 重点确认 `date` 不展示。
+- 重复 `^id` 修复：同文件复制粘贴制造重复 `^id`，保存后是否重写重复项 `^id` 且 `date` 更新为修复时刻。
+- `blp-view` 默认行为：`source` 省略=扫描启用范围；默认 `date desc`；table 默认列 `File/Date`。
+- 过滤/分组/排序：`tags`（含 `none_in_ancestors`）、`outlinks.link_to_current_file`、`section`、`fields`、`date`（within_days/after/before/between）。
+- materialize：受控区域 marker 正确、hash/no-op 生效；手动编辑受控区域后下次更新会被覆盖。

@@ -10,6 +10,11 @@ module.exports = {
     '^main$': '<rootDir>/src/main.ts',
     '^src/(.*)$': '<rootDir>/src/$1',
     '^basics/(.*)$': '<rootDir>/src/basics/$1',
+    '^shared/(.*)$': '<rootDir>/src/shared/$1',
+    '^ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^features/(.*)$': '<rootDir>/src/features/$1',
+    '^utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^types/(.*)$': '<rootDir>/src/types/$1',
     '^css/(.*)$': '<rootDir>/src/css/$1'
   },
   transform: {

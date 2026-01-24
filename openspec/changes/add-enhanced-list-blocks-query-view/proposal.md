@@ -8,6 +8,7 @@ Key outcomes:
 - `expr:` escape hatch for advanced column logic (evaluated by Dataview, not a new DSL).
 - Optional managed materialization mode (dynamic region) that is fully plugin-owned and always overwritten.
 - On-save detection+repair for duplicate `^id` inside the same file (duplicates get a new `^id` and `date` is rewritten to the repair time).
+- The feature is opt-in and scoped: Query/View + repairs only run within explicitly enabled files.
 
 ## Why
 - Obsidian lacks block-first query/view primitives; Dataview has strong indexing, but raw Dataview usage is too high-friction for the "block = list item" workflow we want.
@@ -20,6 +21,8 @@ Key outcomes:
   - optional managed materialization region (no user edits preserved)
 - Make `date` mandatory for Query/View candidates (missing `date` or `blockId` => skip).
 - Make ID conflicts safe: on save, repair duplicate `^id` within a file deterministically.
+- Make Enhanced List Blocks opt-in: only operate on explicitly enabled files (settings folders/files or frontmatter `blp_enhanced_list: true`).
+- Prevent scope leaks: a `blp-view` explicit `source` MUST NOT include non-enabled files (error + no output).
 - Keep the user-facing surface area small and stable; avoid re-implementing Dataview query language.
 
 ## Non-Goals
@@ -31,13 +34,13 @@ Key outcomes:
 - Code block name: `blp-view`
 - YAML schema: `source/filters/group/sort/render/columns`
 - Defaults:
-  - `source` omitted => global scope
+  - `source` omitted => all enabled files (not global)
   - `render.type` omitted => `embed-list`
   - `render.type: table` with no `columns` => default columns `File` and `Date`
 
 ## Impact
 - Adds a new rendering primitive to notes (`blp-view`).
-- Adds a save-time safety mechanism which may rewrite note content to repair duplicate IDs (with no-op optimization to avoid unnecessary writes).
+- Adds a save-time safety mechanism (scoped to enabled files) which may rewrite note content to repair duplicate IDs (with no-op optimization to avoid unnecessary writes).
 
 ## Validation Plan
 - Unit tests for:

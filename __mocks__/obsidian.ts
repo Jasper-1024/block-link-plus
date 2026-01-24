@@ -110,6 +110,10 @@ export class Vault {
     return Array.from(this.files.keys()).map(path => new TFile(path));
   }
 
+  getAbstractFileByPath(path: string): TFile | null {
+    return this.files.has(path) ? new TFile(path) : null;
+  }
+
   // 用于测试的辅助方法
   _addFile(path: string, content: string): TFile {
     this.files.set(path, content);
@@ -263,6 +267,27 @@ export class MarkdownView {
 
   setMode(mode: 'source' | 'preview' | 'live'): void {
     this.mode = mode;
+  }
+}
+
+// MarkdownRenderChild 类模拟（用于 Markdown 渲染子组件）
+export class MarkdownRenderChild {
+  containerEl: HTMLElement;
+
+  constructor(containerEl: HTMLElement) {
+    this.containerEl = containerEl;
+  }
+
+  onload(): void {}
+
+  onunload(): void {}
+
+  load(): void {
+    this.onload();
+  }
+
+  unload(): void {
+    this.onunload();
   }
 }
 

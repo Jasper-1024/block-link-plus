@@ -332,6 +332,124 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.timeline.defaultSortOrder.name)
 			.setDesc(t.settings.timeline.defaultSortOrder.desc);
 
+		// Enhanced List Blocks
+		this.addHeading(t.settings.enhancedListBlocks.title).setDesc(t.settings.enhancedListBlocks.desc);
+
+		const parseScopeLines = (value: string): string[] =>
+			value
+				.split(/\r?\n/)
+				.map((l) => l.trim())
+				.filter(Boolean)
+				.map((l) => l.replace(/\\/g, "/"));
+
+		new Setting(this.containerEl)
+			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
+			.setDesc(t.settings.enhancedListBlocks.enabledFolders.desc)
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("Daily\nProjects")
+					.setValue((this.plugin.settings.enhancedListEnabledFolders ?? []).join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.enhancedListEnabledFolders = parseScopeLines(value);
+						await this.plugin.saveSettings();
+					});
+
+				text.inputEl.rows = 3;
+			});
+
+		new Setting(this.containerEl)
+			.setName(t.settings.enhancedListBlocks.enabledFiles.name)
+			.setDesc(t.settings.enhancedListBlocks.enabledFiles.desc)
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("Daily/2026-01-09.md")
+					.setValue((this.plugin.settings.enhancedListEnabledFiles ?? []).join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.enhancedListEnabledFiles = parseScopeLines(value);
+						await this.plugin.saveSettings();
+					});
+
+				text.inputEl.rows = 3;
+			});
+
+		// Enhanced List Blocks Ops
+		this.addHeading(t.settings.enhancedListBlocks.ops.title).setDesc(t.settings.enhancedListBlocks.ops.desc);
+
+		const isThirdPartyPluginEnabled = (pluginId: string): boolean => {
+			try {
+				return Boolean((this.plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
+			} catch {
+				return false;
+			}
+		};
+
+		const addOpsToggle = (
+			settingName: KeysOfType<PluginSettings, boolean>,
+			name: string,
+			desc: string,
+			blockReason?: () => string | null
+		) => {
+			new Setting(this.containerEl)
+				.setName(name)
+				.setDesc(desc)
+				.addToggle((toggle) => {
+					toggle.setValue(this.plugin.settings[settingName]).onChange(async (value) => {
+						if (value) {
+							const reason = blockReason?.();
+							if (reason) {
+								new Notice(reason);
+								toggle.setValue(false);
+								return;
+							}
+						}
+
+						// @ts-ignore
+						this.plugin.settings[settingName] = value;
+						await this.plugin.saveSettings();
+					});
+				});
+		};
+
+		addOpsToggle(
+			"enhancedListOpsZoom",
+			t.settings.enhancedListBlocks.ops.zoom.name,
+			t.settings.enhancedListBlocks.ops.zoom.desc,
+			() => (isThirdPartyPluginEnabled("obsidian-zoom") ? t.notices.enhancedListZoomConflict : null)
+		);
+
+		const outlinerConflictReason = () =>
+			isThirdPartyPluginEnabled("obsidian-outliner") ? t.notices.enhancedListOutlinerConflict : null;
+
+		addOpsToggle(
+			"enhancedListOpsMove",
+			t.settings.enhancedListBlocks.ops.move.name,
+			t.settings.enhancedListBlocks.ops.move.desc,
+			outlinerConflictReason
+		);
+		addOpsToggle(
+			"enhancedListOpsIndent",
+			t.settings.enhancedListBlocks.ops.indent.name,
+			t.settings.enhancedListBlocks.ops.indent.desc,
+			outlinerConflictReason
+		);
+		addOpsToggle(
+			"enhancedListOpsDragDrop",
+			t.settings.enhancedListBlocks.ops.dragDrop.name,
+			t.settings.enhancedListBlocks.ops.dragDrop.desc,
+			outlinerConflictReason
+		);
+		addOpsToggle(
+			"enhancedListOpsVerticalLines",
+			t.settings.enhancedListBlocks.ops.verticalLines.name,
+			t.settings.enhancedListBlocks.ops.verticalLines.desc,
+			outlinerConflictReason
+		);
+		addOpsToggle(
+			"enhancedListOpsBulletThreading",
+			t.settings.enhancedListBlocks.ops.bulletThreading.name,
+			t.settings.enhancedListBlocks.ops.bulletThreading.desc,
+			outlinerConflictReason
+		);
 	}
 
 }

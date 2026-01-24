@@ -9,3 +9,93 @@
     border: none !important;
     padding: 0 !important;
 } 
+
+.cm-line.blp-enhanced-list-system-line-hidden {
+    display: none !important;
+}
+
+/* Enhanced List Blocks Ops: Vertical indentation lines (Live Preview only) */
+.cm-editor.blp-enhanced-list-vertical-lines .cm-line {
+    position: relative;
+}
+
+.cm-editor.blp-enhanced-list-vertical-lines .cm-indent {
+    position: relative;
+}
+
+.cm-editor.blp-enhanced-list-vertical-lines .cm-indent::before {
+    content: "";
+    position: absolute;
+    top: -0.65em;
+    bottom: -0.65em;
+    left: calc(50% - 0.5px);
+    width: 1px;
+    background-color: var(--background-modifier-border);
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* Enhanced List Blocks Ops: Bullet threading (active path highlight) */
+.cm-editor.blp-enhanced-list-bullet-threading .cm-line {
+    position: relative;
+}
+
+.cm-editor.blp-enhanced-list-bullet-threading .cm-line.blp-enhanced-list-threading-ancestor::before,
+.cm-editor.blp-enhanced-list-bullet-threading .cm-line.blp-enhanced-list-threading-active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background-color: var(--interactive-accent);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.cm-editor.blp-enhanced-list-bullet-threading .cm-line.blp-enhanced-list-threading-active::before {
+    opacity: 0.85;
+}
+
+/* Enhanced List Blocks Ops: Drag & Drop (current file only) */
+.cm-editor.blp-enhanced-list-dnd .cm-line {
+    position: relative;
+}
+
+.cm-editor.blp-enhanced-list-dnd .blp-enhanced-list-drag-handle {
+    position: absolute;
+    left: -18px;
+    top: 0;
+    width: 16px;
+    text-align: center;
+    opacity: 0;
+    color: var(--text-muted);
+    cursor: grab;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.cm-editor.blp-enhanced-list-dnd .cm-line:hover .blp-enhanced-list-drag-handle {
+    opacity: 0.75;
+}
+
+.cm-editor.blp-enhanced-list-dnd.blp-enhanced-list-dnd-dragging .blp-enhanced-list-drag-handle {
+    cursor: grabbing;
+}
+
+.cm-editor.blp-enhanced-list-dnd .cm-line.blp-enhanced-list-dnd-drop-target {
+    background-color: var(--background-modifier-hover);
+}
+
+.cm-editor.blp-enhanced-list-dnd .cm-line.blp-enhanced-list-dnd-drop-above {
+    border-top: 2px solid var(--interactive-accent);
+}
+
+.cm-editor.blp-enhanced-list-dnd .cm-line.blp-enhanced-list-dnd-drop-below,
+.cm-editor.blp-enhanced-list-dnd .cm-line.blp-enhanced-list-dnd-drop-child {
+    border-bottom: 2px solid var(--interactive-accent);
+}
+
+.cm-editor.blp-enhanced-list-dnd .cm-line.blp-enhanced-list-dnd-drop-outdent {
+    border-bottom: 2px dashed var(--interactive-accent);
+}

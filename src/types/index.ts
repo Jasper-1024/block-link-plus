@@ -97,6 +97,16 @@ export interface PluginSettings {
 	timelineDefaultHeadingLevel: number;
 	timelineDefaultSortOrder: 'asc' | 'desc';
 
+	// Enhanced List Blocks
+	enhancedListEnabledFolders: string[];
+	enhancedListEnabledFiles: string[];
+	enhancedListOpsZoom: boolean;
+	enhancedListOpsMove: boolean;
+	enhancedListOpsIndent: boolean;
+	enhancedListOpsDragDrop: boolean;
+	enhancedListOpsVerticalLines: boolean;
+	enhancedListOpsBulletThreading: boolean;
+
 	// Inline Edit
 	inlineEditEnabled: boolean;
 	inlineEditFile: boolean;
@@ -135,6 +145,16 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableTimeline: true,
 	timelineDefaultHeadingLevel: 4,
 	timelineDefaultSortOrder: 'desc',
+
+	// Enhanced List Blocks
+	enhancedListEnabledFolders: [],
+	enhancedListEnabledFiles: [],
+	enhancedListOpsZoom: false,
+	enhancedListOpsMove: false,
+	enhancedListOpsIndent: false,
+	enhancedListOpsDragDrop: false,
+	enhancedListOpsVerticalLines: false,
+	enhancedListOpsBulletThreading: false,
 	
 	// Inline edit (default: enabled, but file-embed editing off)
 	inlineEditEnabled: true,

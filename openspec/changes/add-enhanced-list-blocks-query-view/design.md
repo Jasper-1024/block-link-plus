@@ -5,6 +5,18 @@
 - **System line**: the last line of an enhanced list item: `[date:: <YYYY-MM-DDTHH:mm:ss>] ^<id>`
 - **View**: a `blp-view` code block that queries blocks and renders results.
 
+## Enable scope (opt-in)
+Enhanced List Blocks is opt-in and only applies within explicitly enabled files.
+
+A file is considered **enabled** if either:
+- it is within plugin settings enabled folders/files, or
+- its frontmatter contains `blp_enhanced_list: true`
+
+Scope rules:
+- Query/View candidates are only collected from enabled files.
+- `blp-view` with explicit `source` MUST NOT expand beyond enabled files; if it would, the view errors and produces no output.
+- System-line hiding and on-save duplicate `^id` repair only run for enabled files.
+
 ## YAML schema (minimal)
 
 ```yaml
@@ -15,29 +27,46 @@ filters:
   date: { within_days: 7 }  # required in practice if you want time-bounded results
   fields:
     - { field: state, op: in, value: ["todo", "doing"] }
-  tags: { any: ["#todo"] }
+  tags:
+    any: ["#todo"]
+    none_in_ancestors: ["#archive"] # optional
   outlinks: { link_to_current_file: true }
   section: { any: ["Log"] }
 group: { by: day(date) } # none | day(date) | file | field
 sort: { by: date, order: desc }
 render:
   type: embed-list        # default
-  mode: render            # render | materialize
   columns:
     - { name: Date, expr: 'dateformat(date, "yyyy-MM-dd HH:mm")' }
     - { name: File, expr: 'file.link' }
 ```
 
 Defaults:
-- `source` omitted => global.
+- `source` omitted => all enabled files (not global).
 - `render.type` omitted => `embed-list`.
+- `render.mode` is usually omitted (pure render / no writeback); materialization requires explicit `render.mode: materialize`.
 - `render.type: table` and `render.columns` omitted => columns `[File, Date]`.
 
 ## Candidate model
-- Use Dataview pages as the file set, then read each page's `file.lists`, flatten into list items.
+- Resolve a file set first, then read each page's `file.lists`, flatten into list items.
+- File set resolution:
+  - Start from enabled files.
+  - If `source` is provided, resolve the source pages and verify every page is enabled; otherwise error (no output).
 - Candidate gate:
   - MUST have `blockId`
   - MUST have `date` and it MUST be a Dataview DateTime (not a plain string)
+
+## Filtering semantics
+- Unless otherwise noted, filters apply to the current list item only (block-local), matching Roam/Logseq semantics:
+  - Tags/outlinks/fields/section are not inherited from ancestors.
+  - Tags/outlinks/fields/section are not aggregated from descendants.
+- Section matching follows Dataview: use the Dataview-provided `item.section` link (typically `Link.type === "header"` with header text in `Link.subpath`).
+- Date filter inputs are parsed using Dataview parsing (`dv.date(...)`); invalid inputs error and produce no output.
+- Date comparisons are strict (exclusive):
+  - `after`: `item.date > after`
+  - `before`: `item.date < before`
+  - `between`: `after < item.date < before`
+- `filters.section.all` is treated the same as `any` (each item belongs to a single section).
 
 ## Rendering
 - **embed-list**: render each result as `![[path#^blockId]]` (path from `item.path`).
@@ -48,7 +77,7 @@ Defaults:
   - region content is fully plugin-owned and overwritten; user edits are not preserved.
 
 ## On-save repair (duplicate `^id`)
-- On file save, scan list items in the file for duplicate `blockId`.
+- On file save (enabled files only), scan list items in the file for duplicate `blockId`.
 - Keep the first occurrence unchanged.
 - For each subsequent duplicate:
   - generate a new `^id`
