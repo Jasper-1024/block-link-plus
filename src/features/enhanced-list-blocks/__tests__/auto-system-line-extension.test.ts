@@ -13,6 +13,7 @@ function createView(docText: string) {
 		settings: {
 			enhancedListEnabledFolders: [],
 			enhancedListEnabledFiles: [file.path],
+			enhancedListHideSystemLine: true,
 			enable_prefix: false,
 			id_prefix: "",
 			id_length: 4,
@@ -117,6 +118,63 @@ describe("enhanced-list-blocks/auto-system-line-extension", () => {
 					"- ",
 				].join("\n")
 			);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("keeps cursor after `- ` when selection jumps into hidden system line", () => {
+		Settings.defaultZone = "utc";
+		Settings.now = () => Date.parse("2026-01-10T00:00:00Z");
+
+		const { view, parent } = createView(["---", "blp_enhanced_list: true", "---", "", "- parent", "  - child"].join("\n"));
+		try {
+			const originalDoc = view.state.doc;
+			const childLineNumber =
+				originalDoc.lines >= 1
+					? (() => {
+							for (let n = 1; n <= originalDoc.lines; n++) {
+								if (originalDoc.line(n).text === "  - child") return n;
+							}
+							return null;
+						})()
+					: null;
+
+			expect(childLineNumber).not.toBeNull();
+
+			const childLine = originalDoc.line(childLineNumber!);
+			const insertFrom = childLine.to;
+			const insertText = "\n  - ";
+
+			view.dispatch({
+				changes: { from: insertFrom, to: insertFrom, insert: insertText },
+				selection: EditorSelection.cursor(insertFrom + insertText.length),
+			});
+
+			const afterInsertDoc = view.state.doc;
+			let systemLineNumber: number | null = null;
+			for (let n = 1; n <= afterInsertDoc.lines; n++) {
+				if (afterInsertDoc.line(n).text.includes("[date:: ")) {
+					systemLineNumber = n;
+					break;
+				}
+			}
+
+			expect(systemLineNumber).not.toBeNull();
+
+			const systemLine = afterInsertDoc.line(systemLineNumber!);
+
+			// Simulate Obsidian restoring selection to the pre-insert position (lands in system line).
+			view.dispatch({
+				selection: EditorSelection.cursor(systemLine.from + 4),
+			});
+
+			const head = view.state.selection.main.head;
+			const line = view.state.doc.lineAt(head);
+
+			expect(line.text).toBe("  - ");
+			expect(head - line.from).toBe(4);
 		} finally {
 			view.destroy();
 			parent.remove();

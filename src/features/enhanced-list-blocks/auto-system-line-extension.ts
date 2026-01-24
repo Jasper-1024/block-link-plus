@@ -6,6 +6,7 @@ import { generateRandomId } from "../../utils";
 import { isEnhancedListEnabledFile } from "./enable-scope";
 
 const autoSystemLineEffect = StateEffect.define<void>();
+const autoSystemLineCursorFixEffect = StateEffect.define<void>();
 
 const SYSTEM_LINE_EXACT_RE =
 	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
@@ -17,6 +18,12 @@ const BLOCK_ID_AT_END_RE = /\s*\^([a-zA-Z0-9_-]+)\s*$/;
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
+}
+
+function getListItemPrefixLength(text: string): number | null {
+	const m = text.match(LIST_ITEM_PREFIX_RE);
+	if (!m) return null;
+	return m[0].length;
 }
 
 function isEmptyListItemLine(text: string): { indentLen: number } | null {
@@ -113,10 +120,45 @@ function generateUniqueId(plugin: BlockLinkPlus, fileContent: string): string {
 	}
 }
 
+function computeCursorFixSelection(doc: Text, head: number): { anchor: number; head: number } | null {
+	const headLine = doc.lineAt(head);
+
+	// Case A: caret jumped into the (hidden) system line, but the next line is the newly-created empty list item.
+	if (SYSTEM_LINE_EXACT_RE.test(headLine.text)) {
+		const nextLineNumber = headLine.number + 1;
+		if (nextLineNumber <= doc.lines) {
+			const nextLine = doc.line(nextLineNumber);
+			const nextPrefixLen = getListItemPrefixLength(nextLine.text);
+			if (nextPrefixLen !== null && nextLine.text.slice(nextPrefixLen).trim().length === 0) {
+				const pos = nextLine.from + nextPrefixLen;
+				return { anchor: pos, head: pos };
+			}
+		}
+
+		return null;
+	}
+
+	// Case B: caret is on the newly-created empty list item, but it got placed before the `- ` marker.
+	const prefixLen = getListItemPrefixLength(headLine.text);
+	if (prefixLen === null) return null;
+	if (headLine.text.slice(prefixLen).trim().length !== 0) return null;
+
+	const ch = head - headLine.from;
+	if (ch >= prefixLen) return null;
+
+	if (headLine.number <= 1) return null;
+	const prevLine = doc.line(headLine.number - 1);
+	if (!SYSTEM_LINE_EXACT_RE.test(prevLine.text)) return null;
+
+	const pos = headLine.from + prefixLen;
+	return { anchor: pos, head: pos };
+}
+
 export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus) {
 	return EditorState.transactionFilter.of((tr: Transaction): Transaction | readonly TransactionSpec[] => {
-		if (!tr.docChanged) return tr;
-		if (tr.effects.some((e) => e.is(autoSystemLineEffect))) return tr;
+		if (tr.effects.some((e) => e.is(autoSystemLineEffect) || e.is(autoSystemLineCursorFixEffect))) {
+			return tr;
+		}
 
 		try {
 			if (tr.startState.field?.(editorLivePreviewField, false) !== true) {
@@ -130,6 +172,33 @@ export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus)
 		const file = info?.file;
 		if (!file) return tr;
 		if (!isEnhancedListEnabledFile(plugin, file as any)) return tr;
+
+		if (!tr.docChanged) {
+			if (plugin.settings.enhancedListHideSystemLine !== true) return tr;
+			if (!tr.selection) return tr;
+
+			const main = tr.newSelection.main;
+			if (!main.empty) return tr;
+
+			const startMain = tr.startState.selection.main;
+			if (startMain.anchor === main.anchor && startMain.head === main.head) return tr;
+
+			const desiredSelection = computeCursorFixSelection(tr.newDoc, main.head);
+			if (!desiredSelection) return tr;
+
+			if (desiredSelection.anchor === main.anchor && desiredSelection.head === main.head) {
+				return tr;
+			}
+
+			return [
+				tr,
+				{
+					sequential: true,
+					effects: [autoSystemLineCursorFixEffect.of()],
+					selection: desiredSelection,
+				},
+			];
+		}
 
 		const doc = tr.newDoc;
 		const head = tr.newSelection.main.head;
