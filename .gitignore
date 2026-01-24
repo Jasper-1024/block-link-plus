@@ -22,3 +22,6 @@ data.json
 .DS_Store
 styles.css
 package-lock.json
+
+# Local research scratch space
+_research/
