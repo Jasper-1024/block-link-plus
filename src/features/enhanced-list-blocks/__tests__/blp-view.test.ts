@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 import { App, TFile } from "obsidian";
 import crypto from "crypto";
 import {
+	applyHierarchyFilter,
 	buildGroups,
 	materializeOutput,
 	matchesDateFilter,
@@ -97,6 +98,36 @@ render:
 });
 
 describe("enhanced-list-blocks/blp-view filtering", () => {
+	test("hierarchy filter: outermost-match suppresses nested matches", () => {
+		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
+		const candidates = [
+			{ path: "a.md", line: 10, blockId: "p", date, item: {}, ancestorTags: [], ancestorLines: [] },
+			{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] },
+		];
+
+		const filtered = applyHierarchyFilter(candidates as any, "outermost-match" as any);
+		expect(filtered.map((c: any) => c.line)).toEqual([10]);
+	});
+
+	test("hierarchy filter: outermost-match keeps a child when parent does not match", () => {
+		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
+		const candidates = [{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] }];
+
+		const filtered = applyHierarchyFilter(candidates as any, "outermost-match" as any);
+		expect(filtered.map((c: any) => c.line)).toEqual([11]);
+	});
+
+	test("hierarchy filter: root-only keeps only root list items", () => {
+		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
+		const candidates = [
+			{ path: "a.md", line: 10, blockId: "p", date, item: {}, ancestorTags: [], ancestorLines: [] },
+			{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] },
+		];
+
+		const filtered = applyHierarchyFilter(candidates as any, "root-only" as any);
+		expect(filtered.map((c: any) => c.line)).toEqual([10]);
+	});
+
 	test("tag filter does not inherit from parent (Roam/Logseq semantics)", () => {
 		const tagsFilter = { none: ["#tag1"] };
 		const parent = { tags: ["#tag1"] };
@@ -113,11 +144,43 @@ describe("enhanced-list-blocks/blp-view filtering", () => {
 	});
 
 	test("outlinks.link_to_current_file requires a link to current file", () => {
+		const plugin = { app: { metadataCache: { getFirstLinkpathDest: jest.fn(() => null) } } } as any;
 		const item = { outlinks: [{ path: "current.md" }] };
 		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
 
-		expect(matchesOutlinksFilter(item, { link_to_current_file: true } as any, targets as any, "current.md")).toBe(true);
-		expect(matchesOutlinksFilter(item, { link_to_current_file: true } as any, targets as any, "other.md")).toBe(false);
+		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "current.md")).toBe(true);
+		expect(
+			matchesOutlinksFilter(plugin, { outlinks: [{ path: "current" }] }, { link_to_current_file: true } as any, targets as any, "current.md")
+		).toBe(true);
+		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "other.md")).toBe(false);
+	});
+
+	test("outlinks.link_to_current_file resolves aliases via metadataCache", () => {
+		const plugin = {
+			app: {
+				metadataCache: {
+					// Simulate an Obsidian alias: [[Alias]] resolves to the real file path.
+					getFirstLinkpathDest: jest.fn((linkpath: string) => {
+						if (linkpath === "Alias") return { path: "Task/Real.md" };
+						return null;
+					}),
+				},
+			},
+		} as any;
+
+		const item = { path: "Review/Daily/2026/1/2026-1-19.md", outlinks: [{ path: "Alias" }] };
+		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
+
+		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "Task/Real.md")).toBe(true);
+	});
+
+	test("outlinks.link_to_current_file falls back to basename match when paths differ", () => {
+		const plugin = { app: { metadataCache: { getFirstLinkpathDest: jest.fn(() => null) } } } as any;
+		const item = { outlinks: [{ path: "Real" }] };
+		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
+
+		// The list item uses [[Real]], while the current file lives under a folder.
+		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "Task/Real.md")).toBe(true);
 	});
 
 	test("section filter matches Dataview header subpath", () => {

@@ -32,6 +32,7 @@ render:
 - `tags`: `any | all | none | none_in_ancestors`
 - `outlinks`: `any | all | none | link_to_current_file`
 - `section`: `any | all | none`
+- `hierarchy`: `all | outermost-match | root-only`
 
 ### group
 

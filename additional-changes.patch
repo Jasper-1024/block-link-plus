@@ -1,0 +1,368 @@
+﻿diff --git a/docs/en/reference/yaml.md b/docs/en/reference/yaml.md
+index 01fe936..bd4378d 100644
+--- a/docs/en/reference/yaml.md
++++ b/docs/en/reference/yaml.md
+@@ -32,6 +32,7 @@ render:
+ - `tags`: `any | all | none | none_in_ancestors`
+ - `outlinks`: `any | all | none | link_to_current_file`
+ - `section`: `any | all | none`
++- `hierarchy`: `all | outermost-match | root-only`
+ 
+ ### group
+ 
+diff --git a/docs/reference/yaml.md b/docs/reference/yaml.md
+index 4ffe541..5d794f3 100644
+--- a/docs/reference/yaml.md
++++ b/docs/reference/yaml.md
+@@ -32,6 +32,7 @@ render:
+ - `tags`: `any | all | none | none_in_ancestors`
+ - `outlinks`: `any | all | none | link_to_current_file`
+ - `section`: `any | all | none`
++- `hierarchy`: `all | outermost-match | root-only`
+ 
+ ### group
+ 
+diff --git a/docs/zh-TW/reference/yaml.md b/docs/zh-TW/reference/yaml.md
+index c75b381..388a08d 100644
+--- a/docs/zh-TW/reference/yaml.md
++++ b/docs/zh-TW/reference/yaml.md
+@@ -32,6 +32,7 @@ render:
+ - `tags`: `any | all | none | none_in_ancestors`
+ - `outlinks`: `any | all | none | link_to_current_file`
+ - `section`: `any | all | none`
++- `hierarchy`: `all | outermost-match | root-only`
+ 
+ ### group
+ 
+diff --git a/src/features/enhanced-list-blocks/__tests__/blp-view.test.ts b/src/features/enhanced-list-blocks/__tests__/blp-view.test.ts
+index 10e1869..df1b9d4 100644
+--- a/src/features/enhanced-list-blocks/__tests__/blp-view.test.ts
++++ b/src/features/enhanced-list-blocks/__tests__/blp-view.test.ts
+@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
+ import { App, TFile } from "obsidian";
+ import crypto from "crypto";
+ import {
++	applyHierarchyFilter,
+ 	buildGroups,
+ 	materializeOutput,
+ 	matchesDateFilter,
+@@ -97,6 +98,36 @@ render:
+ });
+ 
+ describe("enhanced-list-blocks/blp-view filtering", () => {
++	test("hierarchy filter: outermost-match suppresses nested matches", () => {
++		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
++		const candidates = [
++			{ path: "a.md", line: 10, blockId: "p", date, item: {}, ancestorTags: [], ancestorLines: [] },
++			{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] },
++		];
++
++		const filtered = applyHierarchyFilter(candidates as any, "outermost-match" as any);
++		expect(filtered.map((c: any) => c.line)).toEqual([10]);
++	});
++
++	test("hierarchy filter: outermost-match keeps a child when parent does not match", () => {
++		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
++		const candidates = [{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] }];
++
++		const filtered = applyHierarchyFilter(candidates as any, "outermost-match" as any);
++		expect(filtered.map((c: any) => c.line)).toEqual([11]);
++	});
++
++	test("hierarchy filter: root-only keeps only root list items", () => {
++		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
++		const candidates = [
++			{ path: "a.md", line: 10, blockId: "p", date, item: {}, ancestorTags: [], ancestorLines: [] },
++			{ path: "a.md", line: 11, blockId: "c", date, item: {}, ancestorTags: [], ancestorLines: [10] },
++		];
++
++		const filtered = applyHierarchyFilter(candidates as any, "root-only" as any);
++		expect(filtered.map((c: any) => c.line)).toEqual([10]);
++	});
++
+ 	test("tag filter does not inherit from parent (Roam/Logseq semantics)", () => {
+ 		const tagsFilter = { none: ["#tag1"] };
+ 		const parent = { tags: ["#tag1"] };
+@@ -113,12 +144,43 @@ describe("enhanced-list-blocks/blp-view filtering", () => {
+ 	});
+ 
+ 	test("outlinks.link_to_current_file requires a link to current file", () => {
++		const plugin = { app: { metadataCache: { getFirstLinkpathDest: jest.fn(() => null) } } } as any;
+ 		const item = { outlinks: [{ path: "current.md" }] };
+ 		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
+ 
+-		expect(matchesOutlinksFilter(item, { link_to_current_file: true } as any, targets as any, "current.md")).toBe(true);
+-		expect(matchesOutlinksFilter({ outlinks: [{ path: "current" }] }, { link_to_current_file: true } as any, targets as any, "current.md")).toBe(true);
+-		expect(matchesOutlinksFilter(item, { link_to_current_file: true } as any, targets as any, "other.md")).toBe(false);
++		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "current.md")).toBe(true);
++		expect(
++			matchesOutlinksFilter(plugin, { outlinks: [{ path: "current" }] }, { link_to_current_file: true } as any, targets as any, "current.md")
++		).toBe(true);
++		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "other.md")).toBe(false);
++	});
++
++	test("outlinks.link_to_current_file resolves aliases via metadataCache", () => {
++		const plugin = {
++			app: {
++				metadataCache: {
++					// Simulate an Obsidian alias: [[Alias]] resolves to the real file path.
++					getFirstLinkpathDest: jest.fn((linkpath: string) => {
++						if (linkpath === "Alias") return { path: "Task/Real.md" };
++						return null;
++					}),
++				},
++			},
++		} as any;
++
++		const item = { path: "Review/Daily/2026/1/2026-1-19.md", outlinks: [{ path: "Alias" }] };
++		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
++
++		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "Task/Real.md")).toBe(true);
++	});
++
++	test("outlinks.link_to_current_file falls back to basename match when paths differ", () => {
++		const plugin = { app: { metadataCache: { getFirstLinkpathDest: jest.fn(() => null) } } } as any;
++		const item = { outlinks: [{ path: "Real" }] };
++		const targets = { any: new Set<string>(), all: new Set<string>(), none: new Set<string>(), requireCurrentFile: true };
++
++		// The list item uses [[Real]], while the current file lives under a folder.
++		expect(matchesOutlinksFilter(plugin, item, { link_to_current_file: true } as any, targets as any, "Task/Real.md")).toBe(true);
+ 	});
+ 
+ 	test("section filter matches Dataview header subpath", () => {
+diff --git a/src/features/enhanced-list-blocks/blp-view.ts b/src/features/enhanced-list-blocks/blp-view.ts
+index fe0f502..ab3224a 100644
+--- a/src/features/enhanced-list-blocks/blp-view.ts
++++ b/src/features/enhanced-list-blocks/blp-view.ts
+@@ -13,6 +13,7 @@ type SortOrder = "asc" | "desc";
+ 
+ type RenderType = "embed-list" | "table";
+ type RenderMode = "materialize";
++type HierarchyFilterMode = "all" | "outermost-match" | "root-only";
+ 
+ type ColumnConfig = { name: string; field?: string; expr?: string };
+ 
+@@ -51,6 +52,13 @@ export interface BlpViewConfig {
+ 			all?: string[];
+ 			none?: string[];
+ 		};
++		/**
++		 * Controls whether nested list-item matches should be kept or suppressed.
++		 * - "all" (default): keep all matching list items.
++		 * - "outermost-match": suppress a match if any ancestor list item also matches.
++		 * - "root-only": only keep root list items (no parent).
++		 */
++		hierarchy?: HierarchyFilterMode;
+ 	};
+ 	group?: {
+ 		by?: "none" | "day(date)" | "file" | "field";
+@@ -74,6 +82,7 @@ export interface BlpViewCandidate {
+ 	date: DateTime;
+ 	item: any;
+ 	ancestorTags: string[];
++	ancestorLines: number[];
+ }
+ 
+ export interface BlpViewGroup {
+@@ -281,15 +290,22 @@ export function resolveSourceFilesOrError(
+ 	};
+ }
+ 
+-function flattenListItems(items: any[], ancestorTags: string[], out: Array<{ item: any; ancestorTags: string[] }>) {
++function flattenListItems(
++	items: any[],
++	ancestorTags: string[],
++	ancestorLines: number[],
++	out: Array<{ item: any; ancestorTags: string[]; ancestorLines: number[] }>
++) {
+ 	for (const item of items) {
+ 		const tags: string[] = Array.isArray(item?.tags) ? item.tags : [];
+ 		const nextAncestors = [...ancestorTags, ...tags];
+-		out.push({ item, ancestorTags });
++		out.push({ item, ancestorTags, ancestorLines });
+ 
+ 		const children: any[] = Array.isArray(item?.children) ? item.children : [];
+ 		if (children.length > 0) {
+-			flattenListItems(children, nextAncestors, out);
++			const line = typeof item?.line === "number" ? item.line : undefined;
++			const nextAncestorLines = typeof line === "number" ? [...ancestorLines, line] : ancestorLines;
++			flattenListItems(children, nextAncestors, nextAncestorLines, out);
+ 		}
+ 	}
+ }
+@@ -393,6 +409,7 @@ export function matchesTagFilter(item: any, tagsFilter: NonNullable<BlpViewConfi
+ }
+ 
+ export function matchesOutlinksFilter(
++	plugin: BlockLinkPlus,
+ 	item: any,
+ 	outlinksFilter: NonNullable<BlpViewConfig["filters"]>["outlinks"],
+ 	targets: ReturnType<typeof resolveOutlinkTargets>,
+@@ -401,13 +418,41 @@ export function matchesOutlinksFilter(
+ 	if (!outlinksFilter) return true;
+ 
+ 	const outlinks: Link[] = Array.isArray(item?.outlinks) ? item.outlinks : [];
+-	const normalizePath = (p: string): string => p.replace(/\.md$/i, "");
+-	const outlinkPaths = new Set(outlinks.map((l) => normalizePath(l.path)));
+-	const currentNormalized = normalizePath(currentFilePath);
+ 
+-	const hasPath = (path: string): boolean => outlinkPaths.has(normalizePath(path));
++	// Dataview list item outlinks are not always normalized to vault-relative paths (can be basename / alias).
++	// Normalize via Obsidian metadataCache, and also fall back to basename matching for loose link formats.
++	const normalizePathForCompare = (p: string): string => p.replace(/\\/g, "/").replace(/^\/+/, "").replace(/\.md$/i, "");
++	const getBasenameForCompare = (p: string): string => {
++		const normalized = normalizePathForCompare(p);
++		const parts = normalized.split("/");
++		return parts[parts.length - 1] ?? normalized;
++	};
++
++	const originFilePath = typeof item?.path === "string" && item.path ? item.path : currentFilePath;
++
++	const outlinkPaths = new Set<string>();
++	const outlinkBasenames = new Set<string>();
++	const addOutlinkCandidate = (p: unknown) => {
++		if (typeof p !== "string" || !p) return;
++		outlinkPaths.add(normalizePathForCompare(p));
++		outlinkBasenames.add(getBasenameForCompare(p));
++	};
++
++	for (const l of outlinks) {
++		addOutlinkCandidate(l.path);
++		const resolved = (plugin.app.metadataCache as any)?.getFirstLinkpathDest?.(l.path, originFilePath)?.path;
++		addOutlinkCandidate(resolved);
++	}
++
++	const hasPath = (path: string): boolean => {
++		const normalized = normalizePathForCompare(path);
++		if (outlinkPaths.has(normalized)) return true;
++
++		const basename = getBasenameForCompare(path);
++		return basename ? outlinkBasenames.has(basename) : false;
++	};
+ 
+-	if (targets.requireCurrentFile && !outlinkPaths.has(currentNormalized)) return false;
++	if (targets.requireCurrentFile && !hasPath(currentFilePath)) return false;
+ 	if (targets.any.size > 0 && ![...targets.any].some(hasPath)) return false;
+ 	if (targets.all.size > 0 && ![...targets.all].every(hasPath)) return false;
+ 	if (targets.none.size > 0 && [...targets.none].some(hasPath)) return false;
+@@ -415,6 +460,35 @@ export function matchesOutlinksFilter(
+ 	return true;
+ }
+ 
++export function applyHierarchyFilter(
++	candidates: BlpViewCandidate[],
++	mode: NonNullable<NonNullable<BlpViewConfig["filters"]>["hierarchy"]> | undefined
++): BlpViewCandidate[] {
++	const resolved: HierarchyFilterMode = mode ?? "all";
++	if (resolved === "all") return candidates;
++
++	if (resolved === "root-only") {
++		return candidates.filter((c) => (c.ancestorLines?.length ?? 0) === 0);
++	}
++
++	// Keep only the outermost match in a list-item subtree:
++	// suppress a match if any ancestor list item is also a match.
++	const matched = new Set<string>();
++	for (const c of candidates) {
++		if (typeof c.path === "string" && typeof c.line === "number" && c.line > 0) {
++			matched.add(`${c.path}:${c.line}`);
++		}
++	}
++
++	return candidates.filter((c) => {
++		const ancestors = Array.isArray(c.ancestorLines) ? c.ancestorLines : [];
++		if (ancestors.length === 0) return true;
++		if (typeof c.path !== "string" || typeof c.line !== "number" || c.line <= 0) return true;
++
++		return !ancestors.some((line) => typeof line === "number" && matched.has(`${c.path}:${line}`));
++	});
++}
++
+ export function matchesSectionFilter(item: any, sectionFilter: NonNullable<BlpViewConfig["filters"]>["section"]): boolean {
+ 	if (!sectionFilter) return true;
+ 
+@@ -760,7 +834,7 @@ export async function handleBlpView(
+ 		}
+ 
+ 		// Candidate extraction
+-		const flattened: Array<{ item: any; ancestorTags: string[] }> = [];
++		const flattened: Array<{ item: any; ancestorTags: string[]; ancestorLines: number[] }> = [];
+ 		const pageFileByPath = new Map<string, any>();
+ 		let filesScanned = 0;
+ 		for (const f of sourceFiles) {
+@@ -781,13 +855,31 @@ export async function handleBlpView(
+ 			const lists = page?.file?.lists;
+ 			if (!Array.isArray(lists) || lists.length === 0) continue;
+ 
+-			flattenListItems(lists, [], flattened);
++			// Dataview's file.lists is already a flat list; traverse only roots to avoid double-counting children.
++			const rootsByParent = lists.filter((li: any) => li?.parent == null);
++			let roots = rootsByParent.length > 0 ? rootsByParent : lists;
++
++			// Some Dataview versions may not populate `.parent` on list items; fall back to excluding known children.
++			if (roots.length === lists.length) {
++				const childSet = new Set<any>();
++				for (const li of lists) {
++					const children: any[] = Array.isArray(li?.children) ? li.children : [];
++					for (const c of children) childSet.add(c);
++				}
++
++				const rootsByChildren = lists.filter((li: any) => !childSet.has(li));
++				if (rootsByChildren.length > 0 && rootsByChildren.length < roots.length) {
++					roots = rootsByChildren;
++				}
++			}
++
++			flattenListItems(roots, [], [], flattened);
+ 		}
+ 
+ 		const targets = resolveOutlinkTargets(plugin, file, config.filters?.outlinks);
+ 
+-		const candidates: BlpViewCandidate[] = [];
+-		for (const { item, ancestorTags } of flattened) {
++		const candidatesByKey = new Map<string, BlpViewCandidate>();
++		for (const { item, ancestorTags, ancestorLines } of flattened) {
+ 			const blockId = item?.blockId;
+ 			if (typeof blockId !== "string" || !blockId) continue;
+ 
+@@ -806,20 +898,36 @@ export async function handleBlpView(
+ 			}
+ 
+ 			if (!matchesTagFilter(item, config.filters?.tags, ancestorTags)) continue;
+-			if (!matchesOutlinksFilter(item, config.filters?.outlinks, targets, file.path)) continue;
++			if (!matchesOutlinksFilter(plugin, item, config.filters?.outlinks, targets, file.path)) continue;
+ 			if (!matchesSectionFilter(item, config.filters?.section)) continue;
+ 
+-			candidates.push({
++			const candidate: BlpViewCandidate = {
+ 				path,
+ 				line,
+ 				blockId,
+ 				date,
+ 				item,
+ 				ancestorTags,
+-			});
++				ancestorLines: Array.isArray(ancestorLines) ? ancestorLines : [],
++			};
++
++			const key = `${path}:${line}:${blockId}`;
++			const existing = candidatesByKey.get(key);
++			// If a list item was double-counted, prefer the candidate with more hierarchy context.
++			if (!existing || candidate.ancestorLines.length > existing.ancestorLines.length) {
++				candidatesByKey.set(key, candidate);
++			}
++		}
++
++		const candidates = [...candidatesByKey.values()];
++
++		const hierarchyMode = config.filters?.hierarchy;
++		if (hierarchyMode && hierarchyMode !== "all" && hierarchyMode !== "outermost-match" && hierarchyMode !== "root-only") {
++			throw new Error(`blp-view: unsupported filters.hierarchy: ${hierarchyMode}`);
+ 		}
+ 
+-		const sorted = stableSortItems(dv, candidates, config.sort);
++		const filtered = applyHierarchyFilter(candidates, hierarchyMode);
++		const sorted = stableSortItems(dv, filtered, config.sort);
+ 
+ 		const totalMatches = sorted.length;
+ 		const limited = maxResults > 0 && totalMatches > maxResults ? sorted.slice(0, maxResults) : sorted;
