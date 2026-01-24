@@ -8,29 +8,21 @@
 
 .cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
     width: 1.1em;
     height: 1.1em;
     margin-right: 0.2em;
     color: transparent;
     border-radius: 4px;
     cursor: grab;
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul:active {
-    cursor: grabbing;
-}
-
-.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul::before {
-    content: "";
-    width: 0.45em;
-    height: 0.45em;
     background-image: radial-gradient(circle, var(--text-muted) 1px, transparent 1.5px);
     background-size: 3px 3px;
     background-position: center;
     background-repeat: repeat;
+}
+
+.cm-editor.blp-enhanced-list-handle .cm-formatting-list-ul:active {
+    cursor: grabbing;
 }
 
 .cm-editor.blp-enhanced-list-handle .cm-line:hover:has(.cm-formatting-list-ul) {
@@ -46,8 +38,8 @@
     background-color: var(--background-modifier-hover);
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-line:hover .cm-formatting-list-ul::before,
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul::before {
+.cm-editor.blp-enhanced-list-handle .cm-line:hover .cm-formatting-list-ul,
+.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
     background-image: radial-gradient(circle, var(--text-normal) 1px, transparent 1.5px);
 }
 
@@ -56,6 +48,6 @@
     box-shadow: 0 0 0 1px hsla(var(--interactive-accent-hsl), 0.35);
 }
 
-.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul::before {
+.cm-editor.blp-enhanced-list-handle .cm-line.cm-active .cm-formatting-list-ul {
     background-image: radial-gradient(circle, var(--interactive-accent) 1px, transparent 1.5px);
 }
