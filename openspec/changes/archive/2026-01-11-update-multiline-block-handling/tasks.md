@@ -29,6 +29,6 @@
 ## 4. Investigate/fix #29 (Android: note becomes blank on scroll)
 - [x] 4.1 Audit reading-mode post processors for destructive mutations
 - [x] 4.2 Fix `markdownPostProcessor` so it does not wipe rendered text (prevents "blank note" on re-render/scroll)
-- [ ] 4.3 Add guards/fallback so preview rendering fails open (native content remains visible)
-- [ ] 4.4 Fix range embed lifecycle for multiline embeds across re-renders/scroll
-- [ ] 4.5 Manual verification on Android (or document constraints if not reproducible)
+- [x] 4.3 Add guards/fallback so preview rendering fails open (native content remains visible)
+- [x] 4.4 Fix range embed lifecycle for multiline embeds across re-renders/scroll
+- [x] 4.5 Manual verification on Android (or document constraints if not reproducible)

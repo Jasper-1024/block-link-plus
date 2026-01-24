@@ -18,6 +18,8 @@ const INLINE_EDIT_HOST_CLASS = "blp-inline-edit-host";
 const LIVE_PREVIEW_GRACE_MS = 5000;
 const READING_RANGE_ACTIVE_CLASS = "blp-reading-range-active";
 const LIVE_PREVIEW_RANGE_ACTIVE_CLASS = "blp-live-preview-range-active";
+const READING_RANGE_HOST_CLASS = "blp-reading-range-host";
+const LIVE_PREVIEW_RANGE_HOST_CLASS = "blp-live-preview-range-host";
 
 type LivePreviewObserverEntry = {
 	view: MarkdownView;
@@ -1593,6 +1595,8 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 	private renderChild: MarkdownRenderChild | null = null;
 	private retryTimer: number | null = null;
 	private retryCount = 0;
+	private nativeContentEl: HTMLElement | null = null;
+	private hostEl: HTMLElement | null = null;
 
 	constructor(args: LivePreviewRangeEmbedChildArgs) {
 		super(args.embedEl);
@@ -1639,6 +1643,10 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 			// ignore
 		}
 		this.renderChild = null;
+
+		this.showNativeEmbed();
+		this.removeHostEl();
+		this.nativeContentEl = null;
 	}
 
 	private scheduleRetry(delayMs: number): void {
@@ -1651,6 +1659,92 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 			this.retryTimer = null;
 			void this.render();
 		}, delayMs);
+	}
+
+	private getNativeContentEl(): HTMLElement | null {
+		if (this.nativeContentEl?.isConnected) return this.nativeContentEl;
+
+		const el = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		this.nativeContentEl = el;
+		return el;
+	}
+
+	private getOrCreateHostEl(): HTMLElement | null {
+		if (this.hostEl?.isConnected) return this.hostEl;
+
+		const existing = this.embedEl.querySelector<HTMLElement>(`.${LIVE_PREVIEW_RANGE_HOST_CLASS}`);
+		if (existing) {
+			this.hostEl = existing;
+			return existing;
+		}
+
+		const host = document.createElement("div");
+		host.className = LIVE_PREVIEW_RANGE_HOST_CLASS;
+		host.style.display = "none";
+
+		const nativeContent = this.getNativeContentEl();
+		const parent = nativeContent?.parentElement ?? this.embedEl;
+		try {
+			parent.insertBefore(host, nativeContent ?? null);
+		} catch {
+			try {
+				parent.appendChild(host);
+			} catch {
+				// ignore
+			}
+		}
+
+		this.hostEl = host;
+		return host;
+	}
+
+	private showNativeEmbed(): void {
+		const nativeContent = this.getNativeContentEl();
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+
+		if (this.hostEl) {
+			try {
+				this.hostEl.style.display = "none";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private showRangeEmbed(): void {
+		const nativeContent = this.getNativeContentEl();
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "none";
+			} catch {
+				// ignore
+			}
+		}
+
+		const host = this.getOrCreateHostEl();
+		if (host) {
+			try {
+				host.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private removeHostEl(): void {
+		if (!this.hostEl) return;
+		try {
+			this.hostEl.remove();
+		} catch {
+			// ignore
+		}
+		this.hostEl = null;
 	}
 
 	private cleanupLegacyMultilineShell(): void {
@@ -1702,6 +1796,8 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 				// ignore
 			}
 		}
+
+		this.showNativeEmbed();
 	}
 
 	async render(): Promise<void> {
@@ -1743,14 +1839,27 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 
 		const currentSeq = (this.renderSeq += 1);
 
-		const contentEl = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (typeof MarkdownRenderer?.renderMarkdown !== "function") {
+			this.showNativeEmbed();
+			return;
+		}
+
+		const contentEl = this.getNativeContentEl();
 		if (!contentEl) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const hostEl = this.getOrCreateHostEl();
+		if (!hostEl) {
+			this.showNativeEmbed();
 			this.scheduleRetry(50);
 			return;
 		}
 
 		const [start, end] = getLineRangeFromRef(this.file.path, this.subpath, this.plugin.app);
 		if (!start || !end) {
+			this.showNativeEmbed();
 			this.scheduleRetry(100);
 			return;
 		}
@@ -1759,6 +1868,7 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 		try {
 			raw = await this.plugin.app.vault.cachedRead(this.file);
 		} catch {
+			this.showNativeEmbed();
 			this.scheduleRetry(200);
 			return;
 		}
@@ -1779,33 +1889,86 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 		const to = clamp(Math.max(start, end));
 		const fragment = lines.slice(from - 1, to).join("\n");
 
+		const wrapper = document.createElement("div");
+		wrapper.className = "markdown-preview-view markdown-rendered";
+		wrapper.style.display = "none";
+
+		const sizer = document.createElement("div");
+		sizer.className = "markdown-preview-sizer markdown-preview-section";
+		wrapper.appendChild(sizer);
+
+		try {
+			hostEl.appendChild(wrapper);
+		} catch {
+			this.showNativeEmbed();
+			this.scheduleRetry(100);
+			return;
+		}
+
+		const nextChild = new MarkdownRenderChild(sizer);
+		this.addChild(nextChild);
+		nextChild.load();
+
+		try {
+			await MarkdownRenderer.renderMarkdown(fragment, sizer, this.file.path, nextChild);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to render live preview range embed", error);
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			try {
+				wrapper.remove();
+			} catch {
+				// ignore
+			}
+			this.showNativeEmbed();
+			this.scheduleRetry(500);
+			return;
+		}
+
+		if (!this.mounted) {
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			return;
+		}
+		if (currentSeq !== this.renderSeq) {
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			return;
+		}
+
 		try {
 			this.renderChild?.unload();
 		} catch {
 			// ignore
 		}
-		this.renderChild = null;
+		this.renderChild = nextChild;
+		this.retryCount = 0;
 
 		try {
-			contentEl.empty();
+			for (const child of Array.from(hostEl.children)) {
+				if (child === wrapper) continue;
+				child.remove();
+			}
 		} catch {
 			// ignore
 		}
 
-		const previewView = contentEl.createDiv({ cls: "markdown-preview-view markdown-rendered" });
-		const previewSizer = previewView.createDiv({ cls: "markdown-preview-sizer markdown-preview-section" });
-
-		const renderChild = new MarkdownRenderChild(previewSizer);
-		this.addChild(renderChild);
-		renderChild.load();
-		this.renderChild = renderChild;
-		this.retryCount = 0;
-
 		try {
-			await MarkdownRenderer.renderMarkdown(fragment, previewSizer, this.file.path, renderChild);
-		} catch (error) {
-			console.error("InlineEditEngine: failed to render live preview range embed", error);
+			wrapper.style.display = "";
+		} catch {
+			// ignore
 		}
+
+		this.showRangeEmbed();
 	}
 }
 
@@ -1831,6 +1994,8 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 	private renderChild: MarkdownRenderChild | null = null;
 	private retryTimer: number | null = null;
 	private retryCount = 0;
+	private nativeContentEl: HTMLElement | null = null;
+	private hostEl: HTMLElement | null = null;
 
 	constructor(args: ReadingRangeEmbedChildArgs) {
 		super(args.embedEl);
@@ -1876,6 +2041,10 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 			// ignore
 		}
 		this.renderChild = null;
+
+		this.showNativeEmbed();
+		this.removeHostEl();
+		this.nativeContentEl = null;
 	}
 
 	private scheduleRetry(delayMs: number): void {
@@ -1888,6 +2057,92 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 			this.retryTimer = null;
 			void this.render();
 		}, delayMs);
+	}
+
+	private getNativeContentEl(): HTMLElement | null {
+		if (this.nativeContentEl?.isConnected) return this.nativeContentEl;
+
+		const el = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		this.nativeContentEl = el;
+		return el;
+	}
+
+	private getOrCreateHostEl(): HTMLElement | null {
+		if (this.hostEl?.isConnected) return this.hostEl;
+
+		const existing = this.embedEl.querySelector<HTMLElement>(`.${READING_RANGE_HOST_CLASS}`);
+		if (existing) {
+			this.hostEl = existing;
+			return existing;
+		}
+
+		const host = document.createElement("div");
+		host.className = READING_RANGE_HOST_CLASS;
+		host.style.display = "none";
+
+		const nativeContent = this.getNativeContentEl();
+		const parent = nativeContent?.parentElement ?? this.embedEl;
+		try {
+			parent.insertBefore(host, nativeContent ?? null);
+		} catch {
+			try {
+				parent.appendChild(host);
+			} catch {
+				// ignore
+			}
+		}
+
+		this.hostEl = host;
+		return host;
+	}
+
+	private showNativeEmbed(): void {
+		const nativeContent = this.getNativeContentEl();
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+
+		if (this.hostEl) {
+			try {
+				this.hostEl.style.display = "none";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private showRangeEmbed(): void {
+		const nativeContent = this.getNativeContentEl();
+		if (nativeContent) {
+			try {
+				nativeContent.style.display = "none";
+			} catch {
+				// ignore
+			}
+		}
+
+		const host = this.getOrCreateHostEl();
+		if (host) {
+			try {
+				host.style.display = "";
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	private removeHostEl(): void {
+		if (!this.hostEl) return;
+		try {
+			this.hostEl.remove();
+		} catch {
+			// ignore
+		}
+		this.hostEl = null;
 	}
 
 	private cleanupLegacyMultilineShell(): void {
@@ -1939,6 +2194,8 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 				// ignore
 			}
 		}
+
+		this.showNativeEmbed();
 	}
 
 	async render(): Promise<void> {
@@ -1971,14 +2228,27 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 
 		const currentSeq = (this.renderSeq += 1);
 
-		const contentEl = this.embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		if (typeof MarkdownRenderer?.renderMarkdown !== "function") {
+			this.showNativeEmbed();
+			return;
+		}
+
+		const contentEl = this.getNativeContentEl();
 		if (!contentEl) {
+			this.scheduleRetry(50);
+			return;
+		}
+
+		const hostEl = this.getOrCreateHostEl();
+		if (!hostEl) {
+			this.showNativeEmbed();
 			this.scheduleRetry(50);
 			return;
 		}
 
 		const [start, end] = getLineRangeFromRef(this.file.path, this.subpath, this.plugin.app);
 		if (!start || !end) {
+			this.showNativeEmbed();
 			this.scheduleRetry(100);
 			return;
 		}
@@ -1987,6 +2257,7 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 		try {
 			raw = await this.plugin.app.vault.cachedRead(this.file);
 		} catch {
+			this.showNativeEmbed();
 			this.scheduleRetry(200);
 			return;
 		}
@@ -2000,32 +2271,85 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 		const to = clamp(Math.max(start, end));
 		const fragment = lines.slice(from - 1, to).join("\n");
 
+		const wrapper = document.createElement("div");
+		wrapper.className = "markdown-preview-view markdown-rendered";
+		wrapper.style.display = "none";
+
+		const sizer = document.createElement("div");
+		sizer.className = "markdown-preview-sizer markdown-preview-section";
+		wrapper.appendChild(sizer);
+
+		try {
+			hostEl.appendChild(wrapper);
+		} catch {
+			this.showNativeEmbed();
+			this.scheduleRetry(100);
+			return;
+		}
+
+		const nextChild = new MarkdownRenderChild(sizer);
+		this.addChild(nextChild);
+		nextChild.load();
+
+		try {
+			await MarkdownRenderer.renderMarkdown(fragment, sizer, this.file.path, nextChild);
+		} catch (error) {
+			console.error("InlineEditEngine: failed to render reading range embed", error);
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			try {
+				wrapper.remove();
+			} catch {
+				// ignore
+			}
+			this.showNativeEmbed();
+			this.scheduleRetry(500);
+			return;
+		}
+
+		if (!this.mounted) {
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			return;
+		}
+		if (currentSeq !== this.renderSeq) {
+			try {
+				nextChild.unload();
+			} catch {
+				// ignore
+			}
+			return;
+		}
+
 		try {
 			this.renderChild?.unload();
 		} catch {
 			// ignore
 		}
-		this.renderChild = null;
+		this.renderChild = nextChild;
+		this.retryCount = 0;
 
 		try {
-			contentEl.empty();
+			for (const child of Array.from(hostEl.children)) {
+				if (child === wrapper) continue;
+				child.remove();
+			}
 		} catch {
 			// ignore
 		}
 
-		const previewView = contentEl.createDiv({ cls: "markdown-preview-view markdown-rendered" });
-		const previewSizer = previewView.createDiv({ cls: "markdown-preview-sizer markdown-preview-section" });
-
-		const renderChild = new MarkdownRenderChild(previewSizer);
-		this.addChild(renderChild);
-		renderChild.load();
-		this.renderChild = renderChild;
-		this.retryCount = 0;
-
 		try {
-			await MarkdownRenderer.renderMarkdown(fragment, previewSizer, this.file.path, renderChild);
-		} catch (error) {
-			console.error("InlineEditEngine: failed to render reading range embed", error);
+			wrapper.style.display = "";
+		} catch {
+			// ignore
 		}
+
+		this.showRangeEmbed();
 	}
 }

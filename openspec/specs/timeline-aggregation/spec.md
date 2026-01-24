@@ -2,7 +2,6 @@
 
 ## Purpose
 通过 `blp-timeline` 代码块 + YAML 配置，把多个文件中的时间相关章节聚合为时间线输出，并以尽量少的写入与更强的可调试性保证稳定运行。
-
 ## Requirements
 ### Requirement: Process `blp-timeline` code blocks with YAML config
 插件 SHALL 识别并处理 `blp-timeline` 代码块，从 YAML 配置生成时间线聚合结果。
@@ -45,3 +44,12 @@
 #### Scenario: Debug output is enabled
 - **WHEN** 用户在 YAML 配置中开启 `debug: true`
 - **THEN** 插件输出结构化调试信息（例如解析后的配置、候选文件、命中章节等）
+
+### Requirement: Generate timeline embeds using standard `![[...]]` only
+插件 SHALL 在 timeline 输出中生成标准嵌入链接 `![[...]]`，且不支持 `!![[...]]`。
+插件 SHOULD 忽略 legacy 配置键 `embed_format`（若存在），并仍输出 `![[...]]`。
+
+#### Scenario: Timeline output uses ![[]] only
+- **WHEN** YAML 配置中存在 legacy `embed_format: '!![[]]'`
+- **THEN** timeline 仍生成 `![[...]]` 形式的嵌入链接（不生成 `!![[...]]`）
+

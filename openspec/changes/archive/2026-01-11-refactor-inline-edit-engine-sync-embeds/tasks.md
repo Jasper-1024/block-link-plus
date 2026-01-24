@@ -65,6 +65,6 @@
 ### Milestone 8: Final switch & cleanup
 - [x] 8.1 移除旧 FlowEditor/Basics 接入与相关 CSS/patch。
 - [x] 8.2 全仓清理 `!!`：代码/设置/i18n/docs/tests/Timeline YAML 文档。
-- [ ] 8.3 回归：Live Preview/Reading、多种引用、无控制台错误。
+- [x] 8.3 回归：Live Preview/Reading、多种引用、无控制台错误。
 
 验收（手动）：用户文档（README、docs/）中不再出现 `!![[`；功能按新设置模型运行。
