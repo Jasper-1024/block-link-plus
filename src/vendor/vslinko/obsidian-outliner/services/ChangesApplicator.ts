@@ -8,6 +8,15 @@ export class ChangesApplicator {
     if (changes) {
       const { replacement, changeFrom, changeTo } = changes;
 
+      // Work around an observed Obsidian CM6 replaceRange edge case where replacing a multi-line
+      // range ending at EOL may also consume the following line break, causing the next line to be
+      // appended to the previous one (e.g. list items "g" + "f" joined on the same line).
+      //
+      // If the cursor position maps to a '\n' in the underlying document, replace that newline
+      // explicitly and re-add it in the replacement to preserve line boundaries.
+      const { changeTo: safeChangeTo, replacement: safeReplacement } =
+        this.ensureTrailingNewlinePreserved(editor, changeTo, replacement);
+
       const { unfold, fold } = this.calculateFoldingOprations(
         prevRoot,
         newRoot,
@@ -19,7 +28,7 @@ export class ChangesApplicator {
         editor.unfold(line);
       }
 
-      editor.replaceRange(replacement, changeFrom, changeTo);
+      editor.replaceRange(safeReplacement, changeFrom, safeChangeTo);
 
       for (const line of fold) {
         editor.fold(line);
@@ -89,6 +98,43 @@ export class ChangesApplicator {
       changeFrom,
       changeTo,
     };
+  }
+
+  private ensureTrailingNewlinePreserved(
+    editor: MyEditor,
+    changeTo: Position,
+    replacement: string,
+  ): { changeTo: Position; replacement: string } {
+    if (replacement.endsWith("\n")) {
+      return { changeTo, replacement };
+    }
+
+    // If changeTo points at the line break (EOL), include the newline in the replaced range and
+    // re-add it to the replacement so we keep the next line separated.
+    try {
+      const doc = editor.getValue();
+      const toOff = editor.posToOffset(changeTo);
+      if (typeof toOff !== "number" || toOff < 0 || toOff >= doc.length) {
+        return { changeTo, replacement };
+      }
+
+      if (doc[toOff] !== "\n") {
+        return { changeTo, replacement };
+      }
+
+      const nextLine = changeTo.line + 1;
+      // Guard against out-of-range line numbers (shouldn't happen if doc[toOff] is '\n').
+      if (nextLine > editor.lastLine()) {
+        return { changeTo, replacement };
+      }
+
+      return {
+        changeTo: { line: nextLine, ch: 0 },
+        replacement: replacement + "\n",
+      };
+    } catch {
+      return { changeTo, replacement };
+    }
   }
 
   private calculateFoldingOprations(
