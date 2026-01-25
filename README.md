@@ -46,6 +46,10 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 - [简体中文](https://block-link-plus.jasper1024.com/)
 - [繁體中文](https://block-link-plus.jasper1024.com/zh-TW/)
 
+### Community
+- [Telegram Channel](https://t.me/+8LPOcMS0p4M3MTUx)
+- [Telegram Chat](https://t.me/+QqmqUG-jSeY2ODNh)
+
 ## 🆕 What's New in v1.8.1
 
 - Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`)
