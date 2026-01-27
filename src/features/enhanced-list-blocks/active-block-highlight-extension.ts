@@ -3,6 +3,7 @@ import { Decoration, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { isEnhancedListEnabledFile } from "./enable-scope";
+import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
 
 // Detect a Markdown list item prefix (bullet or ordered), including optional task checkbox.
 const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
@@ -18,8 +19,8 @@ function escapeRegex(s: string): string {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function getIndentLen(text: string): number {
-	return (text.match(/^\s*/)?.[0] ?? "").length;
+function getIndentLen(text: string, tabSize: number): number {
+	return lineIndentCols(text, tabSize);
 }
 
 type ActiveListBlock = {
@@ -198,7 +199,11 @@ function buildFenceStateMap(doc: any, fromLineNo: number, toLineNo: number): Map
 	return inFenceByLine;
 }
 
-function findActiveListBulletLine(doc: any, cursorLineNo: number): { lineNo: number; indentLen: number } | null {
+function findActiveListBulletLine(
+	doc: any,
+	cursorLineNo: number,
+	tabSize: number
+): { lineNo: number; indentLen: number } | null {
 	const scanStartLineNo = Math.max(1, cursorLineNo - LOOKBACK_LINES);
 	const fenceMap = buildFenceStateMap(doc, scanStartLineNo, cursorLineNo);
 
@@ -212,22 +217,22 @@ function findActiveListBulletLine(doc: any, cursorLineNo: number): { lineNo: num
 		if (!inFence) {
 			const m = text.match(LIST_ITEM_PREFIX_RE);
 			if (m) {
-				return { lineNo: ln, indentLen: (m[1] ?? "").length };
+				return { lineNo: ln, indentLen: indentCols(m[1] ?? "", tabSize) };
 			}
 
 			// If we hit a non-indented, non-list line, we're outside any list item.
-			if (getIndentLen(text) === 0) return null;
+			if (getIndentLen(text, tabSize) === 0) return null;
 		}
 	}
 
 	return null;
 }
 
-function findActiveListBlock(doc: any, head: number): ActiveListBlock | null {
+function findActiveListBlock(doc: any, head: number, tabSize: number): ActiveListBlock | null {
 	const cursorLine = doc.lineAt(head);
 	const cursorLineNo = cursorLine.number;
 
-	const bullet = findActiveListBulletLine(doc, cursorLineNo);
+	const bullet = findActiveListBulletLine(doc, cursorLineNo, tabSize);
 	if (!bullet) return null;
 
 	const startLineNo = bullet.lineNo;
@@ -265,7 +270,7 @@ function findActiveListBlock(doc: any, head: number): ActiveListBlock | null {
 			}
 
 			// Continuation/content lines MUST be indented deeper than the list marker indent.
-			if (getIndentLen(text) <= parentIndentLen) {
+			if (getIndentLen(text, tabSize) <= parentIndentLen) {
 				endLineNo = ln - 1;
 				break;
 			}
@@ -312,8 +317,9 @@ function buildDecorations(view: any, plugin: BlockLinkPlus) {
 		return builder.finish();
 	}
 
+	const tabSize = MARKDOWN_TAB_WIDTH;
 	const head = view.state.selection.main.head;
-	const active = findActiveListBlock(view.state.doc, head);
+	const active = findActiveListBlock(view.state.doc, head, tabSize);
 	if (!active) {
 		updateActiveBlockLeftOffsetVar(view, null);
 		return builder.finish();

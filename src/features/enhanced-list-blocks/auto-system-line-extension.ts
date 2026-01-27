@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import { isEnhancedListEnabledFile } from "./enable-scope";
+import { indentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
 
 const autoSystemLineEffect = StateEffect.define<void>();
 const autoSystemLineCursorFixEffect = StateEffect.define<void>();
@@ -45,16 +46,17 @@ function computeContinuationIndentFromStartLine(startLineText: string): string |
 function findPreviousListItemStartLineNumber(
 	doc: Text,
 	fromLineNumber: number,
-	targetIndentLen: number
+	targetIndentLen: number,
+	tabSize: number
 ): number | null {
 	for (let n = fromLineNumber; n >= 1; n--) {
 		const line = doc.line(n);
 		const m = line.text.match(LIST_ITEM_PREFIX_RE);
 		if (!m) continue;
 
-		const indentLen = (m[1] ?? "").length;
-		if (indentLen === targetIndentLen) return n;
-		if (indentLen < targetIndentLen) return null;
+		const candidateIndentCols = indentCols(m[1] ?? "", tabSize);
+		if (candidateIndentCols === targetIndentLen) return n;
+		if (candidateIndentCols < targetIndentLen) return null;
 	}
 	return null;
 }
@@ -63,14 +65,15 @@ function findFirstChildListStartLineNumber(
 	doc: Text,
 	startLineNumber: number,
 	endLineNumber: number,
-	parentIndentLen: number
+	parentIndentLen: number,
+	tabSize: number
 ): number | null {
 	for (let n = startLineNumber + 1; n <= endLineNumber; n++) {
 		const line = doc.line(n);
 		const m = line.text.match(LIST_ITEM_PREFIX_RE);
 		if (!m) continue;
-		const indentLen = (m[1] ?? "").length;
-		if (indentLen > parentIndentLen) return n;
+		const indentColsHere = indentCols(m[1] ?? "", tabSize);
+		if (indentColsHere > parentIndentLen) return n;
 	}
 	return null;
 }
@@ -282,6 +285,7 @@ export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus)
 		if (!tr.docChanged) return tr;
 
 		const doc = tr.newDoc;
+		const tabSize = MARKDOWN_TAB_WIDTH;
 		const head = tr.newSelection.main.head;
 		const currentLine = doc.lineAt(head);
 		const currentLineNumber = currentLine.number;
@@ -297,11 +301,12 @@ export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus)
 
 		if (currentLineNumber <= 1) return tr;
 
-		const parentIndentLen = emptyListInfo.indentLen;
+		const parentIndentLen = indentCols((currentPrefixMatch[1] ?? ""), tabSize);
 		const prevStartLineNumber = findPreviousListItemStartLineNumber(
 			doc,
 			currentLineNumber - 1,
-			parentIndentLen
+			parentIndentLen,
+			tabSize
 		);
 		if (!prevStartLineNumber) return tr;
 
@@ -316,7 +321,8 @@ export function createEnhancedListAutoSystemLineExtension(plugin: BlockLinkPlus)
 			doc,
 			prevStartLineNumber,
 			endLineNumber,
-			parentIndentLen
+			parentIndentLen,
+			tabSize
 		);
 		const desiredInsertBeforeLineNumber = firstChildLineNumber ?? currentLineNumber;
 

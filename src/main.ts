@@ -43,6 +43,7 @@ import {
 	createEnhancedListActiveBlockHighlightExtension,
 	createEnhancedListCodeBlockIndentExtension,
 	handleBlpView,
+	createEnhancedListDirtyRangeTrackerExtension,
 	registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
@@ -171,6 +172,7 @@ export default class BlockLinkPlus extends Plugin {
 		// for live preview
 		this.updateViewPlugin();
 		this.registerEditorExtension([
+			createEnhancedListDirtyRangeTrackerExtension(this),
 			createEnhancedListSystemLineHideExtension(this),
 			createEnhancedListHandleAffordanceExtension(this),
 			createEnhancedListHandleActionsExtension(this),

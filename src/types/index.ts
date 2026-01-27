@@ -112,6 +112,14 @@ export interface PluginSettings {
 	enhancedListHandleClickAction: "toggle-folding" | "menu" | "none";
 	enhancedListIndentCodeBlocks: boolean;
 	enhancedListDeleteSubtreeOnListItemDelete: boolean;
+	// Enhanced List Blocks: save-time normalization (enabled files only; scoped to recently-edited ranges).
+	enhancedListNormalizeOnSave: boolean;
+	enhancedListNormalizeTabsToSpaces: boolean;
+	enhancedListNormalizeTabSize: number;
+	enhancedListNormalizeCleanupInvalidSystemLines: boolean;
+	enhancedListNormalizeMergeSplitSystemLine: boolean;
+	enhancedListNormalizeSystemLineIndent: boolean;
+	enhancedListNormalizeEnsureSystemLineForTouchedItems: boolean;
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -160,6 +168,13 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enhancedListHandleClickAction: "toggle-folding",
 	enhancedListIndentCodeBlocks: true,
 	enhancedListDeleteSubtreeOnListItemDelete: false,
+	enhancedListNormalizeOnSave: false,
+	enhancedListNormalizeTabsToSpaces: true,
+	enhancedListNormalizeTabSize: 2,
+	enhancedListNormalizeCleanupInvalidSystemLines: true,
+	enhancedListNormalizeMergeSplitSystemLine: true,
+	enhancedListNormalizeSystemLineIndent: true,
+	enhancedListNormalizeEnsureSystemLineForTouchedItems: true,
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,

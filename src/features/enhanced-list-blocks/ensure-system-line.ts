@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
+import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
 
 type EditorPos = { line: number; ch: number };
 
@@ -41,11 +42,16 @@ function computeContinuationIndentFromStartLine(startLineText: string): string |
 	return indentPrefix + " ".repeat(prefixLenWithoutIndent);
 }
 
-function getIndentLen(text: string): number {
-	return (text.match(/^\s*/)?.[0] ?? "").length;
+function getIndentCols(text: string, tabSize: number): number {
+	return lineIndentCols(text, tabSize);
 }
 
-function findListItemEndLineIndex(lines: string[], startLineIndex: number, parentIndentLen: number): number {
+function findListItemEndLineIndex(
+	lines: string[],
+	startLineIndex: number,
+	parentIndentCols: number,
+	tabSize: number
+): number {
 	for (let n = startLineIndex + 1; n < lines.length; n++) {
 		const text = lines[n] ?? "";
 
@@ -54,15 +60,15 @@ function findListItemEndLineIndex(lines: string[], startLineIndex: number, paren
 
 		const m = text.match(LIST_ITEM_PREFIX_RE);
 		if (m) {
-			const indentLen = (m[1] ?? "").length;
+			const indentLen = indentCols(m[1] ?? "", tabSize);
 			// Next sibling (same indent) or ancestor (smaller indent) starts here; current item ends above.
-			if (indentLen <= parentIndentLen) return n - 1;
+			if (indentLen <= parentIndentCols) return n - 1;
 			continue;
 		}
 
-		const indentLen = getIndentLen(text);
+		const indentLen = getIndentCols(text, tabSize);
 		// Continuation/content lines MUST be indented deeper than the list marker indent.
-		if (indentLen <= parentIndentLen) return n - 1;
+		if (indentLen <= parentIndentCols) return n - 1;
 	}
 
 	return Math.max(0, lines.length - 1);
@@ -72,15 +78,16 @@ function findFirstChildListStartLineIndex(
 	lines: string[],
 	startLineIndex: number,
 	endLineIndex: number,
-	parentIndentLen: number
+	parentIndentLen: number,
+	tabSize: number
 ): number | null {
 	for (let n = startLineIndex + 1; n <= endLineIndex; n++) {
 		const text = lines[n] ?? "";
 		const m = text.match(LIST_ITEM_PREFIX_RE);
 		if (!m) continue;
 
-		const indentLen = (m[1] ?? "").length;
-		if (indentLen > parentIndentLen) return n;
+		const indentHere = indentCols(m[1] ?? "", tabSize);
+		if (indentHere > parentIndentLen) return n;
 	}
 	return null;
 }
@@ -194,12 +201,13 @@ function applyLineEdit(
 export function ensureEnhancedListSystemLineForActiveListItem(plugin: BlockLinkPlus, editor: any): string | null {
 	if (!hasEditorApi(editor)) return null;
 
+	const tabSize = MARKDOWN_TAB_WIDTH;
 	const startLineIndex = editor.getCursor("to").line;
 	const startLineText = editor.getLine(startLineIndex);
 	const startPrefixMatch = startLineText.match(LIST_ITEM_PREFIX_RE);
 	if (!startPrefixMatch) return null;
 
-	const parentIndentLen = (startPrefixMatch[1] ?? "").length;
+	const parentIndentLen = indentCols(startPrefixMatch[1] ?? "", tabSize);
 	const continuationIndent = computeContinuationIndentFromStartLine(startLineText);
 	if (!continuationIndent) return null;
 
@@ -207,12 +215,13 @@ export function ensureEnhancedListSystemLineForActiveListItem(plugin: BlockLinkP
 	const lines = fileText.split("\n");
 	if (startLineIndex < 0 || startLineIndex >= lines.length) return null;
 
-	const endLineIndex = findListItemEndLineIndex(lines, startLineIndex, parentIndentLen);
+	const endLineIndex = findListItemEndLineIndex(lines, startLineIndex, parentIndentLen, tabSize);
 	const firstChildLineIndex = findFirstChildListStartLineIndex(
 		lines,
 		startLineIndex,
 		endLineIndex,
-		parentIndentLen
+		parentIndentLen,
+		tabSize
 	);
 	const insertBeforeLineIndex =
 		firstChildLineIndex ?? (endLineIndex + 1 < lines.length ? endLineIndex + 1 : null);

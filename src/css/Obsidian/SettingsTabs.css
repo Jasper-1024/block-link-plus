@@ -86,6 +86,14 @@
 	padding-bottom: 0;
 }
 
+.blp-settings-heading-level2.setting-item-heading .setting-item-name {
+	font-weight: 700;
+}
+
+.blp-settings-master-toggle.setting-item .setting-item-name {
+	font-weight: 700;
+}
+
 /* Hide elements (avoid keyboard focus inside inactive tabs / filtered items). */
 .blp-visually-hidden {
 	display: none !important;

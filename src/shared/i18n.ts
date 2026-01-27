@@ -166,6 +166,20 @@ class T {
         enhancedListBlocks: {
           title: "Enhanced List",
           desc: "Opt-in scope for Enhanced List Blocks features (blp-view, system line hiding, duplicate ^id repair). A file is enabled if it matches any enabled folder/file below, or has frontmatter `blp_enhanced_list: true`.",
+          groups: {
+            scopeAndBehavior: {
+              title: "Scope & Behavior",
+            },
+            scope: {
+              title: "Enable scope",
+            },
+            behavior: {
+              title: "Behavior",
+            },
+            normalization: {
+              title: "Normalization",
+            },
+          },
           dataviewStatus: {
             available: "✅ Dataview plugin is installed and enabled (v${version})",
             unavailable: "❌ Dataview plugin is not installed or not enabled. blp-view will not work.",
@@ -213,6 +227,36 @@ class T {
           deleteSubtreeOnDelete: {
             name: "Delete children when deleting a list item",
             desc: "If enabled, deleting a parent list item will delete its nested children (Logseq/Roam style). If disabled, children stay and only the system line is removed."
+          },
+          normalizeOnSave: {
+            name: "Normalize list format on save",
+            desc: "On save only (enabled files). Applies selected normalization rules to the list items you edited since the last save. No changes while typing.",
+            rules: {
+              tabsToSpaces: {
+                name: "Convert leading tabs to spaces",
+                desc: "Convert leading indentation tabs to spaces (configurable tab width). Example (tab width = 2): `\\t- a` -> `  - a`.",
+                tabSize: {
+                  name: "Tab width (spaces)",
+                  desc: "How many spaces a leading tab expands to during normalization. Default: 2."
+                }
+              },
+              cleanupInvalidSystemLines: {
+                name: "Remove extra / invalid system lines",
+                desc: "Remove extra system lines in an edited list item (keeps the first one), and removes orphan system lines right above a list item. Example: `  [date:: ...] ^a` + `  [date:: ...] ^b` -> keep only one."
+              },
+              mergeSplitSystemLine: {
+                name: "Merge split system line",
+                desc: "Merge a two-line system line into one line. Example: `  [date:: 2026-01-26T16:01:21]` + `  ^7fp1` -> `  [date:: 2026-01-26T16:01:21] ^7fp1`."
+              },
+              systemLineIndent: {
+                name: "Fix system line indentation",
+                desc: "Force system line indentation to the list item's continuation indent (aligned to the content column after `- ` / checkbox). Example: `- a` + `[date:: ...] ^id` -> `- a` + `  [date:: ...] ^id`."
+              },
+              ensureSystemLineForTouchedItems: {
+                name: "Ensure system line for edited list items",
+                desc: "If an edited list item is missing a system line, insert it on save (and move it above child lists when needed)."
+              }
+            }
           },
           blpView: {
             title: "blp-view (Query/View)",
@@ -588,6 +632,20 @@ class T {
         enhancedListBlocks: {
           title: "增强 List Blocks",
           desc: "配置增强 List Blocks 的启用范围（blp-view、系统行隐藏、重复 ^id 修复仅在启用文件内生效）。满足任一条件即启用：位于启用文件夹/启用文件列表，或文件 frontmatter 含 `blp_enhanced_list: true`。",
+          groups: {
+            scopeAndBehavior: {
+              title: "启用范围与行为",
+            },
+            scope: {
+              title: "启用范围",
+            },
+            behavior: {
+              title: "行为",
+            },
+            normalization: {
+              title: "标准化",
+            },
+          },
           dataviewStatus: {
             available: "✅ Dataview 插件已安装并启用 (v${version})",
             unavailable: "❌ Dataview 插件未安装或未启用，blp-view 将无法工作。",
@@ -635,6 +693,36 @@ class T {
           deleteSubtreeOnDelete: {
             name: "删除列表项时删除子项",
             desc: "开启后：删除父列表项会一并删除其子列表（Logseq/Roam 风格）。关闭后：子项保留，仅删除系统行。"
+          },
+          normalizeOnSave: {
+            name: "保存时标准化列表格式",
+            desc: "仅在保存时生效（仅对启用文件）。只对上次保存后你编辑过的列表项应用规则；输入时不改动。",
+            rules: {
+              tabsToSpaces: {
+                name: "将行首 Tab 转为空格",
+                desc: "将行首缩进的 Tab 转为空格（tab 宽度可配置）。例（tab=2）：`\\t- a` -> `  - a`。",
+                tabSize: {
+                  name: "Tab 宽度（空格）",
+                  desc: "标准化时，把行首 Tab 展开为多少个空格。默认：2。"
+                }
+              },
+              cleanupInvalidSystemLines: {
+                name: "清理无效/多余系统行",
+                desc: "删除已编辑列表项中的多余系统行（保留第一条），并删除列表项正上方的孤儿系统行。例：`  [date:: ...] ^a` + `  [date:: ...] ^b` -> 仅保留一条。"
+              },
+              mergeSplitSystemLine: {
+                name: "合并拆分的系统行",
+                desc: "把两行系统行合并为一行。例：`  [date:: 2026-01-26T16:01:21]` + `  ^7fp1` -> `  [date:: 2026-01-26T16:01:21] ^7fp1`。"
+              },
+              systemLineIndent: {
+                name: "修正系统行缩进",
+                desc: "把系统行缩进强制修正为 continuation indent（与 `- ` / 复选框后的内容列对齐）。例：`- a` + `[date:: ...] ^id` -> `- a` + `  [date:: ...] ^id`。"
+              },
+              ensureSystemLineForTouchedItems: {
+                name: "为已编辑的列表项补齐系统行",
+                desc: "如果已编辑的列表项缺少系统行，保存时自动插入（必要时移动到子列表之前）。"
+              }
+            }
           },
           blpView: {
             title: "blp-view（Query/View）",
@@ -1010,6 +1098,20 @@ class T {
         enhancedListBlocks: {
           title: "增強 List Blocks",
           desc: "設定增強 List Blocks 的啟用範圍（blp-view、系統行隱藏、重複 ^id 修復僅在啟用檔案內生效）。滿足任一條件即啟用：位於啟用資料夾/啟用檔案清單，或檔案 frontmatter 含 `blp_enhanced_list: true`。",
+          groups: {
+            scopeAndBehavior: {
+              title: "啟用範圍與行為",
+            },
+            scope: {
+              title: "啟用範圍",
+            },
+            behavior: {
+              title: "行為",
+            },
+            normalization: {
+              title: "標準化",
+            },
+          },
           dataviewStatus: {
             available: "✅ Dataview 插件已安裝並啟用(版本 ${version})",
             unavailable: "❌ Dataview 插件未安裝或未啟用，blp-view 將無法運作。",
@@ -1057,6 +1159,36 @@ class T {
           deleteSubtreeOnDelete: {
             name: "刪除列表項時刪除子項",
             desc: "開啟後：刪除父列表項會一併刪除其子列表（Logseq/Roam 風格）。關閉後：子項保留，僅刪除系統行。"
+          },
+          normalizeOnSave: {
+            name: "儲存時標準化清單格式",
+            desc: "僅在儲存時生效（僅對啟用檔案）。只對上次儲存後你編輯過的清單項套用規則；輸入時不改動。",
+            rules: {
+              tabsToSpaces: {
+                name: "將行首 Tab 轉為空格",
+                desc: "將行首縮排的 Tab 轉為空格（tab 寬度可設定）。例（tab=2）：`\\t- a` -> `  - a`。",
+                tabSize: {
+                  name: "Tab 寬度（空格）",
+                  desc: "標準化時，將行首 Tab 展開為多少個空格。預設：2。"
+                }
+              },
+              cleanupInvalidSystemLines: {
+                name: "清理無效/多餘系統行",
+                desc: "刪除已編輯清單項中的多餘系統行（保留第一條），並刪除清單項正上方的孤兒系統行。例：`  [date:: ...] ^a` + `  [date:: ...] ^b` -> 僅保留一條。"
+              },
+              mergeSplitSystemLine: {
+                name: "合併拆分的系統行",
+                desc: "把兩行系統行合併為一行。例：`  [date:: 2026-01-26T16:01:21]` + `  ^7fp1` -> `  [date:: 2026-01-26T16:01:21] ^7fp1`。"
+              },
+              systemLineIndent: {
+                name: "修正系統行縮排",
+                desc: "把系統行縮排強制修正為 continuation indent（與 `- ` / 核取方塊後的內容欄對齊）。例：`- a` + `[date:: ...] ^id` -> `- a` + `  [date:: ...] ^id`。"
+              },
+              ensureSystemLineForTouchedItems: {
+                name: "為已編輯的清單項補齊系統行",
+                desc: "若已編輯的清單項缺少系統行，儲存時自動插入（必要時移動到子清單之前）。"
+              }
+            }
           },
           blpView: {
             title: "blp-view（Query/View）",

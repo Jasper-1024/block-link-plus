@@ -4,7 +4,7 @@ import { App, editorInfoField, editorLivePreviewField } from "obsidian";
 import { Settings } from "luxon";
 import { createEnhancedListAutoSystemLineExtension } from "../auto-system-line-extension";
 
-function createView(docText: string) {
+function createView(docText: string, opts?: { tabSize?: number }) {
 	const app = new App();
 	const file = (app.vault as any)._addFile("test.md", docText);
 
@@ -27,6 +27,7 @@ function createView(docText: string) {
 		doc: docText,
 		selection: EditorSelection.cursor(docText.length),
 		extensions: [
+			...(opts?.tabSize ? [(EditorState as any).tabSize.of(opts.tabSize)] : []),
 			editorInfoField.init(() => ({ app, file, hoverPopover: null } as any)),
 			editorLivePreviewField.init(() => true),
 			createEnhancedListAutoSystemLineExtension(plugin),
@@ -84,6 +85,28 @@ describe("enhanced-list-blocks/auto-system-line-extension", () => {
 
 			expect(view.state.doc.toString()).toMatch(
 				/^- parent\n  \[date:: 2026-01-10T00:00:00\] \^[a-zA-Z0-9_-]+\n  - child\n- $/
+			);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("treats a tab and 4 spaces as the same indentation level", () => {
+		Settings.defaultZone = "utc";
+		Settings.now = () => Date.parse("2026-01-10T00:00:00Z");
+
+		const { view, parent } = createView(["- parent", "\t- a"].join("\n"));
+		try {
+			const insertFrom = view.state.doc.length;
+			const insertText = "\n    - ";
+			view.dispatch({
+				changes: { from: insertFrom, to: insertFrom, insert: insertText },
+				selection: EditorSelection.cursor(insertFrom + insertText.length),
+			});
+
+			expect(view.state.doc.toString()).toMatch(
+				/^- parent\n\t- a\n\t  \[date:: 2026-01-10T00:00:00\] \^[a-zA-Z0-9_-]+\n {4}- $/
 			);
 		} finally {
 			view.destroy();

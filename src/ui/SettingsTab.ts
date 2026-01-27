@@ -426,20 +426,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	private renderEnhancedListTab(rootEl: HTMLElement) {
 		this.addHeading(t.settings.enhancedListBlocks.title, rootEl).setDesc(t.settings.enhancedListBlocks.desc);
 
-		// Dataview status hint (used by blp-view Query/View).
-		const dataviewStatus = detectDataviewStatus();
-		const statusText = dataviewStatus.functioning
-			? t.settings.enhancedListBlocks.dataviewStatus.available.replace(
-					"${version}",
-					dataviewStatus.version || "unknown"
-			  )
-			: t.settings.enhancedListBlocks.dataviewStatus.unavailable;
-
-		const statusSetting = new Setting(rootEl).setDesc(statusText);
-		statusSetting.settingEl.classList.add("blp-settings-dataview-status");
-		hideEl(statusSetting.nameEl);
-		if (!dataviewStatus.functioning) statusSetting.descEl.classList.add("mod-warning");
-
 		const parseScopeLines = (value: string): string[] =>
 			value
 				.split(/\r?\n/)
@@ -447,7 +433,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				.filter(Boolean)
 				.map((l) => l.replace(/\\/g, "/"));
 
-		new Setting(rootEl)
+		// Scope.
+		this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
+
+		const enabledFoldersSetting = new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
 			.setDesc(t.settings.enhancedListBlocks.enabledFolders.desc)
 			.addTextArea((text) => {
@@ -462,7 +451,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		new Setting(rootEl)
+		const enabledFilesSetting = new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFiles.name)
 			.setDesc(t.settings.enhancedListBlocks.enabledFiles.desc)
 			.addTextArea((text) => {
@@ -477,17 +466,20 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
+		// Behavior.
+		this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
+
+		const hideSystemLineSetting = this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
 			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
 
-		this.addToggleSetting("enhancedListHandleAffordance", undefined, rootEl)
+		const handleAffordanceSetting = this.addToggleSetting("enhancedListHandleAffordance", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.handleAffordance.name)
 			.setDesc(t.settings.enhancedListBlocks.handleAffordance.desc);
 
 		let handleClickActionDropdown: any | null = null;
 
-		this.addToggleSetting(
+		const handleActionsSetting = this.addToggleSetting(
 			"enhancedListHandleActions",
 			(enabled) => {
 				// Keep the dropdown in sync without a full re-render.
@@ -498,7 +490,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.enhancedListBlocks.handleActions.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.desc);
 
-		new Setting(rootEl)
+		const handleClickActionSetting = new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.handleActions.clickAction.name)
 			.setDesc(t.settings.enhancedListBlocks.handleActions.clickAction.desc)
 			.addDropdown((dropdown) => {
@@ -518,59 +510,181 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		this.addToggleSetting("enhancedListIndentCodeBlocks", undefined, rootEl)
+		const indentCodeBlocksSetting = this.addToggleSetting("enhancedListIndentCodeBlocks", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)
 			.setDesc(t.settings.enhancedListBlocks.indentCodeBlocks.desc);
 
-		this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete", undefined, rootEl)
+		const deleteSubtreeSetting = this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.name)
 			.setDesc(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.desc);
 
-		if (dataviewStatus.functioning) {
-			this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(t.settings.enhancedListBlocks.blpView.desc);
+		// Normalization.
+		this.addHeading(t.settings.enhancedListBlocks.groups.normalization.title, rootEl);
 
-			this.addToggleSetting("blpViewAllowMaterialize", undefined, rootEl)
-				.setName(t.settings.enhancedListBlocks.blpView.allowMaterialize.name)
-				.setDesc(t.settings.enhancedListBlocks.blpView.allowMaterialize.desc);
+		const normalizeOnSaveSetting = new Setting(rootEl)
+			.setName(t.settings.enhancedListBlocks.normalizeOnSave.name)
+			.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.desc)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.enhancedListNormalizeOnSave)
+					.onChange(async (value) => {
+						this.plugin.settings.enhancedListNormalizeOnSave = value;
+						await this.plugin.saveSettings();
+						// Re-render to show/hide rule details (and keep search index consistent).
+						this.display();
+					});
+			});
+		normalizeOnSaveSetting.settingEl.classList.add("blp-settings-master-toggle");
+
+		if (this.plugin.settings.enhancedListNormalizeOnSave === true) {
+			const normalizeTabsSetting = new Setting(rootEl)
+				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.name)
+				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.desc)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(this.plugin.settings.enhancedListNormalizeTabsToSpaces)
+						.onChange(async (value) => {
+							this.plugin.settings.enhancedListNormalizeTabsToSpaces = value;
+							await this.plugin.saveSettings();
+							// Re-render to show/hide tab size configuration.
+							this.display();
+						});
+				});
+
+			if (this.plugin.settings.enhancedListNormalizeTabsToSpaces === true) {
+				new Setting(rootEl)
+					.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.tabSize.name)
+					.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.tabSize.desc)
+					.addText((text) => {
+						text.inputEl.type = "number";
+						text.inputEl.min = "1";
+						text.inputEl.max = "16";
+						text.inputEl.step = "1";
+						text.inputEl.style.width = "72px";
+
+						text
+							.setPlaceholder("2")
+							.setValue(String(this.plugin.settings.enhancedListNormalizeTabSize ?? 2))
+							.onChange(async (value) => {
+								const trimmed = value.trim();
+								const next = trimmed ? Number.parseInt(trimmed, 10) : NaN;
+								if (!Number.isFinite(next) || next <= 0) return;
+
+								this.plugin.settings.enhancedListNormalizeTabSize = next;
+								await this.plugin.saveSettings();
+							});
+					});
+			}
 
 			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.blpView.maxSourceFiles.name)
-				.setDesc(t.settings.enhancedListBlocks.blpView.maxSourceFiles.desc)
-				.addText((text) => {
-					text.inputEl.type = "number";
-					text
-						.setPlaceholder("0")
-						.setValue(String(this.plugin.settings.blpViewMaxSourceFiles ?? 0))
+				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.cleanupInvalidSystemLines.name)
+				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.cleanupInvalidSystemLines.desc)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(this.plugin.settings.enhancedListNormalizeCleanupInvalidSystemLines)
 						.onChange(async (value) => {
-							const trimmed = value.trim();
-							const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
-							if (!Number.isFinite(next) || next < 0) return;
-							this.plugin.settings.blpViewMaxSourceFiles = next;
+							this.plugin.settings.enhancedListNormalizeCleanupInvalidSystemLines = value;
 							await this.plugin.saveSettings();
 						});
 				});
 
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.blpView.maxResults.name)
-				.setDesc(t.settings.enhancedListBlocks.blpView.maxResults.desc)
-				.addText((text) => {
-					text.inputEl.type = "number";
-					text
-						.setPlaceholder("0")
-						.setValue(String(this.plugin.settings.blpViewMaxResults ?? 0))
+			const normalizeMergeSetting = new Setting(rootEl)
+				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.mergeSplitSystemLine.name)
+				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.mergeSplitSystemLine.desc)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine)
 						.onChange(async (value) => {
-							const trimmed = value.trim();
-							const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
-							if (!Number.isFinite(next) || next < 0) return;
-							this.plugin.settings.blpViewMaxResults = next;
-							await this.plugin.saveSettings();
-						});
+							this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine = value;
+						await this.plugin.saveSettings();
+					});
 				});
 
-			this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
-				.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
-				.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
+			const normalizeIndentSetting = new Setting(rootEl)
+				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.systemLineIndent.name)
+				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.systemLineIndent.desc)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(this.plugin.settings.enhancedListNormalizeSystemLineIndent)
+						.onChange(async (value) => {
+							this.plugin.settings.enhancedListNormalizeSystemLineIndent = value;
+						await this.plugin.saveSettings();
+					});
+				});
+
+			const normalizeEnsureSetting = new Setting(rootEl)
+				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.ensureSystemLineForTouchedItems.name)
+				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.ensureSystemLineForTouchedItems.desc)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems)
+						.onChange(async (value) => {
+							this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems = value;
+						await this.plugin.saveSettings();
+					});
+				});
 		}
+
+		// blp-view.
+		const blpViewHeading = this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(
+			t.settings.enhancedListBlocks.blpView.desc
+		);
+
+		// Dataview status hint (used by blp-view Query/View).
+		const dataviewStatus = detectDataviewStatus();
+		const statusText = dataviewStatus.functioning
+			? t.settings.enhancedListBlocks.dataviewStatus.available.replace(
+					"${version}",
+					dataviewStatus.version || "unknown"
+			  )
+			: t.settings.enhancedListBlocks.dataviewStatus.unavailable;
+
+		const statusSetting = new Setting(rootEl).setDesc(statusText);
+		statusSetting.settingEl.classList.add("blp-settings-dataview-status");
+		hideEl(statusSetting.nameEl);
+		if (!dataviewStatus.functioning) statusSetting.descEl.classList.add("mod-warning");
+
+		const allowMaterializeSetting = this.addToggleSetting("blpViewAllowMaterialize", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.blpView.allowMaterialize.name)
+			.setDesc(t.settings.enhancedListBlocks.blpView.allowMaterialize.desc);
+
+		const maxSourceFilesSetting = new Setting(rootEl)
+			.setName(t.settings.enhancedListBlocks.blpView.maxSourceFiles.name)
+			.setDesc(t.settings.enhancedListBlocks.blpView.maxSourceFiles.desc)
+			.addText((text) => {
+				text.inputEl.type = "number";
+				text
+					.setPlaceholder("0")
+					.setValue(String(this.plugin.settings.blpViewMaxSourceFiles ?? 0))
+					.onChange(async (value) => {
+						const trimmed = value.trim();
+						const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
+						if (!Number.isFinite(next) || next < 0) return;
+						this.plugin.settings.blpViewMaxSourceFiles = next;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		const maxResultsSetting = new Setting(rootEl)
+			.setName(t.settings.enhancedListBlocks.blpView.maxResults.name)
+			.setDesc(t.settings.enhancedListBlocks.blpView.maxResults.desc)
+			.addText((text) => {
+				text.inputEl.type = "number";
+				text
+					.setPlaceholder("0")
+					.setValue(String(this.plugin.settings.blpViewMaxResults ?? 0))
+					.onChange(async (value) => {
+						const trimmed = value.trim();
+						const next = trimmed ? Number.parseInt(trimmed, 10) : 0;
+						if (!Number.isFinite(next) || next < 0) return;
+						this.plugin.settings.blpViewMaxResults = next;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		const showDiagnosticsSetting = this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
+			.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
 	}
 
 	private renderBuiltInPluginsTab(rootEl: HTMLElement) {

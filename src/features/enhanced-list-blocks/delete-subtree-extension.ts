@@ -2,6 +2,7 @@ import { EditorState, StateEffect, type Text, type Transaction, type Transaction
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { isEnhancedListEnabledFile } from "./enable-scope";
+import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
 
 const deleteSubtreeEffect = StateEffect.define<void>();
 
@@ -31,19 +32,23 @@ function mergeRanges(ranges: Range[]): Range[] {
 	return merged;
 }
 
-function leadingWhitespaceLen(text: string): number {
-	const m = text.match(/^(\s*)/);
-	return (m?.[1] ?? "").length;
+function leadingWhitespaceLen(text: string, tabSize: number): number {
+	return lineIndentCols(text, tabSize);
 }
 
-function parseListItemPrefix(text: string): { indentLen: number; markerLen: number } | null {
+function parseListItemPrefix(
+	text: string,
+	tabSize: number
+): { indentLen: number; indentCols: number; markerLen: number } | null {
 	const m = text.match(LIST_ITEM_PREFIX_RE);
 	if (!m) return null;
 
-	const indentLen = (m[1] ?? "").length;
+	const indentText = m[1] ?? "";
+	const indentLen = indentText.length;
+	const indentLenCols = indentCols(indentText, tabSize);
 
-	if (m[2]) return { indentLen, markerLen: 1 };
-	if (m[3]) return { indentLen, markerLen: m[3].length };
+	if (m[2]) return { indentLen, indentCols: indentLenCols, markerLen: 1 };
+	if (m[3]) return { indentLen, indentCols: indentLenCols, markerLen: m[3].length };
 
 	return null;
 }
@@ -60,7 +65,8 @@ function computeContinuationIndentFromStartLine(startLineText: string): string |
 function computeSubtreeDeleteRange(
 	doc: Text,
 	startLineNumber: number,
-	parentIndentLen: number
+	parentIndentLen: number,
+	tabSize: number
 ): Range {
 	const startLine = doc.line(startLineNumber);
 
@@ -68,7 +74,7 @@ function computeSubtreeDeleteRange(
 	for (let n = startLineNumber + 1; n <= doc.lines; n++) {
 		const line = doc.line(n);
 		if (line.text.trim() === "") continue;
-		if (leadingWhitespaceLen(line.text) <= parentIndentLen) {
+		if (leadingWhitespaceLen(line.text, tabSize) <= parentIndentLen) {
 			to = line.from;
 			break;
 		}
@@ -77,11 +83,16 @@ function computeSubtreeDeleteRange(
 	return { from: startLine.from, to };
 }
 
-function findSubtreeEndLineNumber(doc: Text, startLineNumber: number, parentIndentLen: number): number {
+function findSubtreeEndLineNumber(
+	doc: Text,
+	startLineNumber: number,
+	parentIndentLen: number,
+	tabSize: number
+): number {
 	for (let n = startLineNumber + 1; n <= doc.lines; n++) {
 		const line = doc.line(n);
 		if (line.text.trim() === "") continue;
-		if (leadingWhitespaceLen(line.text) <= parentIndentLen) {
+		if (leadingWhitespaceLen(line.text, tabSize) <= parentIndentLen) {
 			return n - 1;
 		}
 	}
@@ -93,14 +104,16 @@ function computeSystemLineDeletions(
 	doc: Text,
 	startLineNumber: number,
 	endLineNumber: number,
-	expectedIndent: string
+	expectedIndent: string,
+	tabSize: number
 ): Range[] {
+	const expectedIndentCols = indentCols(expectedIndent, tabSize);
 	const ranges: Range[] = [];
 	for (let n = startLineNumber; n <= endLineNumber; n++) {
 		const line = doc.line(n);
 		const m = line.text.match(SYSTEM_LINE_EXACT_RE);
 		if (!m) continue;
-		if ((m[1] ?? "") !== expectedIndent) continue;
+		if (indentCols(m[1] ?? "", tabSize) !== expectedIndentCols) continue;
 
 		const from = line.from;
 		const to = n < doc.lines ? line.to + 1 : line.to;
@@ -109,7 +122,7 @@ function computeSystemLineDeletions(
 	return ranges;
 }
 
-function computeCleanupDeletionsOldDoc(tr: Transaction, deleteSubtree: boolean): Range[] {
+function computeCleanupDeletionsOldDoc(tr: Transaction, deleteSubtree: boolean, tabSize: number): Range[] {
 	const oldDoc = tr.startState.doc;
 	const newDoc = tr.newDoc;
 
@@ -130,7 +143,7 @@ function computeCleanupDeletionsOldDoc(tr: Transaction, deleteSubtree: boolean):
 
 	for (const lineNumber of touchedLineNumbers) {
 		const line = oldDoc.line(lineNumber);
-		const prefix = parseListItemPrefix(line.text);
+		const prefix = parseListItemPrefix(line.text, tabSize);
 		if (!prefix) continue;
 
 		const markerFrom = line.from + prefix.indentLen;
@@ -156,13 +169,13 @@ function computeCleanupDeletionsOldDoc(tr: Transaction, deleteSubtree: boolean):
 
 		const continuationIndent = computeContinuationIndentFromStartLine(line.text);
 		if (continuationIndent) {
-			const endLineNumber = findSubtreeEndLineNumber(oldDoc, lineNumber, prefix.indentLen);
+			const endLineNumber = findSubtreeEndLineNumber(oldDoc, lineNumber, prefix.indentCols, tabSize);
 			ranges.push(
-				...computeSystemLineDeletions(oldDoc, lineNumber, endLineNumber, continuationIndent)
+				...computeSystemLineDeletions(oldDoc, lineNumber, endLineNumber, continuationIndent, tabSize)
 			);
 
 			if (deleteSubtree) {
-				const subtree = computeSubtreeDeleteRange(oldDoc, lineNumber, prefix.indentLen);
+				const subtree = computeSubtreeDeleteRange(oldDoc, lineNumber, prefix.indentCols, tabSize);
 				if (subtree.to > subtree.from) ranges.push(subtree);
 			}
 		}
@@ -189,9 +202,11 @@ export function createEnhancedListDeleteSubtreeExtension(plugin: BlockLinkPlus) 
 		if (!file) return tr;
 		if (!isEnhancedListEnabledFile(plugin, file as any)) return tr;
 
+		const tabSize = MARKDOWN_TAB_WIDTH;
 		const deletionsOld = computeCleanupDeletionsOldDoc(
 			tr,
-			plugin.settings.enhancedListDeleteSubtreeOnListItemDelete === true
+			plugin.settings.enhancedListDeleteSubtreeOnListItemDelete === true,
+			tabSize
 		);
 		if (deletionsOld.length === 0) return tr;
 

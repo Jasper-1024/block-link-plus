@@ -7,3 +7,4 @@ export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-exten
 export { createEnhancedListCodeBlockIndentExtension } from "./codeblock-indent-extension";
 export { createEnhancedListActiveBlockHighlightExtension } from "./active-block-highlight-extension";
 export { registerEnhancedListDuplicateIdRepair } from "./duplicate-id-repair";
+export { createEnhancedListDirtyRangeTrackerExtension } from "./normalize-on-save";

@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import { isEnhancedListEnabledFile } from "./enable-scope";
+import { consumeEnhancedListDirtyRanges, normalizeEnhancedListContentOnSave } from "./normalize-on-save";
 
 const SYSTEM_LINE_REGEX =
 	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
@@ -81,9 +82,19 @@ export function registerEnhancedListDuplicateIdRepair(plugin: BlockLinkPlus): vo
 
 			try {
 				const content = await plugin.app.vault.read(file);
-				const repaired = repairDuplicateEnhancedListIds(content, plugin);
-				if (repaired !== content) {
-					await plugin.app.vault.modify(file, repaired);
+
+				// "Normalize on save" operates only on recently-edited ranges (tracked in-memory).
+				const dirtyRanges = consumeEnhancedListDirtyRanges(file.path);
+				let next = content;
+				if (plugin.settings.enhancedListNormalizeOnSave === true && dirtyRanges.length > 0) {
+					next = normalizeEnhancedListContentOnSave(next, plugin, { dirtyRanges });
+				}
+
+				// Existing behavior: always fix duplicate Enhanced List IDs on save.
+				next = repairDuplicateEnhancedListIds(next, plugin);
+
+				if (next !== content) {
+					await plugin.app.vault.modify(file, next);
 				}
 			} finally {
 				inFlight.delete(file.path);
