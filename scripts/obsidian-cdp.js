@@ -10,6 +10,7 @@
 //   node scripts/obsidian-cdp.js open-note "Review/_blp-ai-workbench.md"
 //   node scripts/obsidian-cdp.js set-editor "doc/_blp-ai-workbench-baseline.md"
 //   node scripts/obsidian-cdp.js write-note "Review/_blp-ai-workbench.md" "doc/_blp-ai-workbench-baseline.md"
+//   node scripts/obsidian-cdp.js key "ctrl+c"
 //   node scripts/obsidian-cdp.js screenshot out.png
 //
 // Keep this script dependency-light: it uses the `ws` package that already exists in
@@ -164,6 +165,7 @@ Commands:
   eval <js>
   eval-file <localFile>
   mouse-click <x> <y> [--shift] [--ctrl] [--alt] [--meta]
+  key <combo>  (e.g. "ctrl+c", "shift+enter", "esc")
   open-note <vaultPath>
   set-editor <localFile>
   write-note <vaultPath> <localFile>
@@ -285,6 +287,86 @@ Env:
         button: "left",
         clickCount: 1,
         modifiers,
+      });
+
+      console.log("ok");
+      return;
+    }
+
+    if (cmd === "key") {
+      const combo = args.slice(1).join(" ").trim();
+      if (!combo) die('key requires a combo string, e.g. "ctrl+c"');
+
+      const parts = combo
+        .split("+")
+        .map((p) => String(p || "").trim().toLowerCase())
+        .filter(Boolean);
+
+      let modifiers = 0;
+      let keyPart = null;
+
+      for (const p of parts) {
+        if (p === "shift") modifiers |= 8;
+        else if (p === "ctrl" || p === "control") modifiers |= 2;
+        else if (p === "alt" || p === "option") modifiers |= 1;
+        else if (p === "meta" || p === "cmd" || p === "command") modifiers |= 4;
+        else keyPart = p;
+      }
+
+      if (!keyPart) die(`key combo missing a key: ${combo}`);
+
+      let key = keyPart;
+      let code = "";
+      let vk = 0;
+      let commands = undefined;
+
+      if (keyPart === "esc" || keyPart === "escape") {
+        key = "Escape";
+        code = "Escape";
+        vk = 27;
+      } else if (keyPart === "enter" || keyPart === "return") {
+        key = "Enter";
+        code = "Enter";
+        vk = 13;
+      } else if (keyPart.length === 1) {
+        const ch = keyPart;
+        const upper = ch.toUpperCase();
+        key = ch;
+
+        if (upper >= "A" && upper <= "Z") {
+          code = `Key${upper}`;
+          vk = upper.charCodeAt(0);
+          if ((modifiers & 2) === 2) {
+            if (upper === "C") commands = ["copy"];
+            if (upper === "X") commands = ["cut"];
+            if (upper === "V") commands = ["paste"];
+          }
+        } else if (ch >= "0" && ch <= "9") {
+          code = `Digit${ch}`;
+          vk = ch.charCodeAt(0);
+        } else {
+          die(`Unsupported key character: ${keyPart}`);
+        }
+      } else {
+        die(`Unsupported key combo: ${combo}`);
+      }
+
+      await client.send("Input.dispatchKeyEvent", {
+        type: "keyDown",
+        modifiers,
+        windowsVirtualKeyCode: vk,
+        nativeVirtualKeyCode: vk,
+        key,
+        code,
+        commands,
+      });
+      await client.send("Input.dispatchKeyEvent", {
+        type: "keyUp",
+        modifiers,
+        windowsVirtualKeyCode: vk,
+        nativeVirtualKeyCode: vk,
+        key,
+        code,
       });
 
       console.log("ok");

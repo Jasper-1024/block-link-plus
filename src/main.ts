@@ -38,14 +38,15 @@ import {
 	createEnhancedListSystemLineHideExtension,
 	createEnhancedListAutoSystemLineExtension,
 	createEnhancedListDeleteSubtreeExtension,
-	createEnhancedListHandleAffordanceExtension,
-	createEnhancedListHandleActionsExtension,
-	createEnhancedListBlockSelectionExtension,
-	createEnhancedListActiveBlockHighlightExtension,
-	createEnhancedListCodeBlockIndentExtension,
-	handleBlpView,
-	createEnhancedListDirtyRangeTrackerExtension,
-	registerEnhancedListDuplicateIdRepair,
+		createEnhancedListHandleAffordanceExtension,
+		createEnhancedListHandleActionsExtension,
+		createEnhancedListBlockSelectionExtension,
+		createEnhancedListSubtreeClipboardExtension,
+		createEnhancedListActiveBlockHighlightExtension,
+		createEnhancedListCodeBlockIndentExtension,
+		handleBlpView,
+		createEnhancedListDirtyRangeTrackerExtension,
+		registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
@@ -172,17 +173,18 @@ export default class BlockLinkPlus extends Plugin {
 
 		// for live preview
 		this.updateViewPlugin();
-		this.registerEditorExtension([
-			createEnhancedListDirtyRangeTrackerExtension(this),
-			createEnhancedListSystemLineHideExtension(this),
-			createEnhancedListHandleAffordanceExtension(this),
-			createEnhancedListHandleActionsExtension(this),
-			createEnhancedListBlockSelectionExtension(this),
-			createEnhancedListActiveBlockHighlightExtension(this),
-			createEnhancedListAutoSystemLineExtension(this),
-			createEnhancedListCodeBlockIndentExtension(this),
-			createEnhancedListDeleteSubtreeExtension(this),
-		]);
+			this.registerEditorExtension([
+				createEnhancedListDirtyRangeTrackerExtension(this),
+				createEnhancedListSystemLineHideExtension(this),
+				createEnhancedListHandleAffordanceExtension(this),
+				createEnhancedListHandleActionsExtension(this),
+				createEnhancedListBlockSelectionExtension(this),
+				createEnhancedListSubtreeClipboardExtension(this),
+				createEnhancedListActiveBlockHighlightExtension(this),
+				createEnhancedListAutoSystemLineExtension(this),
+				createEnhancedListCodeBlockIndentExtension(this),
+				createEnhancedListDeleteSubtreeExtension(this),
+			]);
 		registerEnhancedListDuplicateIdRepair(this);
 
 		// Initialize Flow Editor Manager
