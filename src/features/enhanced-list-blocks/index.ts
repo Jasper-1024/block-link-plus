@@ -3,6 +3,8 @@ export { createEnhancedListHandleAffordanceExtension } from "./handle-affordance
 export { createEnhancedListHandleActionsExtension } from "./handle-actions-extension";
 export { createEnhancedListBlockSelectionExtension } from "./block-selection-extension";
 export { createEnhancedListSubtreeClipboardExtension } from "./subtree-clipboard-extension";
+export { createEnhancedListBlockReferenceTriggerExtension } from "./block-reference-trigger-extension";
+export { openEnhancedListBlockReferencePicker } from "./block-reference-picker";
 export { createEnhancedListSystemLineHideExtension } from "./system-line-hide-extension";
 export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-extension";
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";

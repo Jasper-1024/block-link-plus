@@ -38,16 +38,19 @@ import {
 	createEnhancedListSystemLineHideExtension,
 	createEnhancedListAutoSystemLineExtension,
 	createEnhancedListDeleteSubtreeExtension,
-		createEnhancedListHandleAffordanceExtension,
-		createEnhancedListHandleActionsExtension,
-		createEnhancedListBlockSelectionExtension,
-		createEnhancedListSubtreeClipboardExtension,
-		createEnhancedListActiveBlockHighlightExtension,
-		createEnhancedListCodeBlockIndentExtension,
-		handleBlpView,
-		createEnhancedListDirtyRangeTrackerExtension,
-		registerEnhancedListDuplicateIdRepair,
+	createEnhancedListHandleAffordanceExtension,
+	createEnhancedListHandleActionsExtension,
+	createEnhancedListBlockSelectionExtension,
+	createEnhancedListSubtreeClipboardExtension,
+	createEnhancedListBlockReferenceTriggerExtension,
+	createEnhancedListActiveBlockHighlightExtension,
+	createEnhancedListCodeBlockIndentExtension,
+	openEnhancedListBlockReferencePicker,
+	handleBlpView,
+	createEnhancedListDirtyRangeTrackerExtension,
+	registerEnhancedListDuplicateIdRepair,
 } from "features/enhanced-list-blocks";
+import { isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
@@ -168,6 +171,42 @@ export default class BlockLinkPlus extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: "insert-block-reference",
+			name: "Insert Block Reference",
+			editorCheckCallback: (isChecking, _editor, view) => {
+				const file = (view as any)?.file;
+				if (!file || !isEnhancedListEnabledFile(this, file)) return false;
+
+				if (!isChecking) {
+					const cmView = (view as any)?.editor?.cm;
+					if (!cmView) return false;
+					const sel = cmView.state.selection.main;
+					openEnhancedListBlockReferencePicker(this, { view: cmView, from: sel.from, to: sel.to, embed: false });
+				}
+
+				return true;
+			},
+		});
+
+		this.addCommand({
+			id: "insert-block-embed",
+			name: "Insert Block Embed",
+			editorCheckCallback: (isChecking, _editor, view) => {
+				const file = (view as any)?.file;
+				if (!file || !isEnhancedListEnabledFile(this, file)) return false;
+
+				if (!isChecking) {
+					const cmView = (view as any)?.editor?.cm;
+					if (!cmView) return false;
+					const sel = cmView.state.selection.main;
+					openEnhancedListBlockReferencePicker(this, { view: cmView, from: sel.from, to: sel.to, embed: true });
+				}
+
+				return true;
+			},
+		});
+
 		// for reading mode
 		this.registerMarkdownPostProcessor((el, ctx) => markdownPostProcessor(el, ctx, this));
 
@@ -180,6 +219,7 @@ export default class BlockLinkPlus extends Plugin {
 				createEnhancedListHandleActionsExtension(this),
 				createEnhancedListBlockSelectionExtension(this),
 				createEnhancedListSubtreeClipboardExtension(this),
+				createEnhancedListBlockReferenceTriggerExtension(this),
 				createEnhancedListActiveBlockHighlightExtension(this),
 				createEnhancedListAutoSystemLineExtension(this),
 				createEnhancedListCodeBlockIndentExtension(this),
