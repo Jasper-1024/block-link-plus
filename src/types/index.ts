@@ -109,7 +109,7 @@ export interface PluginSettings {
 	enhancedListHandleAffordance: boolean;
 	enhancedListHandleActions: boolean;
 	// What a left-click on the list handle does when handle actions are enabled.
-	enhancedListHandleClickAction: "toggle-folding" | "menu" | "none";
+	enhancedListHandleClickAction: "toggle-folding" | "menu" | "select-block" | "none";
 	enhancedListIndentCodeBlocks: boolean;
 	enhancedListDeleteSubtreeOnListItemDelete: boolean;
 	// Enhanced List Blocks: save-time normalization (enabled files only; scoped to recently-edited ranges).

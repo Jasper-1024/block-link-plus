@@ -72,5 +72,12 @@
     background: var(--background-modifier-hover) !important;
 }
 
+/* Block selection mode (Enhanced List Blocks): highlight selected list item start lines. */
+.cm-editor .cm-line.blp-enhanced-list-block-selected {
+    /* Use `background` to override theme active-line styling. */
+    background: hsla(var(--interactive-accent-hsl), 0.12);
+    box-shadow: inset 2px 0 0 hsla(var(--interactive-accent-hsl), 0.9);
+}
+
 /* Nested fenced code blocks inside Enhanced List (UI-only).
  * Indentation is applied via CM decorations. Keep this class as a styling hook. */

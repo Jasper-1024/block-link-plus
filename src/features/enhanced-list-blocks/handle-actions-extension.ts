@@ -7,6 +7,7 @@ import t from "../../shared/i18n";
 import { getEditorFromState } from "../../vendor/vslinko/obsidian-outliner/editor";
 import { ObsidianSettings } from "../../vendor/vslinko/obsidian-outliner/services/ObsidianSettings";
 import { isEnhancedListEnabledFile } from "./enable-scope";
+import { dispatchEnhancedListBlockSelectionClick } from "./block-selection-extension";
 import { ensureEnhancedListSystemLineForActiveListItem } from "./ensure-system-line";
 
 const HANDLE_SELECTOR = ".cm-formatting-list-ul";
@@ -258,6 +259,12 @@ export function createEnhancedListHandleActionsExtension(
 
 				const line = resolveHandleLine(this.view, event);
 				if (line === null) return false;
+
+				if (clickAction === "select-block") {
+					dispatchEnhancedListBlockSelectionClick(this.view, { line, shiftKey: event.shiftKey });
+					event.preventDefault();
+					return true;
+				}
 
 				setCursorToLine(this.view, infoField, line);
 

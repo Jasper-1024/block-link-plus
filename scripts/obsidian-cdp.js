@@ -5,6 +5,7 @@
 // Usage examples:
 //   node scripts/obsidian-cdp.js list
 //   node scripts/obsidian-cdp.js eval "location.href"
+//   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/dump-state.js"
 //   node scripts/obsidian-cdp.js eval "(async()=>app.workspace.getActiveFile()?.path)()"
 //   node scripts/obsidian-cdp.js open-note "Review/_blp-ai-workbench.md"
 //   node scripts/obsidian-cdp.js set-editor "doc/_blp-ai-workbench-baseline.md"
@@ -161,6 +162,8 @@ Commands:
   list
   call <Method> [JsonParams]
   eval <js>
+  eval-file <localFile>
+  mouse-click <x> <y> [--shift] [--ctrl] [--alt] [--meta]
   open-note <vaultPath>
   set-editor <localFile>
   write-note <vaultPath> <localFile>
@@ -224,6 +227,67 @@ Env:
       } else {
         console.log(JSON.stringify(res, null, 2));
       }
+      return;
+    }
+
+    if (cmd === "eval-file") {
+      const localFile = args.slice(1).join(" ").trim();
+      if (!localFile) die("eval-file requires a local file path");
+
+      const code = fs.readFileSync(path.resolve(localFile), "utf8");
+      const res = await client.send("Runtime.evaluate", {
+        expression: code,
+        awaitPromise: true,
+        returnByValue: true,
+      });
+      if (res?.result && Object.prototype.hasOwnProperty.call(res.result, "value")) {
+        console.log(JSON.stringify(res.result.value, null, 2));
+      } else {
+        console.log(JSON.stringify(res, null, 2));
+      }
+      return;
+    }
+
+    if (cmd === "mouse-click") {
+      const x = Number(args[1]);
+      const y = Number(args[2]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        die("mouse-click requires numeric <x> <y>");
+      }
+
+      const flags = new Set(args.slice(3));
+      // Chrome DevTools Protocol modifier bitmask:
+      // Alt=1, Ctrl=2, Meta=4, Shift=8
+      let modifiers = 0;
+      if (flags.has("--alt")) modifiers |= 1;
+      if (flags.has("--ctrl")) modifiers |= 2;
+      if (flags.has("--meta")) modifiers |= 4;
+      if (flags.has("--shift")) modifiers |= 8;
+
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x,
+        y,
+        modifiers,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        x,
+        y,
+        button: "left",
+        clickCount: 1,
+        modifiers,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        x,
+        y,
+        button: "left",
+        clickCount: 1,
+        modifiers,
+      });
+
+      console.log("ok");
       return;
     }
 

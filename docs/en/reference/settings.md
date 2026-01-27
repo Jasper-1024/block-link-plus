@@ -46,7 +46,7 @@ Since v1.9.0, Block Link Plus settings are grouped into tabs and support cross-t
 - **enhancedListHideSystemLine** - Hide the system line in Live Preview/Reading mode
 - **enhancedListHandleAffordance** - Show list handle affordance (Live Preview + enabled files only)
 - **enhancedListHandleActions** - Enable list handle actions (Live Preview + enabled files only)
-- **enhancedListHandleClickAction** - List handle left-click action (`toggle-folding` | `menu` | `none`)
+- **enhancedListHandleClickAction** - List handle left-click action (`toggle-folding` | `select-block` | `menu` | `none`)
 - **enhancedListIndentCodeBlocks** - Indent nested fenced code blocks (Live Preview + enabled files only)
 - **enhancedListDeleteSubtreeOnListItemDelete** - Delete children when deleting a list item
 - **blpViewAllowMaterialize** - Allow `render.mode: materialize` writeback

@@ -208,6 +208,7 @@ class T {
               desc: "Choose what a left-click on the list handle does. Right-click always opens the handle menu.",
               options: {
                 toggleFolding: "Toggle folding",
+                selectBlock: "Select block",
                 menu: "Open handle menu",
                 none: "None",
               },
@@ -234,7 +235,7 @@ class T {
             rules: {
               tabsToSpaces: {
                 name: "Convert leading tabs to spaces",
-                desc: "Convert leading indentation tabs to spaces (configurable tab width). Example (tab width = 2): `\\t- a` -> `  - a`.",
+                desc: "Convert leading indentation tabs to spaces (configurable tab width). To avoid changing list nesting, conversion falls back to Markdown tab semantics when needed. Example (tab width = 2): `\\t- a` -> `  - a`.",
                 tabSize: {
                   name: "Tab width (spaces)",
                   desc: "How many spaces a leading tab expands to during normalization. Default: 2."
@@ -674,6 +675,7 @@ class T {
               desc: "选择左键点击列表手柄时执行的动作。右键始终打开手柄菜单。",
               options: {
                 toggleFolding: "切换折叠",
+                selectBlock: "选择块",
                 menu: "打开手柄菜单",
                 none: "无",
               },
@@ -700,7 +702,7 @@ class T {
             rules: {
               tabsToSpaces: {
                 name: "将行首 Tab 转为空格",
-                desc: "将行首缩进的 Tab 转为空格（tab 宽度可配置）。例（tab=2）：`\\t- a` -> `  - a`。",
+                desc: "将行首缩进的 Tab 转为空格（tab 宽度可配置）。为避免改变列表层级，当需要时会回退到 Markdown 的 tab 缩进语义。例（tab=2）：`\\t- a` -> `  - a`。",
                 tabSize: {
                   name: "Tab 宽度（空格）",
                   desc: "标准化时，把行首 Tab 展开为多少个空格。默认：2。"
@@ -1140,6 +1142,7 @@ class T {
               desc: "選擇左鍵點擊列表把手時執行的動作。右鍵一律開啟把手選單。",
               options: {
                 toggleFolding: "切換折疊",
+                selectBlock: "選擇區塊",
                 menu: "開啟把手選單",
                 none: "無",
               },
@@ -1166,7 +1169,7 @@ class T {
             rules: {
               tabsToSpaces: {
                 name: "將行首 Tab 轉為空格",
-                desc: "將行首縮排的 Tab 轉為空格（tab 寬度可設定）。例（tab=2）：`\\t- a` -> `  - a`。",
+                desc: "將行首縮排的 Tab 轉為空格（tab 寬度可設定）。為避免改變列表層級，必要時會回退到 Markdown 的 tab 縮排語義。例（tab=2）：`\\t- a` -> `  - a`。",
                 tabSize: {
                   name: "Tab 寬度（空格）",
                   desc: "標準化時，將行首 Tab 展開為多少個空格。預設：2。"

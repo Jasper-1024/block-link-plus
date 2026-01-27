@@ -433,8 +433,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				.filter(Boolean)
 				.map((l) => l.replace(/\\/g, "/"));
 
-		// Scope.
-		this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
+		// Scope & behavior.
+		this.addHeading(t.settings.enhancedListBlocks.groups.scopeAndBehavior.title, rootEl);
+
+		const scopeHeading = this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
+		scopeHeading.settingEl.classList.add("blp-settings-heading-level2");
 
 		const enabledFoldersSetting = new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
@@ -466,8 +469,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		// Behavior.
-		this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
+		const behaviorHeading = this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
+		behaviorHeading.settingEl.classList.add("blp-settings-heading-level2");
 
 		const hideSystemLineSetting = this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
@@ -499,6 +502,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				dropdown
 					.addOptions({
 						"toggle-folding": t.settings.enhancedListBlocks.handleActions.clickAction.options.toggleFolding,
+						"select-block": t.settings.enhancedListBlocks.handleActions.clickAction.options.selectBlock,
 						menu: t.settings.enhancedListBlocks.handleActions.clickAction.options.menu,
 						none: t.settings.enhancedListBlocks.handleActions.clickAction.options.none,
 					} as any)
@@ -596,8 +600,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine)
 						.onChange(async (value) => {
 							this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine = value;
-						await this.plugin.saveSettings();
-					});
+							await this.plugin.saveSettings();
+						});
 				});
 
 			const normalizeIndentSetting = new Setting(rootEl)
@@ -608,8 +612,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.enhancedListNormalizeSystemLineIndent)
 						.onChange(async (value) => {
 							this.plugin.settings.enhancedListNormalizeSystemLineIndent = value;
-						await this.plugin.saveSettings();
-					});
+							await this.plugin.saveSettings();
+						});
 				});
 
 			const normalizeEnsureSetting = new Setting(rootEl)
@@ -620,8 +624,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems)
 						.onChange(async (value) => {
 							this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems = value;
-						await this.plugin.saveSettings();
-					});
+							await this.plugin.saveSettings();
+						});
 				});
 		}
 

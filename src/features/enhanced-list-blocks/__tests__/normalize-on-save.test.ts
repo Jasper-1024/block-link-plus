@@ -56,6 +56,7 @@ describe("enhanced-list-blocks/normalize-on-save", () => {
 			settings: {
 				enhancedListNormalizeOnSave: true,
 				enhancedListNormalizeTabsToSpaces: true,
+				enhancedListNormalizeTabSize: 2,
 				enhancedListNormalizeMergeSplitSystemLine: false,
 				enhancedListNormalizeSystemLineIndent: false,
 				enhancedListNormalizeEnsureSystemLineForTouchedItems: false,
@@ -74,6 +75,35 @@ describe("enhanced-list-blocks/normalize-on-save", () => {
 		});
 
 		expect(out).toBe(["- parent", "  - a", "    continued", "- b", "\t- c"].join("\n"));
+	});
+
+	test("does not change list nesting when converting tabs to spaces", () => {
+		const plugin = {
+			app: { vault: { config: { tabSize: 2 } } },
+			settings: {
+				enhancedListNormalizeOnSave: true,
+				enhancedListNormalizeTabsToSpaces: true,
+				enhancedListNormalizeTabSize: 2,
+				enhancedListNormalizeCleanupInvalidSystemLines: false,
+				enhancedListNormalizeMergeSplitSystemLine: false,
+				enhancedListNormalizeSystemLineIndent: false,
+				enhancedListNormalizeEnsureSystemLineForTouchedItems: false,
+				enable_prefix: false,
+				id_prefix: "",
+				id_length: 4,
+			},
+		} as any;
+
+		const content = ["- top", "  - parent", "\t- child"].join("\n");
+		const from = content.indexOf("\t- child");
+		const to = from + "\t- child".length;
+
+		const out = normalizeEnhancedListContentOnSave(content, plugin, {
+			dirtyRanges: [{ from, to }],
+		});
+
+		// Preserve nesting: `\t- child` under `  - parent` stays nested after normalization.
+		expect(out).toBe(["- top", "  - parent", "    - child"].join("\n"));
 	});
 
 	test("converts tab-indented system line to continuation indent (tab=4 columns)", () => {

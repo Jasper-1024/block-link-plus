@@ -603,12 +603,53 @@ export function normalizeEnhancedListContentOnSave(
 		if (ruleTabsToSpaces) {
 			const parentContentEnd =
 				firstChildLineIndex != null ? Math.max(startIdx, firstChildLineIndex - 1) : endLineIndex;
-			for (let ln = startIdx; ln <= parentContentEnd; ln++) {
+
+			// Converting a tab to fewer columns (e.g. tabSize=2) can accidentally "outdent" a list item
+			// so it becomes a sibling of its parent. Keep conversion configurable, but avoid breaking
+			// list nesting by falling back to Markdown semantics (tab=4 columns) when required.
+			const parentStartIdx = findParentListStartLineIndex(lines, startIdx, parseTabSize, fenceMap);
+			let parentStartIndentCols = -1;
+			if (parentStartIdx != null) {
+				const parentText = lines[parentStartIdx] ?? "";
+				const parentMatch = parentText.match(LIST_ITEM_PREFIX_RE);
+				if (parentMatch) {
+					parentStartIndentCols = indentCols(parentMatch[1] ?? "", parseTabSize);
+				}
+			}
+
+			const startTextBefore = lines[startIdx] ?? "";
+			const startCandidate = normalizeLineLeadingIndentTabsToSpaces(startTextBefore, normalizeTabSize);
+			if (startCandidate !== startTextBefore) {
+				const candidateIndentCols = indentCols(leadingIndentText(startCandidate), parseTabSize);
+				if (parentStartIndentCols >= 0 && candidateIndentCols <= parentStartIndentCols) {
+					lines[startIdx] = normalizeLineLeadingIndentTabsToSpaces(startTextBefore, parseTabSize);
+				} else {
+					lines[startIdx] = startCandidate;
+				}
+			}
+
+			// Recompute the current item's indent after converting its start line (threshold for continuation lines).
+			startLineText = lines[startIdx] ?? "";
+			startPrefixMatch = startLineText.match(LIST_ITEM_PREFIX_RE);
+			if (!startPrefixMatch) continue;
+			parentIndentCols = indentCols(startPrefixMatch[1] ?? "", parseTabSize);
+
+			for (let ln = startIdx + 1; ln <= parentContentEnd; ln++) {
 				const lineNo = ln + 1;
 				const text = lines[ln] ?? "";
 				const inFence = fenceMap.get(lineNo) ?? false;
 				if (inFence && !isFenceMarkerLine(text)) continue;
-				lines[ln] = normalizeLineLeadingIndentTabsToSpaces(text, normalizeTabSize);
+
+				const candidate = normalizeLineLeadingIndentTabsToSpaces(text, normalizeTabSize);
+				if (candidate === text) continue;
+
+				// Continuation/content lines must remain indented deeper than the list marker indent.
+				const candidateIndentCols = indentCols(leadingIndentText(candidate), parseTabSize);
+				if (candidateIndentCols <= parentIndentCols) {
+					lines[ln] = normalizeLineLeadingIndentTabsToSpaces(text, parseTabSize);
+				} else {
+					lines[ln] = candidate;
+				}
 			}
 		}
 

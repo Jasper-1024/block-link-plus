@@ -44,6 +44,15 @@ export class DetectClickOnBullet {
       return;
     }
 
+    // Block Link Plus Enhanced List can take over bullet clicks (fold/menu/block selection).
+    // When it does, do not also trigger zoom-on-click.
+    const blp = (window as any).BlockLinkPlus;
+    const handleActionsEnabled = Boolean(blp?.settings?.enhancedListHandleActions);
+    const clickAction = String(blp?.settings?.enhancedListHandleClickAction ?? "toggle-folding");
+    if (handleActionsEnabled && clickAction !== "none") {
+      return;
+    }
+
     const pos = view.posAtDOM(e.target);
     this.clickOnBullet.clickOnBullet(view, pos);
   };

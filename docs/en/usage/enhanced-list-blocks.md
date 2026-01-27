@@ -44,6 +44,11 @@ When enabled (enabled files + Live Preview only):
 You can configure the left-click behavior in settings:
 - `Enhanced List` tab → “Enhanced List” → “Handle left-click action”
 
+When the handle left-click action is set to `select-block` (enabled files + Live Preview only):
+- Left-click the handle: select the list item as a block (block highlight, not a text selection).
+- Shift + left-click: select a contiguous range of blocks (block-granular).
+- Escape: clear block selection and return to normal editing.
+
 ### Nested code block indentation (optional)
 
 Enabled by default (can be turned off in settings):

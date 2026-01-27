@@ -46,7 +46,7 @@
 - **enhancedListHideSystemLine** - 在 Live Preview/Reading mode 隱藏系統行
 - **enhancedListHandleAffordance** - 顯示列表把手（僅 Live Preview + 啟用檔案）
 - **enhancedListHandleActions** - 啟用列表把手動作（僅 Live Preview + 啟用檔案）
-- **enhancedListHandleClickAction** - 把手左鍵動作（`toggle-folding` | `menu` | `none`）
+- **enhancedListHandleClickAction** - 把手左鍵動作（`toggle-folding` | `select-block` | `menu` | `none`）
 - **enhancedListIndentCodeBlocks** - 縮排巢狀圍欄程式碼區塊（僅 Live Preview + 啟用檔案）
 - **enhancedListDeleteSubtreeOnListItemDelete** - 刪除列表項時是否連帶刪除子項
 - **blpViewAllowMaterialize** - 允許 `render.mode: materialize` 寫回
