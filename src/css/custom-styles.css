@@ -82,6 +82,31 @@
 /* Nested fenced code blocks inside Enhanced List (UI-only).
  * Indentation is applied via CM decorations. Keep this class as a styling hook. */
 
+/* blp-view: add a lightweight "peek" affordance to block embeds. */
+.blp-block-peek-host {
+    position: relative;
+}
+
+.blp-block-peek-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-muted);
+    background: var(--background-modifier-hover);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0;
+    transition: opacity 120ms ease-in-out;
+}
+
+.blp-block-peek-host:hover .blp-block-peek-btn {
+    opacity: 1;
+}
+
 /* Block Peek modal (Enhanced List Blocks). */
 .blp-block-peek-header {
     margin-bottom: 0.75em;

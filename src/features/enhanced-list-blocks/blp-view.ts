@@ -7,6 +7,7 @@ import { getDataviewApi } from "../../utils/dataview-detector";
 import { getEnhancedListEnabledMarkdownFiles, isEnhancedListEnabledFile } from "./enable-scope";
 import crypto from "crypto";
 import { findManagedRegion, REGION_END_MARKER, REGION_START_MARKER_PREFIX } from "./region-parser";
+import { openEnhancedListBlockPeek } from "./block-peek";
 
 type SortBy = "date" | "file.path" | "line";
 type SortOrder = "asc" | "desc";
@@ -651,6 +652,59 @@ function renderEmbedList(groups: BlpViewGroup[]): string {
 	return lines.join("\n").trim();
 }
 
+const INTERNAL_EMBED_SRC_BLOCK_REF_RE = /^([^#]+)#\^([a-zA-Z0-9_-]+)$/;
+
+/**
+ * Enhance rendered blp-view output with a lightweight "peek" affordance on block embeds.
+ * This keeps the main renderer pure-markdown while still enabling block-first workflows.
+ */
+export function attachEnhancedListBlockPeekToRenderedBlpViewOutput(
+	plugin: BlockLinkPlus,
+	el: HTMLElement,
+	args: { sourcePath: string }
+): void {
+	const app: any = plugin.app as any;
+	const sourcePath = args.sourcePath ?? "";
+
+	// Obsidian renders `![[file#^id]]` as `.internal-embed` with `src="file#^id"`.
+	const embeds = el.querySelectorAll<HTMLElement>('.internal-embed[src*="#^"]');
+	for (const embed of embeds) {
+		if (!embed || (embed as any).dataset?.blpPeekBound === "1") continue;
+
+		const src = embed.getAttribute("src") ?? "";
+		const m = src.match(INTERNAL_EMBED_SRC_BLOCK_REF_RE);
+		if (!m?.[1] || !m?.[2]) continue;
+
+		const linkpath = m[1];
+		const id = m[2];
+
+		let dest: any = null;
+		try {
+			dest = app.metadataCache?.getFirstLinkpathDest?.(linkpath, sourcePath) ?? null;
+		} catch {
+			dest = null;
+		}
+		if (!dest) continue;
+
+		(embed as any).dataset.blpPeekBound = "1";
+		embed.classList.add("blp-block-peek-host");
+
+		// Avoid duplicating the button if Obsidian reuses DOM nodes.
+		if (embed.querySelector(".blp-block-peek-btn")) continue;
+
+		const btn = document.createElement("span");
+		btn.className = "blp-block-peek-btn";
+		btn.textContent = "peek";
+		btn.setAttribute("aria-label", "Block Peek");
+		btn.addEventListener("click", (ev) => {
+			ev.preventDefault();
+			ev.stopPropagation();
+			openEnhancedListBlockPeek(plugin, { file: dest, blockId: id });
+		});
+		embed.appendChild(btn);
+	}
+}
+
 function renderTable(
 	dv: DataviewApi,
 	groups: BlpViewGroup[],
@@ -984,6 +1038,7 @@ export async function handleBlpView(
 		}
 
 		await MarkdownRenderer.renderMarkdown(markdown, el, ctx.sourcePath, plugin);
+		attachEnhancedListBlockPeekToRenderedBlpViewOutput(plugin, el, { sourcePath: ctx.sourcePath });
 		if (showDiagnostics) {
 			el.createEl("pre", { text: diagnosticsText });
 		}
