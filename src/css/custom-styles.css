@@ -81,3 +81,38 @@
 
 /* Nested fenced code blocks inside Enhanced List (UI-only).
  * Indentation is applied via CM decorations. Keep this class as a styling hook. */
+
+/* Block Peek modal (Enhanced List Blocks). */
+.blp-block-peek-header {
+    margin-bottom: 0.75em;
+}
+
+.blp-block-peek-path {
+    cursor: pointer;
+    color: var(--text-accent);
+    font-family: var(--font-monospace);
+}
+
+.blp-block-peek-section {
+    margin-top: 0.75em;
+}
+
+.blp-block-peek-backlink {
+    padding: 0.5em;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.blp-block-peek-backlink:hover {
+    background: var(--background-modifier-hover);
+}
+
+.blp-block-peek-backlink-path {
+    font-weight: 600;
+}
+
+.blp-block-peek-backlink-line {
+    margin-top: 0.25em;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}

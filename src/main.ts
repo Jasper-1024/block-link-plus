@@ -46,9 +46,12 @@ import {
 	createEnhancedListActiveBlockHighlightExtension,
 	createEnhancedListCodeBlockIndentExtension,
 	openEnhancedListBlockReferencePicker,
+	findActiveListItemBlockIdInContent,
+	findBlockTargetFromLine,
 	handleBlpView,
 	createEnhancedListDirtyRangeTrackerExtension,
 	registerEnhancedListDuplicateIdRepair,
+	openEnhancedListBlockPeek,
 } from "features/enhanced-list-blocks";
 import { isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
@@ -204,6 +207,46 @@ export default class BlockLinkPlus extends Plugin {
 				}
 
 				return true;
+			},
+		});
+
+		this.addCommand({
+			id: "open-block-peek",
+			name: "Block Peek",
+			editorCheckCallback: (isChecking, editor, view) => {
+				const file = (view as any)?.file;
+				if (!file) return false;
+
+				if (isChecking) return true;
+
+				try {
+					const cursor = editor.getCursor();
+					const lineText = editor.getLine(cursor.line) ?? "";
+
+					const target = findBlockTargetFromLine(this, { sourceFile: file, lineText });
+					if (target) {
+						openEnhancedListBlockPeek(this, { file: target.file, blockId: target.id });
+						return true;
+					}
+
+					if (!isEnhancedListEnabledFile(this, file)) {
+						new Notice("Block Peek works on Enhanced List blocks or [[file#^id]] references.");
+						return true;
+					}
+
+					const content = editor.getValue();
+					const id = findActiveListItemBlockIdInContent(content, cursor.line);
+					if (!id) {
+						new Notice("No list item block id found at cursor.");
+						return true;
+					}
+
+					openEnhancedListBlockPeek(this, { file, blockId: id });
+					return true;
+				} catch (e: any) {
+					new Notice(`Block Peek failed: ${String(e?.message ?? e)}`);
+					return true;
+				}
 			},
 		});
 

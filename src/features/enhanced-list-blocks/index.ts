@@ -5,6 +5,13 @@ export { createEnhancedListBlockSelectionExtension } from "./block-selection-ext
 export { createEnhancedListSubtreeClipboardExtension } from "./subtree-clipboard-extension";
 export { createEnhancedListBlockReferenceTriggerExtension } from "./block-reference-trigger-extension";
 export { openEnhancedListBlockReferencePicker } from "./block-reference-picker";
+export {
+	findActiveListItemBlockIdInContent,
+	findBlockTargetFromLine,
+	getEnhancedListBlockBacklinks,
+	openEnhancedListBlockPeek,
+	openEnhancedListBlockPeekAtCursor,
+} from "./block-peek";
 export { createEnhancedListSystemLineHideExtension } from "./system-line-hide-extension";
 export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-extension";
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";

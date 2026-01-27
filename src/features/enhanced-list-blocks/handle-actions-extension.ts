@@ -9,6 +9,7 @@ import { ObsidianSettings } from "../../vendor/vslinko/obsidian-outliner/service
 import { isEnhancedListEnabledFile } from "./enable-scope";
 import { dispatchEnhancedListBlockSelectionClick } from "./block-selection-extension";
 import { ensureEnhancedListSystemLineForActiveListItem } from "./ensure-system-line";
+import { openEnhancedListBlockPeek } from "./block-peek";
 
 const HANDLE_SELECTOR = ".cm-formatting-list-ul";
 
@@ -182,6 +183,18 @@ function showHandleMenu(
 				return;
 			}
 			copyToClipboard(plugin.app, plugin.settings as any, file, blockId, true);
+		});
+	});
+
+	menu.addItem((item) => {
+		item.setTitle(getLabel("Peek block", "peekBlock")).onClick(() => {
+			setCursorToLine(view, infoField, line);
+			const blockId = ensureEnhancedListSystemLineForActiveListItem(plugin, editor);
+			if (!blockId) {
+				new Notice("No list item block id found.");
+				return;
+			}
+			openEnhancedListBlockPeek(plugin, { file, blockId });
 		});
 	});
 

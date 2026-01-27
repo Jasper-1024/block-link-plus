@@ -146,6 +146,7 @@ export class App {
       view: any;
     };
     on: any;
+    getLeaf?: any;
   };
   plugins: {
     plugins: Record<string, any>;
@@ -156,7 +157,12 @@ export class App {
     this.metadataCache = new MetadataCache();
     this.workspace = {
       activeLeaf: undefined,
-      on: function() { return null; }
+      on: function() { return null; },
+      getLeaf: function() {
+        return {
+          openFile: async function() { return null; },
+        };
+      },
     };
     this.plugins = {
       plugins: {}
@@ -273,6 +279,51 @@ export class MarkdownView {
 }
 
 // MarkdownRenderChild 类模拟（用于 Markdown 渲染子组件）
+// Minimal UI stubs used by feature-level unit tests.
+function enhanceEl<T extends HTMLElement>(el: T): T {
+  (el as any).empty = () => {
+    el.innerHTML = '';
+  };
+  (el as any).setText = (text: string) => {
+    el.textContent = String(text ?? '');
+  };
+  (el as any).createDiv = (opts?: { cls?: string; text?: string }) => {
+    const div = document.createElement('div');
+    if (opts?.cls) div.className = opts.cls;
+    if (opts?.text != null) div.textContent = String(opts.text);
+    el.appendChild(div);
+    return enhanceEl(div);
+  };
+  (el as any).createEl = (tag: string, opts?: { cls?: string; text?: string }) => {
+    const child = document.createElement(tag);
+    if (opts?.cls) child.className = opts.cls;
+    if (opts?.text != null) child.textContent = String(opts.text);
+    el.appendChild(child);
+    return enhanceEl(child as any);
+  };
+  return el;
+}
+
+export class Modal {
+  app: App;
+  titleEl: HTMLElement;
+  contentEl: HTMLElement;
+
+  constructor(app: App) {
+    this.app = app;
+    this.titleEl = enhanceEl(document.createElement('div'));
+    this.contentEl = enhanceEl(document.createElement('div'));
+  }
+
+  open(): void {
+    if (typeof (this as any).onOpen === 'function') (this as any).onOpen();
+  }
+
+  close(): void {
+    if (typeof (this as any).onClose === 'function') (this as any).onClose();
+  }
+}
+
 export class MarkdownRenderChild {
   containerEl: HTMLElement;
 
