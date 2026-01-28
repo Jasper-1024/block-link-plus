@@ -16,7 +16,7 @@
 /* Obsidian's built-in list folding indicator (triangle) is too close to the bullet and
  * commonly causes accidental fold/unfold when using vslinko outliner drag handles.
  * Hide it only inside Enhanced List scope so normal notes keep native behavior. */
-.cm-editor.blp-vslinko-scope .HyperMD-list-line .cm-fold-indicator {
+.cm-editor.blp-enhanced-list-hide-native-fold-indicator .HyperMD-list-line .cm-fold-indicator {
     display: none !important;
 }
 

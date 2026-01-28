@@ -176,6 +176,9 @@ class T {
             behavior: {
               title: "Behavior",
             },
+            blockMode: {
+              title: "Block mode",
+            },
             normalization: {
               title: "Normalization",
             },
@@ -228,6 +231,22 @@ class T {
           deleteSubtreeOnDelete: {
             name: "Delete children when deleting a list item",
             desc: "If enabled, deleting a parent list item will delete its nested children (Logseq/Roam style). If disabled, children stay and only the system line is removed."
+          },
+          hideNativeFoldIndicator: {
+            name: "Hide Obsidian's built-in fold indicator",
+            desc: "Hide the built-in fold triangle shown near list bullets in Live Preview (enabled files only). This reduces accidental fold/unfold when using drag-and-drop."
+          },
+          subtreeClipboard: {
+            name: "Enable subtree clipboard (copy/cut/paste block-tree)",
+            desc: "When block selection mode is active, Copy/Cut/Paste operates on list-item subtrees (block-tree semantics) instead of plain text."
+          },
+          doubleParenTrigger: {
+            name: "Enable `((` trigger for block reference insertion",
+            desc: "When enabled, typing `((` opens the Block Reference picker and replaces `((` with a standard `[[file#^id]]` reference. Recommended to keep off unless you prefer Roam/Logseq-style triggers."
+          },
+          blockPeek: {
+            name: "Enable Block Peek (context + backlinks)",
+            desc: "Enable Block Peek UI affordances (handle menu + blp-view peek button) for `[[file#^id]]` blocks."
           },
           normalizeOnSave: {
             name: "Normalize list format on save",
@@ -643,6 +662,9 @@ class T {
             behavior: {
               title: "行为",
             },
+            blockMode: {
+              title: "块模式",
+            },
             normalization: {
               title: "标准化",
             },
@@ -662,6 +684,22 @@ class T {
           hideSystemLine: {
             name: "隐藏系统行",
             desc: "在 Live Preview 与 Reading mode 下隐藏系统行（`[date:: ...] ^id`）。关闭后显示系统行（用于调试）。"
+          },
+          hideNativeFoldIndicator: {
+            name: "隐藏 Obsidian 自带折叠指示器",
+            desc: "在 Live Preview（仅启用文件）中隐藏列表项目旁边的折叠小三角，减少拖拽时误触折叠/展开。"
+          },
+          subtreeClipboard: {
+            name: "启用子树剪贴板（按块树 copy/cut/paste）",
+            desc: "当块选择模式激活时，Copy/Cut/Paste 以列表项子树（块树）为单位，而不是纯文本。"
+          },
+          doubleParenTrigger: {
+            name: "启用 `((` 触发块引用插入",
+            desc: "开启后，输入 `((` 会打开块引用选择器，并将 `((` 替换为标准 `[[file#^id]]` 引用。不习惯 Roam/Logseq 风格可保持关闭。"
+          },
+          blockPeek: {
+            name: "启用 Block Peek（上下文 + 反向链接）",
+            desc: "为 `[[file#^id]]` 块提供 Block Peek 入口（手柄菜单 + blp-view peek 按钮）。"
           },
           handleAffordance: {
             name: "显示列表手柄",
@@ -1110,6 +1148,9 @@ class T {
             behavior: {
               title: "行為",
             },
+            blockMode: {
+              title: "區塊模式",
+            },
             normalization: {
               title: "標準化",
             },
@@ -1129,6 +1170,22 @@ class T {
           hideSystemLine: {
             name: "隱藏系統行",
             desc: "在 Live Preview 與 Reading mode 下隱藏系統行（`[date:: ...] ^id`）。關閉後顯示系統行（用於除錯）。"
+          },
+          hideNativeFoldIndicator: {
+            name: "隱藏 Obsidian 內建折疊指示器",
+            desc: "在 Live Preview（僅啟用檔案）中隱藏列表項目旁的折疊小三角，降低拖曳時誤觸折疊/展開。"
+          },
+          subtreeClipboard: {
+            name: "啟用子樹剪貼簿（以區塊樹 copy/cut/paste）",
+            desc: "當區塊選擇模式啟用時，Copy/Cut/Paste 以列表項子樹（區塊樹語意）為單位，而非純文字。"
+          },
+          doubleParenTrigger: {
+            name: "啟用 `((` 觸發區塊引用插入",
+            desc: "啟用後，輸入 `((` 會開啟區塊引用選擇器，並將 `((` 替換為標準 `[[file#^id]]` 引用。不習慣 Roam/Logseq 風格可保持關閉。"
+          },
+          blockPeek: {
+            name: "啟用 Block Peek（上下文 + 反向連結）",
+            desc: "為 `[[file#^id]]` 區塊提供 Block Peek 入口（把手選單 + blp-view peek 按鈕）。"
           },
           handleAffordance: {
             name: "顯示列表把手",

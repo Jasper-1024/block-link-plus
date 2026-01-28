@@ -186,17 +186,19 @@ function showHandleMenu(
 		});
 	});
 
-	menu.addItem((item) => {
-		item.setTitle(getLabel("Peek block", "peekBlock")).onClick(() => {
-			setCursorToLine(view, infoField, line);
-			const blockId = ensureEnhancedListSystemLineForActiveListItem(plugin, editor);
-			if (!blockId) {
-				new Notice("No list item block id found.");
-				return;
-			}
-			openEnhancedListBlockPeek(plugin, { file, blockId });
+	if (plugin.settings.enhancedListBlockPeekEnabled !== false) {
+		menu.addItem((item) => {
+			item.setTitle(getLabel("Peek block", "peekBlock")).onClick(() => {
+				setCursorToLine(view, infoField, line);
+				const blockId = ensureEnhancedListSystemLineForActiveListItem(plugin, editor);
+				if (!blockId) {
+					new Notice("No list item block id found.");
+					return;
+				}
+				openEnhancedListBlockPeek(plugin, { file, blockId });
+			});
 		});
-	});
+	}
 
 	const zoomApi = (window as any).ObsidianZoomPlugin;
 	if (zoomApi) {

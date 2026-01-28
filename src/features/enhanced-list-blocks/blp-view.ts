@@ -663,6 +663,8 @@ export function attachEnhancedListBlockPeekToRenderedBlpViewOutput(
 	el: HTMLElement,
 	args: { sourcePath: string }
 ): void {
+	if (plugin.settings?.enhancedListBlockPeekEnabled === false) return;
+
 	const app: any = plugin.app as any;
 	const sourcePath = args.sourcePath ?? "";
 

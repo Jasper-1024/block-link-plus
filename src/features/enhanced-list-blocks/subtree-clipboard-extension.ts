@@ -302,6 +302,7 @@ function shouldEnableSubtreeClipboard(
 	livePreviewField: typeof editorLivePreviewField
 ): boolean {
 	// Clipboard semantics are only active in the same conditions as block selection mode.
+	if (plugin.settings.enhancedListSubtreeClipboardEnabled === false) return false;
 	if (!plugin.settings.enhancedListHandleActions) return false;
 	if (plugin.settings.enhancedListHandleClickAction !== "select-block") return false;
 

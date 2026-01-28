@@ -36,6 +36,7 @@ import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import {
 	createEnhancedListSystemLineHideExtension,
+	createEnhancedListHideNativeFoldIndicatorExtension,
 	createEnhancedListAutoSystemLineExtension,
 	createEnhancedListDeleteSubtreeExtension,
 	createEnhancedListHandleAffordanceExtension,
@@ -214,6 +215,8 @@ export default class BlockLinkPlus extends Plugin {
 			id: "open-block-peek",
 			name: "Block Peek",
 			editorCheckCallback: (isChecking, editor, view) => {
+				if (this.settings.enhancedListBlockPeekEnabled === false) return false;
+
 				const file = (view as any)?.file;
 				if (!file) return false;
 
@@ -258,6 +261,7 @@ export default class BlockLinkPlus extends Plugin {
 			this.registerEditorExtension([
 				createEnhancedListDirtyRangeTrackerExtension(this),
 				createEnhancedListSystemLineHideExtension(this),
+				createEnhancedListHideNativeFoldIndicatorExtension(this),
 				createEnhancedListHandleAffordanceExtension(this),
 				createEnhancedListHandleActionsExtension(this),
 				createEnhancedListBlockSelectionExtension(this),

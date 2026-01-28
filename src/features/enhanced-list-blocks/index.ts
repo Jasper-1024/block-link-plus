@@ -13,6 +13,7 @@ export {
 	openEnhancedListBlockPeekAtCursor,
 } from "./block-peek";
 export { createEnhancedListSystemLineHideExtension } from "./system-line-hide-extension";
+export { createEnhancedListHideNativeFoldIndicatorExtension } from "./hide-native-fold-indicator-extension";
 export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-extension";
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";
 export { createEnhancedListCodeBlockIndentExtension } from "./codeblock-indent-extension";

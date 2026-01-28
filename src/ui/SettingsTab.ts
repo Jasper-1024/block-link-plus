@@ -433,11 +433,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				.filter(Boolean)
 				.map((l) => l.replace(/\\/g, "/"));
 
-		// Scope & behavior.
-		this.addHeading(t.settings.enhancedListBlocks.groups.scopeAndBehavior.title, rootEl);
-
-		const scopeHeading = this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
-		scopeHeading.settingEl.classList.add("blp-settings-heading-level2");
+		// Scope.
+		this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
 
 		const enabledFoldersSetting = new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
@@ -469,12 +466,16 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				text.inputEl.rows = 3;
 			});
 
-		const behaviorHeading = this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
-		behaviorHeading.settingEl.classList.add("blp-settings-heading-level2");
+		// Behavior.
+		this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
 
 		const hideSystemLineSetting = this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
 			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
+
+		this.addToggleSetting("enhancedListHideNativeFoldIndicator", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.hideNativeFoldIndicator.name)
+			.setDesc(t.settings.enhancedListBlocks.hideNativeFoldIndicator.desc);
 
 		const handleAffordanceSetting = this.addToggleSetting("enhancedListHandleAffordance", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.handleAffordance.name)
@@ -513,6 +514,18 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		this.addToggleSetting("enhancedListSubtreeClipboardEnabled", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.subtreeClipboard.name)
+			.setDesc(t.settings.enhancedListBlocks.subtreeClipboard.desc);
+
+		this.addToggleSetting("enhancedListDoubleParenTriggerEnabled", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.doubleParenTrigger.name)
+			.setDesc(t.settings.enhancedListBlocks.doubleParenTrigger.desc);
+
+		this.addToggleSetting("enhancedListBlockPeekEnabled", undefined, rootEl)
+			.setName(t.settings.enhancedListBlocks.blockPeek.name)
+			.setDesc(t.settings.enhancedListBlocks.blockPeek.desc);
 
 		const indentCodeBlocksSetting = this.addToggleSetting("enhancedListIndentCodeBlocks", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)

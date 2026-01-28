@@ -7,6 +7,10 @@ import { openEnhancedListBlockReferencePicker } from "./block-reference-picker";
 let modalOpen = false;
 
 function shouldEnableTrigger(view: any, plugin: BlockLinkPlus): boolean {
+	if (plugin.settings.enhancedListDoubleParenTriggerEnabled !== true) {
+		return false;
+	}
+
 	try {
 		if (view.state.field?.(editorLivePreviewField, false) !== true) {
 			return false;
