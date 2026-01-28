@@ -198,6 +198,14 @@ function looksLikeListSubtree(text: string): boolean {
 	return false;
 }
 
+function isSystemLine(text: string): boolean {
+	return (
+		SYSTEM_LINE_MERGED_RE.test(text) ||
+		SYSTEM_LINE_DATE_ONLY_RE.test(text) ||
+		SYSTEM_LINE_ID_ONLY_RE.test(text)
+	);
+}
+
 function reindentTextByDelta(text: string, deltaCols: number): string {
 	if (deltaCols === 0) return text;
 	const lines = text.split("\n");
@@ -342,10 +350,38 @@ export function createEnhancedListSubtreeClipboardExtension(
 			return null;
 		}
 
-		const text = line.text ?? "";
-		const m = text.match(LIST_ITEM_PREFIX_RE);
-		if (!m) return null;
+		const originalText = line.text ?? "";
 
+		// Normal case: cursor is on a list item marker line.
+		let m = originalText.match(LIST_ITEM_PREFIX_RE);
+
+		// When system lines are hidden in Live Preview, the caret can end up on the
+		// hidden system line. In that case, resolve the owning list item above so
+		// subtree paste stays block-level (instead of falling back to plain text).
+		if (!m) {
+			const isIndentedBlank =
+				originalText.trim().length === 0 && lineIndentCols(originalText, MARKDOWN_TAB_WIDTH) > 0;
+			if (!isSystemLine(originalText) && !isIndentedBlank) return null;
+
+			for (let ln = line.number - 1; ln >= 1; ln--) {
+				const candidate = doc.line(ln);
+				const cm = (candidate.text ?? "").match(LIST_ITEM_PREFIX_RE);
+				if (!cm) continue;
+
+				const parentIndentCols = indentCols(cm[1] ?? "", MARKDOWN_TAB_WIDTH);
+				const subtreeRange = computeSubtreeRange(state, candidate.number, parentIndentCols, MARKDOWN_TAB_WIDTH);
+
+				if (cursorPos < subtreeRange.from || cursorPos >= subtreeRange.to) continue;
+
+				m = cm;
+				line = candidate;
+				break;
+			}
+
+			if (!m) return null;
+		}
+
+		const text = line.text ?? "";
 		const parentIndentCols = indentCols(m[1] ?? "", MARKDOWN_TAB_WIDTH);
 		const subtreeRange = computeSubtreeRange(state, line.number, parentIndentCols, MARKDOWN_TAB_WIDTH);
 

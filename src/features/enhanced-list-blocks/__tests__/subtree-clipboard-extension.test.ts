@@ -263,6 +263,80 @@ describe("enhanced-list-blocks/subtree-clipboard-extension", () => {
 		}
 	});
 
+	test("paste without block selection works when cursor is on a system line (hidden in Live Preview)", () => {
+		Settings.defaultZone = "utc";
+		Settings.now = () => Date.parse("2026-01-09T10:20:30Z");
+		let calls = 0;
+		Math.random = () => {
+			calls += 1;
+			return calls === 1 ? 0.111111 : 0.222222;
+		};
+
+		const source = [
+			"- a",
+			"  [date:: 2026-01-01T00:00:00] ^src1",
+			"  - child",
+			"    [date:: 2026-01-01T00:00:00] ^src2",
+		].join("\n");
+		const { view: srcView, parent: srcParent } = createView(source);
+
+		let internal = "";
+		try {
+			dispatchEnhancedListBlockSelectionClick(srcView, { line: 0, shiftKey: false });
+			const clipboard = new FakeClipboardData();
+			dispatchClipboardEvent(srcView, "copy", clipboard);
+			internal = clipboard.getData("application/x-blp-enhanced-list-subtree-v1");
+			expect(internal).toContain("\"kind\":\"copy\"");
+		} finally {
+			srcView.destroy();
+			srcParent.remove();
+		}
+
+		const dest = [
+			"- top",
+			"  [date:: 2026-01-01T00:00:00] ^top1",
+			"  - xxxx",
+			"    [date:: 2026-01-01T00:00:00] ^dest1",
+			"    - nested",
+			"      [date:: 2026-01-01T00:00:00] ^nested1",
+			"  - after",
+			"    [date:: 2026-01-01T00:00:00] ^after1",
+		].join("\n");
+		const { view, parent } = createView(dest);
+
+		try {
+			// Put the cursor on the system line under `- xxxx` (a common caret position when system lines are hidden).
+			const sysLine = view.state.doc.line(4); // 1-based line number 4 => `    [date:: ...] ^dest1`
+			view.dispatch({ selection: { anchor: sysLine.from + 2 } });
+
+			const clipboard = new FakeClipboardData();
+			clipboard.setData("application/x-blp-enhanced-list-subtree-v1", internal);
+			clipboard.setData("text/plain", "- a\n  - child\n");
+
+			const e = dispatchClipboardEvent(view, "paste", clipboard);
+			expect(e.defaultPrevented).toBe(true);
+
+			const out = view.state.doc.toString();
+
+			// Inserted as a sibling below `- xxxx` (between its subtree and `after`), reindented to 2 spaces.
+			expect(out).toContain("  - a");
+			expect(out).toContain("    - child");
+
+			const idxAfter = out.indexOf("  - after");
+			const idxChild = out.indexOf("    - child");
+			expect(idxChild).toBeGreaterThan(0);
+			expect(idxAfter).toBeGreaterThan(idxChild);
+
+			// System lines exist but source ids are remapped.
+			expect(out).toContain("[date:: 2026-01-09T10:20:30]");
+			expect(out).not.toContain("^src1");
+			expect(out).not.toContain("^src2");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
 	test("paste plain text fallback computes source base indent from text (reindent stays correct)", () => {
 		const dest = [
 			"- top",
