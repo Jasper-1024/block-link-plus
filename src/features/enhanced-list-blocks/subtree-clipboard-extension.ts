@@ -176,6 +176,28 @@ function computeDestIndentColsAtPos(state: EditorState, pos: number): number {
 	}
 }
 
+function computeBaseIndentColsFromText(text: string): number {
+	const lines = text.split("\n");
+	let base = Number.POSITIVE_INFINITY;
+
+	for (const line of lines) {
+		const m = (line ?? "").match(LIST_ITEM_PREFIX_RE);
+		if (!m) continue;
+		base = Math.min(base, indentCols(m[1] ?? "", MARKDOWN_TAB_WIDTH));
+	}
+
+	return Number.isFinite(base) ? base : 0;
+}
+
+function looksLikeListSubtree(text: string): boolean {
+	const lines = text.split("\n");
+	for (const line of lines) {
+		if ((line ?? "").trim().length === 0) continue;
+		return LIST_ITEM_PREFIX_RE.test(line);
+	}
+	return false;
+}
+
 function reindentTextByDelta(text: string, deltaCols: number): string {
 	if (deltaCols === 0) return text;
 	const lines = text.split("\n");
@@ -308,6 +330,37 @@ export function createEnhancedListSubtreeClipboardExtension(
 	const infoField = deps.infoField ?? editorInfoField;
 	const livePreviewField = deps.livePreviewField ?? editorLivePreviewField;
 
+	function computeCursorPasteTarget(
+		state: EditorState,
+		cursorPos: number
+	): { insertAt: number; destIndentCols: number; replaceRange: Range | null } | null {
+		const doc = state.doc;
+		let line;
+		try {
+			line = doc.lineAt(cursorPos);
+		} catch {
+			return null;
+		}
+
+		const text = line.text ?? "";
+		const m = text.match(LIST_ITEM_PREFIX_RE);
+		if (!m) return null;
+
+		const parentIndentCols = indentCols(m[1] ?? "", MARKDOWN_TAB_WIDTH);
+		const subtreeRange = computeSubtreeRange(state, line.number, parentIndentCols, MARKDOWN_TAB_WIDTH);
+
+		// When the cursor sits on an empty placeholder list item (`- `), replace it so we don't
+		// leave a dangling empty block above the pasted subtree.
+		const afterPrefix = text.slice(m[0].length);
+		const isEmptyItem = afterPrefix.trim().length === 0;
+		if (isEmptyItem) {
+			return { insertAt: subtreeRange.from, destIndentCols: parentIndentCols, replaceRange: subtreeRange };
+		}
+
+		// Default: paste below the current block subtree (sibling insertion).
+		return { insertAt: subtreeRange.to, destIndentCols: parentIndentCols, replaceRange: null };
+	}
+
 	function handleCopy(event: ClipboardEvent, view: EditorView, kind: "copy" | "cut"): boolean {
 		if (!shouldEnableSubtreeClipboard(view, plugin, infoField, livePreviewField)) return false;
 		if (!isEmptyTextSelection(view)) return false;
@@ -369,17 +422,30 @@ export function createEnhancedListSubtreeClipboardExtension(
 		if (!shouldEnableSubtreeClipboard(view, plugin, infoField, livePreviewField)) return false;
 		if (!isEmptyTextSelection(view)) return false;
 
-		const selected = getSelectedStartPos(view);
-		if (selected.length === 0) return false;
-
 		const clipboardData = event.clipboardData ?? (window as any).clipboardData;
 		if (!clipboardData) return false;
 
-		const ranges = computeSelectedSubtreeRanges(view.state, selected);
-		if (ranges.length === 0) return false;
+		const selected = getSelectedStartPos(view);
+		const hasBlockSelection = selected.length > 0;
 
-		const insertAt = ranges[0].from;
-		const destIndentCols = computeDestIndentColsAtPos(view.state, insertAt);
+		let ranges: Range[] = [];
+		let insertAt = 0;
+		let destIndentCols = 0;
+		let cursorReplaceRange: Range | null = null;
+
+		if (hasBlockSelection) {
+			ranges = computeSelectedSubtreeRanges(view.state, selected);
+			if (ranges.length === 0) return false;
+			insertAt = ranges[0].from;
+			destIndentCols = computeDestIndentColsAtPos(view.state, insertAt);
+		} else {
+			const cursorPos = view.state.selection.main.head;
+			const cursorTarget = computeCursorPasteTarget(view.state, cursorPos);
+			if (!cursorTarget) return false;
+			insertAt = cursorTarget.insertAt;
+			destIndentCols = cursorTarget.destIndentCols;
+			cursorReplaceRange = cursorTarget.replaceRange;
+		}
 
 		let insertText = "";
 		let internalKind: ClipboardPayloadV1["kind"] | null = null;
@@ -402,7 +468,12 @@ export function createEnhancedListSubtreeClipboardExtension(
 		// Fall back to plain text (external clipboard).
 		if (!insertText) {
 			insertText = clipboardData.getData("text/plain") || "";
-			sourceBaseIndentCols = 0;
+
+			// When block selection is not active, only intercept if the clipboard looks like a list subtree;
+			// otherwise allow normal "paste text into the current line" behavior.
+			if (!hasBlockSelection && !looksLikeListSubtree(insertText)) return false;
+
+			sourceBaseIndentCols = computeBaseIndentColsFromText(insertText);
 			internalKind = null;
 		}
 
@@ -421,14 +492,28 @@ export function createEnhancedListSubtreeClipboardExtension(
 			insertText += "\n";
 		}
 
-		const [first, ...rest] = ranges;
-		const changes = [
-			{ from: first.from, to: first.to, insert: insertText },
-			...rest.map((r) => ({ from: r.from, to: r.to, insert: "" })),
-		];
+		let changes:
+			| { from: number; to: number; insert: string }[]
+			| readonly { from: number; to: number; insert: string }[] = [];
+		let anchor = insertAt;
 
-		view.dispatch({ changes, selection: { anchor: first.from } });
-		clearEnhancedListBlockSelection(view);
+		if (hasBlockSelection) {
+			const [first, ...rest] = ranges;
+			changes = [
+				{ from: first.from, to: first.to, insert: insertText },
+				...rest.map((r) => ({ from: r.from, to: r.to, insert: "" })),
+			];
+			anchor = first.from;
+		} else if (cursorReplaceRange) {
+			changes = [{ from: cursorReplaceRange.from, to: cursorReplaceRange.to, insert: insertText }];
+			anchor = cursorReplaceRange.from;
+		} else {
+			changes = [{ from: insertAt, to: insertAt, insert: insertText }];
+			anchor = insertAt;
+		}
+
+		view.dispatch({ changes, selection: { anchor } });
+		if (hasBlockSelection) clearEnhancedListBlockSelection(view);
 
 		event.preventDefault();
 		return true;

@@ -190,5 +190,109 @@ describe("enhanced-list-blocks/subtree-clipboard-extension", () => {
 			parent.remove();
 		}
 	});
-});
 
+	test("paste without block selection inserts below cursor block subtree (block-level) and reindents", () => {
+		Settings.defaultZone = "utc";
+		Settings.now = () => Date.parse("2026-01-09T10:20:30Z");
+		let calls = 0;
+		Math.random = () => {
+			calls += 1;
+			return calls === 1 ? 0.111111 : 0.222222;
+		};
+
+		const source = [
+			"- a",
+			"  [date:: 2026-01-01T00:00:00] ^src1",
+			"  - child",
+			"    [date:: 2026-01-01T00:00:00] ^src2",
+		].join("\n");
+		const { view: srcView, parent: srcParent } = createView(source);
+
+		let internal = "";
+		try {
+			dispatchEnhancedListBlockSelectionClick(srcView, { line: 0, shiftKey: false });
+			const clipboard = new FakeClipboardData();
+			dispatchClipboardEvent(srcView, "copy", clipboard);
+			internal = clipboard.getData("application/x-blp-enhanced-list-subtree-v1");
+			expect(internal).toContain("\"kind\":\"copy\"");
+		} finally {
+			srcView.destroy();
+			srcParent.remove();
+		}
+
+		const dest = [
+			"- top",
+			"  [date:: 2026-01-01T00:00:00] ^top1",
+			"  - xxxx",
+			"    [date:: 2026-01-01T00:00:00] ^dest1",
+			"  - after",
+			"    [date:: 2026-01-01T00:00:00] ^after1",
+		].join("\n");
+		const { view, parent } = createView(dest);
+
+		try {
+			// Put the cursor inside the `- xxxx` block without using block selection.
+			const line = view.state.doc.line(3); // 1-based line number 3 => 0-based index 2.
+			view.dispatch({ selection: { anchor: line.from + 4 } });
+
+			const clipboard = new FakeClipboardData();
+			clipboard.setData("application/x-blp-enhanced-list-subtree-v1", internal);
+			clipboard.setData("text/plain", "- a\n  - child\n");
+
+			const e = dispatchClipboardEvent(view, "paste", clipboard);
+			expect(e.defaultPrevented).toBe(true);
+
+			const out = view.state.doc.toString();
+
+			// Inserted as a sibling below `- xxxx` (between `xxxx` and `after`), reindented to 2 spaces.
+			expect(out).toContain("  - a");
+			expect(out).toContain("    - child");
+
+			const idxAfter = out.indexOf("  - after");
+			const idxChild = out.indexOf("    - child");
+			expect(idxChild).toBeGreaterThan(0);
+			expect(idxAfter).toBeGreaterThan(idxChild);
+
+			// System lines exist but source ids are remapped.
+			expect(out).toContain("[date:: 2026-01-09T10:20:30]");
+			expect(out).not.toContain("^src1");
+			expect(out).not.toContain("^src2");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("paste plain text fallback computes source base indent from text (reindent stays correct)", () => {
+		const dest = [
+			"- top",
+			"  [date:: 2026-01-01T00:00:00] ^top1",
+			"  - dest",
+			"    [date:: 2026-01-01T00:00:00] ^dest1",
+			"  - after",
+			"    [date:: 2026-01-01T00:00:00] ^after1",
+		].join("\n");
+		const { view, parent } = createView(dest);
+
+		try {
+			// Select the nested `- dest` block (0-based line index 2).
+			dispatchEnhancedListBlockSelectionClick(view, { line: 2, shiftKey: false });
+
+			const clipboard = new FakeClipboardData();
+			clipboard.setData("text/plain", "    - ext\n      - child\n");
+
+			const e = dispatchClipboardEvent(view, "paste", clipboard);
+			expect(e.defaultPrevented).toBe(true);
+
+			const out = view.state.doc.toString();
+			expect(out).toContain("  - ext");
+			expect(out).toContain("    - child");
+
+			// If source base indent were incorrectly treated as 0, we'd end up with 6+ spaces here.
+			expect(out).not.toContain("      - child");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+});
