@@ -1,4 +1,4 @@
-import type { TFile } from "obsidian";
+import { TFile } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { processLineContent } from "../../utils";
 import { getEnhancedListEnabledMarkdownFiles } from "./enable-scope";
@@ -113,14 +113,21 @@ type FileCacheEntry = { mtime: number; blocks: IndexedEnhancedListBlock[] };
 export class EnhancedListBlockIndex {
 	private plugin: BlockLinkPlus;
 	private fileCache = new Map<string, FileCacheEntry>();
+	private readonly maxCacheEntries = 200;
 
 	constructor(plugin: BlockLinkPlus) {
 		this.plugin = plugin;
+		this.registerVaultListeners();
 	}
 
 	async getBlocksForFile(file: TFile): Promise<IndexedEnhancedListBlock[]> {
 		const cached = this.fileCache.get(file.path);
-		if (cached && cached.mtime === file.stat.mtime) return cached.blocks;
+		if (cached && cached.mtime === file.stat.mtime) {
+			// LRU touch (Map preserves insertion order).
+			this.fileCache.delete(file.path);
+			this.fileCache.set(file.path, cached);
+			return cached.blocks;
+		}
 
 		const vault: any = this.plugin.app.vault as any;
 		const content =
@@ -128,6 +135,7 @@ export class EnhancedListBlockIndex {
 
 		const blocks = parseEnhancedListBlocksFromContent(content, file);
 		this.fileCache.set(file.path, { mtime: file.stat.mtime, blocks });
+		this.evictIfNeeded();
 		return blocks;
 	}
 
@@ -149,6 +157,46 @@ export class EnhancedListBlockIndex {
 
 	clear(): void {
 		this.fileCache.clear();
+	}
+
+	private evictIfNeeded(): void {
+		while (this.fileCache.size > this.maxCacheEntries) {
+			const oldest = this.fileCache.keys().next().value as string | undefined;
+			if (!oldest) break;
+			this.fileCache.delete(oldest);
+		}
+	}
+
+	private registerVaultListeners(): void {
+		const pluginAny = this.plugin as any;
+		const vault: any = (this.plugin.app as any)?.vault;
+		if (!pluginAny || typeof pluginAny.registerEvent !== "function" || !vault || typeof vault.on !== "function") {
+			return;
+		}
+		const registerEvent = (ref: any) => pluginAny.registerEvent(ref);
+
+		registerEvent(
+			vault.on("rename", (file: any, oldPath: string) => {
+				if (!(file instanceof TFile)) return;
+				const prev = String(oldPath ?? "");
+				const next = String(file.path ?? "");
+				if (!prev || !next || prev === next) return;
+
+				const cached = this.fileCache.get(prev);
+				if (!cached) return;
+
+				this.fileCache.delete(prev);
+				this.fileCache.set(next, cached);
+				this.evictIfNeeded();
+			})
+		);
+
+		registerEvent(
+			vault.on("delete", (file: any) => {
+				if (!(file instanceof TFile)) return;
+				this.fileCache.delete(String(file.path ?? ""));
+			})
+		);
 	}
 }
 

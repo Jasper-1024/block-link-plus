@@ -54,7 +54,7 @@ import {
 	registerEnhancedListSavePreprocessor,
 	openEnhancedListBlockPeek,
 } from "features/enhanced-list-blocks";
-import { isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
+import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
@@ -345,6 +345,7 @@ export default class BlockLinkPlus extends Plugin {
 		await this.saveData(this.settings);
 		this.inlineEditEngine?.onSettingsChanged();
 		this.builtInVslinko?.onSettingsChanged(false);
+		getEnhancedListScopeManager(this).onSettingsChanged();
 	}
 
 	async onunload() {

@@ -6,7 +6,7 @@ import { copyToClipboard } from "../clipboard-handler";
 import t from "../../shared/i18n";
 import { getEditorFromState } from "../../vendor/vslinko/obsidian-outliner/editor";
 import { ObsidianSettings } from "../../vendor/vslinko/obsidian-outliner/services/ObsidianSettings";
-import { isEnhancedListEnabledFile } from "./enable-scope";
+import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "./enable-scope";
 import { dispatchEnhancedListBlockSelectionClick } from "./block-selection-extension";
 import { ensureEnhancedListSystemLineForActiveListItem } from "./ensure-system-line";
 import { openEnhancedListBlockPeek } from "./block-peek";
@@ -243,15 +243,40 @@ export function createEnhancedListHandleActionsExtension(
 			private view: any;
 			private isActive = false;
 			private lastDragTs = 0;
+			private unsubscribe: (() => void) | null = null;
+			private didFirstUpdate = false;
 
 			constructor(view: any) {
 				this.view = view;
+				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
 				ensureDndTracker();
 				this.refresh();
 			}
 
 			update(update: ViewUpdate) {
-				this.refresh();
+				// Avoid relying on CM mount ordering details; refresh once on first update.
+				if (!this.didFirstUpdate) {
+					this.didFirstUpdate = true;
+					this.refresh();
+					return;
+				}
+
+				const prevInfo = update.startState.field(infoField, false);
+				const nextInfo = update.state.field(infoField, false);
+				if (prevInfo?.file !== nextInfo?.file) {
+					this.refresh();
+					return;
+				}
+
+				try {
+					const prevLP = update.startState.field?.(livePreviewField, false);
+					const nextLP = update.state.field?.(livePreviewField, false);
+					if (prevLP !== nextLP) {
+						this.refresh();
+					}
+				} catch {
+					// Ignore.
+				}
 			}
 
 			private refresh() {
@@ -328,6 +353,8 @@ export function createEnhancedListHandleActionsExtension(
 			}
 
 			destroy() {
+				this.unsubscribe?.();
+				this.unsubscribe = null;
 				releaseDndTracker();
 			}
 		},

@@ -1,41 +1,52 @@
 import { normalizePath, TFile } from "obsidian";
 import type BlockLinkPlus from "../../main";
 
-export const ENHANCED_LIST_FRONTMATTER_KEY = "blp_enhanced_list";
+import {
+	ENHANCED_LIST_FRONTMATTER_KEY,
+	EnhancedListScopeManager,
+	isPathInEnhancedListScopeFolder,
+	normalizeEnhancedListScopePath,
+} from "./scope-manager";
 
-function normalizeScopePath(input: string): string {
-	return normalizePath(input.trim()).replace(/^\/+/, "").replace(/\/+$/, "");
+export { ENHANCED_LIST_FRONTMATTER_KEY };
+
+export function normalizeScopePath(input: string): string {
+	return normalizeEnhancedListScopePath(input);
 }
 
-function isPathInFolder(path: string, folder: string): boolean {
-	const normalizedFolder = normalizeScopePath(folder);
-	if (!normalizedFolder) return true;
-	return path === normalizedFolder || path.startsWith(normalizedFolder + "/");
+export function isPathInFolder(path: string, folder: string): boolean {
+	return isPathInEnhancedListScopeFolder(normalizePath(path), folder);
+}
+
+const scopeByPlugin = new WeakMap<BlockLinkPlus, EnhancedListScopeManager>();
+const scopeSymbol: symbol = Symbol.for("block-link-plus.enhancedListScopeManager");
+
+export function getEnhancedListScopeManager(plugin: BlockLinkPlus): EnhancedListScopeManager {
+	const anyPlugin = plugin as any;
+	const existing = anyPlugin?.[scopeSymbol] as EnhancedListScopeManager | undefined;
+	if (existing) return existing;
+
+	let scope = scopeByPlugin.get(plugin);
+	if (!scope) {
+		scope = new EnhancedListScopeManager(plugin);
+		scopeByPlugin.set(plugin, scope);
+	}
+
+	try {
+		anyPlugin[scopeSymbol] = scope;
+	} catch {
+		// Ignore if plugin object is not extensible.
+	}
+
+	return scope;
 }
 
 export function isEnhancedListEnabledFile(plugin: BlockLinkPlus, file: TFile): boolean {
-	if (file.extension && file.extension.toLowerCase() !== "md") return false;
-
-	const filePath = normalizePath(file.path);
-
-	if ((plugin.settings.enhancedListEnabledFiles ?? []).some((p) => normalizePath(p) === filePath)) {
-		return true;
-	}
-
-	if ((plugin.settings.enhancedListEnabledFolders ?? []).some((f) => isPathInFolder(filePath, f))) {
-		return true;
-	}
-
-	const cache = plugin.app.metadataCache.getFileCache(file);
-	const fm = cache?.frontmatter as Record<string, unknown> | undefined;
-	if (!fm) return false;
-
-	const raw = fm[ENHANCED_LIST_FRONTMATTER_KEY];
-	return raw === true || raw === "true" || raw === 1;
+	if (!(file instanceof TFile)) return false;
+	return getEnhancedListScopeManager(plugin).isEnabledFile(file);
 }
 
 export function getEnhancedListEnabledMarkdownFiles(plugin: BlockLinkPlus): TFile[] {
-	const files = plugin.app.vault.getFiles();
-	return files.filter((f): f is TFile => f instanceof TFile && isEnhancedListEnabledFile(plugin, f));
+	return getEnhancedListScopeManager(plugin).getEnabledMarkdownFiles().files;
 }
 

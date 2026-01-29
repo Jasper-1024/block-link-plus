@@ -25,6 +25,15 @@ describe("enhanced-list-blocks/enable-scope", () => {
 		expect(isEnhancedListEnabledFile(plugin, file)).toBe(false);
 	});
 
+	test("folder '/' enables all markdown files", () => {
+		const { app, plugin } = makePlugin({
+			settings: { enhancedListEnabledFolders: ["/"], enhancedListEnabledFiles: [] },
+		});
+		const file = (app.vault as any)._addFile("Daily/2026-01-09.md", "");
+
+		expect(isEnhancedListEnabledFile(plugin, file)).toBe(true);
+	});
+
 	test("matches enabled files with path normalization", () => {
 		const { app, plugin } = makePlugin({
 			settings: { enhancedListEnabledFolders: [], enhancedListEnabledFiles: ["Daily\\2026-01-09.md"] },

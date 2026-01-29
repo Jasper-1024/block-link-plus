@@ -1,7 +1,7 @@
 import { ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
-import { isEnhancedListEnabledFile } from "./enable-scope";
+import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "./enable-scope";
 
 export const BLP_HIDE_NATIVE_FOLD_INDICATOR_CLASS = "blp-enhanced-list-hide-native-fold-indicator";
 
@@ -38,17 +38,44 @@ export function createEnhancedListHideNativeFoldIndicatorExtension(
 	return ViewPlugin.fromClass(
 		class {
 			private view: any;
+			private unsubscribe: (() => void) | null = null;
+			private didFirstUpdate = false;
 
 			constructor(view: any) {
 				this.view = view;
+				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
 				this.refresh();
 			}
 
-			update(_update: ViewUpdate) {
-				this.refresh();
+			update(update: ViewUpdate) {
+				// CM can still mutate editor DOM during initial mount; re-apply once on first update.
+				if (!this.didFirstUpdate) {
+					this.didFirstUpdate = true;
+					this.refresh();
+					return;
+				}
+
+				const prevInfo = update.startState.field(infoField, false);
+				const nextInfo = update.state.field(infoField, false);
+				if (prevInfo?.file !== nextInfo?.file) {
+					this.refresh();
+					return;
+				}
+
+				try {
+					const prevLP = update.startState.field?.(livePreviewField, false);
+					const nextLP = update.state.field?.(livePreviewField, false);
+					if (prevLP !== nextLP) {
+						this.refresh();
+					}
+				} catch {
+					// Ignore.
+				}
 			}
 
 			destroy() {
+				this.unsubscribe?.();
+				this.unsubscribe = null;
 				this.view?.dom?.classList?.remove(BLP_HIDE_NATIVE_FOLD_INDICATOR_CLASS);
 			}
 
@@ -59,4 +86,3 @@ export function createEnhancedListHideNativeFoldIndicatorExtension(
 		}
 	);
 }
-

@@ -1,7 +1,7 @@
 import { ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
-import { isEnhancedListEnabledFile } from "../enhanced-list-blocks/enable-scope";
+import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "../enhanced-list-blocks/enable-scope";
 import { BLP_VSLINKO_SCOPE_CLASS } from "../../vendor/vslinko/blp-scope";
 
 function isBuiltInVslinkoEnabled(plugin: BlockLinkPlus): boolean {
@@ -35,19 +35,46 @@ export function createBuiltInVslinkoScopeExtension(plugin: BlockLinkPlus) {
 		class {
 			private view: any;
 			private scheduled: number | null = null;
+			private unsubscribe: (() => void) | null = null;
+			private didFirstUpdate = false;
 
 			constructor(view: any) {
 				this.view = view;
+				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
 				this.refresh();
 				// CM can still mutate the editor DOM during initial mount; re-apply once after mount.
 				this.scheduled = window.setTimeout(() => this.refresh(), 0);
 			}
 
 			update(_update: ViewUpdate) {
-				this.refresh();
+				// Avoid relying on CM mount ordering details; refresh once on first update.
+				if (!this.didFirstUpdate) {
+					this.didFirstUpdate = true;
+					this.refresh();
+					return;
+				}
+
+				const prevInfo = _update.startState.field(editorInfoField, false);
+				const nextInfo = _update.state.field(editorInfoField, false);
+				if (prevInfo?.file !== nextInfo?.file) {
+					this.refresh();
+					return;
+				}
+
+				try {
+					const prevLP = _update.startState.field?.(editorLivePreviewField, false);
+					const nextLP = _update.state.field?.(editorLivePreviewField, false);
+					if (prevLP !== nextLP) {
+						this.refresh();
+					}
+				} catch {
+					// Ignore.
+				}
 			}
 
 			destroy() {
+				this.unsubscribe?.();
+				this.unsubscribe = null;
 				if (this.scheduled !== null) {
 					clearTimeout(this.scheduled);
 					this.scheduled = null;

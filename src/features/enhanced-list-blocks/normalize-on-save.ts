@@ -1,5 +1,5 @@
 import { EditorState, type Text, type Transaction, type TransactionSpec } from "@codemirror/state";
-import { editorInfoField } from "obsidian";
+import { editorInfoField, normalizePath, TFile } from "obsidian";
 import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
@@ -24,6 +24,8 @@ import {
 export type DirtyRange = { from: number; to: number };
 
 const dirtyRangesByPath = new Map<string, DirtyRange[]>();
+const MAX_DIRTY_RANGE_KEYS = 200;
+const dirtyRangeLifecycleRegistered = new WeakSet<BlockLinkPlus>();
 
 function mergeRanges(ranges: DirtyRange[]): DirtyRange[] {
 	if (ranges.length === 0) return [];
@@ -59,6 +61,7 @@ export function clearEnhancedListDirtyRanges(filePath: string): void {
 }
 
 export function createEnhancedListDirtyRangeTrackerExtension(plugin: BlockLinkPlus) {
+	ensureDirtyRangeLifecycle(plugin);
 	return EditorState.transactionFilter.of(
 		(tr: Transaction): Transaction | readonly TransactionSpec[] => {
 			if (!tr.docChanged) return tr;
@@ -87,10 +90,57 @@ export function createEnhancedListDirtyRangeTrackerExtension(plugin: BlockLinkPl
 				next.push({ from: Math.min(from, to), to: Math.max(from, to) });
 			});
 
+			// LRU touch: keep recently edited files so we don't retain stale paths forever.
+			dirtyRangesByPath.delete(filePath);
 			dirtyRangesByPath.set(filePath, mergeRanges([...mappedPrev, ...next]));
+			evictDirtyRangeKeysIfNeeded();
 
 			return tr;
 		}
+	);
+}
+
+function evictDirtyRangeKeysIfNeeded(): void {
+	while (dirtyRangesByPath.size > MAX_DIRTY_RANGE_KEYS) {
+		const oldest = dirtyRangesByPath.keys().next().value as string | undefined;
+		if (!oldest) break;
+		dirtyRangesByPath.delete(oldest);
+	}
+}
+
+function ensureDirtyRangeLifecycle(plugin: BlockLinkPlus): void {
+	if (dirtyRangeLifecycleRegistered.has(plugin)) return;
+	dirtyRangeLifecycleRegistered.add(plugin);
+
+	const pluginAny = plugin as any;
+	const vault: any = (plugin.app as any)?.vault;
+	if (!pluginAny || typeof pluginAny.registerEvent !== "function" || !vault || typeof vault.on !== "function") {
+		return;
+	}
+	const registerEvent = (ref: any) => pluginAny.registerEvent(ref);
+
+	registerEvent(
+		vault.on("rename", (file: any, oldPath: string) => {
+			if (!(file instanceof TFile)) return;
+			const prev = normalizePath(String(oldPath ?? ""));
+			const next = normalizePath(String(file.path ?? ""));
+			if (!prev || !next || prev === next) return;
+
+			const ranges = dirtyRangesByPath.get(prev);
+			if (!ranges) return;
+
+			dirtyRangesByPath.delete(prev);
+			dirtyRangesByPath.delete(next);
+			dirtyRangesByPath.set(next, ranges);
+			evictDirtyRangeKeysIfNeeded();
+		})
+	);
+
+	registerEvent(
+		vault.on("delete", (file: any) => {
+			if (!(file instanceof TFile)) return;
+			dirtyRangesByPath.delete(normalizePath(String(file.path ?? "")));
+		})
 	);
 }
 

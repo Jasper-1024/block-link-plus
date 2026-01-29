@@ -4,7 +4,7 @@ import * as yaml from "js-yaml";
 import { DateTime } from "luxon";
 import type { DataviewApi, Link } from "obsidian-dataview";
 import { getDataviewApi } from "../../utils/dataview-detector";
-import { getEnhancedListEnabledMarkdownFiles, isEnhancedListEnabledFile } from "./enable-scope";
+import { isEnhancedListEnabledFile, isPathInFolder } from "./enable-scope";
 import crypto from "crypto";
 import { findManagedRegion, REGION_END_MARKER, REGION_START_MARKER_PREFIX } from "./region-parser";
 import { openEnhancedListBlockPeek } from "./block-peek";
@@ -155,12 +155,6 @@ export function resolveConfigDefaults(config: BlpViewConfig): BlpViewResolvedCon
 	};
 }
 
-function isPathInFolder(path: string, folder: string): boolean {
-	const normalizedFolder = folder.replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
-	if (!normalizedFolder) return true;
-	return path === normalizedFolder || path.startsWith(normalizedFolder + "/");
-}
-
 export function resolveSourceFilesOrError(
 	plugin: BlockLinkPlus,
 	dv: DataviewApi,
@@ -175,7 +169,7 @@ export function resolveSourceFilesOrError(
 	const allMarkdownFiles = plugin.app.vault
 		.getFiles()
 		.filter((f): f is TFile => f instanceof TFile && f.extension?.toLowerCase() === "md");
-	const enabledFiles = getEnhancedListEnabledMarkdownFiles(plugin);
+	const enabledFiles = allMarkdownFiles.filter((f) => isEnhancedListEnabledFile(plugin, f));
 	const enabledPathSet = new Set(enabledFiles.map((f) => f.path));
 
 	if (!source) {
