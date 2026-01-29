@@ -175,93 +175,6 @@ export function getBlockPeekContextFromContent(
 	return { self, ancestors, prevSiblings, nextSiblings };
 }
 
-export type BlockBacklink = {
-	sourceFile: TFile;
-	sourcePath: string;
-	lineText: string;
-};
-
-type BacklinksCacheEntry = { ts: number; items: BlockBacklink[] };
-const backlinksCache = new Map<string, BacklinksCacheEntry>();
-
-export function clearEnhancedListBlockPeekCaches(): void {
-	backlinksCache.clear();
-}
-
-function cacheKey(targetFilePath: string, id: string): string {
-	return `${targetFilePath}#^${id}`;
-}
-
-export async function getEnhancedListBlockBacklinks(
-	plugin: BlockLinkPlus,
-	targetFile: TFile,
-	idRaw: string
-): Promise<BlockBacklink[]> {
-	const id = idRaw.startsWith("^") ? idRaw.slice(1) : idRaw;
-
-	const key = cacheKey(targetFile.path, id);
-	const now = Date.now();
-	const cached = backlinksCache.get(key);
-	if (cached && now - cached.ts < 30_000) return cached.items;
-
-	const app: any = plugin.app as any;
-	const vault: any = app.vault as any;
-
-	const filesRaw: unknown = app.vault.getMarkdownFiles?.() ?? app.vault.getFiles?.() ?? [];
-	const files = Array.isArray(filesRaw)
-		? (filesRaw as any[]).filter((f): f is TFile => f instanceof TFile && (f.extension ?? "").toLowerCase() === "md")
-		: [];
-
-	const needle = `#^${id}`;
-
-	const results: BlockBacklink[] = [];
-	for (const src of files) {
-		if (!src || src.path === targetFile.path) continue;
-
-		let content = "";
-		try {
-			content = typeof vault.cachedRead === "function" ? await vault.cachedRead(src) : await plugin.app.vault.read(src);
-		} catch {
-			continue;
-		}
-
-		if (!content.includes(needle)) continue;
-
-		BLOCK_REF_LINK_RE.lastIndex = 0;
-		let m: RegExpExecArray | null;
-		while ((m = BLOCK_REF_LINK_RE.exec(content)) !== null) {
-			const linkpath = m[1] ?? "";
-			const matchId = m[2] ?? "";
-			if (matchId !== id) continue;
-
-			let dest: any = null;
-			try {
-				dest = app.metadataCache?.getFirstLinkpathDest?.(linkpath, src.path) ?? null;
-			} catch {
-				dest = null;
-			}
-			if (!dest || dest.path !== targetFile.path) continue;
-
-			const at = m.index;
-			const lineStart = content.lastIndexOf("\n", at) + 1;
-			let lineEnd = content.indexOf("\n", at);
-			if (lineEnd === -1) lineEnd = content.length;
-			const lineText = content.slice(lineStart, lineEnd).trim();
-
-			results.push({ sourceFile: src, sourcePath: src.path, lineText });
-		}
-	}
-
-	// Recent files first.
-	results.sort(
-		(a, b) =>
-			(b.sourceFile.stat?.mtime ?? 0) - (a.sourceFile.stat?.mtime ?? 0) || a.sourcePath.localeCompare(b.sourcePath)
-	);
-
-	backlinksCache.set(key, { ts: now, items: results });
-	return results;
-}
-
 export function findBlockTargetFromLine(
 	plugin: BlockLinkPlus,
 	args: { sourceFile: TFile; lineText: string }
@@ -393,25 +306,6 @@ class BlockPeekModal extends Modal {
 			sibEl.createEl("div", { cls: "blp-block-peek-siblings-title", text: "Next:" });
 			for (const b of ctx.nextSiblings) sibEl.createEl("div", { text: `- ${b.text}` });
 		}
-
-		const backlinks = await getEnhancedListBlockBacklinks(this.plugin, this.file, this.id);
-		const blEl = container.createDiv({ cls: "blp-block-peek-section" });
-		blEl.createEl("h4", { text: `Backlinks (${backlinks.length})` });
-
-		if (backlinks.length === 0) {
-			blEl.createEl("div", { text: "No backlinks found." });
-			return;
-		}
-
-		for (const b of backlinks.slice(0, 50)) {
-			const row = blEl.createDiv({ cls: "blp-block-peek-backlink" });
-			row.createEl("div", { cls: "blp-block-peek-backlink-path", text: b.sourcePath });
-			if (b.lineText) row.createEl("div", { cls: "blp-block-peek-backlink-line", text: b.lineText });
-			row.addEventListener("click", () => {
-				void this.app.workspace.getLeaf(false).openFile(b.sourceFile);
-				this.close();
-			});
-		}
 	}
 }
 
@@ -428,4 +322,3 @@ export function openEnhancedListBlockPeekAtCursor(
 	if (!id) return;
 	new BlockPeekModal(plugin, args.file, id).open();
 }
-

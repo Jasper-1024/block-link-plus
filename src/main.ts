@@ -51,7 +51,7 @@ import {
 	findBlockTargetFromLine,
 	handleBlpView,
 	createEnhancedListDirtyRangeTrackerExtension,
-	registerEnhancedListDuplicateIdRepair,
+	registerEnhancedListSavePreprocessor,
 	openEnhancedListBlockPeek,
 } from "features/enhanced-list-blocks";
 import { isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
@@ -72,6 +72,7 @@ export default class BlockLinkPlus extends Plugin {
 	inlineEditEngine: InlineEditEngine;
 	private hasExistingSettingsData = false;
 	private builtInVslinko: BuiltInVslinkoManager | null = null;
+	private viewPluginRegistered = false;
 
 	public get enactor(): Enactor {
 		return this.flowEditorManager.enactor;
@@ -113,8 +114,15 @@ export default class BlockLinkPlus extends Plugin {
 	 */
 	public updateViewPlugin() {
 		const rule = "(^| )˅[a-zA-Z0-9_]+$";
-		this.viewPlugin = createViewPlugin(rule);
-		this.registerEditorExtension([this.viewPlugin]);
+		// `registerEditorExtension` only adds; calling it repeatedly will stack duplicates.
+		// This rule is currently constant, so register once per plugin load.
+		if (!this.viewPlugin) {
+			this.viewPlugin = createViewPlugin(rule);
+		}
+		if (!this.viewPluginRegistered) {
+			this.registerEditorExtension([this.viewPlugin]);
+			this.viewPluginRegistered = true;
+		}
 	}
 
 	async onload() {
@@ -272,7 +280,7 @@ export default class BlockLinkPlus extends Plugin {
 				createEnhancedListCodeBlockIndentExtension(this),
 				createEnhancedListDeleteSubtreeExtension(this),
 			]);
-		registerEnhancedListDuplicateIdRepair(this);
+		registerEnhancedListSavePreprocessor(this);
 
 		// Initialize Flow Editor Manager
 		this.flowEditorManager = new FlowEditorManager(this);
@@ -335,9 +343,6 @@ export default class BlockLinkPlus extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-		// Update view plugin after saving settings
-		// This ensures that the plugin is updated whenever settings are changed
-		this.updateViewPlugin();
 		this.inlineEditEngine?.onSettingsChanged();
 		this.builtInVslinko?.onSettingsChanged(false);
 	}

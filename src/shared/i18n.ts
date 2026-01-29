@@ -245,7 +245,7 @@ class T {
             desc: "When enabled, typing `((` opens the Block Reference picker and replaces `((` with a standard `[[file#^id]]` reference. Recommended to keep off unless you prefer Roam/Logseq-style triggers."
           },
           blockPeek: {
-            name: "Enable Block Peek (context + backlinks)",
+            name: "Enable Block Peek (context)",
             desc: "Enable Block Peek UI affordances (handle menu + blp-view peek button) for `[[file#^id]]` blocks."
           },
           normalizeOnSave: {
@@ -698,7 +698,7 @@ class T {
             desc: "开启后，输入 `((` 会打开块引用选择器，并将 `((` 替换为标准 `[[file#^id]]` 引用。不习惯 Roam/Logseq 风格可保持关闭。"
           },
           blockPeek: {
-            name: "启用 Block Peek（上下文 + 反向链接）",
+            name: "启用 Block Peek（上下文）",
             desc: "为 `[[file#^id]]` 块提供 Block Peek 入口（手柄菜单 + blp-view peek 按钮）。"
           },
           handleAffordance: {
@@ -1184,7 +1184,7 @@ class T {
             desc: "啟用後，輸入 `((` 會開啟區塊引用選擇器，並將 `((` 替換為標準 `[[file#^id]]` 引用。不習慣 Roam/Logseq 風格可保持關閉。"
           },
           blockPeek: {
-            name: "啟用 Block Peek（上下文 + 反向連結）",
+            name: "啟用 Block Peek（上下文）",
             desc: "為 `[[file#^id]]` 區塊提供 Block Peek 入口（把手選單 + blp-view peek 按鈕）。"
           },
           handleAffordance: {

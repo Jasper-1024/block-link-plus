@@ -1,9 +1,6 @@
-import { TFile } from "obsidian";
 import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
-import { isEnhancedListEnabledFile } from "./enable-scope";
-import { consumeEnhancedListDirtyRanges, normalizeEnhancedListContentOnSave } from "./normalize-on-save";
 
 const SYSTEM_LINE_REGEX =
 	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
@@ -64,41 +61,4 @@ export function repairDuplicateEnhancedListIds(content: string, plugin: BlockLin
 	}
 
 	return lines.join("\n");
-}
-
-export function registerEnhancedListDuplicateIdRepair(plugin: BlockLinkPlus): void {
-	const inFlight = new Set<string>();
-
-	const vault: any = plugin.app.vault as any;
-	if (typeof vault?.on !== "function") return;
-
-	plugin.registerEvent(
-		vault.on("modify", async (file: any) => {
-			if (!(file instanceof TFile)) return;
-			if (!isEnhancedListEnabledFile(plugin, file)) return;
-
-			if (inFlight.has(file.path)) return;
-			inFlight.add(file.path);
-
-			try {
-				const content = await plugin.app.vault.read(file);
-
-				// "Normalize on save" operates only on recently-edited ranges (tracked in-memory).
-				const dirtyRanges = consumeEnhancedListDirtyRanges(file.path);
-				let next = content;
-				if (plugin.settings.enhancedListNormalizeOnSave === true && dirtyRanges.length > 0) {
-					next = normalizeEnhancedListContentOnSave(next, plugin, { dirtyRanges });
-				}
-
-				// Existing behavior: always fix duplicate Enhanced List IDs on save.
-				next = repairDuplicateEnhancedListIds(next, plugin);
-
-				if (next !== content) {
-					await plugin.app.vault.modify(file, next);
-				}
-			} finally {
-				inFlight.delete(file.path);
-			}
-		})
-	);
 }

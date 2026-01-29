@@ -8,7 +8,6 @@ export { openEnhancedListBlockReferencePicker } from "./block-reference-picker";
 export {
 	findActiveListItemBlockIdInContent,
 	findBlockTargetFromLine,
-	getEnhancedListBlockBacklinks,
 	openEnhancedListBlockPeek,
 	openEnhancedListBlockPeekAtCursor,
 } from "./block-peek";
@@ -18,5 +17,5 @@ export { createEnhancedListAutoSystemLineExtension } from "./auto-system-line-ex
 export { createEnhancedListDeleteSubtreeExtension } from "./delete-subtree-extension";
 export { createEnhancedListCodeBlockIndentExtension } from "./codeblock-indent-extension";
 export { createEnhancedListActiveBlockHighlightExtension } from "./active-block-highlight-extension";
-export { registerEnhancedListDuplicateIdRepair } from "./duplicate-id-repair";
+export { registerEnhancedListSavePreprocessor } from "./save-preprocessor";
 export { createEnhancedListDirtyRangeTrackerExtension } from "./normalize-on-save";

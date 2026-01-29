@@ -1,10 +1,8 @@
 import { App } from "obsidian";
 import {
-	clearEnhancedListBlockPeekCaches,
 	findActiveListItemBlockIdInContent,
 	findBlockTargetFromLine,
 	getBlockPeekContextFromContent,
-	getEnhancedListBlockBacklinks,
 } from "../block-peek";
 
 describe("enhanced-list-blocks/block-peek", () => {
@@ -58,22 +56,4 @@ describe("enhanced-list-blocks/block-peek", () => {
 		expect(out?.id).toBe("a1");
 	});
 
-	test("getEnhancedListBlockBacklinks finds block-level backlinks across markdown files", async () => {
-		clearEnhancedListBlockPeekCaches();
-
-		const app = new App();
-		const vault: any = app.vault as any;
-		const target = vault._addFile("A.md", "- A\n  [date:: 2026-01-01T00:00:00] ^a1\n");
-		vault._addFile("B.md", "- link [[A.md#^a1]]\n");
-		vault._addFile("C.md", "ref ![[A.md#^a1]]\n");
-
-		(app.metadataCache as any).getFirstLinkpathDest = (linkpath: string) => vault.getAbstractFileByPath(linkpath);
-
-		const plugin = { app } as any;
-
-		const backlinks = await getEnhancedListBlockBacklinks(plugin, target, "a1");
-		const paths = backlinks.map((b) => b.sourcePath).sort();
-		expect(paths).toEqual(["B.md", "C.md"]);
-		expect(backlinks.some((b) => b.lineText.includes("[[A.md#^a1]]"))).toBe(true);
-	});
 });
