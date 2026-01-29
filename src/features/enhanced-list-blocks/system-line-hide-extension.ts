@@ -3,9 +3,7 @@ import { Decoration, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { isEnhancedListEnabledFile } from "./enable-scope";
-
-const SYSTEM_LINE_REGEX =
-	/^\s*\[date::\s*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\]\s*\^[a-zA-Z0-9_-]+\s*$/;
+import { SYSTEM_LINE_MERGED_RE } from "./list-parse";
 
 function buildDecorations(view: any, plugin: BlockLinkPlus) {
 	const builder = new RangeSetBuilder<Decoration>();
@@ -31,7 +29,7 @@ function buildDecorations(view: any, plugin: BlockLinkPlus) {
 		let pos = from;
 		while (pos <= to) {
 			const line = view.state.doc.lineAt(pos);
-			if (SYSTEM_LINE_REGEX.test(line.text)) {
+			if (SYSTEM_LINE_MERGED_RE.test(line.text)) {
 				builder.add(
 					line.from,
 					line.from,

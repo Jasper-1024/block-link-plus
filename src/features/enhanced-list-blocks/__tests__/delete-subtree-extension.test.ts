@@ -181,4 +181,62 @@ describe("enhanced-list-blocks/delete-subtree-extension", () => {
 			parent.remove();
 		}
 	});
+
+	test("does not remove system-line-like text inside fenced code blocks", () => {
+		const { view, parent } = createView(
+			[
+				"- parent",
+				"  [date:: 2026-01-10T00:00:00] ^abc",
+				"  ```txt",
+				"  [date:: 2026-01-10T00:00:00] ^nope",
+				"  ```",
+				"  - child",
+				"- next",
+			].join("\n")
+		);
+		try {
+			view.dispatch({
+				changes: { from: 0, to: 1, insert: "" },
+				selection: EditorSelection.cursor(0),
+			});
+
+			expect(view.state.doc.toString()).toBe(
+				[
+					" parent",
+					"  ```txt",
+					"  [date:: 2026-01-10T00:00:00] ^nope",
+					"  ```",
+					"  - child",
+					"- next",
+				].join("\n")
+			);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("deletes subtree containing fenced code blocks even if fence content is not indented", () => {
+		const initial = [
+			"- parent",
+			"  [date:: 2026-01-10T00:00:00] ^abc",
+			"  ```txt",
+			"console.log('hi')",
+			"  ```",
+			"- next",
+		].join("\n");
+
+		const { view, parent } = createView(initial, { deleteSubtree: true });
+		try {
+			view.dispatch({
+				changes: { from: 0, to: 1, insert: "" },
+				selection: EditorSelection.cursor(0),
+			});
+
+			expect(view.state.doc.toString()).toBe("- next");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
 });

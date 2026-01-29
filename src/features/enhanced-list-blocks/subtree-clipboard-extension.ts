@@ -7,15 +7,14 @@ import { generateRandomId } from "../../utils";
 import { isEnhancedListEnabledFile } from "./enable-scope";
 import { clearEnhancedListBlockSelection, enhancedListBlockSelectionStateField } from "./block-selection-extension";
 import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
-
-const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
-
-const SYSTEM_LINE_MERGED_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
-const SYSTEM_LINE_DATE_ONLY_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*$/;
-const SYSTEM_LINE_ID_ONLY_RE = /^(\s*)\^([a-zA-Z0-9_-]+)\s*$/;
+import {
+	FENCE_LINE_REGEX,
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_DATE_ONLY_RE,
+	SYSTEM_LINE_ID_ONLY_RE,
+	SYSTEM_LINE_MERGED_RE,
+	escapeRegex,
+} from "./list-parse";
 
 // Keep a versioned, internal-only MIME type so "internal paste" can preserve system lines / IDs.
 const BLP_SUBTREE_CLIPBOARD_MIME = "application/x-blp-enhanced-list-subtree-v1";
@@ -42,10 +41,6 @@ function mergeRanges(ranges: Range[]): Range[] {
 		last.to = Math.max(last.to, r.to);
 	}
 	return merged;
-}
-
-function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function computeSubtreeRange(

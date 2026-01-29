@@ -2,6 +2,12 @@ import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
+import {
+	BLOCK_ID_AT_END_RE,
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_EXACT_RE,
+	computeContinuationIndentFromStartLine,
+} from "./list-parse";
 
 type EditorPos = { line: number; ch: number };
 
@@ -11,14 +17,6 @@ type EditorLike = {
 	getCursor: (which?: "from" | "to") => EditorPos;
 	replaceRange: (replacement: string, from: EditorPos, to?: EditorPos) => void;
 };
-
-const SYSTEM_LINE_EXACT_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
-
-const LIST_ITEM_PREFIX_RE =
-	/^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-
-const BLOCK_ID_AT_END_RE = /\s*\^([a-zA-Z0-9_-]+)\s*$/;
 
 function hasEditorApi(editor: any): editor is EditorLike {
 	return (
@@ -32,14 +30,6 @@ function hasEditorApi(editor: any): editor is EditorLike {
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
-}
-
-function computeContinuationIndentFromStartLine(startLineText: string): string | null {
-	const m = startLineText.match(LIST_ITEM_PREFIX_RE);
-	if (!m) return null;
-	const indentPrefix = m[1] ?? "";
-	const prefixLenWithoutIndent = m[0].length - indentPrefix.length;
-	return indentPrefix + " ".repeat(prefixLenWithoutIndent);
 }
 
 function getIndentCols(text: string, tabSize: number): number {

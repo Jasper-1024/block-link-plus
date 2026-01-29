@@ -228,4 +228,24 @@ describe("enhanced-list-blocks/auto-system-line-extension", () => {
 			parent.remove();
 		}
 	});
+
+	test("does not insert system line across a paragraph break (new list elsewhere)", () => {
+		Settings.defaultZone = "utc";
+		Settings.now = () => Date.parse("2026-01-10T00:00:00Z");
+
+		const { view, parent } = createView(["- a", "para"].join("\n"));
+		try {
+			const insertFrom = view.state.doc.length;
+			const insertText = "\n- ";
+			view.dispatch({
+				changes: { from: insertFrom, to: insertFrom, insert: insertText },
+				selection: EditorSelection.cursor(insertFrom + insertText.length),
+			});
+
+			expect(view.state.doc.toString()).toBe(["- a", "para", "- "].join("\n"));
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
 });

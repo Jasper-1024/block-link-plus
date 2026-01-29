@@ -4,9 +4,7 @@ import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { isEnhancedListEnabledFile } from "./enable-scope";
-
-const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
+import { FENCE_LINE_REGEX, LIST_ITEM_PREFIX_RE, escapeRegex } from "./list-parse";
 
 const SELECTED_BLOCK_CLASS = "blp-enhanced-list-block-selected";
 
@@ -20,10 +18,6 @@ type BlockSelectionEffect =
 	| { kind: "click"; pos: number; shiftKey: boolean };
 
 const blockSelectionEffect = StateEffect.define<BlockSelectionEffect>();
-
-function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function clampPos(pos: number, docLen: number): number {
 	if (!Number.isFinite(pos)) return 0;
@@ -277,4 +271,3 @@ export function createEnhancedListBlockSelectionExtension(
 
 	return [enhancedListBlockSelectionStateField, escapeKey, decorations];
 }
-

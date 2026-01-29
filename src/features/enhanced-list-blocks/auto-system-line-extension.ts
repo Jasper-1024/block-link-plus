@@ -5,42 +5,22 @@ import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import { isEnhancedListEnabledFile } from "./enable-scope";
 import { indentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
+import {
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_EXACT_RE,
+	computeContinuationIndentFromStartLine,
+	getListItemPrefixLength,
+	isEmptyListItemLine,
+	isListContextBarrierLine,
+} from "./list-parse";
 
 const autoSystemLineEffect = StateEffect.define<void>();
 const autoSystemLineCursorFixEffect = StateEffect.define<void>();
-
-const SYSTEM_LINE_EXACT_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
-
-const LIST_ITEM_PREFIX_RE =
-	/^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
 
 const BLOCK_ID_AT_END_RE = /\s*\^([a-zA-Z0-9_-]+)\s*$/;
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
-}
-
-function getListItemPrefixLength(text: string): number | null {
-	const m = text.match(LIST_ITEM_PREFIX_RE);
-	if (!m) return null;
-	return m[0].length;
-}
-
-function isEmptyListItemLine(text: string): { indentLen: number } | null {
-	const m = text.match(LIST_ITEM_PREFIX_RE);
-	if (!m) return null;
-	const prefixLen = m[0].length;
-	if (text.slice(prefixLen).trim().length !== 0) return null;
-	return { indentLen: (m[1] ?? "").length };
-}
-
-function computeContinuationIndentFromStartLine(startLineText: string): string | null {
-	const m = startLineText.match(LIST_ITEM_PREFIX_RE);
-	if (!m) return null;
-	const indentPrefix = m[1] ?? "";
-	const prefixLenWithoutIndent = m[0].length - indentPrefix.length;
-	return indentPrefix + " ".repeat(prefixLenWithoutIndent);
 }
 
 function findPreviousListItemStartLineNumber(
@@ -51,6 +31,14 @@ function findPreviousListItemStartLineNumber(
 ): number | null {
 	for (let n = fromLineNumber; n >= 1; n--) {
 		const line = doc.line(n);
+
+		// Do not "jump across" paragraph breaks / other blocks; this is the main source of
+		// "sometimes inserts system line for the wrong list" behavior when users manually
+		// start a new list elsewhere in the note.
+		if (isListContextBarrierLine(line.text, { targetIndentCols: targetIndentLen, tabSize })) {
+			return null;
+		}
+
 		const m = line.text.match(LIST_ITEM_PREFIX_RE);
 		if (!m) continue;
 

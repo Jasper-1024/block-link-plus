@@ -3,14 +3,13 @@ import type BlockLinkPlus from "../../main";
 import { processLineContent } from "../../utils";
 import { getEnhancedListEnabledMarkdownFiles } from "./enable-scope";
 import { indentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
-
-const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-
-const SYSTEM_LINE_MERGED_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
-const SYSTEM_LINE_DATE_ONLY_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*$/;
-const SYSTEM_LINE_ID_ONLY_RE = /^(\s*)\^([a-zA-Z0-9_-]+)\s*$/;
+import {
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_DATE_ONLY_RE,
+	SYSTEM_LINE_ID_ONLY_RE,
+	SYSTEM_LINE_MERGED_RE,
+	buildFenceStateMapFromLines,
+} from "./list-parse";
 
 export type IndexedEnhancedListBlock = {
 	file: TFile;
@@ -32,12 +31,16 @@ export function parseEnhancedListBlocksFromContent(
 	file: TFile
 ): IndexedEnhancedListBlock[] {
 	const lines = content.split("\n");
+	const fenceMap = buildFenceStateMapFromLines(lines);
 	const out: IndexedEnhancedListBlock[] = [];
 
 	// Track ancestry by indentation (marker indent cols).
 	const stack: Array<{ indentCols: number; text: string }> = [];
 
 	for (let i = 0; i < lines.length; i++) {
+		const lineNo = i + 1;
+		if (fenceMap[lineNo]) continue;
+
 		const line = lines[i] ?? "";
 		const m = line.match(LIST_ITEM_PREFIX_RE);
 		if (!m) continue;
@@ -55,6 +58,9 @@ export function parseEnhancedListBlocksFromContent(
 		// Find the system line inside the parent item's own content (before children).
 		let id: string | null = null;
 		for (let j = i + 1; j < lines.length; j++) {
+			const jLineNo = j + 1;
+			if (fenceMap[jLineNo]) continue;
+
 			const next = lines[j] ?? "";
 			if (next.trim() === "") continue;
 

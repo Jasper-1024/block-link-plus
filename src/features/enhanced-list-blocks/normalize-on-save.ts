@@ -11,6 +11,15 @@ import {
 	normalizeLineLeadingIndentTabsToSpaces,
 	MARKDOWN_TAB_WIDTH,
 } from "./indent-utils";
+import {
+	BLOCK_ID_AT_END_RE,
+	FENCE_LINE_REGEX,
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_DATE_ONLY_RE,
+	SYSTEM_LINE_EXACT_RE,
+	SYSTEM_LINE_ID_ONLY_RE,
+	escapeRegex,
+} from "./list-parse";
 
 export type DirtyRange = { from: number; to: number };
 
@@ -85,24 +94,7 @@ export function createEnhancedListDirtyRangeTrackerExtension(plugin: BlockLinkPl
 	);
 }
 
-const SYSTEM_LINE_EXACT_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
 
-const SYSTEM_LINE_DATE_ONLY_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*$/;
-
-const SYSTEM_LINE_ID_ONLY_RE = /^(\s*)\^([a-zA-Z0-9_-]+)\s*$/;
-
-const LIST_ITEM_PREFIX_RE =
-	/^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-
-const BLOCK_ID_AT_END_RE = /\s*\^([a-zA-Z0-9_-]+)\s*$/;
-
-const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
-
-function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");

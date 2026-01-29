@@ -1,9 +1,7 @@
 import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
-
-const SYSTEM_LINE_REGEX =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
+import { SYSTEM_LINE_MERGED_RE } from "./list-parse";
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -39,7 +37,7 @@ export function repairDuplicateEnhancedListIds(content: string, plugin: BlockLin
 	const duplicates: Array<{ lineIndex: number; indent: string }> = [];
 
 	for (let i = 0; i < lines.length; i++) {
-		const match = lines[i].match(SYSTEM_LINE_REGEX);
+		const match = lines[i].match(SYSTEM_LINE_MERGED_RE);
 		if (!match) continue;
 
 		const id = match[3];

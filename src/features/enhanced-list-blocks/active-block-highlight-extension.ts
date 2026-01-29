@@ -4,20 +4,13 @@ import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { isEnhancedListEnabledFile } from "./enable-scope";
 import { indentCols, lineIndentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
+import { FENCE_LINE_REGEX, LIST_ITEM_PREFIX_RE, escapeRegex } from "./list-parse";
 
-// Detect a Markdown list item prefix (bullet or ordered), including optional task checkbox.
-const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
 // Same as LIST_ITEM_PREFIX_RE but stops right after the marker + whitespace.
 // Used to align the "active block" highlight to the editable content column (incl. task checkbox).
 const LIST_ITEM_MARKER_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+/;
 
-// Detect fenced code blocks so we don't misinterpret `- foo` lines inside code fences as list items.
-const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
 const LOOKBACK_LINES = 500;
-
-function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function getIndentLen(text: string, tabSize: number): number {
 	return lineIndentCols(text, tabSize);

@@ -2,15 +2,13 @@ import { Modal, TFile } from "obsidian";
 import type BlockLinkPlus from "../../main";
 import { processLineContent } from "../../utils";
 import { indentCols, MARKDOWN_TAB_WIDTH } from "./indent-utils";
-
-const LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+(?:\[(?: |x|X)\]\s+)?/;
-const FENCE_LINE_REGEX = /^(\s*)(```+|~~~+).*/;
-
-const SYSTEM_LINE_MERGED_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*\^([a-zA-Z0-9_-]+)\s*$/;
-const SYSTEM_LINE_DATE_ONLY_RE =
-	/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*$/;
-const SYSTEM_LINE_ID_ONLY_RE = /^(\s*)\^([a-zA-Z0-9_-]+)\s*$/;
+import {
+	LIST_ITEM_PREFIX_RE,
+	SYSTEM_LINE_DATE_ONLY_RE,
+	SYSTEM_LINE_ID_ONLY_RE,
+	SYSTEM_LINE_MERGED_RE,
+	buildFenceStateMapFromLines,
+} from "./list-parse";
 
 const BLOCK_REF_LINK_RE = /!?\[\[([^|\]#]+)#\^([a-zA-Z0-9_-]+)(?:\|[^\]]*)?\]\]/g;
 
@@ -31,52 +29,9 @@ export type BlockPeekContext = {
 	nextSiblings: ParsedBlock[];
 };
 
-function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function buildFenceStateMap(lines: string[]): boolean[] {
-	// 1-based line numbers for easier parity with CM/Obsidian APIs.
-	const inFenceByLineNo: boolean[] = new Array(lines.length + 1).fill(false);
-
-	let inFence = false;
-	let fenceChar = "";
-	let fenceLen = 0;
-	let openedAtLineNo = 0;
-
-	for (let i = 0; i < lines.length; i++) {
-		const lineNo = i + 1;
-		const text = lines[i] ?? "";
-
-		if (!inFence) {
-			const m = text.match(FENCE_LINE_REGEX);
-			if (m) {
-				inFence = true;
-				fenceChar = (m[2] ?? "")[0] ?? "";
-				fenceLen = (m[2] ?? "").length;
-				openedAtLineNo = lineNo;
-			}
-		}
-
-		inFenceByLineNo[lineNo] = inFence;
-
-		if (inFence) {
-			const closeRe = new RegExp(`^\\s*${escapeRegex(fenceChar)}{${fenceLen},}\\s*$`);
-			if (fenceChar && fenceLen >= 3 && lineNo !== openedAtLineNo && closeRe.test(text)) {
-				inFence = false;
-				fenceChar = "";
-				fenceLen = 0;
-				openedAtLineNo = 0;
-			}
-		}
-	}
-
-	return inFenceByLineNo;
-}
-
 function parseBlocksWithParents(content: string): { blocks: ParsedBlock[]; byId: Map<string, ParsedBlock> } {
 	const lines = content.split("\n");
-	const fenceMap = buildFenceStateMap(lines);
+	const fenceMap = buildFenceStateMapFromLines(lines);
 
 	const blocks: ParsedBlock[] = [];
 	const byId = new Map<string, ParsedBlock>();
@@ -198,7 +153,7 @@ export function findBlockTargetFromLine(
 
 export function findActiveListItemBlockIdInContent(content: string, cursorLineNo0: number): string | null {
 	const lines = content.split("\n");
-	const fenceMap = buildFenceStateMap(lines);
+	const fenceMap = buildFenceStateMapFromLines(lines);
 
 	let startIdx = cursorLineNo0;
 	for (let i = cursorLineNo0; i >= 0; i--) {

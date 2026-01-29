@@ -48,5 +48,22 @@ describe("enhanced-list-blocks/block-index", () => {
 		const blocks = parseEnhancedListBlocksFromContent(content, file);
 		expect(blocks.length).toBe(0);
 	});
-});
 
+	test("ignores list-like lines inside fenced code blocks", () => {
+		const app = new App();
+		const content = [
+			"- real",
+			"  [date:: 2026-01-01T00:00:00] ^r1",
+			"```txt",
+			"- fake",
+			"  [date:: 2026-01-01T00:00:00] ^f1",
+			"```",
+			"- after",
+			"  [date:: 2026-01-01T00:00:00] ^a1",
+		].join("\n");
+		const file = (app.vault as any)._addFile("test.md", content);
+
+		const blocks = parseEnhancedListBlocksFromContent(content, file);
+		expect(blocks.map((b) => b.id)).toEqual(["r1", "a1"]);
+	});
+});
