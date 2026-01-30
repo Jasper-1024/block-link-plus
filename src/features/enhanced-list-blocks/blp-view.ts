@@ -626,12 +626,56 @@ export function stableSortItems(dv: DataviewApi, items: BlpViewCandidate[], sort
 	});
 }
 
-function renderEmbedList(groups: BlpViewGroup[]): string {
+function stripMarkdownExtension(path: string): string {
+	return path.replace(/\.md$/i, "");
+}
+
+function maybeLinkGroupTitleToSourceFile(group: BlpViewGroup): string {
+	const title = group.title ?? "";
+	if (!title) return title;
+
+	// If the title already contains a wiki-link (e.g. group.by=file), leave it as-is.
+	if (title.includes("[[")) return title;
+
+	const uniquePaths = new Set<string>();
+	for (const item of group.items ?? []) {
+		if (item?.path) uniquePaths.add(String(item.path));
+	}
+
+	const paths = [...uniquePaths];
+	if (paths.length === 1) {
+		return `[[${stripMarkdownExtension(paths[0])}|${title}]]`;
+	}
+
+	// Best-effort: when grouping by day(date), the title is `yyyy-MM-dd`. Try to find a
+	// daily-note path whose basename matches either `yyyy-MM-dd` or `yyyy-M-d`.
+	const dateMatch = title.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	if (!dateMatch) return title;
+
+	const yyyy = dateMatch[1];
+	const mm = dateMatch[2];
+	const dd = dateMatch[3];
+	const mNoPad = String(parseInt(mm, 10));
+	const dNoPad = String(parseInt(dd, 10));
+
+	const candidates = new Set([`${yyyy}-${mm}-${dd}`, `${yyyy}-${mNoPad}-${dNoPad}`]);
+	const matching = paths.filter((p) => {
+		const base = p.split("/").pop()?.replace(/\.md$/i, "") ?? "";
+		return candidates.has(base);
+	});
+	if (matching.length === 1) {
+		return `[[${stripMarkdownExtension(matching[0])}|${title}]]`;
+	}
+
+	return title;
+}
+
+export function renderEmbedList(groups: BlpViewGroup[]): string {
 	const lines: string[] = [];
 
 	for (const group of groups) {
 		if (group.title) {
-			lines.push(`### ${group.title}`);
+			lines.push(`### ${maybeLinkGroupTitleToSourceFile(group)}`);
 		}
 
 		for (const item of group.items) {

@@ -11,6 +11,7 @@ import {
 	matchesSectionFilter,
 	matchesTagFilter,
 	parseConfig,
+	renderEmbedList,
 	resolveSourceFilesOrError,
 	resolveConfigDefaults,
 	stableSortItems,
@@ -213,6 +214,55 @@ describe("enhanced-list-blocks/blp-view filtering", () => {
 
 		expect(matchesDateFilter(dv, d1, { between: ["2026-01-08T00:00:00Z", "2026-01-10T00:00:00Z"] } as any)).toBe(true);
 		expect(matchesDateFilter(dv, d1, { between: { after: "2026-01-09T00:00:00Z", before: "2026-01-10T00:00:00Z" } } as any)).toBe(false);
+	});
+});
+
+describe("enhanced-list-blocks/blp-view render: embed-list headings", () => {
+	test("links day(date) group headings to the unique source file when possible", () => {
+		const groups = [
+			{
+				key: "2026-01-28",
+				title: "2026-01-28",
+				items: [
+					{
+						path: "Review/Daily/2026/1/2026-1-28.md",
+						line: 10,
+						blockId: "abcd",
+						date: DateTime.fromISO("2026-01-28T00:00:00Z"),
+						item: {},
+						ancestorTags: [],
+						ancestorLines: [],
+					},
+				],
+			},
+		] as any;
+
+		const md = renderEmbedList(groups);
+		expect(md).toContain("### [[Review/Daily/2026/1/2026-1-28|2026-01-28]]");
+	});
+
+	test("does not wrap titles that already contain a wiki link (group.by=file)", () => {
+		const groups = [
+			{
+				key: "Review/Daily/2026/1/2026-1-28.md",
+				title: "[[Review/Daily/2026/1/2026-1-28.md]]",
+				items: [
+					{
+						path: "Review/Daily/2026/1/2026-1-28.md",
+						line: 10,
+						blockId: "abcd",
+						date: DateTime.fromISO("2026-01-28T00:00:00Z"),
+						item: {},
+						ancestorTags: [],
+						ancestorLines: [],
+					},
+				],
+			},
+		] as any;
+
+		const md = renderEmbedList(groups);
+		expect(md).toContain("### [[Review/Daily/2026/1/2026-1-28.md]]");
+		expect(md).not.toContain("|[[");
 	});
 });
 
