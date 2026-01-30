@@ -184,6 +184,16 @@ export function createEnhancedListDeleteSubtreeExtension(plugin: BlockLinkPlus) 
 		if (!tr.docChanged) return tr;
 		if (tr.effects.some((e) => e.is(deleteSubtreeEffect))) return tr;
 
+		// Vendored vslinko outliner applies structural edits via replaceRange(). Those edits can
+		// touch list markers and look like user deletions, which would incorrectly trigger our
+		// subtree deletion logic and corrupt the document.
+		try {
+			const w: any = typeof window !== "undefined" ? (window as any) : null;
+			if (w && w.__blpOutlinerApplying > 0) return tr;
+		} catch {
+			// ignore
+		}
+
 		try {
 			if (tr.startState.field?.(editorLivePreviewField, false) !== true) {
 				return tr;

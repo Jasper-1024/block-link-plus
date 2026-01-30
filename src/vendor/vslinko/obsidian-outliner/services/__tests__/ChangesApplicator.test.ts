@@ -73,11 +73,16 @@ class BuggyReplaceRangeEditor extends BaseTestEditor {
 	}
 }
 
-function makeRoot(content: string, start: Pos, end: Pos) {
+function makeRoot(
+	content: string,
+	start: Pos,
+	end: Pos,
+	selections: Array<{ anchor: Pos; head: Pos }> = [{ anchor: { line: 0, ch: 0 }, head: { line: 0, ch: 0 } }]
+) {
 	return {
 		getContentRange: () => [start, end] as [Pos, Pos],
 		print: () => content,
-		getSelections: () => [{ anchor: { line: 0, ch: 0 }, head: { line: 0, ch: 0 } }],
+		getSelections: () => selections,
 		getChildren: () => [],
 	};
 }
@@ -126,6 +131,34 @@ describe("ChangesApplicator newline preservation", () => {
 
 		expect(editor.getValue()).toBe(newText);
 		expect(editor.getValue()).not.toMatch(/\n\n/);
+	});
+
+	it("clamps invalid selections to document bounds (no RangeError)", () => {
+		const text = ["- a", "  - b", "- c"].join("\n");
+		const start: Pos = { line: 0, ch: 0 };
+		const end: Pos = { line: 2, ch: "- c".length };
+
+		let received: any = null;
+		class ThrowingSelectionEditor extends NormalReplaceRangeEditor {
+			setSelections(sels: any) {
+				received = sels;
+				const lastLine = this.lastLine();
+				for (const s of sels ?? []) {
+					for (const p of [s?.anchor, s?.head]) {
+						if (p.line < 0 || p.line > lastLine) throw new Error("bad line");
+						const lineLen = this.getLine(p.line).length;
+						if (p.ch < 0 || p.ch > lineLen) throw new Error("bad ch");
+					}
+				}
+			}
+		}
+
+		const editor = new ThrowingSelectionEditor(text);
+		const prevRoot = makeRoot(text, start, end, [{ anchor: { line: 99, ch: 99 }, head: { line: -1, ch: -5 } }]);
+		const nextRoot = makeRoot(text, start, end, [{ anchor: { line: 99, ch: 99 }, head: { line: -1, ch: -5 } }]);
+
+		expect(() => new ChangesApplicator().apply(editor as any, prevRoot as any, nextRoot as any)).not.toThrow();
+		expect(received).toEqual([{ anchor: { line: 2, ch: 3 }, head: { line: 0, ch: 0 } }]);
 	});
 });
 

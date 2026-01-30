@@ -4,9 +4,69 @@ import { List, Position, Root, isRangesIntersects } from "../root";
 
 export class ChangesApplicator {
   apply(editor: MyEditor, prevRoot: Root, newRoot: Root) {
+    // Debug hook: set `window.__blpOutlinerDebug = true` in DevTools to capture the
+    // last apply() inputs/outputs without spamming the console.
+    const captureDebug = (phase: string, payload: any) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const w = typeof window !== "undefined" ? (window as any) : null;
+        if (!w || w.__blpOutlinerDebug !== true) return;
+
+        const MAX = 2000;
+        const clip = (s: any) => {
+          const str = typeof s === "string" ? s : JSON.stringify(s);
+          if (!str) return str;
+          if (str.length <= MAX) return str;
+          return str.slice(0, MAX) + `...(len=${str.length})`;
+        };
+
+        const evt = {
+          t: Date.now(),
+          phase,
+          ...payload,
+          // Keep payload JSON-ish and bounded.
+          oldString: payload?.oldString ? clip(payload.oldString) : undefined,
+          newString: payload?.newString ? clip(payload.newString) : undefined,
+          replacement: payload?.replacement ? clip(payload.replacement) : undefined,
+          safeReplacement: payload?.safeReplacement ? clip(payload.safeReplacement) : undefined,
+        };
+
+        const prev = w.__blpOutlinerLastApply;
+        const events = Array.isArray(prev?.events) ? prev.events.slice() : [];
+        events.push(evt);
+        if (events.length > 20) events.splice(0, events.length - 20);
+        w.__blpOutlinerLastApply = { events };
+      } catch {
+        // ignore debug hook errors
+      }
+    };
+
     const changes = this.calculateChanges(editor, prevRoot, newRoot);
     if (changes) {
       const { replacement, changeFrom, changeTo } = changes;
+      const rootRange = prevRoot.getContentRange();
+      let oldString = "";
+      let newString = "";
+      try {
+        oldString = editor.getRange(rootRange[0], rootRange[1]);
+      } catch {
+        oldString = "";
+      }
+      try {
+        newString = newRoot.print();
+      } catch {
+        newString = "";
+      }
+      captureDebug("before-apply", {
+        rootRange,
+        changeFrom,
+        changeTo,
+        replacement,
+        oldLen: oldString.length,
+        newLen: newString.length,
+        oldString,
+        newString,
+      });
 
       // Work around an observed Obsidian CM6 replaceRange edge case where replacing a multi-line
       // range ending at EOL may also consume the following line break, causing the next line to be
@@ -28,14 +88,90 @@ export class ChangesApplicator {
         editor.unfold(line);
       }
 
-      editor.replaceRange(safeReplacement, changeFrom, safeChangeTo);
+      // Suppress Enhanced List delete-subtree cleanup while we apply structural outliner edits.
+      // Those edits can temporarily remove list markers and must not be interpreted as user deletion.
+      let w: any = null;
+      try {
+        w = typeof window !== "undefined" ? (window as any) : null;
+        if (w) w.__blpOutlinerApplying = (w.__blpOutlinerApplying ?? 0) + 1;
+      } catch {
+        w = null;
+      }
+
+      try {
+        editor.replaceRange(safeReplacement, changeFrom, safeChangeTo);
+      } finally {
+        try {
+          if (w) {
+            w.__blpOutlinerApplying = (w.__blpOutlinerApplying ?? 1) - 1;
+            if (w.__blpOutlinerApplying <= 0) {
+              delete w.__blpOutlinerApplying;
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+      captureDebug("after-replaceRange", { safeChangeTo, safeReplacement });
 
       for (const line of fold) {
         editor.fold(line);
       }
     }
 
-    editor.setSelections(newRoot.getSelections());
+    const sels = newRoot.getSelections();
+    const safeSels = this.clampSelections(editor, sels);
+    captureDebug("before-setSelections", { selections: sels, safeSelections: safeSels });
+    try {
+      editor.setSelections(safeSels);
+    } catch {
+      // Last resort: keep the editor usable even if selection math went wrong.
+      try {
+        editor.setSelections([{ anchor: { line: 0, ch: 0 }, head: { line: 0, ch: 0 } }]);
+      } catch {
+        // ignore
+      }
+    }
+    captureDebug("after-setSelections", {});
+  }
+
+  private clampSelections(editor: MyEditor, selections: any[]) {
+    if (!Array.isArray(selections) || selections.length === 0) {
+      return [{ anchor: { line: 0, ch: 0 }, head: { line: 0, ch: 0 } }];
+    }
+
+    let lastLine = 0;
+    try {
+      lastLine = editor.lastLine();
+      if (!Number.isFinite(lastLine) || lastLine < 0) lastLine = 0;
+    } catch {
+      lastLine = 0;
+    }
+
+    const clampPos = (pos: any) => {
+      let line = Number(pos?.line ?? 0);
+      let ch = Number(pos?.ch ?? 0);
+      if (!Number.isFinite(line)) line = 0;
+      if (!Number.isFinite(ch)) ch = 0;
+
+      line = Math.max(0, Math.min(lastLine, Math.floor(line)));
+
+      let lineText = "";
+      try {
+        lineText = editor.getLine(line) ?? "";
+      } catch {
+        lineText = "";
+      }
+      const maxCh = Math.max(0, lineText.length);
+      ch = Math.max(0, Math.min(maxCh, Math.floor(ch)));
+
+      return { line, ch };
+    };
+
+    return selections.map((s) => ({
+      anchor: clampPos(s?.anchor),
+      head: clampPos(s?.head),
+    }));
   }
 
   private calculateChanges(editor: MyEditor, prevRoot: Root, newRoot: Root) {
