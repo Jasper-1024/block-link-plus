@@ -1,6 +1,7 @@
 import type { Editor, SectionCache, EditorPosition, CachedMetadata } from 'obsidian';
 import type { PluginSettings } from '../../types';
 import { generateRandomId, shouldInsertAfter } from '../../utils';
+import { BLP_BLOCK_MARKER } from "shared/block-marker";
 
 export type MultilineBlockLinkInsertResult =
 	| { ok: true; link: string }
@@ -123,12 +124,12 @@ export function gen_insert_blocklink_multline_heading(
 	const cursor = editor.getCursor("from"); // getCursor
 	// const lineLength = editor.getLine(cursor.line).length;
 	editor.setCursor(cursor.line, cursor.ch);
-	editor.replaceRange(`${heading} ˅${id}\n\n`, {
+	editor.replaceRange(`${heading} ${BLP_BLOCK_MARKER}${id}\n\n`, {
 		line: cursor.line,
 		ch: 0,
 	});
 
-	return `˅${id}`;
+	return `${BLP_BLOCK_MARKER}${id}`;
 }
 
 

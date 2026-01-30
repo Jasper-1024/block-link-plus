@@ -3,6 +3,7 @@ import {
 	HeadingCache,
 	CachedMetadata,
 } from "obsidian";
+import { BLP_BLOCK_MARKER } from "shared/block-marker";
 import { HeadingAnalysisResult } from '../../types';
 import { processLineContent, processMultiLineContent } from '../../utils';
 
@@ -90,8 +91,8 @@ export function analyzeHeadings(
 			const { start, end } = heading.position;
 			// 对于 start.line 在 (0, start_line) 开区间的处理
 			if (start.line < start_line) {
-				// 跳过以 ^ 或 ˅ 开头的标题
-				if (heading.heading.startsWith('^') || heading.heading.startsWith('˅')) {
+				// 跳过以 ^ 或 block marker 开头的标题
+				if (heading.heading.startsWith('^') || heading.heading.startsWith(BLP_BLOCK_MARKER)) {
 					return;
 				}
 				const distance = start_line - start.line;
@@ -146,8 +147,8 @@ export function analyzeHeadings(
 			if (start_line - start.line < closestBeforeStartDistance) {
 				closestBeforeStartDistance = distance;
 				nearestBeforeStartLevel = heading.level;
-				// 跳过以 ^ 或 ˅ 开头的标题 | 这里存疑,有可能存在 多行 block 套 block ;
-				if (heading.heading.startsWith('^') || heading.heading.startsWith('˅')) {
+				// 跳过以 ^ 或 block marker 开头的标题 | 这里存疑,有可能存在 多行 block 套 block ;
+				if (heading.heading.startsWith('^') || heading.heading.startsWith(BLP_BLOCK_MARKER)) {
 					return;
 				}
 				nearestHeadingTitle = heading.heading;  // 记录最近的标题内容

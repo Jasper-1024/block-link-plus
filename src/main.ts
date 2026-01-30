@@ -32,6 +32,7 @@ import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
 import { markdownPostProcessor } from 'ui/MarkdownPost';
 import { WhatsNewModal } from "ui/WhatsNewModal";
+import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import {
@@ -113,11 +114,10 @@ export default class BlockLinkPlus extends Plugin {
 	 * Update the view plugin
 	 */
 	public updateViewPlugin() {
-		const rule = "(^| )˅[a-zA-Z0-9_]+$";
 		// `registerEditorExtension` only adds; calling it repeatedly will stack duplicates.
 		// This rule is currently constant, so register once per plugin load.
 		if (!this.viewPlugin) {
-			this.viewPlugin = createViewPlugin(rule);
+			this.viewPlugin = createViewPlugin(BLP_BLOCK_MARKER_RULE);
 		}
 		if (!this.viewPluginRegistered) {
 			this.registerEditorExtension([this.viewPlugin]);

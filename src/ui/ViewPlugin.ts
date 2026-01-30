@@ -4,9 +4,10 @@ import {
 	ViewPlugin,
 } from "@codemirror/view";
 import { BlockLinkPlusViewPlugin } from "../types";
+import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 
 export function createViewPlugin(
-	rule: string = "(^| )˅[a-zA-Z0-9_]+$"
+	rule: string = BLP_BLOCK_MARKER_RULE
 ): BlockLinkPlusViewPlugin {
 	let decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
