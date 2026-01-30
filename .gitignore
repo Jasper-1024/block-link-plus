@@ -36,3 +36,13 @@ doc/**/_cdp-*
 _cdp_*
 scripts/_cdp_*
 debug.log
+
+# Local build/docs logs
+mkdocs.log
+
+# Local scratch patches
+uncommitted-changes.patch
+additional-changes.patch
+
+# Local memory-bank snapshots (keep the canonical files, drop backups)
+memory-bank/backups/
