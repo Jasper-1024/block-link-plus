@@ -770,7 +770,7 @@ export class VerticalLinesPluginValue implements PluginValue {
 }
 
 export class VerticalLines implements Feature {
-  private updateBodyClassInterval: number;
+  private settingsChangeHandler: (() => void) | null = null;
 
   constructor(
     private plugin: Plugin,
@@ -781,9 +781,9 @@ export class VerticalLines implements Feature {
 
   async load() {
     this.updateBodyClass();
-    this.updateBodyClassInterval = window.setInterval(() => {
-      this.updateBodyClass();
-    }, 1000);
+    // Avoid polling; Settings already has onChange callbacks.
+    this.settingsChangeHandler = () => this.updateBodyClass();
+    this.settings.onChange(this.settingsChangeHandler);
 
     this.plugin.registerEditorExtension(
       ViewPlugin.define(
@@ -799,7 +799,10 @@ export class VerticalLines implements Feature {
   }
 
   async unload() {
-    clearInterval(this.updateBodyClassInterval);
+    if (this.settingsChangeHandler) {
+      this.settings.removeCallback(this.settingsChangeHandler);
+      this.settingsChangeHandler = null;
+    }
     document.body.classList.remove(VERTICAL_LINES_BODY_CLASS);
   }
 
