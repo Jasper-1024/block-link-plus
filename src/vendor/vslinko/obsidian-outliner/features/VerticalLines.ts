@@ -306,8 +306,9 @@ export class VerticalLinesPluginValue implements PluginValue {
       return;
     }
 
+    const listStartLine = list.getFirstLineContentStart().line;
     const fromOffset = this.editor.posToOffset({
-      line: list.getFirstLineContentStart().line,
+      line: listStartLine,
       ch: list.getFirstLineIndent().length,
     });
     const nextSibling = this.getNextSibling(list);
@@ -332,6 +333,24 @@ export class VerticalLinesPluginValue implements PluginValue {
 
     if (fromOffset > visibleTo || tillOffset < visibleFrom) {
       return;
+    }
+
+    // When using Obsidian Zoom, ancestor list items outside the zoom range can still be in the
+    // document but visually shifted/hidden. `coordsAtPos()` on those lines may return unrelated
+    // geometry and poison `rootLeft`, causing huge negative left offsets. Never anchor (or render)
+    // vertical lines for list items whose start line is outside the zoom range; just recurse into
+    // children that may be visible.
+    if (zoomRange) {
+      const zoomFromLine = zoomRange.from?.line ?? 0;
+      const zoomToLine = zoomRange.to?.line ?? zoomFromLine;
+      if (listStartLine < zoomFromLine || listStartLine > zoomToLine) {
+        for (const child of children) {
+          if (!child.isEmpty()) {
+            this.recursive(child, parentCtx);
+          }
+        }
+        return;
+      }
     }
 
     const coords = this.view.coordsAtPos(fromOffset, 1);

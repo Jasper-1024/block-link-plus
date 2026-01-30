@@ -38,13 +38,35 @@ export function registerEnhancedListSavePreprocessor(plugin: BlockLinkPlus): voi
 				const next = preprocessEnhancedListContentForSave(content, plugin, { dirtyRanges });
 
 				if (next !== content) {
+					// `setViewData()` replaces large document ranges. Other Enhanced List transactionFilters
+					// (notably delete-subtree) can misinterpret that as user deletion and corrupt the doc.
+					// Guard the apply window so those filters can safely no-op.
+					let w: any = null;
+					try {
+						w = typeof window !== "undefined" ? (window as any) : null;
+						if (w) w.__blpSavePreprocessorApplying = (w.__blpSavePreprocessorApplying ?? 0) + 1;
+					} catch {
+						w = null;
+					}
+
 					// Update the editor content before saving so Obsidian writes the final text once,
 					// avoiding "file was modified externally" prompts.
 					try {
-						this.setViewData(next, false);
-					} catch {
 						try {
-							this.editor?.setValue?.(next);
+							this.setViewData(next, false);
+						} catch {
+							try {
+								this.editor?.setValue?.(next);
+							} catch {
+								// ignore
+							}
+						}
+					} finally {
+						try {
+							if (w) {
+								w.__blpSavePreprocessorApplying = (w.__blpSavePreprocessorApplying ?? 1) - 1;
+								if (w.__blpSavePreprocessorApplying <= 0) delete w.__blpSavePreprocessorApplying;
+							}
 						} catch {
 							// ignore
 						}
@@ -61,4 +83,3 @@ export function registerEnhancedListSavePreprocessor(plugin: BlockLinkPlus): voi
 
 	plugin.register(uninstaller);
 }
-

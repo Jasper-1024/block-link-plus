@@ -88,6 +88,37 @@ describe("enhanced-list-blocks/delete-subtree-extension", () => {
 		}
 	});
 
+	test("skips subtree deletion while save preprocessor is applying", () => {
+		const initial = [
+			"- parent",
+			"  [date:: 2026-01-10T00:00:00] ^abc",
+			"  - child",
+			"- next",
+		].join("\n");
+
+		const { view, parent } = createView(initial, { deleteSubtree: true });
+		try {
+			(window as any).__blpSavePreprocessorApplying = 1;
+			view.dispatch({
+				changes: { from: 0, to: 1, insert: "" },
+				selection: EditorSelection.cursor(0),
+			});
+
+			expect(view.state.doc.toString()).toBe(
+				[
+					" parent",
+					"  [date:: 2026-01-10T00:00:00] ^abc",
+					"  - child",
+					"- next",
+				].join("\n")
+			);
+		} finally {
+			delete (window as any).__blpSavePreprocessorApplying;
+			view.destroy();
+			parent.remove();
+		}
+	});
+
 	test("removes system line (keeps children) when parent line is removed (cut line, default)", () => {
 		const initial = [
 			"- parent",

@@ -190,6 +190,9 @@ export function createEnhancedListDeleteSubtreeExtension(plugin: BlockLinkPlus) 
 		try {
 			const w: any = typeof window !== "undefined" ? (window as any) : null;
 			if (w && w.__blpOutlinerApplying > 0) return tr;
+			// Save-time preprocessing can also replace large ranges (setViewData), which is not a user
+			// deletion and must not trigger subtree cleanup.
+			if (w && w.__blpSavePreprocessorApplying > 0) return tr;
 		} catch {
 			// ignore
 		}
