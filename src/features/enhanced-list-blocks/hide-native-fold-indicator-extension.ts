@@ -5,6 +5,24 @@ import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "./enable
 
 export const BLP_HIDE_NATIVE_FOLD_INDICATOR_CLASS = "blp-enhanced-list-hide-native-fold-indicator";
 
+function getViewFilePath(view: any, infoField: typeof editorInfoField): string | null {
+	try {
+		const info = view.state.field(infoField, false);
+		return info?.file?.path ?? null;
+	} catch {
+		return null;
+	}
+}
+
+function getViewLivePreview(view: any, livePreviewField: typeof editorLivePreviewField): boolean | null {
+	try {
+		const v = view.state.field?.(livePreviewField, false);
+		return v === true ? true : v === false ? false : null;
+	} catch {
+		return null;
+	}
+}
+
 function shouldHideNativeFoldIndicator(
 	view: any,
 	plugin: BlockLinkPlus,
@@ -40,48 +58,67 @@ export function createEnhancedListHideNativeFoldIndicatorExtension(
 			private view: any;
 			private unsubscribe: (() => void) | null = null;
 			private didFirstUpdate = false;
+			private lastFilePath: string | null = null;
+			private lastLivePreview: boolean | null = null;
+			private scheduled: number | null = null;
 
 			constructor(view: any) {
 				this.view = view;
 				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
+				this.lastFilePath = getViewFilePath(view, infoField);
+				this.lastLivePreview = getViewLivePreview(view, livePreviewField);
 				this.refresh();
+				// Obsidian/CM can still mutate editor state during initial mount; re-apply once after mount.
+				this.scheduleRefresh();
 			}
 
 			update(update: ViewUpdate) {
-				// CM can still mutate editor DOM during initial mount; re-apply once on first update.
+				const filePath = getViewFilePath(update.view, infoField);
+				const livePreview = getViewLivePreview(update.view, livePreviewField);
+				const changed = filePath !== this.lastFilePath || livePreview !== this.lastLivePreview;
+
+				// Obsidian may mutate the editor info field in-place; don't rely on startState vs state.
+				// Refresh once on first update, and whenever file / Live Preview changes afterward.
 				if (!this.didFirstUpdate) {
 					this.didFirstUpdate = true;
+					this.lastFilePath = filePath;
+					this.lastLivePreview = livePreview;
 					this.refresh();
 					return;
 				}
 
-				const prevInfo = update.startState.field(infoField, false);
-				const nextInfo = update.state.field(infoField, false);
-				if (prevInfo?.file !== nextInfo?.file) {
+				if (changed) {
+					this.lastFilePath = filePath;
+					this.lastLivePreview = livePreview;
 					this.refresh();
-					return;
 				}
 
-				try {
-					const prevLP = update.startState.field?.(livePreviewField, false);
-					const nextLP = update.state.field?.(livePreviewField, false);
-					if (prevLP !== nextLP) {
-						this.refresh();
-					}
-				} catch {
-					// Ignore.
-				}
+				// Obsidian may mutate editor info state out-of-band; re-check once after the
+				// update cycle so scoped classes self-heal without requiring another CM update.
+				this.scheduleRefresh();
 			}
 
 			destroy() {
 				this.unsubscribe?.();
 				this.unsubscribe = null;
+				if (this.scheduled !== null) {
+					clearTimeout(this.scheduled);
+					this.scheduled = null;
+				}
 				this.view?.dom?.classList?.remove(BLP_HIDE_NATIVE_FOLD_INDICATOR_CLASS);
 			}
 
 			private refresh() {
 				const next = shouldHideNativeFoldIndicator(this.view, plugin, infoField, livePreviewField);
 				this.view.dom.classList.toggle(BLP_HIDE_NATIVE_FOLD_INDICATOR_CLASS, next);
+			}
+
+			private scheduleRefresh() {
+				if (this.scheduled !== null) return;
+				this.scheduled = window.setTimeout(() => {
+					this.scheduled = null;
+					this.refresh();
+				}, 0);
 			}
 		}
 	);

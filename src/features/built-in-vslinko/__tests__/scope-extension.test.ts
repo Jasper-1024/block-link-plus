@@ -129,4 +129,52 @@ describe("built-in-vslinko/scope-extension", () => {
 			parent.remove();
 		}
 	});
+
+	test("refreshes when editor info is mutated in-place (file switch)", () => {
+		const app = new App();
+		const fileA = (app.vault as any)._addFile("a.md", "- a");
+		const fileB = (app.vault as any)._addFile("b.md", "- b");
+
+		const plugin = {
+			app,
+			settings: {
+				enhancedListEnabledFolders: [],
+				enhancedListEnabledFiles: [fileB.path],
+
+				builtInObsidianOutlinerEnabled: true,
+				builtInObsidianZoomEnabled: false,
+				builtInVslinkoScopeToEnhancedList: true,
+			},
+		} as any;
+
+		const info: any = { app, file: fileA };
+
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const scopeExtension = createBuiltInVslinkoScopeExtension(plugin);
+		const state = EditorState.create({
+			doc: "- item",
+			extensions: [
+				editorInfoField.init(() => info),
+				editorLivePreviewField.init(() => true),
+				scopeExtension,
+			],
+		});
+
+		const view = new EditorView({ state, parent });
+		view.dispatch({ selection: EditorSelection.cursor(1) });
+
+		try {
+			expect(view.dom.classList.contains("blp-vslinko-scope")).toBe(false);
+
+			info.file = fileB;
+			view.dispatch({ selection: EditorSelection.cursor(2) });
+
+			expect(view.dom.classList.contains("blp-vslinko-scope")).toBe(true);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
 });

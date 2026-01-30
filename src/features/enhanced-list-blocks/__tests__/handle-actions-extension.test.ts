@@ -1,4 +1,4 @@
-import { EditorState } from "@codemirror/state";
+import { EditorSelection, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { App, editorInfoField, editorLivePreviewField } from "obsidian";
 import { createEnhancedListHandleActionsExtension } from "../handle-actions-extension";
@@ -182,6 +182,72 @@ describe("enhanced-list-blocks/handle-actions-extension", () => {
 			handleEl.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
 			expect(toggled).toEqual([]);
 			expect(menus).toEqual([]);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("refreshes when editor info is mutated in-place (file switch)", () => {
+		const app = new App();
+		const fileA = (app.vault as any)._addFile("a.md", "- a");
+		const fileB = (app.vault as any)._addFile("b.md", "- b");
+
+		const plugin = {
+			app,
+			settings: {
+				enhancedListEnabledFolders: [],
+				enhancedListEnabledFiles: [fileB.path],
+				enhancedListHandleActions: true,
+				enhancedListHandleClickAction: "toggle-folding",
+			},
+		} as any;
+
+		const toggled: number[] = [];
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const info: any = { app, file: fileA, editor: { setCursor: jest.fn() } };
+		const ext = createEnhancedListHandleActionsExtension(plugin, {
+			infoField: editorInfoField,
+			livePreviewField: editorLivePreviewField,
+			resolveHandleLine: (_view, event) => {
+				const target = event.target as HTMLElement | null;
+				if (!target?.classList?.contains("cm-formatting-list-ul")) return null;
+				return 0;
+			},
+			onToggleFold: (_view, line) => {
+				toggled.push(line);
+			},
+		});
+
+		const state = EditorState.create({
+			doc: "- item",
+			extensions: [
+				editorInfoField.init(() => info),
+				editorLivePreviewField.init(() => true),
+				ext,
+			],
+		});
+
+		const view = new EditorView({ state, parent });
+		const handleEl = document.createElement("span");
+		handleEl.className = "cm-formatting-list-ul";
+		(view as any).contentDOM?.appendChild(handleEl);
+
+		// First update: establish baseline state (fileA disabled).
+		view.dispatch({ selection: EditorSelection.cursor(1) });
+
+		try {
+			handleEl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+			expect(toggled).toEqual([]);
+
+			// Obsidian can mutate editorInfoField in-place; ensure we still refresh.
+			info.file = fileB;
+			view.dispatch({ selection: EditorSelection.cursor(2) });
+
+			handleEl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+			expect(toggled).toEqual([0]);
 		} finally {
 			view.destroy();
 			parent.remove();

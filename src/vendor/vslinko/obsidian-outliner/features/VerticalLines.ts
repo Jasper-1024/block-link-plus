@@ -41,6 +41,7 @@ export class VerticalLinesPluginValue implements PluginValue {
   private activeConnectorPath: SVGPathElement | null = null;
   private isActive = false;
   private isDestroyed = false;
+  private scopeObserver: MutationObserver | null = null;
 
   constructor(
     private settings: Settings,
@@ -50,6 +51,18 @@ export class VerticalLinesPluginValue implements PluginValue {
   ) {
     this.refreshScope();
     setTimeout(this.refreshScope, 0);
+
+    // BLP can toggle `blp-vslinko-scope` out-of-band (DOM class only). Observe
+    // class changes so the overlay can enable/disable without requiring a CM update.
+    try {
+      this.scopeObserver = new MutationObserver(() => this.refreshScope());
+      this.scopeObserver.observe(this.view.dom, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    } catch {
+      // ignore
+    }
   }
 
   private refreshScope = () => {
@@ -765,6 +778,12 @@ export class VerticalLinesPluginValue implements PluginValue {
 
   destroy() {
     this.isDestroyed = true;
+    try {
+      this.scopeObserver?.disconnect();
+    } catch {
+      // ignore
+    }
+    this.scopeObserver = null;
     this.disable();
   }
 }

@@ -8,6 +8,24 @@ function isBuiltInVslinkoEnabled(plugin: BlockLinkPlus): boolean {
 	return Boolean(plugin.settings.builtInObsidianOutlinerEnabled || plugin.settings.builtInObsidianZoomEnabled);
 }
 
+function getViewFilePath(view: any): string | null {
+	try {
+		const info = view.state.field(editorInfoField, false);
+		return info?.file?.path ?? null;
+	} catch {
+		return null;
+	}
+}
+
+function getViewLivePreview(view: any): boolean | null {
+	try {
+		const v = view.state.field?.(editorLivePreviewField, false);
+		return v === true ? true : v === false ? false : null;
+	} catch {
+		return null;
+	}
+}
+
 function shouldApplyScopeClass(view: any, plugin: BlockLinkPlus): boolean {
 	if (!isBuiltInVslinkoEnabled(plugin)) return false;
 
@@ -37,39 +55,44 @@ export function createBuiltInVslinkoScopeExtension(plugin: BlockLinkPlus) {
 			private scheduled: number | null = null;
 			private unsubscribe: (() => void) | null = null;
 			private didFirstUpdate = false;
+			private lastFilePath: string | null = null;
+			private lastLivePreview: boolean | null = null;
 
 			constructor(view: any) {
 				this.view = view;
 				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
+				this.lastFilePath = getViewFilePath(view);
+				this.lastLivePreview = getViewLivePreview(view);
 				this.refresh();
-				// CM can still mutate the editor DOM during initial mount; re-apply once after mount.
-				this.scheduled = window.setTimeout(() => this.refresh(), 0);
+				// Obsidian/CM can still mutate the editor state/DOM during initial mount.
+				// Re-apply once after mount to avoid missing scoped classes.
+				this.scheduleRefresh();
 			}
 
-			update(_update: ViewUpdate) {
-				// Avoid relying on CM mount ordering details; refresh once on first update.
+			update(update: ViewUpdate) {
+				const filePath = getViewFilePath(update.view);
+				const livePreview = getViewLivePreview(update.view);
+				const changed = filePath !== this.lastFilePath || livePreview !== this.lastLivePreview;
+
+				// Obsidian may mutate the editor info field in-place; don't rely on startState vs state.
+				// Refresh once on first update, and whenever file / Live Preview changes afterward.
 				if (!this.didFirstUpdate) {
 					this.didFirstUpdate = true;
+					this.lastFilePath = filePath;
+					this.lastLivePreview = livePreview;
 					this.refresh();
 					return;
 				}
 
-				const prevInfo = _update.startState.field(editorInfoField, false);
-				const nextInfo = _update.state.field(editorInfoField, false);
-				if (prevInfo?.file !== nextInfo?.file) {
+				if (changed) {
+					this.lastFilePath = filePath;
+					this.lastLivePreview = livePreview;
 					this.refresh();
-					return;
 				}
 
-				try {
-					const prevLP = _update.startState.field?.(editorLivePreviewField, false);
-					const nextLP = _update.state.field?.(editorLivePreviewField, false);
-					if (prevLP !== nextLP) {
-						this.refresh();
-					}
-				} catch {
-					// Ignore.
-				}
+				// Obsidian may mutate editor info state out-of-band; re-check once after the
+				// update cycle so scoped classes self-heal without requiring another CM update.
+				this.scheduleRefresh();
 			}
 
 			destroy() {
@@ -85,6 +108,14 @@ export function createBuiltInVslinkoScopeExtension(plugin: BlockLinkPlus) {
 			private refresh() {
 				const next = shouldApplyScopeClass(this.view, plugin);
 				this.view.dom.classList.toggle(BLP_VSLINKO_SCOPE_CLASS, next);
+			}
+
+			private scheduleRefresh() {
+				if (this.scheduled !== null) return;
+				this.scheduled = window.setTimeout(() => {
+					this.scheduled = null;
+					this.refresh();
+				}, 0);
 			}
 		}
 	);

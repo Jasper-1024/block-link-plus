@@ -282,6 +282,18 @@ export default class BlockLinkPlus extends Plugin {
 			]);
 		registerEnhancedListSavePreprocessor(this);
 
+		// Some Obsidian updates mutate editor state fields in-place (or transiently hide them)
+		// which can cause scoped CSS classes to be missing on already-open editors until the
+		// next CM update. Nudge all Enhanced List scoped view plugins to re-evaluate once after
+		// layout is ready so open tabs are corrected immediately.
+		this.app.workspace.onLayoutReady(() => {
+			try {
+				getEnhancedListScopeManager(this).onSettingsChanged();
+			} catch {
+				// Ignore.
+			}
+		});
+
 		// Initialize Flow Editor Manager
 		this.flowEditorManager = new FlowEditorManager(this);
 		this.flowEditorManager.initialize();
