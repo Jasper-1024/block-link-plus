@@ -541,12 +541,6 @@ export class VerticalLinesPluginValue implements PluginValue {
 
       const containerRect = this.contentContainer.getBoundingClientRect();
 
-      // Use DOM geometry (bullet dot + vertical line overlay). We deliberately align
-      // based on a top-level list bullet so the global offset stays stable even when
-      // the active line is a leaf item (which has no vertical line at its own level).
-      const activeLineEl = this.getActiveListBulletLine();
-      if (!activeLineEl) return;
-
       const visibleLines = this.lineElements.filter(
         (el) => el && el.style.display !== "none",
       );
@@ -562,27 +556,34 @@ export class VerticalLinesPluginValue implements PluginValue {
       }
       if (minStripeX === null) return;
 
-      // Find the nearest top-level list line for the active cursor position.
-      // This keeps the offset constant across nested levels.
-      const classMatch = activeLineEl.className.match(/HyperMD-list-line-(\d+)/);
-      const activeLevel = classMatch ? parseInt(classMatch[1], 10) : 1;
-      let refLineEl: HTMLElement = activeLineEl;
+      // Use DOM geometry (bullet dot + vertical line overlay).
+      //
+      // In normal (non-zoom) mode we can anchor to a level-1 bullet. Under Obsidian Zoom,
+      // the visible subtree may start at a deeper level (e.g. level-2). If we anchor to
+      // the active cursor line, the global offset "drifts" as the cursor moves across
+      // levels. Instead, always anchor to the shallowest visible bullet level.
+      const bulletLines = Array.from(
+        this.view.dom.querySelectorAll(
+          ".cm-line.HyperMD-list-line:not(.HyperMD-list-line-nobullet)",
+        ),
+      ).filter(Boolean) as HTMLElement[];
+      if (bulletLines.length === 0) return;
 
-      if (Number.isFinite(activeLevel) && activeLevel > 1) {
-        let cur: Element | null = activeLineEl.previousElementSibling;
-        while (cur) {
-          const el = cur as HTMLElement;
-          if (el.classList?.contains?.("HyperMD-list-line")) {
-            const m = el.className.match(/HyperMD-list-line-(\d+)/);
-            const lvl = m ? parseInt(m[1], 10) : null;
-            if (lvl === 1 && !el.classList.contains("HyperMD-list-line-nobullet")) {
-              refLineEl = el;
-              break;
-            }
-          }
-          cur = cur.previousElementSibling;
-        }
+      let minLevel = Infinity;
+      for (const el of bulletLines) {
+        const m = el.className.match(/HyperMD-list-line-(\d+)/);
+        const lvl = m ? parseInt(m[1], 10) : 1;
+        if (Number.isFinite(lvl)) minLevel = Math.min(minLevel, lvl);
       }
+      if (!Number.isFinite(minLevel) || minLevel === Infinity) return;
+
+      const refLineEl =
+        bulletLines.find((el) => {
+          const m = el.className.match(/HyperMD-list-line-(\d+)/);
+          const lvl = m ? parseInt(m[1], 10) : 1;
+          return lvl === minLevel;
+        }) ?? null;
+      if (!refLineEl) return;
 
       const bulletEl = refLineEl.querySelector(
         ".cm-formatting-list-ul .list-bullet, .cm-formatting-list-ol .list-bullet",
