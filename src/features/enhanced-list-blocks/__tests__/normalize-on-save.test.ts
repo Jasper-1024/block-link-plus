@@ -328,6 +328,37 @@ describe("enhanced-list-blocks/normalize-on-save", () => {
 		expect(out).toBe(["----", "- 内存故障", "  [date:: 2026-01-27T10:58:27] ^2ujj"].join("\n"));
 	});
 
+	test("dedupes system lines in a list item even if one is indented too deep (still parent content)", () => {
+		const plugin = {
+			app: { vault: { config: { tabSize: 2 } } },
+			settings: {
+				enhancedListNormalizeOnSave: true,
+				enhancedListNormalizeTabsToSpaces: false,
+				enhancedListNormalizeCleanupInvalidSystemLines: true,
+				enhancedListNormalizeMergeSplitSystemLine: false,
+				enhancedListNormalizeSystemLineIndent: false,
+				enhancedListNormalizeEnsureSystemLineForTouchedItems: false,
+				enable_prefix: false,
+				id_prefix: "",
+				id_length: 4,
+			},
+		} as any;
+
+		const content = [
+			"- [[vpp routing table]]",
+			"  [date:: 2026-02-03T10:12:12] ^tc2t",
+			"    [date:: 2026-02-03T10:12:03] ^ewwn",
+		].join("\n");
+
+		const out = normalizeEnhancedListContentOnSave(content, plugin, {
+			dirtyRanges: [{ from: 0, to: content.length }],
+		});
+
+		expect(out).toBe(
+			["- [[vpp routing table]]", "  [date:: 2026-02-03T10:12:12] ^tc2t"].join("\n")
+		);
+	});
+
 	test("treats parents as touched when editing a child list item", () => {
 		Settings.defaultZone = "utc";
 		Settings.now = () => Date.parse("2026-01-10T00:00:00Z");

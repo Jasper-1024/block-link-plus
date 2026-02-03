@@ -73,6 +73,33 @@ describe("enhanced-list-blocks/enable-scope", () => {
 		expect(isEnhancedListEnabledFile(plugin, fileNum)).toBe(true);
 	});
 
+	test("supports frontmatter opt-out (overrides enabled folder/file scope)", () => {
+		const { app, plugin } = makePlugin({
+			settings: {
+				enhancedListEnabledFolders: ["Daily"],
+				enhancedListEnabledFiles: ["Inbox/force-on.md"],
+			},
+		});
+
+		const inFolder = (app.vault as any)._addFile("Daily/in-folder.md", "");
+		const inEnabledFiles = (app.vault as any)._addFile("Inbox/force-on.md", "");
+		const outOfScope = (app.vault as any)._addFile("Inbox/out-of-scope.md", "");
+
+		(app.metadataCache as any)._setFileCache(inFolder, {
+			frontmatter: { blp_enhanced_list: false, position: { start: {}, end: {} } },
+		});
+		(app.metadataCache as any)._setFileCache(inEnabledFiles, {
+			frontmatter: { blp_enhanced_list: "false", position: { start: {}, end: {} } },
+		});
+		(app.metadataCache as any)._setFileCache(outOfScope, {
+			frontmatter: { blp_enhanced_list: 0, position: { start: {}, end: {} } },
+		});
+
+		expect(isEnhancedListEnabledFile(plugin, inFolder)).toBe(false);
+		expect(isEnhancedListEnabledFile(plugin, inEnabledFiles)).toBe(false);
+		expect(isEnhancedListEnabledFile(plugin, outOfScope)).toBe(false);
+	});
+
 	test("getEnhancedListEnabledMarkdownFiles returns only enabled markdown files", () => {
 		const { app, plugin } = makePlugin({
 			settings: { enhancedListEnabledFolders: ["Daily"], enhancedListEnabledFiles: [] },

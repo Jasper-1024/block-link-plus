@@ -14,6 +14,7 @@ export function isPathInEnhancedListScopeFolder(path: string, folder: string): b
 }
 
 type EnabledCacheEntry = { enabled: boolean; mtime: number };
+type FrontmatterState = boolean | null;
 
 /**
  * In-memory scope manager. No persistence; caches are bounded and invalidated by
@@ -37,7 +38,7 @@ export class EnhancedListScopeManager {
 		| { scopeVersion: number; files: TFile[]; pathSet: Set<string> }
 		| null = null;
 
-	private frontmatterOptInByPath = new Map<string, boolean>();
+	private frontmatterOptInByPath = new Map<string, FrontmatterState>();
 	private readonly maxFrontmatterCacheEntries = 2000;
 
 	constructor(plugin: BlockLinkPlus) {
@@ -71,6 +72,16 @@ export class EnhancedListScopeManager {
 
 		this.ensureNormalizedSettings();
 
+		const fmState = this.getFrontmatterState(file);
+		if (fmState === false) {
+			this.setEnabledCache(filePath, { enabled: false, mtime });
+			return false;
+		}
+		if (fmState === true) {
+			this.setEnabledCache(filePath, { enabled: true, mtime });
+			return true;
+		}
+
 		if (this.normalizedEnabledFiles.has(filePath)) {
 			this.setEnabledCache(filePath, { enabled: true, mtime });
 			return true;
@@ -81,9 +92,8 @@ export class EnhancedListScopeManager {
 			return true;
 		}
 
-		const optIn = this.getFrontmatterOptIn(file);
-		this.setEnabledCache(filePath, { enabled: optIn, mtime });
-		return optIn;
+		this.setEnabledCache(filePath, { enabled: false, mtime });
+		return false;
 	}
 
 	getEnabledMarkdownFiles(): { files: TFile[]; pathSet: Set<string> } {
@@ -127,7 +137,7 @@ export class EnhancedListScopeManager {
 		this.normalizedSettingsVersion = this.scopeVersion;
 	}
 
-	private getFrontmatterOptIn(file: TFile): boolean {
+	private getFrontmatterState(file: TFile): FrontmatterState {
 		const filePath = normalizePath(file.path);
 
 		const cached = this.frontmatterOptInByPath.get(filePath);
@@ -135,12 +145,15 @@ export class EnhancedListScopeManager {
 
 		const cache = this.plugin.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter as Record<string, unknown> | undefined;
+		const hasKey = Boolean(fm && Object.prototype.hasOwnProperty.call(fm, ENHANCED_LIST_FRONTMATTER_KEY));
 		const raw = fm?.[ENHANCED_LIST_FRONTMATTER_KEY];
 		const enabled = raw === true || raw === "true" || raw === 1;
+		const disabled = raw === false || raw === "false" || raw === 0;
+		const state = hasKey ? (enabled ? true : disabled ? false : null) : null;
 
-		this.frontmatterOptInByPath.set(filePath, enabled);
+		this.frontmatterOptInByPath.set(filePath, state);
 		this.evictFrontmatterOptInIfNeeded();
-		return enabled;
+		return state;
 	}
 
 	private registerObsidianListeners(): void {
@@ -207,18 +220,20 @@ export class EnhancedListScopeManager {
 					const hasKey = Boolean(
 						fm && Object.prototype.hasOwnProperty.call(fm, ENHANCED_LIST_FRONTMATTER_KEY)
 					);
-					const prevOptIn = this.frontmatterOptInByPath.get(path);
-					if (!hasKey && prevOptIn === undefined) return;
+					const prevState = this.frontmatterOptInByPath.get(path);
+					if (!hasKey && prevState === undefined) return;
 
 					const raw = fm?.[ENHANCED_LIST_FRONTMATTER_KEY];
-					const nextOptIn = raw === true || raw === "true" || raw === 1;
+					const enabled = raw === true || raw === "true" || raw === 1;
+					const disabled = raw === false || raw === "false" || raw === 0;
+					const nextState = hasKey ? (enabled ? true : disabled ? false : null) : null;
 
-					if (prevOptIn !== nextOptIn) {
-						this.frontmatterOptInByPath.set(path, nextOptIn);
+					if (prevState !== nextState) {
+						this.frontmatterOptInByPath.set(path, nextState);
 						this.evictFrontmatterOptInIfNeeded();
 						this.bumpScopeVersion({ clearAll: false });
 					} else {
-						this.frontmatterOptInByPath.set(path, nextOptIn);
+						this.frontmatterOptInByPath.set(path, nextState);
 						this.evictFrontmatterOptInIfNeeded();
 					}
 				})

@@ -410,8 +410,7 @@ function findSystemLineInSubtree(
 	startLineIndex: number,
 	endLineIndex: number,
 	tabSize: number,
-	fenceMap: Map<number, boolean>,
-	expectedIndentCols: number
+	fenceMap: Map<number, boolean>
 ): Array<{ lineIndex: number; indent: string; date: string; id: string }> {
 	const out: Array<{ lineIndex: number; indent: string; date: string; id: string }> = [];
 	for (let n = startLineIndex; n <= endLineIndex; n++) {
@@ -423,10 +422,11 @@ function findSystemLineInSubtree(
 		const m = text.match(SYSTEM_LINE_EXACT_RE);
 		if (!m) continue;
 
-		// Only consider a system line as belonging to this item if its indentation
-		// is not deeper than the parent's continuation indent (children are deeper).
-		const indentHereCols = indentCols(m[1] ?? "", tabSize);
-		if (indentHereCols > expectedIndentCols + 1) continue;
+		// Attribute system lines to their owning list item using Markdown list semantics.
+		// This avoids brittle "indent depth" heuristics which break when system lines
+		// are accidentally indented too deep (still part of the parent item).
+		const owner = findOwningListStartLineIndex(lines, n, tabSize, fenceMap);
+		if (owner !== startLineIndex) continue;
 
 		out.push({ lineIndex: n, indent: m[1] ?? "", date: m[2], id: m[3] });
 	}
@@ -608,8 +608,11 @@ export function normalizeEnhancedListContentOnSave(
 			const aboveText = lines[aboveIndex] ?? "";
 			const aboveInFence = fenceMap.get(aboveLineNo) ?? false;
 			if (!(aboveInFence && !isFenceMarkerLine(aboveText))) {
-				const m = aboveText.match(SYSTEM_LINE_EXACT_RE);
-				if (m) {
+				const isSystemLine =
+					SYSTEM_LINE_EXACT_RE.test(aboveText) ||
+					SYSTEM_LINE_DATE_ONLY_RE.test(aboveText) ||
+					SYSTEM_LINE_ID_ONLY_RE.test(aboveText);
+				if (isSystemLine) {
 					const owner = findOwningListStartLineIndex(lines, aboveIndex, parseTabSize, fenceMap);
 					if (owner == null) {
 						lines.splice(aboveIndex, 1);
@@ -733,13 +736,21 @@ export function normalizeEnhancedListContentOnSave(
 		const parentContentEndLineIndex =
 			desiredInsertBeforeLineIndex != null ? desiredInsertBeforeLineIndex - 1 : endLineIndex;
 
-		// Cleanup: keep only the first system line inside the edited list item's own content (not children).
+		// Cleanup: keep only the first system line owned by this list item (remove nested/stray duplicates).
+		// We attribute ownership using `findOwningListStartLineIndex` so a system line that is indented
+		// too deep (but still inside the parent's subtree) is still deduped correctly.
 		if (ruleCleanupInvalidSystemLines) {
-			const systemLinesInContent = findSystemLineInRange(lines, startIdx, parentContentEndLineIndex, fenceMap);
-			if (systemLinesInContent.length > 1) {
+			const systemLinesOwned = findSystemLineInSubtree(
+				lines,
+				startIdx,
+				endLineIndex,
+				parseTabSize,
+				fenceMap
+			);
+			if (systemLinesOwned.length > 1) {
 				// Remove from bottom-up so earlier indices stay valid.
-				for (let i = systemLinesInContent.length - 1; i >= 1; i--) {
-					lines.splice(systemLinesInContent[i].lineIndex, 1);
+				for (let i = systemLinesOwned.length - 1; i >= 1; i--) {
+					lines.splice(systemLinesOwned[i].lineIndex, 1);
 				}
 
 				// Recompute because line numbers shifted.
@@ -783,7 +794,7 @@ export function normalizeEnhancedListContentOnSave(
 			findSystemLineInRange(lines, startIdx, parentContentEndLineIndexAfterCleanup, fenceMap)[0] ?? null;
 		const systemLineAny =
 			systemLineInContent ??
-			findSystemLineInSubtree(lines, startIdx, endLineIndex, parseTabSize, fenceMap, expectedIndentCols)[0] ??
+			findSystemLineInSubtree(lines, startIdx, endLineIndex, parseTabSize, fenceMap)[0] ??
 			null;
 
 		const hasSystemLineInCorrectPlace =
