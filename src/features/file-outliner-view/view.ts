@@ -241,7 +241,9 @@ export class FileOutlinerView extends TextFileView {
 	private syncBlockList(container: HTMLElement, blocks: OutlinerBlock[]): void {
 		for (const block of blocks) {
 			const el = this.ensureBlockElement(block.id);
-			el.classList.toggle("has-children", (block.children?.length ?? 0) > 0);
+			// Match Logseq DOM conventions so we can reuse its proven CSS selector strategy.
+			el.setAttribute("haschild", (block.children?.length ?? 0) > 0 ? "true" : "false");
+			el.setAttribute("level", String((block.depth ?? 0) + 1));
 			container.appendChild(el);
 
 			// Ensure the display is rendered at least once for new blocks.
@@ -264,11 +266,11 @@ export class FileOutlinerView extends TextFileView {
 		blockEl.dataset.blpOutlinerId = id;
 
 		const main = document.createElement("div");
-		main.className = "block-main-container";
+		main.className = "block-main-container items-baseline";
 		blockEl.appendChild(main);
 
 		const controlWrap = document.createElement("div");
-		controlWrap.className = "block-control-wrap";
+		controlWrap.className = "block-control-wrap items-center";
 		main.appendChild(controlWrap);
 
 		const bulletContainer = document.createElement("span");
@@ -306,11 +308,15 @@ export class FileOutlinerView extends TextFileView {
 		bulletContainer.addEventListener("click", onActivate);
 
 		const childrenContainer = document.createElement("div");
-		childrenContainer.className = "block-children-container";
+		childrenContainer.className = "block-children-container flex";
 		blockEl.appendChild(childrenContainer);
 
+		const leftBorder = document.createElement("div");
+		leftBorder.className = "block-children-left-border";
+		childrenContainer.appendChild(leftBorder);
+
 		const children = document.createElement("div");
-		children.className = "block-children";
+		children.className = "block-children w-full";
 		childrenContainer.appendChild(children);
 		this.childrenElById.set(id, children);
 

@@ -23,6 +23,7 @@ const WebSocket = require("ws");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 9222;
+const DEFAULT_URL_CONTAINS = "app://obsidian.md/index.html";
 
 function die(msg) {
   console.error(msg);
@@ -174,6 +175,9 @@ Commands:
 Env:
   OB_CDP_HOST (default ${DEFAULT_HOST})
   OB_CDP_PORT (default ${DEFAULT_PORT})
+  OB_CDP_TARGET_ID (optional; exact target id from /json/list)
+  OB_CDP_TITLE_CONTAINS (optional; substring match)
+  OB_CDP_URL_CONTAINS (optional; substring match; default "${DEFAULT_URL_CONTAINS}")
 `);
     process.exit(0);
   }
@@ -188,7 +192,9 @@ Env:
   }
 
   const target = pickTarget(targets, {
-    urlContains: "app://obsidian.md/index.html",
+    id: process.env.OB_CDP_TARGET_ID,
+    titleContains: process.env.OB_CDP_TITLE_CONTAINS,
+    urlContains: process.env.OB_CDP_URL_CONTAINS || DEFAULT_URL_CONTAINS,
   });
   if (!target?.webSocketDebuggerUrl) {
     die("No CDP target found (is Obsidian running with --remote-debugging-port=9222?)");

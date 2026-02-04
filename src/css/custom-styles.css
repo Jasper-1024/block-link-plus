@@ -1,116 +1,212 @@
-/* File-level outliner view (v2) — Logseq-like block threading (scoped). */
+/* File-level outliner view (v2).
+ *
+ * The bullet/threading styles are adapted from logseq-bullet-threading (MIT).
+ * Keep selectors scoped under `.blp-file-outliner-view` to avoid global side effects.
+ */
+
 .blp-file-outliner-view {
-    --blp-outliner-control-width: 42px;
-    --blp-outliner-bullet-container: 14px;
-    --blp-outliner-bullet-size: 6px;
-    --blp-outliner-thread-width: 2px;
-    --blp-outliner-thread-color: var(--background-modifier-border);
-    --blp-outliner-thread-active: hsla(var(--interactive-accent-hsl), 0.9);
-    --blp-outliner-active-bg: hsla(var(--interactive-accent-hsl), 0.08);
+	/* Map Logseq variable names to Obsidian theme variables. */
+	--ls-guideline-color: var(--background-modifier-border);
+	--ls-link-text-color: hsla(var(--interactive-accent-hsl), 0.95);
+	--ls-block-bullet-color: var(--text-muted);
+	--ls-block-bullet-threading-active-color-overwrite: hsla(var(--interactive-accent-hsl), 0.9);
+	--ls-block-bullet-threading-width-overwrite: 2px;
+
+	--ls-block-bullet-active-color: var(
+		--ls-block-bullet-threading-active-color-overwrite,
+		var(--ls-link-text-color)
+	);
+	--ls-block-bullet-threading-width: var(--ls-block-bullet-threading-width-overwrite, 1px);
+
+	/* Layout constants observed from Logseq. */
+	--blp-outliner-control-width: 42px;
+	--blp-outliner-children-offset: 29px;
+	--blp-outliner-active-bg: hsla(var(--interactive-accent-hsl), 0.08);
 }
 
 .blp-file-outliner-view .blp-file-outliner-root {
-    padding: 12px 14px;
+	padding: 12px 14px;
 }
 
 .blp-file-outliner-view .ls-block {
-    position: relative;
-    margin: 2px 0;
+	position: relative;
+	margin: 2px 0;
 }
 
-.blp-file-outliner-view .ls-block > .block-main-container {
-    display: flex;
-    align-items: flex-start;
+.blp-file-outliner-view .block-main-container {
+	display: flex;
+	align-items: baseline;
 }
 
 .blp-file-outliner-view .block-control-wrap {
-    flex: 0 0 var(--blp-outliner-control-width);
-    position: relative;
-    display: flex;
-    justify-content: center;
-    padding-top: 4px;
+	flex: 0 0 var(--blp-outliner-control-width);
+	width: var(--blp-outliner-control-width);
+	box-sizing: border-box;
+	padding-right: 6px;
+	display: flex;
+	align-items: center;
+	position: relative;
+	height: 26px;
 }
 
 .blp-file-outliner-view .bullet-container {
-    width: var(--blp-outliner-bullet-container);
-    height: var(--blp-outliner-bullet-container);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+	height: 14px;
+	width: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	position: relative;
+	transform: translate(1px, -1px);
 }
 
 .blp-file-outliner-view .bullet {
-    width: var(--blp-outliner-bullet-size);
-    height: var(--blp-outliner-bullet-size);
-    border-radius: 50%;
-    background: var(--text-muted);
-}
-
-.blp-file-outliner-view .ls-block:focus-within > .block-main-container .bullet {
-    background: var(--blp-outliner-thread-active);
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background-color: var(--ls-block-bullet-color);
 }
 
 .blp-file-outliner-view .block-content-wrapper {
-    flex: 1 1 auto;
-    min-width: 0;
+	flex: 1 1 auto;
+	min-width: 0;
+	position: relative;
+	overflow-x: visible;
 }
 
 .blp-file-outliner-view .block-content {
-    min-width: 0;
+	min-width: 0;
 }
 
 .blp-file-outliner-view .blp-file-outliner-display {
-    cursor: text;
-    padding: 4px 6px;
-    border-radius: 6px;
+	cursor: text;
+	padding: 4px 6px;
+	border-radius: 6px;
 }
 
 .blp-file-outliner-view .blp-file-outliner-editor {
-    width: 100%;
-    box-sizing: border-box;
-    resize: none;
-    overflow: hidden;
-    padding: 4px 6px;
-    font: inherit;
-    line-height: inherit;
-    border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	overflow: hidden;
+	padding: 4px 6px;
+	font: inherit;
+	line-height: inherit;
+	border-radius: 6px;
+	border: 0;
+	outline: none;
+	background: transparent;
+	color: inherit;
 }
 
-/* Indent: each level is one control width; threading line anchors to bullet center. */
+/* --- Logseq bullet threading (adapted) --- */
+
+.blp-file-outliner-view .block-children {
+	border-left-color: var(--ls-guideline-color);
+	border-left-style: solid;
+	border-left-width: var(--ls-block-bullet-threading-width) !important;
+}
+
 .blp-file-outliner-view .block-children-container {
-    position: relative;
-    margin-left: var(--blp-outliner-control-width);
+	position: relative;
+	display: flex;
+	margin-left: var(--blp-outliner-children-offset);
 }
 
-.blp-file-outliner-view .ls-block.has-children > .block-children-container::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(var(--blp-outliner-control-width) * -0.5);
-    width: var(--blp-outliner-thread-width);
-    background: var(--blp-outliner-thread-color);
-    opacity: 0.45;
-    pointer-events: none;
+.blp-file-outliner-view .block-children-left-border {
+	z-index: 1;
+	position: absolute;
+	height: 100%;
+	width: 4px;
+	padding-right: 0;
+	border-radius: 2px;
+	background-color: transparent;
+	left: -1px;
+	opacity: 0.6;
+	transition: background-color 0.2s;
 }
 
-.blp-file-outliner-view .ls-block.has-children:focus-within > .block-children-container::before {
-    background: var(--blp-outliner-thread-active);
-    opacity: 0.85;
+.blp-file-outliner-view .block-children-left-border:hover {
+	background-color: var(--ls-block-bullet-active-color);
 }
+
+.blp-file-outliner-view .ls-block .bullet {
+	background-color: var(--ls-block-bullet-active-color);
+	box-shadow: 0 0 0 1px var(--ls-block-bullet-active-color);
+}
+
+.blp-file-outliner-view .ls-block:not(:focus-within) .bullet {
+	background-color: var(--ls-block-bullet-color);
+	transform: scale(1);
+	box-shadow: none;
+}
+
+.blp-file-outliner-view .ls-block .ls-block > div > div.items-center::before {
+	pointer-events: none;
+	content: "";
+	left: calc(var(--ls-block-bullet-threading-width) * -1);
+	right: 20px;
+	top: calc(-50% + var(--ls-block-bullet-threading-width) * 0.5 - 1px);
+	bottom: 50%;
+	position: absolute;
+	border-left: var(--ls-block-bullet-threading-width) solid transparent;
+	border-bottom: var(--ls-block-bullet-threading-width) solid transparent;
+	border-bottom-left-radius: 10px;
+}
+
+.blp-file-outliner-view .ls-block .ls-block:focus-within > div > div.items-center::before {
+	border-color: var(--ls-block-bullet-active-color);
+}
+
+.blp-file-outliner-view .ls-block .block-children > .ls-block::before {
+	pointer-events: none;
+	content: "";
+	top: -1rem;
+	bottom: 0;
+	border-left: var(--ls-block-bullet-threading-width) solid transparent;
+	left: calc(var(--ls-block-bullet-threading-width) * -1);
+	position: absolute;
+}
+
+.blp-file-outliner-view .ls-block .block-children:focus-within > .ls-block:not(:focus-within)::before {
+	border-color: var(--ls-block-bullet-active-color);
+}
+
+.blp-file-outliner-view .ls-block .block-children:focus-within > .ls-block:focus-within ~ .ls-block::before {
+	border-color: transparent;
+}
+
+.blp-file-outliner-view .ls-block[haschild] > div > .block-content-wrapper::before {
+	pointer-events: none;
+	content: "";
+	top: 12px;
+	bottom: 0;
+	left: -21px;
+	position: absolute;
+	border-left: var(--ls-block-bullet-threading-width) solid transparent;
+}
+
+.blp-file-outliner-view .ls-block[haschild]:focus-within > div > .block-content-wrapper::before {
+	border-color: var(--ls-block-bullet-active-color);
+}
+
+@media (max-width: 640px) {
+	.blp-file-outliner-view .ls-block[haschild] > div > .block-content-wrapper::before {
+		left: -11px;
+	}
+}
+
+/* --- Active/target highlighting --- */
 
 .blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
 .blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
-    box-shadow: inset 2px 0 0 var(--blp-outliner-thread-active);
-    background: var(--blp-outliner-active-bg);
+	box-shadow: inset 2px 0 0 var(--ls-block-bullet-active-color);
+	background: var(--blp-outliner-active-bg);
 }
 
 .blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-display,
 .blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-editor {
-    box-shadow: inset 2px 0 0 var(--blp-outliner-thread-active);
-    background: var(--blp-outliner-active-bg);
+	box-shadow: inset 2px 0 0 var(--ls-block-bullet-active-color);
+	background: var(--blp-outliner-active-bg);
 }
+
