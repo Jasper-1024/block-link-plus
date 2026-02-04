@@ -45,6 +45,7 @@
 	padding-right: 6px;
 	display: flex;
 	align-items: center;
+	justify-content: flex-end;
 	position: relative;
 	height: 26px;
 }
@@ -209,4 +210,3 @@
 	box-shadow: inset 2px 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }
-
