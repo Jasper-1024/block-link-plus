@@ -143,6 +143,16 @@
 
     const countAfterDelete = root.querySelectorAll(".ls-block").length;
 
+    // Ensure Shift+Enter semantics (newlines within a block) stay visible when not editing.
+    editor.value = "hello\nworld";
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    editor.blur();
+    await wait(30);
+
+    const firstRenderedText =
+      (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").trimEnd();
+    const newlineRendered = firstRenderedText.includes("\n") && firstRenderedText.includes("world");
+
     const data = typeof view.getViewData === "function" ? view.getViewData() : null;
     const dataPreview = data ? data.split("\n").slice(0, 12) : null;
 
@@ -167,6 +177,7 @@
             length: data.length,
             hasSysMarker: data.includes("blp_sys:: 1"),
             hasHello: data.includes("hello"),
+            newlineRendered,
             preview: dataPreview,
           }
         : null,

@@ -89,6 +89,7 @@
 
 .blp-file-outliner-view .blp-file-outliner-display p {
 	margin: 0;
+	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */
 }
 
 .blp-file-outliner-view .blp-file-outliner-editor {
