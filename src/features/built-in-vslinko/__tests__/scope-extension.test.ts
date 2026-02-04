@@ -6,7 +6,7 @@ import { createBuiltInVslinkoScopeExtension } from "../scope-extension";
 type ViewOptions = {
 	builtInEnabled: boolean;
 	scopeToEnhancedList: boolean;
-	enhancedListEnabled: boolean;
+	outlinerEnabled: boolean;
 	livePreview: boolean;
 };
 
@@ -17,9 +17,9 @@ function createView(options: ViewOptions) {
 	const plugin = {
 		app,
 		settings: {
-			// Enhanced List scope
-			enhancedListEnabledFolders: [],
-			enhancedListEnabledFiles: options.enhancedListEnabled ? [file.path] : [],
+			// Outliner scope
+			fileOutlinerEnabledFolders: [],
+			fileOutlinerEnabledFiles: options.outlinerEnabled ? [file.path] : [],
 
 			// Built-in modules
 			builtInObsidianOutlinerEnabled: options.builtInEnabled,
@@ -54,7 +54,7 @@ describe("built-in-vslinko/scope-extension", () => {
 		const { view, parent } = createView({
 			builtInEnabled: true,
 			scopeToEnhancedList: false,
-			enhancedListEnabled: false,
+			outlinerEnabled: false,
 			livePreview: false,
 		});
 
@@ -66,11 +66,11 @@ describe("built-in-vslinko/scope-extension", () => {
 		}
 	});
 
-	test("adds scope class only for Enhanced List enabled files in Live Preview when scoping is enabled", () => {
+	test("adds scope class only for outliner-scoped files in Live Preview when scoping is enabled", () => {
 		const { view, parent } = createView({
 			builtInEnabled: true,
 			scopeToEnhancedList: true,
-			enhancedListEnabled: true,
+			outlinerEnabled: true,
 			livePreview: true,
 		});
 
@@ -82,11 +82,11 @@ describe("built-in-vslinko/scope-extension", () => {
 		}
 	});
 
-	test("does not add scope class when file is not Enhanced List enabled in scoped mode", () => {
+	test("does not add scope class when file is not outliner-scoped in scoped mode", () => {
 		const { view, parent } = createView({
 			builtInEnabled: true,
 			scopeToEnhancedList: true,
-			enhancedListEnabled: false,
+			outlinerEnabled: false,
 			livePreview: true,
 		});
 
@@ -102,7 +102,7 @@ describe("built-in-vslinko/scope-extension", () => {
 		const { view, parent } = createView({
 			builtInEnabled: true,
 			scopeToEnhancedList: true,
-			enhancedListEnabled: true,
+			outlinerEnabled: true,
 			livePreview: false,
 		});
 
@@ -118,7 +118,7 @@ describe("built-in-vslinko/scope-extension", () => {
 		const { view, parent } = createView({
 			builtInEnabled: false,
 			scopeToEnhancedList: false,
-			enhancedListEnabled: false,
+			outlinerEnabled: false,
 			livePreview: true,
 		});
 
@@ -138,8 +138,8 @@ describe("built-in-vslinko/scope-extension", () => {
 		const plugin = {
 			app,
 			settings: {
-				enhancedListEnabledFolders: [],
-				enhancedListEnabledFiles: [fileB.path],
+				fileOutlinerEnabledFolders: [],
+				fileOutlinerEnabledFiles: [fileB.path],
 
 				builtInObsidianOutlinerEnabled: true,
 				builtInObsidianZoomEnabled: false,

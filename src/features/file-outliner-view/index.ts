@@ -4,6 +4,7 @@ import { registerFileOutlinerRouting } from "./routing";
 
 export { FILE_OUTLINER_VIEW_TYPE, FileOutlinerView };
 export * from "./protocol";
+export { handleBlpView } from "./blp-view";
 export { registerFileOutlinerRouting };
 
 export function registerFileOutlinerView(plugin: BlockLinkPlus): void {

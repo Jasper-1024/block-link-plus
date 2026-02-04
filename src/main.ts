@@ -1,6 +1,5 @@
 import {
-	Plugin,
-	Notice
+	Plugin
 } from "obsidian";
 
 import { Extension } from "@codemirror/state";
@@ -30,34 +29,12 @@ import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
-import { markdownPostProcessor } from 'ui/MarkdownPost';
 import { fileOutlinerMarkdownPostProcessor } from "ui/MarkdownPostOutliner";
 import { WhatsNewModal } from "ui/WhatsNewModal";
 import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
-import {
-	createEnhancedListSystemLineHideExtension,
-	createEnhancedListHideNativeFoldIndicatorExtension,
-	createEnhancedListAutoSystemLineExtension,
-	createEnhancedListDeleteSubtreeExtension,
-	createEnhancedListHandleAffordanceExtension,
-	createEnhancedListHandleActionsExtension,
-	createEnhancedListBlockSelectionExtension,
-	createEnhancedListSubtreeClipboardExtension,
-	createEnhancedListBlockReferenceTriggerExtension,
-	createEnhancedListActiveBlockHighlightExtension,
-	createEnhancedListCodeBlockIndentExtension,
-	openEnhancedListBlockReferencePicker,
-	findActiveListItemBlockIdInContent,
-	findBlockTargetFromLine,
-	handleBlpView,
-	createEnhancedListDirtyRangeTrackerExtension,
-	registerEnhancedListSavePreprocessor,
-	openEnhancedListBlockPeek,
-} from "features/enhanced-list-blocks";
-import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
-import { registerFileOutlinerView } from "features/file-outliner-view";
+import { handleBlpView, registerFileOutlinerView } from "features/file-outliner-view";
 import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
@@ -155,7 +132,7 @@ export default class BlockLinkPlus extends Plugin {
 			)
 		);
 
-		// Register post-processor for blp-view blocks (Enhanced List Blocks Query/View)
+		// Register processor for blp-view code blocks (Query/View)
 		this.registerMarkdownCodeBlockProcessor("blp-view", (source, el, ctx) => {
 			if (isDataviewAvailable()) {
 				void handleBlpView(this, source, el, ctx);
@@ -189,117 +166,11 @@ export default class BlockLinkPlus extends Plugin {
 			},
 		});
 
-		this.addCommand({
-			id: "insert-block-reference",
-			name: "Insert Block Reference",
-			editorCheckCallback: (isChecking, _editor, view) => {
-				const file = (view as any)?.file;
-				if (!file || !isEnhancedListEnabledFile(this, file)) return false;
-
-				if (!isChecking) {
-					const cmView = (view as any)?.editor?.cm;
-					if (!cmView) return false;
-					const sel = cmView.state.selection.main;
-					openEnhancedListBlockReferencePicker(this, { view: cmView, from: sel.from, to: sel.to, embed: false });
-				}
-
-				return true;
-			},
-		});
-
-		this.addCommand({
-			id: "insert-block-embed",
-			name: "Insert Block Embed",
-			editorCheckCallback: (isChecking, _editor, view) => {
-				const file = (view as any)?.file;
-				if (!file || !isEnhancedListEnabledFile(this, file)) return false;
-
-				if (!isChecking) {
-					const cmView = (view as any)?.editor?.cm;
-					if (!cmView) return false;
-					const sel = cmView.state.selection.main;
-					openEnhancedListBlockReferencePicker(this, { view: cmView, from: sel.from, to: sel.to, embed: true });
-				}
-
-				return true;
-			},
-		});
-
-		this.addCommand({
-			id: "open-block-peek",
-			name: "Block Peek",
-			editorCheckCallback: (isChecking, editor, view) => {
-				if (this.settings.enhancedListBlockPeekEnabled === false) return false;
-
-				const file = (view as any)?.file;
-				if (!file) return false;
-
-				if (isChecking) return true;
-
-				try {
-					const cursor = editor.getCursor();
-					const lineText = editor.getLine(cursor.line) ?? "";
-
-					const target = findBlockTargetFromLine(this, { sourceFile: file, lineText });
-					if (target) {
-						openEnhancedListBlockPeek(this, { file: target.file, blockId: target.id });
-						return true;
-					}
-
-					if (!isEnhancedListEnabledFile(this, file)) {
-						new Notice("Block Peek works on Enhanced List blocks or [[file#^id]] references.");
-						return true;
-					}
-
-					const content = editor.getValue();
-					const id = findActiveListItemBlockIdInContent(content, cursor.line);
-					if (!id) {
-						new Notice("No list item block id found at cursor.");
-						return true;
-					}
-
-					openEnhancedListBlockPeek(this, { file, blockId: id });
-					return true;
-				} catch (e: any) {
-					new Notice(`Block Peek failed: ${String(e?.message ?? e)}`);
-					return true;
-				}
-			},
-		});
-
 		// for reading mode
-		this.registerMarkdownPostProcessor((el, ctx) => markdownPostProcessor(el, ctx, this));
 		this.registerMarkdownPostProcessor((el, ctx) => fileOutlinerMarkdownPostProcessor(el, ctx, this));
 
 		// for live preview
 		this.updateViewPlugin();
-			this.registerEditorExtension([
-				createEnhancedListDirtyRangeTrackerExtension(this),
-				createEnhancedListSystemLineHideExtension(this),
-				createEnhancedListHideNativeFoldIndicatorExtension(this),
-				createEnhancedListHandleAffordanceExtension(this),
-				createEnhancedListHandleActionsExtension(this),
-				createEnhancedListBlockSelectionExtension(this),
-				createEnhancedListSubtreeClipboardExtension(this),
-				createEnhancedListBlockReferenceTriggerExtension(this),
-				createEnhancedListActiveBlockHighlightExtension(this),
-				createEnhancedListAutoSystemLineExtension(this),
-				createEnhancedListCodeBlockIndentExtension(this),
-				createEnhancedListDeleteSubtreeExtension(this),
-			]);
-		registerEnhancedListSavePreprocessor(this);
-
-		// Some Obsidian updates mutate editor state fields in-place (or transiently hide them)
-		// which can cause scoped CSS classes to be missing on already-open editors until the
-		// next CM update. Nudge all Enhanced List scoped view plugins to re-evaluate once after
-		// layout is ready so open tabs are corrected immediately.
-		this.app.workspace.onLayoutReady(() => {
-			try {
-				getEnhancedListScopeManager(this).onSettingsChanged();
-			} catch {
-				// Ignore.
-			}
-		});
 
 		// Initialize Flow Editor Manager
 		this.flowEditorManager = new FlowEditorManager(this);
@@ -364,7 +235,6 @@ export default class BlockLinkPlus extends Plugin {
 		await this.saveData(this.settings);
 		this.inlineEditEngine?.onSettingsChanged();
 		this.builtInVslinko?.onSettingsChanged(false);
-		getEnhancedListScopeManager(this).onSettingsChanged();
 		getFileOutlinerScopeManager(this).onSettingsChanged();
 	}
 

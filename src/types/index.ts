@@ -110,29 +110,6 @@ export interface PluginSettings {
 	fileOutlinerViewEnabled: boolean;
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
-	// Enhanced List Blocks
-	enhancedListEnabledFolders: string[];
-	enhancedListEnabledFiles: string[];
-	enhancedListHideSystemLine: boolean;
-	enhancedListHandleAffordance: boolean;
-	enhancedListHandleActions: boolean;
-	// What a left-click on the list handle does when handle actions are enabled.
-	enhancedListHandleClickAction: "toggle-folding" | "menu" | "select-block" | "none";
-	enhancedListIndentCodeBlocks: boolean;
-	enhancedListDeleteSubtreeOnListItemDelete: boolean;
-	// Enhanced List Blocks: optional block-mode features (Logseq/Roam-like UX).
-	enhancedListSubtreeClipboardEnabled: boolean;
-	enhancedListDoubleParenTriggerEnabled: boolean;
-	enhancedListBlockPeekEnabled: boolean;
-	enhancedListHideNativeFoldIndicator: boolean;
-	// Enhanced List Blocks: save-time normalization (enabled files only; scoped to recently-edited ranges).
-	enhancedListNormalizeOnSave: boolean;
-	enhancedListNormalizeTabsToSpaces: boolean;
-	enhancedListNormalizeTabSize: number;
-	enhancedListNormalizeCleanupInvalidSystemLines: boolean;
-	enhancedListNormalizeMergeSplitSystemLine: boolean;
-	enhancedListNormalizeSystemLineIndent: boolean;
-	enhancedListNormalizeEnsureSystemLineForTouchedItems: boolean;
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -180,26 +157,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerViewEnabled: true,
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
-	// Enhanced List Blocks
-	enhancedListEnabledFolders: [],
-	enhancedListEnabledFiles: [],
-	enhancedListHideSystemLine: true,
-	enhancedListHandleAffordance: true,
-	enhancedListHandleActions: true,
-	enhancedListHandleClickAction: "toggle-folding",
-	enhancedListIndentCodeBlocks: true,
-	enhancedListDeleteSubtreeOnListItemDelete: false,
-	enhancedListSubtreeClipboardEnabled: true,
-	enhancedListDoubleParenTriggerEnabled: false,
-	enhancedListBlockPeekEnabled: true,
-	enhancedListHideNativeFoldIndicator: true,
-	enhancedListNormalizeOnSave: false,
-	enhancedListNormalizeTabsToSpaces: true,
-	enhancedListNormalizeTabSize: 2,
-	enhancedListNormalizeCleanupInvalidSystemLines: true,
-	enhancedListNormalizeMergeSplitSystemLine: true,
-	enhancedListNormalizeSystemLineIndent: true,
-	enhancedListNormalizeEnsureSystemLineForTouchedItems: true,
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,

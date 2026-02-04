@@ -5,8 +5,6 @@ import { analyzeHeadings } from '../heading-analysis';
 import * as LinkCreation from '../link-creation';
 import * as Clipboard from '../clipboard-handler';
 import BlockLinkPlus from '../../main';
-import { ensureEnhancedListSystemLineForActiveListItem } from '../enhanced-list-blocks/ensure-system-line';
-import { isEnhancedListEnabledFile } from '../enhanced-list-blocks/enable-scope';
 
 function handleSingleLine(
     plugin: BlockLinkPlus,
@@ -19,14 +17,7 @@ function handleSingleLine(
 ) {
     let link: string | undefined;
 
-    const enhancedListLink =
-        !isHeading && isEnhancedListEnabledFile(plugin, file as any)
-            ? ensureEnhancedListSystemLineForActiveListItem(plugin, editor)
-            : null;
-
-    if (enhancedListLink) {
-        link = enhancedListLink;
-    } else if (plugin.settings.heading_id_newline && head_analysis.block) {
+    if (plugin.settings.heading_id_newline && head_analysis.block) {
         link = LinkCreation.gen_insert_blocklink_singleline(head_analysis.block, editor, plugin.settings);
     } else if (isHeading && head_analysis.headingAtStart) {
         link = head_analysis.headingAtStart.heading;

@@ -1,7 +1,7 @@
 import { ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { editorInfoField, editorLivePreviewField } from "obsidian";
 import type BlockLinkPlus from "../../main";
-import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "../enhanced-list-blocks/enable-scope";
+import { getFileOutlinerScopeManager, isFileOutlinerEnabledFile } from "../file-outliner-view/enable-scope";
 import { BLP_VSLINKO_SCOPE_CLASS } from "../../vendor/vslinko/blp-scope";
 
 function isBuiltInVslinkoEnabled(plugin: BlockLinkPlus): boolean {
@@ -45,7 +45,7 @@ function shouldApplyScopeClass(view: any, plugin: BlockLinkPlus): boolean {
 		return false;
 	}
 
-	return isEnhancedListEnabledFile(plugin, file);
+	return isFileOutlinerEnabledFile(plugin, file);
 }
 
 export function createBuiltInVslinkoScopeExtension(plugin: BlockLinkPlus) {
@@ -60,7 +60,7 @@ export function createBuiltInVslinkoScopeExtension(plugin: BlockLinkPlus) {
 
 			constructor(view: any) {
 				this.view = view;
-				this.unsubscribe = getEnhancedListScopeManager(plugin).onChange(() => this.refresh());
+				this.unsubscribe = getFileOutlinerScopeManager(plugin).onChange(() => this.refresh());
 				this.lastFilePath = getViewFilePath(view);
 				this.lastLivePreview = getViewLivePreview(view);
 				this.refresh();

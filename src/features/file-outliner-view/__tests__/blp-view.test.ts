@@ -60,7 +60,7 @@ function createTestDv(nowIso = "2026-01-10T00:00:00Z") {
 	} as any;
 }
 
-describe("enhanced-list-blocks/blp-view config", () => {
+describe("file-outliner-view/blp-view config", () => {
 	test("defaults: render.type=embed-list, sort=date desc, group=none", () => {
 		const resolved = resolveConfigDefaults(parseConfig(""));
 
@@ -98,7 +98,7 @@ render:
 	});
 });
 
-describe("enhanced-list-blocks/blp-view filtering", () => {
+describe("file-outliner-view/blp-view filtering", () => {
 	test("hierarchy filter: outermost-match suppresses nested matches", () => {
 		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
 		const candidates = [
@@ -217,7 +217,7 @@ describe("enhanced-list-blocks/blp-view filtering", () => {
 	});
 });
 
-describe("enhanced-list-blocks/blp-view render: embed-list headings", () => {
+describe("file-outliner-view/blp-view render: embed-list headings", () => {
 	test("links day(date) group headings to the unique source file when possible", () => {
 		const groups = [
 			{
@@ -266,7 +266,7 @@ describe("enhanced-list-blocks/blp-view render: embed-list headings", () => {
 	});
 });
 
-describe("enhanced-list-blocks/blp-view grouping + sorting", () => {
+describe("file-outliner-view/blp-view grouping + sorting", () => {
 	test("stable sorting breaks ties by path/line/blockId", () => {
 		const dv = createTestDv();
 		const date = DateTime.fromISO("2026-01-01T00:00:00Z");
@@ -309,7 +309,7 @@ group:
 	});
 });
 
-describe("enhanced-list-blocks/blp-view materialize", () => {
+describe("file-outliner-view/blp-view materialize", () => {
 	test("no-op when existing region hash and content match", async () => {
 		const markdown = "generated";
 		const hash = crypto.createHash("sha256").update(markdown).digest("hex");
@@ -400,7 +400,7 @@ describe("enhanced-list-blocks/blp-view materialize", () => {
 	});
 });
 
-describe("enhanced-list-blocks/blp-view source resolution", () => {
+describe("file-outliner-view/blp-view source resolution", () => {
 	test("resolves source.files by basename via vault fallback when metadataCache cannot resolve", () => {
 		const app = new App();
 		const dataPath = "Review/day/2026/1/BLP/data/BLP Data 01 - Daily Logs A.md";
@@ -414,8 +414,8 @@ describe("enhanced-list-blocks/blp-view source resolution", () => {
 		const plugin = {
 			app,
 			settings: {
-				enhancedListEnabledFolders: ["Review"],
-				enhancedListEnabledFiles: [],
+				fileOutlinerEnabledFolders: ["Review"],
+				fileOutlinerEnabledFiles: [],
 			},
 		} as any;
 
@@ -438,8 +438,8 @@ describe("enhanced-list-blocks/blp-view source resolution", () => {
 		const plugin = {
 			app,
 			settings: {
-				enhancedListEnabledFolders: ["Review"],
-				enhancedListEnabledFiles: [],
+				fileOutlinerEnabledFolders: ["Review"],
+				fileOutlinerEnabledFiles: [],
 			},
 		} as any;
 
@@ -464,8 +464,8 @@ describe("enhanced-list-blocks/blp-view source resolution", () => {
 		const plugin = {
 			app,
 			settings: {
-				enhancedListEnabledFolders: ["Review"],
-				enhancedListEnabledFiles: [],
+				fileOutlinerEnabledFolders: ["Review"],
+				fileOutlinerEnabledFiles: [],
 			},
 		} as any;
 

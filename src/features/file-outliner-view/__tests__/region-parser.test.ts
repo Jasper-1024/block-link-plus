@@ -1,6 +1,6 @@
 import { findManagedRegion, REGION_END_MARKER, REGION_START_MARKER_PREFIX } from "../region-parser";
 
-describe("enhanced-list-blocks/region-parser", () => {
+describe("file-outliner-view/region-parser", () => {
 	test("finds managed region after code block", () => {
 		const content = [
 			"# Note",

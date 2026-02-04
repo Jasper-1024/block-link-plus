@@ -11,7 +11,7 @@ import {
 	unhideEl,
 } from "./settings-tabs";
 
-type SettingsTabName = "basics" | "outliner" | "enhanced-list" | "built-in-plugins";
+type SettingsTabName = "basics" | "outliner" | "built-in-plugins";
 
 export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	plugin: BlockLinkPlus;
@@ -41,7 +41,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		});
 	}
 
-	// 文本输入框
+	// Text input
 	addTextInputSetting(settingName: KeysOfType<PluginSettings, string>, placeholder: string, containerEl?: HTMLElement) {
 		const rootEl = containerEl ?? this.containerEl;
 		return new Setting(rootEl).addText((text) =>
@@ -137,13 +137,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		const tabs: Record<SettingsTabName, SettingsTabPane> = {
 			basics: new SettingsTabPane({ navEl, contentRootEl, name: "basics", label: uiText.tabs.basics }),
-			outliner: new SettingsTabPane({ navEl, contentRootEl, name: "outliner", label: "Outliner" }),
-			"enhanced-list": new SettingsTabPane({
-				navEl,
-				contentRootEl,
-				name: "enhanced-list",
-				label: uiText.tabs.enhancedList,
-			}),
+			outliner: new SettingsTabPane({ navEl, contentRootEl, name: "outliner", label: uiText.tabs.outliner }),
 			"built-in-plugins": new SettingsTabPane({
 				navEl,
 				contentRootEl,
@@ -162,7 +156,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		this.renderBasicsTab(tabs.basics.contentEl);
 		this.renderFileOutlinerTab(tabs.outliner.contentEl);
-		this.renderEnhancedListTab(tabs["enhanced-list"].contentEl);
 		this.renderBuiltInPluginsTab(tabs["built-in-plugins"].contentEl);
 
 		for (const tab of allTabs) this.buildSearchIndex(tab);
@@ -214,7 +207,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	private getSettingsUiText(): {
 		searchPlaceholder: string;
 		emptyState: string;
-		tabs: { basics: string; enhancedList: string; builtInPlugins: string };
+		tabs: { basics: string; outliner: string; builtInPlugins: string };
 	} {
 		switch (t.lang) {
 			case "zh":
@@ -223,7 +216,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					emptyState: "没有匹配的设置。",
 					tabs: {
 						basics: "基础",
-						enhancedList: "增强列表",
+						outliner: "Outliner",
 						builtInPlugins: "内置插件",
 					},
 				};
@@ -233,7 +226,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					emptyState: "沒有匹配的設定。",
 					tabs: {
 						basics: "基礎",
-						enhancedList: "增強清單",
+						outliner: "Outliner",
 						builtInPlugins: "內建外掛",
 					},
 				};
@@ -243,7 +236,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					emptyState: "No matching settings.",
 					tabs: {
 						basics: "Basics",
-						enhancedList: "Enhanced List",
+						outliner: "Outliner",
 						builtInPlugins: "Built-in Plugins",
 					},
 				};
@@ -510,229 +503,9 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
-	}
-
-	private renderEnhancedListTab(rootEl: HTMLElement) {
-		this.addHeading(t.settings.enhancedListBlocks.title, rootEl).setDesc(t.settings.enhancedListBlocks.desc);
-
-		const parseScopeLines = (value: string): string[] =>
-			value
-				.split(/\r?\n/)
-				.map((l) => l.trim())
-				.filter(Boolean)
-				.map((l) => l.replace(/\\/g, "/"));
-
-		// Scope.
-		this.addHeading(t.settings.enhancedListBlocks.groups.scope.title, rootEl);
-
-		const enabledFoldersSetting = new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.enabledFolders.name)
-			.setDesc(t.settings.enhancedListBlocks.enabledFolders.desc)
-			.addTextArea((text) => {
-				text
-					.setPlaceholder("Daily\nProjects")
-					.setValue((this.plugin.settings.enhancedListEnabledFolders ?? []).join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.enhancedListEnabledFolders = parseScopeLines(value);
-						await this.plugin.saveSettings();
-					});
-
-				text.inputEl.rows = 3;
-			});
-
-		const enabledFilesSetting = new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.enabledFiles.name)
-			.setDesc(t.settings.enhancedListBlocks.enabledFiles.desc)
-			.addTextArea((text) => {
-				text
-					.setPlaceholder("Daily/2026-01-09.md")
-					.setValue((this.plugin.settings.enhancedListEnabledFiles ?? []).join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.enhancedListEnabledFiles = parseScopeLines(value);
-						await this.plugin.saveSettings();
-					});
-
-				text.inputEl.rows = 3;
-			});
-
-		// Behavior.
-		this.addHeading(t.settings.enhancedListBlocks.groups.behavior.title, rootEl);
-
-		const hideSystemLineSetting = this.addToggleSetting("enhancedListHideSystemLine", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.hideSystemLine.name)
-			.setDesc(t.settings.enhancedListBlocks.hideSystemLine.desc);
-
-		this.addToggleSetting("enhancedListHideNativeFoldIndicator", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.hideNativeFoldIndicator.name)
-			.setDesc(t.settings.enhancedListBlocks.hideNativeFoldIndicator.desc);
-
-		const handleAffordanceSetting = this.addToggleSetting("enhancedListHandleAffordance", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.handleAffordance.name)
-			.setDesc(t.settings.enhancedListBlocks.handleAffordance.desc);
-
-		let handleClickActionDropdown: any | null = null;
-
-		const handleActionsSetting = this.addToggleSetting(
-			"enhancedListHandleActions",
-			(enabled) => {
-				// Keep the dropdown in sync without a full re-render.
-				handleClickActionDropdown?.setDisabled?.(!enabled);
-			},
-			rootEl
-		)
-			.setName(t.settings.enhancedListBlocks.handleActions.name)
-			.setDesc(t.settings.enhancedListBlocks.handleActions.desc);
-
-		const handleClickActionSetting = new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.handleActions.clickAction.name)
-			.setDesc(t.settings.enhancedListBlocks.handleActions.clickAction.desc)
-			.addDropdown((dropdown) => {
-				handleClickActionDropdown = dropdown;
-
-				dropdown
-					.addOptions({
-						"toggle-folding": t.settings.enhancedListBlocks.handleActions.clickAction.options.toggleFolding,
-						"select-block": t.settings.enhancedListBlocks.handleActions.clickAction.options.selectBlock,
-						menu: t.settings.enhancedListBlocks.handleActions.clickAction.options.menu,
-						none: t.settings.enhancedListBlocks.handleActions.clickAction.options.none,
-					} as any)
-					.setValue(this.plugin.settings.enhancedListHandleClickAction ?? "toggle-folding")
-					.setDisabled(!this.plugin.settings.enhancedListHandleActions)
-					.onChange(async (value: any) => {
-						this.plugin.settings.enhancedListHandleClickAction = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
-		this.addToggleSetting("enhancedListSubtreeClipboardEnabled", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.subtreeClipboard.name)
-			.setDesc(t.settings.enhancedListBlocks.subtreeClipboard.desc);
-
-		this.addToggleSetting("enhancedListDoubleParenTriggerEnabled", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.doubleParenTrigger.name)
-			.setDesc(t.settings.enhancedListBlocks.doubleParenTrigger.desc);
-
-		this.addToggleSetting("enhancedListBlockPeekEnabled", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.blockPeek.name)
-			.setDesc(t.settings.enhancedListBlocks.blockPeek.desc);
-
-		const indentCodeBlocksSetting = this.addToggleSetting("enhancedListIndentCodeBlocks", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.indentCodeBlocks.name)
-			.setDesc(t.settings.enhancedListBlocks.indentCodeBlocks.desc);
-
-		const deleteSubtreeSetting = this.addToggleSetting("enhancedListDeleteSubtreeOnListItemDelete", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.name)
-			.setDesc(t.settings.enhancedListBlocks.deleteSubtreeOnDelete.desc);
-
-		// Normalization.
-		this.addHeading(t.settings.enhancedListBlocks.groups.normalization.title, rootEl);
-
-		const normalizeOnSaveSetting = new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.normalizeOnSave.name)
-			.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.desc)
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.enhancedListNormalizeOnSave)
-					.onChange(async (value) => {
-						this.plugin.settings.enhancedListNormalizeOnSave = value;
-						await this.plugin.saveSettings();
-						// Re-render to show/hide rule details (and keep search index consistent).
-						this.display();
-					});
-			});
-		normalizeOnSaveSetting.settingEl.classList.add("blp-settings-master-toggle");
-
-		if (this.plugin.settings.enhancedListNormalizeOnSave === true) {
-			const normalizeTabsSetting = new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.name)
-				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.desc)
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.enhancedListNormalizeTabsToSpaces)
-						.onChange(async (value) => {
-							this.plugin.settings.enhancedListNormalizeTabsToSpaces = value;
-							await this.plugin.saveSettings();
-							// Re-render to show/hide tab size configuration.
-							this.display();
-						});
-				});
-
-			if (this.plugin.settings.enhancedListNormalizeTabsToSpaces === true) {
-				new Setting(rootEl)
-					.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.tabSize.name)
-					.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.tabsToSpaces.tabSize.desc)
-					.addText((text) => {
-						text.inputEl.type = "number";
-						text.inputEl.min = "1";
-						text.inputEl.max = "16";
-						text.inputEl.step = "1";
-						text.inputEl.style.width = "72px";
-
-						text
-							.setPlaceholder("2")
-							.setValue(String(this.plugin.settings.enhancedListNormalizeTabSize ?? 2))
-							.onChange(async (value) => {
-								const trimmed = value.trim();
-								const next = trimmed ? Number.parseInt(trimmed, 10) : NaN;
-								if (!Number.isFinite(next) || next <= 0) return;
-
-								this.plugin.settings.enhancedListNormalizeTabSize = next;
-								await this.plugin.saveSettings();
-							});
-					});
-			}
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.cleanupInvalidSystemLines.name)
-				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.cleanupInvalidSystemLines.desc)
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.enhancedListNormalizeCleanupInvalidSystemLines)
-						.onChange(async (value) => {
-							this.plugin.settings.enhancedListNormalizeCleanupInvalidSystemLines = value;
-							await this.plugin.saveSettings();
-						});
-				});
-
-			const normalizeMergeSetting = new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.mergeSplitSystemLine.name)
-				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.mergeSplitSystemLine.desc)
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine)
-						.onChange(async (value) => {
-							this.plugin.settings.enhancedListNormalizeMergeSplitSystemLine = value;
-							await this.plugin.saveSettings();
-						});
-				});
-
-			const normalizeIndentSetting = new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.systemLineIndent.name)
-				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.systemLineIndent.desc)
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.enhancedListNormalizeSystemLineIndent)
-						.onChange(async (value) => {
-							this.plugin.settings.enhancedListNormalizeSystemLineIndent = value;
-							await this.plugin.saveSettings();
-						});
-				});
-
-			const normalizeEnsureSetting = new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.normalizeOnSave.rules.ensureSystemLineForTouchedItems.name)
-				.setDesc(t.settings.enhancedListBlocks.normalizeOnSave.rules.ensureSystemLineForTouchedItems.desc)
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems)
-						.onChange(async (value) => {
-							this.plugin.settings.enhancedListNormalizeEnsureSystemLineForTouchedItems = value;
-							await this.plugin.saveSettings();
-						});
-				});
-		}
 
 		// blp-view.
-		const blpViewHeading = this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(
+		this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(
 			t.settings.enhancedListBlocks.blpView.desc
 		);
 
@@ -750,11 +523,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		hideEl(statusSetting.nameEl);
 		if (!dataviewStatus.functioning) statusSetting.descEl.classList.add("mod-warning");
 
-		const allowMaterializeSetting = this.addToggleSetting("blpViewAllowMaterialize", undefined, rootEl)
+		this.addToggleSetting("blpViewAllowMaterialize", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.allowMaterialize.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.allowMaterialize.desc);
 
-		const maxSourceFilesSetting = new Setting(rootEl)
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.maxSourceFiles.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.maxSourceFiles.desc)
 			.addText((text) => {
@@ -771,7 +544,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		const maxResultsSetting = new Setting(rootEl)
+		new Setting(rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.maxResults.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.maxResults.desc)
 			.addText((text) => {
@@ -788,7 +561,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		const showDiagnosticsSetting = this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
+		this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
 	}
@@ -1001,3 +774,4 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		}
 	}
 }
+
