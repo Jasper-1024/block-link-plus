@@ -150,7 +150,7 @@ interface WorkspaceTabs {
     editor?: Editor,
     setMode?: (unknown) => unknown,
     editMode?: unknown,
-    file?: TAbstractFile,
+    file?: TAbstractFile | null,
     getMode?: () => unknown,
   }
   interface MenuItem {

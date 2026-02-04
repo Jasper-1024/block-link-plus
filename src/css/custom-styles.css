@@ -148,3 +148,39 @@
     color: var(--text-muted);
     font-size: 0.9em;
 }
+
+/* File-level outliner view (v2). */
+.blp-file-outliner-view .blp-file-outliner-root {
+    padding: 12px 14px;
+}
+
+.blp-file-outliner-view .blp-file-outliner-block {
+    position: relative;
+    margin: 2px 0;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display {
+    cursor: text;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor {
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    padding: 4px 6px;
+    font: inherit;
+    line-height: inherit;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.blp-file-outliner-view .blp-file-outliner-block.is-blp-outliner-target .blp-file-outliner-display,
+.blp-file-outliner-view .blp-file-outliner-block.is-blp-outliner-target .blp-file-outliner-editor {
+    box-shadow: inset 2px 0 0 hsla(var(--interactive-accent-hsl), 0.9);
+    background: hsla(var(--interactive-accent-hsl), 0.08);
+}

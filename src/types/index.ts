@@ -102,6 +102,14 @@ export interface PluginSettings {
 	enable_block_notification: boolean;
 	enable_embed_notification: boolean;
 	enable_url_notification: boolean;
+
+	// File Outliner View (v2)
+	fileOutlinerEnabledFolders: string[];
+	fileOutlinerEnabledFiles: string[];
+	fileOutlinerHideSystemLine: boolean;
+	fileOutlinerViewEnabled: boolean;
+	fileOutlinerChildrenOnSplit: "keep" | "move";
+	fileOutlinerPasteMultiline: "split" | "multiline";
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: string[];
 	enhancedListEnabledFiles: string[];
@@ -164,6 +172,14 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enable_block_notification: true,
 	enable_embed_notification: true,
 	enable_url_notification: true,
+
+	// File Outliner View (v2)
+	fileOutlinerEnabledFolders: [],
+	fileOutlinerEnabledFiles: [],
+	fileOutlinerHideSystemLine: true,
+	fileOutlinerViewEnabled: true,
+	fileOutlinerChildrenOnSplit: "keep",
+	fileOutlinerPasteMultiline: "split",
 	// Enhanced List Blocks
 	enhancedListEnabledFolders: [],
 	enhancedListEnabledFiles: [],

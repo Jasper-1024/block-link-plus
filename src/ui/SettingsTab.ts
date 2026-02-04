@@ -11,7 +11,7 @@ import {
 	unhideEl,
 } from "./settings-tabs";
 
-type SettingsTabName = "basics" | "enhanced-list" | "built-in-plugins";
+type SettingsTabName = "basics" | "outliner" | "enhanced-list" | "built-in-plugins";
 
 export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	plugin: BlockLinkPlus;
@@ -137,6 +137,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		const tabs: Record<SettingsTabName, SettingsTabPane> = {
 			basics: new SettingsTabPane({ navEl, contentRootEl, name: "basics", label: uiText.tabs.basics }),
+			outliner: new SettingsTabPane({ navEl, contentRootEl, name: "outliner", label: "Outliner" }),
 			"enhanced-list": new SettingsTabPane({
 				navEl,
 				contentRootEl,
@@ -160,6 +161,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		controller.init(this.selectedTabName);
 
 		this.renderBasicsTab(tabs.basics.contentEl);
+		this.renderFileOutlinerTab(tabs.outliner.contentEl);
 		this.renderEnhancedListTab(tabs["enhanced-list"].contentEl);
 		this.renderBuiltInPluginsTab(tabs["built-in-plugins"].contentEl);
 
@@ -421,6 +423,93 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("inlineEditFile", undefined, rootEl).setName(t.settings.inlineEdit.file.name).setDesc(t.settings.inlineEdit.file.desc);
 		this.addToggleSetting("inlineEditHeading", undefined, rootEl).setName(t.settings.inlineEdit.heading.name).setDesc(t.settings.inlineEdit.heading.desc);
 		this.addToggleSetting("inlineEditBlock", undefined, rootEl).setName(t.settings.inlineEdit.block.name).setDesc(t.settings.inlineEdit.block.desc);
+	}
+
+	private renderFileOutlinerTab(rootEl: HTMLElement) {
+		this.addHeading("File Outliner (v2)", rootEl).setDesc(
+			"File-level outliner view (Logseq-like). Tail lines use Dataview inline fields + `^id` so `[[file#^id]]` works without the plugin."
+		);
+
+		const parseScopeLines = (value: string): string[] =>
+			value
+				.split(/\r?\n/)
+				.map((l) => l.trim())
+				.filter(Boolean)
+				.map((l) => l.replace(/\\/g, "/"));
+
+		this.addHeading("Scope", rootEl);
+
+		new Setting(rootEl)
+			.setName("Enabled folders (vault-relative)")
+			.setDesc("One per line. Files under these folders will open in the outliner view.")
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("Daily\nProjects")
+					.setValue((this.plugin.settings.fileOutlinerEnabledFolders ?? []).join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.fileOutlinerEnabledFolders = parseScopeLines(value);
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.rows = 3;
+			});
+
+		new Setting(rootEl)
+			.setName("Enabled files (vault-relative)")
+			.setDesc("One per line. Use this when you only want specific files.")
+			.addTextArea((text) => {
+				text
+					.setPlaceholder("Daily/2026-01-09.md")
+					.setValue((this.plugin.settings.fileOutlinerEnabledFiles ?? []).join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.fileOutlinerEnabledFiles = parseScopeLines(value);
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.rows = 3;
+			});
+
+		new Setting(rootEl)
+			.setName("Frontmatter override")
+			.setDesc("Per-file: `blp_outliner: true/false` (legacy alias: `blp_enhanced_list`).");
+
+		this.addHeading("Behavior", rootEl);
+
+		this.addToggleSetting("fileOutlinerViewEnabled", () => this.display(), rootEl)
+			.setName("Enable outliner routing")
+			.setDesc("When enabled, scoped files open in the outliner view instead of the native Markdown editor.");
+
+		this.addToggleSetting("fileOutlinerHideSystemLine", undefined, rootEl)
+			.setName("Hide system tail lines")
+			.setDesc("Hide outliner protocol tail lines in Reading mode when `[blp_sys:: 1]` is present.");
+
+		new Setting(rootEl)
+			.setName("Enter split: children behavior")
+			.setDesc("Choose what happens to children when splitting a block with Enter.")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("keep", "Keep children on the original block")
+					.addOption("move", "Move children to the new block")
+					.setValue(this.plugin.settings.fileOutlinerChildrenOnSplit ?? "keep")
+					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
+					.onChange(async (value: any) => {
+						this.plugin.settings.fileOutlinerChildrenOnSplit = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(rootEl)
+			.setName("Paste multiline")
+			.setDesc("When pasting multiple lines into a block, either split into blocks or keep as multiline.")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("split", "Split into multiple blocks (default)")
+					.addOption("multiline", "Keep as multiline text in the current block")
+					.setValue(this.plugin.settings.fileOutlinerPasteMultiline ?? "split")
+					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
+					.onChange(async (value: any) => {
+						this.plugin.settings.fileOutlinerPasteMultiline = value;
+						await this.plugin.saveSettings();
+					});
+			});
 	}
 
 	private renderEnhancedListTab(rootEl: HTMLElement) {

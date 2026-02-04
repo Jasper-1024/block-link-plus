@@ -31,6 +31,7 @@ import "css/custom-styles.css";
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
 import { markdownPostProcessor } from 'ui/MarkdownPost';
+import { fileOutlinerMarkdownPostProcessor } from "ui/MarkdownPostOutliner";
 import { WhatsNewModal } from "ui/WhatsNewModal";
 import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 import * as CommandHandler from 'features/command-handler';
@@ -56,6 +57,8 @@ import {
 	openEnhancedListBlockPeek,
 } from "features/enhanced-list-blocks";
 import { getEnhancedListScopeManager, isEnhancedListEnabledFile } from "features/enhanced-list-blocks/enable-scope";
+import { registerFileOutlinerView } from "features/file-outliner-view";
+import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
@@ -138,6 +141,9 @@ export default class BlockLinkPlus extends Plugin {
 		// Built-in vendored plugins (vslinko).
 		this.builtInVslinko = new BuiltInVslinkoManager(this);
 		await this.builtInVslinko.load();
+
+		// File-level outliner view (v2).
+		registerFileOutlinerView(this);
 
 		await this.maybeShowWhatsNew();
 
@@ -263,6 +269,7 @@ export default class BlockLinkPlus extends Plugin {
 
 		// for reading mode
 		this.registerMarkdownPostProcessor((el, ctx) => markdownPostProcessor(el, ctx, this));
+		this.registerMarkdownPostProcessor((el, ctx) => fileOutlinerMarkdownPostProcessor(el, ctx, this));
 
 		// for live preview
 		this.updateViewPlugin();
@@ -358,6 +365,7 @@ export default class BlockLinkPlus extends Plugin {
 		this.inlineEditEngine?.onSettingsChanged();
 		this.builtInVslinko?.onSettingsChanged(false);
 		getEnhancedListScopeManager(this).onSettingsChanged();
+		getFileOutlinerScopeManager(this).onSettingsChanged();
 	}
 
 	async onunload() {

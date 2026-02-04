@@ -1,14 +1,24 @@
 import { normalizePath, TFile } from "obsidian";
 import type BlockLinkPlus from "../../main";
 
-export const ENHANCED_LIST_FRONTMATTER_KEY = "blp_enhanced_list";
+/**
+ * Frontmatter boolean that can force-enable / force-disable the file-level outliner view.
+ *
+ * - `blp_outliner: true`  => enable (even if not in enabled folders/files)
+ * - `blp_outliner: false` => disable (even if in enabled folders/files)
+ *
+ * Back-compat: `blp_enhanced_list` is treated as an alias so existing vaults don't need to
+ * rewrite frontmatter to try v2.
+ */
+export const FILE_OUTLINER_FRONTMATTER_KEY = "blp_outliner";
+export const LEGACY_FILE_OUTLINER_FRONTMATTER_KEY = "blp_enhanced_list";
 
-export function normalizeEnhancedListScopePath(input: string): string {
+export function normalizeFileOutlinerScopePath(input: string): string {
 	return normalizePath(input.trim()).replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
-export function isPathInEnhancedListScopeFolder(path: string, folder: string): boolean {
-	const normalizedFolder = normalizeEnhancedListScopePath(folder);
+export function isPathInFileOutlinerScopeFolder(path: string, folder: string): boolean {
+	const normalizedFolder = normalizeFileOutlinerScopePath(folder);
 	if (!normalizedFolder) return true;
 	return path === normalizedFolder || path.startsWith(normalizedFolder + "/");
 }
@@ -16,11 +26,33 @@ export function isPathInEnhancedListScopeFolder(path: string, folder: string): b
 type EnabledCacheEntry = { enabled: boolean; mtime: number };
 type FrontmatterState = boolean | null;
 
+function parseFrontmatterBool(raw: unknown): FrontmatterState {
+	const enabled = raw === true || raw === "true" || raw === 1;
+	const disabled = raw === false || raw === "false" || raw === 0;
+	return enabled ? true : disabled ? false : null;
+}
+
+function getFrontmatterStateFromObject(fm: Record<string, unknown> | undefined): FrontmatterState {
+	if (!fm) return null;
+
+	const has = (k: string) => Object.prototype.hasOwnProperty.call(fm, k);
+
+	if (has(FILE_OUTLINER_FRONTMATTER_KEY)) {
+		return parseFrontmatterBool(fm[FILE_OUTLINER_FRONTMATTER_KEY]);
+	}
+
+	if (has(LEGACY_FILE_OUTLINER_FRONTMATTER_KEY)) {
+		return parseFrontmatterBool(fm[LEGACY_FILE_OUTLINER_FRONTMATTER_KEY]);
+	}
+
+	return null;
+}
+
 /**
  * In-memory scope manager. No persistence; caches are bounded and invalidated by
  * vault/metadata/settings changes so debugging stays straightforward.
  */
-export class EnhancedListScopeManager {
+export class FileOutlinerScopeManager {
 	private plugin: BlockLinkPlus;
 	private scopeVersion = 0;
 
@@ -34,9 +66,7 @@ export class EnhancedListScopeManager {
 	private enabledByPath = new Map<string, EnabledCacheEntry>();
 	private readonly maxEnabledCacheEntries = 2000;
 
-	private enabledMarkdownFilesCache:
-		| { scopeVersion: number; files: TFile[]; pathSet: Set<string> }
-		| null = null;
+	private enabledMarkdownFilesCache: { scopeVersion: number; files: TFile[]; pathSet: Set<string> } | null = null;
 
 	private frontmatterOptInByPath = new Map<string, FrontmatterState>();
 	private readonly maxFrontmatterCacheEntries = 2000;
@@ -87,7 +117,7 @@ export class EnhancedListScopeManager {
 			return true;
 		}
 
-		if (this.normalizedEnabledFolders.some((f) => isPathInEnhancedListScopeFolder(filePath, f))) {
+		if (this.normalizedEnabledFolders.some((f) => isPathInFileOutlinerScopeFolder(filePath, f))) {
 			this.setEnabledCache(filePath, { enabled: true, mtime });
 			return true;
 		}
@@ -126,13 +156,14 @@ export class EnhancedListScopeManager {
 	private ensureNormalizedSettings(): void {
 		if (this.normalizedSettingsVersion === this.scopeVersion) return;
 
-		const enabledFiles = (this.plugin.settings.enhancedListEnabledFiles ?? [])
+		const enabledFiles = (this.plugin.settings.fileOutlinerEnabledFiles ?? [])
 			.map((p: string) => normalizePath(String(p ?? "")))
 			.filter(Boolean);
 		this.normalizedEnabledFiles = new Set(enabledFiles);
 
-		this.normalizedEnabledFolders = (this.plugin.settings.enhancedListEnabledFolders ?? [])
-			.map((p: string) => normalizeEnhancedListScopePath(String(p ?? "")));
+		this.normalizedEnabledFolders = (this.plugin.settings.fileOutlinerEnabledFolders ?? []).map((p: string) =>
+			normalizeFileOutlinerScopePath(String(p ?? ""))
+		);
 
 		this.normalizedSettingsVersion = this.scopeVersion;
 	}
@@ -145,11 +176,7 @@ export class EnhancedListScopeManager {
 
 		const cache = this.plugin.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter as Record<string, unknown> | undefined;
-		const hasKey = Boolean(fm && Object.prototype.hasOwnProperty.call(fm, ENHANCED_LIST_FRONTMATTER_KEY));
-		const raw = fm?.[ENHANCED_LIST_FRONTMATTER_KEY];
-		const enabled = raw === true || raw === "true" || raw === 1;
-		const disabled = raw === false || raw === "false" || raw === 0;
-		const state = hasKey ? (enabled ? true : disabled ? false : null) : null;
+		const state = getFrontmatterStateFromObject(fm);
 
 		this.frontmatterOptInByPath.set(filePath, state);
 		this.evictFrontmatterOptInIfNeeded();
@@ -217,16 +244,15 @@ export class EnhancedListScopeManager {
 					this.enabledMarkdownFilesCache = null;
 
 					const fm = cache?.frontmatter as Record<string, unknown> | undefined;
-					const hasKey = Boolean(
-						fm && Object.prototype.hasOwnProperty.call(fm, ENHANCED_LIST_FRONTMATTER_KEY)
+					const hasRelevantKey = Boolean(
+						fm &&
+							(Object.prototype.hasOwnProperty.call(fm, FILE_OUTLINER_FRONTMATTER_KEY) ||
+								Object.prototype.hasOwnProperty.call(fm, LEGACY_FILE_OUTLINER_FRONTMATTER_KEY))
 					);
 					const prevState = this.frontmatterOptInByPath.get(path);
-					if (!hasKey && prevState === undefined) return;
+					if (!hasRelevantKey && prevState === undefined) return;
 
-					const raw = fm?.[ENHANCED_LIST_FRONTMATTER_KEY];
-					const enabled = raw === true || raw === "true" || raw === 1;
-					const disabled = raw === false || raw === "false" || raw === 0;
-					const nextState = hasKey ? (enabled ? true : disabled ? false : null) : null;
+					const nextState = getFrontmatterStateFromObject(fm);
 
 					if (prevState !== nextState) {
 						this.frontmatterOptInByPath.set(path, nextState);
