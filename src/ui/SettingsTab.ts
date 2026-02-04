@@ -504,6 +504,21 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(rootEl)
+			.setName("Backspace at start (block has children)")
+			.setDesc("Choose whether Backspace merges with previous (default) or outdents the block when it has children.")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("merge", "Merge with previous (default)")
+					.addOption("outdent", "Prefer outdent")
+					.setValue(this.plugin.settings.fileOutlinerBackspaceWithChildren ?? "merge")
+					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
+					.onChange(async (value: any) => {
+						this.plugin.settings.fileOutlinerBackspaceWithChildren = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
 		// blp-view.
 		this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(
 			t.settings.enhancedListBlocks.blpView.desc

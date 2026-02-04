@@ -30,7 +30,6 @@ export type OutlinerSystemFields = {
 export type OutlinerBlock = {
 	id: string;
 	depth: number;
-	task: " " | "x" | "X" | null;
 	// Editable markdown text for the block (first line + continuation lines).
 	text: string;
 	children: OutlinerBlock[];
@@ -75,11 +74,6 @@ function indentText(depth: number, indentSize: number): string {
 
 function contentIndentText(depth: number, indentSize: number): string {
 	return indentText(depth, indentSize) + " ".repeat(indentSize);
-}
-
-function parseTaskState(prefixText: string): " " | "x" | "X" | null {
-	const m = prefixText.match(/\[( |x|X)\]/);
-	return (m?.[1] as any) ?? null;
 }
 
 type ParsedSystemLine = {
@@ -204,19 +198,20 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 	const indentSize = opts.indentSize;
 	const now = opts.now;
 
+	// Outliner MUST treat task checkboxes (`[ ]`, `[x]`) as plain text.
+	// Therefore the outliner list-item prefix MUST NOT consume the checkbox.
+	const OUTLINER_LIST_ITEM_PREFIX_RE = /^(\s*)(?:([-*+])|(\d+\.))\s+/;
+
 	for (let i = 0; i < mergedLines.length; i++) {
 		const lineNo = i + 1;
 		const line = mergedLines[i] ?? "";
 		const inFence = fenceMap[lineNo] ?? false;
 
 		if (!inFence) {
-			const listMatch = line.match(LIST_ITEM_PREFIX_RE);
+			const listMatch = line.match(OUTLINER_LIST_ITEM_PREFIX_RE);
 			if (listMatch) {
 				const indent = (listMatch[1] ?? "").length;
 				const depth = Math.max(0, Math.floor(indent / indentSize));
-				const prefixLenWithoutIndent = (listMatch[0] ?? "").length - (listMatch[1] ?? "").length;
-				const prefixText = line.slice(0, (listMatch[1] ?? "").length + prefixLenWithoutIndent);
-				const task = parseTaskState(prefixText);
 				const content = line.slice((listMatch[0] ?? "").length);
 
 				while (stack.length > depth) stack.pop();
@@ -224,7 +219,6 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 				const block: OutlinerBlock = {
 					id: "",
 					depth,
-					task,
 					text: content,
 					children: [],
 					system: { date: "", updated: "", extra: {} },
@@ -396,11 +390,10 @@ function serializeBlocks(blocks: OutlinerBlock[], opts: { indentSize: number }):
 		for (const b of list) {
 			const indent = indentText(depth, indentSize);
 			const bodyIndent = contentIndentText(depth, indentSize);
-			const taskPrefix = b.task === null ? "" : `[${b.task}] `;
 
 			const rawLines = String(b.text ?? "").split("\n");
 			const first = rawLines[0] ?? "";
-			out.push(`${indent}- ${taskPrefix}${first}`);
+			out.push(`${indent}- ${first}`);
 
 			let inFence = false;
 			for (let i = 1; i < rawLines.length; i++) {

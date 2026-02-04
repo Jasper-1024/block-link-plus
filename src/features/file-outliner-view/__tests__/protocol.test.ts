@@ -155,8 +155,7 @@ describe("file-outliner-view/protocol", () => {
 				{
 					id: "aa",
 					depth: 0,
-					task: null,
-					text: "a\n- not a child\n1. not a list",
+					text: "a\n- not a child\n- [ ] not a child\n1. not a list",
 					children: [],
 					system: {
 						date: "2026-02-03T10:00:00",
@@ -169,6 +168,39 @@ describe("file-outliner-view/protocol", () => {
 
 		const out = serializeOutlinerFile(file, { indentSize: 2 });
 		expect(out).toContain("  \\- not a child");
+		expect(out).toContain("  \\- [ ] not a child");
 		expect(out).toContain("  1\\. not a list");
+	});
+
+	test("treats task checkbox markers as plain text (no structural task state)", () => {
+		const now = DateTime.fromISO("2026-02-03T00:00:00");
+		const input = [
+			"- [ ] a",
+			"  [date:: 2026-02-03T10:00:00] [updated:: 2026-02-03T10:00:00] [blp_sys:: 1] [blp_ver:: 2] ^aa",
+			"",
+		].join("\n");
+
+		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
+		expect(out.content).toBe(input);
+	});
+
+	test("drops nested/misindented legacy system tail lines", () => {
+		const now = DateTime.fromISO("2026-02-03T00:00:00");
+		const input = [
+			"- [[vpp-route-table]]",
+			"  [date:: 2026-02-03T10:12:12] ^tc2t",
+			"    [date:: 2026-02-03T10:12:03] ^ewwn",
+			"",
+		].join("\n");
+
+		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
+		expect(out.content).toBe(
+			[
+				"- [[vpp-route-table]]",
+				"  [date:: 2026-02-03T10:12:12] [updated:: 2026-02-03T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^tc2t",
+				"",
+			].join("\n")
+		);
+		expect(out.content).not.toContain("^ewwn");
 	});
 });

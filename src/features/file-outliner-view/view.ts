@@ -4,6 +4,16 @@ import { DateTime } from "luxon";
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import {
+	backspaceAtStart,
+	indentBlock,
+	mergeWithNext,
+	outdentBlock,
+	pasteSplitLines,
+	splitAtSelection,
+	type OutlinerEngineContext,
+	type OutlinerSelection,
+} from "./engine";
+import {
 	normalizeOutlinerFile,
 	serializeOutlinerFile,
 	type OutlinerBlock,
@@ -33,29 +43,23 @@ function autoGrow(textarea: HTMLTextAreaElement): void {
 	textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
-function findBlockLocation(
-	list: OutlinerBlock[],
-	id: string,
-	parent: OutlinerBlock | null
-): { block: OutlinerBlock; parent: OutlinerBlock | null; siblings: OutlinerBlock[]; index: number } | null {
-	for (let i = 0; i < list.length; i++) {
-		const b = list[i];
-		if (b.id === id) return { block: b, parent, siblings: list, index: i };
-		const child = findBlockLocation(b.children, id, b);
-		if (child) return child;
-	}
-	return null;
-}
-
 export class FileOutlinerView extends TextFileView {
 	private readonly plugin: BlockLinkPlus;
 	private outlinerFile: ParsedOutlinerFile | null = null;
 
 	private blockById = new Map<string, OutlinerBlock>();
-	private textareaById = new Map<string, HTMLTextAreaElement>();
-	private displayById = new Map<string, HTMLElement>();
 
 	private dirtyBlockIds = new Set<string>();
+
+	private rootEl: HTMLElement | null = null;
+	private topLevelBlocksEl: HTMLElement | null = null;
+
+	private blockElById = new Map<string, HTMLElement>();
+	private blockContentElById = new Map<string, HTMLElement>();
+	private childrenElById = new Map<string, HTMLElement>();
+	private displayElById = new Map<string, HTMLElement>();
+
+	private editorEl: HTMLTextAreaElement | null = null;
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
@@ -83,12 +87,19 @@ export class FileOutlinerView extends TextFileView {
 	clear(): void {
 		this.outlinerFile = null;
 		this.blockById.clear();
-		this.textareaById.clear();
-		this.displayById.clear();
+		this.blockElById.clear();
+		this.blockContentElById.clear();
+		this.childrenElById.clear();
+		this.displayElById.clear();
 		this.dirtyBlockIds.clear();
+
 		this.editingId = null;
 		this.pendingFocus = null;
 		this.pendingScrollToId = null;
+
+		this.editorEl = null;
+		this.rootEl = null;
+		this.topLevelBlocksEl = null;
 		this.contentEl.empty();
 	}
 
@@ -115,7 +126,7 @@ export class FileOutlinerView extends TextFileView {
 		this.data = content;
 		this.outlinerFile = file;
 		this.rebuildIndex();
-		this.render();
+		this.render({ forceRebuild: true });
 
 		if (didChange) {
 			// Persist normalization invariants (tail lines, ids, etc).
@@ -170,346 +181,386 @@ export class FileOutlinerView extends TextFileView {
 		}
 	}
 
-	private render(): void {
-		const file = this.outlinerFile;
-		this.contentEl.empty();
-		this.textareaById.clear();
-		this.displayById.clear();
+	private ensureRoot(): void {
+		if (this.rootEl && this.topLevelBlocksEl && this.editorEl) return;
 
-		if (!file) return;
+		this.contentEl.empty();
 
 		const root = this.contentEl.createDiv({ cls: "blp-file-outliner-root" });
-		for (const b of file.blocks) {
-			this.renderBlock(root, b, 0);
+		this.rootEl = root;
+		this.topLevelBlocksEl = root;
+
+		const textarea = document.createElement("textarea");
+		textarea.className = "blp-file-outliner-editor";
+		textarea.spellcheck = true;
+		textarea.rows = 1;
+		textarea.style.display = "none";
+
+		textarea.addEventListener("input", () => this.onEditorInput());
+		textarea.addEventListener("keydown", (evt) => this.onEditorKeyDown(evt));
+		textarea.addEventListener("paste", (evt) => this.onEditorPaste(evt));
+		textarea.addEventListener("blur", () => this.onEditorBlur());
+
+		this.editorEl = textarea;
+	}
+
+	private render(opts?: { forceRebuild?: boolean }): void {
+		const file = this.outlinerFile;
+		this.ensureRoot();
+		const root = this.topLevelBlocksEl;
+		if (!file || !root) return;
+
+		// 1) Sync block DOM structure to the current file model.
+		if (opts?.forceRebuild) {
+			// Clear DOM caches but keep the view root/editor.
+			for (const el of this.blockElById.values()) el.remove();
+			this.blockElById.clear();
+			this.blockContentElById.clear();
+			this.childrenElById.clear();
+			this.displayElById.clear();
 		}
 
+		this.syncBlockList(root, file.blocks ?? []);
+		this.pruneDom();
+
+		// 2) Restore focus/selection.
 		if (this.pendingFocus) {
 			const { id, cursorStart, cursorEnd } = this.pendingFocus;
 			this.pendingFocus = null;
 			this.enterEditMode(id, { cursorStart, cursorEnd, scroll: true });
 		} else if (this.editingId) {
-			// Best-effort: restore edit mode across re-renders.
 			this.enterEditMode(this.editingId, { cursorStart: 0, cursorEnd: 0, scroll: false, reuseExisting: true });
 		}
 
+		// 3) Handle deep-link scroll.
 		if (this.pendingScrollToId) {
 			this.scrollToBlockId(this.pendingScrollToId);
 		}
 	}
 
-	private renderBlock(container: HTMLElement, block: OutlinerBlock, depth: number): void {
-		const row = container.createDiv({ cls: "blp-file-outliner-block" });
-		row.dataset.blpOutlinerId = block.id;
-		row.style.paddingLeft = `${depth * 18}px`;
+	private syncBlockList(container: HTMLElement, blocks: OutlinerBlock[]): void {
+		for (const block of blocks) {
+			const el = this.ensureBlockElement(block.id);
+			el.classList.toggle("has-children", (block.children?.length ?? 0) > 0);
+			container.appendChild(el);
 
-		// Display (rendered markdown).
-		const display = row.createDiv({ cls: "blp-file-outliner-display" });
-		this.displayById.set(block.id, display);
+			// Ensure the display is rendered at least once for new blocks.
+			const display = this.displayElById.get(block.id);
+			if (display && display.childNodes.length === 0 && this.editingId !== block.id) {
+				this.renderBlockDisplay(block.id);
+			}
 
-		const sourcePath = this.file?.path ?? "";
-		void MarkdownRenderer.render(this.app, block.text, display, sourcePath, this);
+			const children = this.childrenElById.get(block.id);
+			if (children) this.syncBlockList(children, block.children ?? []);
+		}
+	}
 
-		display.addEventListener("click", (evt) => {
-			// Let normal navigation/controls work (links, checkboxes, etc).
+	private ensureBlockElement(id: string): HTMLElement {
+		const existing = this.blockElById.get(id);
+		if (existing) return existing;
+
+		const blockEl = document.createElement("div");
+		blockEl.className = "ls-block";
+		blockEl.dataset.blpOutlinerId = id;
+
+		const main = document.createElement("div");
+		main.className = "block-main-container";
+		blockEl.appendChild(main);
+
+		const controlWrap = document.createElement("div");
+		controlWrap.className = "block-control-wrap";
+		main.appendChild(controlWrap);
+
+		const bulletContainer = document.createElement("span");
+		bulletContainer.className = "bullet-container";
+		controlWrap.appendChild(bulletContainer);
+
+		const bullet = document.createElement("span");
+		bullet.className = "bullet";
+		bulletContainer.appendChild(bullet);
+
+		const contentWrap = document.createElement("div");
+		contentWrap.className = "block-content-wrapper";
+		main.appendChild(contentWrap);
+
+		const content = document.createElement("div");
+		content.className = "block-content";
+		contentWrap.appendChild(content);
+		this.blockContentElById.set(id, content);
+
+		const display = document.createElement("div");
+		display.className = "blp-file-outliner-display";
+		content.appendChild(display);
+		this.displayElById.set(id, display);
+
+		const onActivate = (evt: MouseEvent) => {
+			// Let normal navigation/controls work (links, buttons, checkboxes, etc).
 			const target = evt.target as HTMLElement | null;
 			if (target?.closest("a, button, input, textarea")) return;
-			this.enterEditMode(block.id, { cursorStart: block.text.length, cursorEnd: block.text.length, scroll: true });
-		});
+			const b = this.blockById.get(id);
+			const end = b?.text?.length ?? 0;
+			this.enterEditMode(id, { cursorStart: end, cursorEnd: end, scroll: true });
+		};
 
-		// Editor (textarea).
-		const textarea = row.createEl("textarea", { cls: "blp-file-outliner-editor" });
-		textarea.value = block.text;
-		textarea.spellcheck = true;
-		textarea.rows = 1;
-		textarea.style.display = this.editingId === block.id ? "" : "none";
-		this.textareaById.set(block.id, textarea);
-		if (this.editingId === block.id) autoGrow(textarea);
+		display.addEventListener("click", onActivate);
+		bulletContainer.addEventListener("click", onActivate);
 
-		textarea.addEventListener("input", () => {
-			block.text = textarea.value;
-			autoGrow(textarea);
-			this.dirtyBlockIds.add(block.id);
-			this.requestSave();
-		});
+		const childrenContainer = document.createElement("div");
+		childrenContainer.className = "block-children-container";
+		blockEl.appendChild(childrenContainer);
 
-		textarea.addEventListener("blur", () => {
-			if (this.editingId !== block.id) return;
-			this.exitEditMode(block.id);
-		});
+		const children = document.createElement("div");
+		children.className = "block-children";
+		childrenContainer.appendChild(children);
+		this.childrenElById.set(id, children);
 
-		textarea.addEventListener("keydown", (evt) => this.handleKeyDown(evt, block.id));
-		textarea.addEventListener("paste", (evt) => this.handlePaste(evt, block.id));
+		this.blockElById.set(id, blockEl);
+		return blockEl;
+	}
 
-		// Children.
-		if (block.children.length > 0) {
-			for (const child of block.children) {
-				this.renderBlock(container, child, depth + 1);
+	private pruneDom(): void {
+		// Remove block elements for ids that are no longer in the model.
+		for (const [id, el] of Array.from(this.blockElById.entries())) {
+			if (this.blockById.has(id)) continue;
+
+			// If we just deleted the active block, force exit edit mode.
+			if (this.editingId === id) {
+				this.editingId = null;
+				try {
+					this.editorEl?.remove();
+				} catch {
+					// ignore
+				}
 			}
+
+			el.remove();
+			this.blockElById.delete(id);
+			this.blockContentElById.delete(id);
+			this.childrenElById.delete(id);
+			this.displayElById.delete(id);
 		}
 	}
 
-	private handleKeyDown(evt: KeyboardEvent, id: string): void {
-		if (!this.outlinerFile) return;
+	private renderBlockDisplay(id: string): void {
+		const b = this.blockById.get(id);
+		const display = this.displayElById.get(id);
+		if (!b || !display) return;
 
-		const textarea = this.textareaById.get(id);
-		if (!textarea) return;
-
-		if (evt.key === "Enter" && !evt.shiftKey) {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.splitBlockAtCursor(id, textarea.selectionStart ?? 0, textarea.selectionEnd ?? 0);
-			return;
-		}
-
-		if (evt.key === "Tab") {
-			evt.preventDefault();
-			evt.stopPropagation();
-			if (evt.shiftKey) this.outdentBlock(id);
-			else this.indentBlock(id);
-			return;
-		}
-
-		if (evt.key === "Backspace") {
-			const start = textarea.selectionStart ?? 0;
-			const end = textarea.selectionEnd ?? 0;
-			if (start === 0 && end === 0) {
-				evt.preventDefault();
-				evt.stopPropagation();
-				this.mergeWithPrevious(id);
-			}
-		}
-	}
-
-	private handlePaste(evt: ClipboardEvent, id: string): void {
-		if (!this.outlinerFile) return;
-		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return;
-
-		const raw = evt.clipboardData?.getData("text/plain") ?? "";
-		if (!raw.includes("\n") && !raw.includes("\r")) return;
-
-		evt.preventDefault();
-		evt.stopPropagation();
-
-		const textarea = this.textareaById.get(id);
-		if (!textarea) return;
-
-		const loc = findBlockLocation(this.outlinerFile.blocks, id, null);
-		if (!loc) return;
-
-		const text = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-		const lines = text.split("\n");
-		if (lines.length <= 1) return;
-
-		const currentText = textarea.value;
-		const start = textarea.selectionStart ?? 0;
-		const end = textarea.selectionEnd ?? 0;
-		const left = Math.max(0, Math.min(currentText.length, Math.min(start, end)));
-		const right = Math.max(0, Math.min(currentText.length, Math.max(start, end)));
-
-		const before = currentText.slice(0, left);
-		const after = currentText.slice(right);
-
-		const now = formatSystemDate(DateTime.now());
-
-		// First line stays in the current block.
-		loc.block.text = before + (lines[0] ?? "");
-		loc.block.system.updated = now;
-		this.dirtyBlockIds.add(loc.block.id);
-
-		// Remaining lines become new sibling blocks. The final line inherits the "after" text.
-		let insertAt = loc.index + 1;
-		let lastId: string | null = null;
-		for (let i = 1; i < lines.length; i++) {
-			const isLast = i === lines.length - 1;
-			const newId = this.generateUniqueId();
-			const lineText = (lines[i] ?? "") + (isLast ? after : "");
-
-			const next: OutlinerBlock = {
-				id: newId,
-				depth: loc.block.depth,
-				task: null,
-				text: lineText,
-				children: [],
-				system: { date: now, updated: now, extra: {} },
-			};
-
-			loc.siblings.splice(insertAt, 0, next);
-			insertAt++;
-
-			this.blockById.set(newId, next);
-			this.dirtyBlockIds.add(newId);
-			lastId = newId;
-		}
-
-		const focusId = lastId ?? loc.block.id;
-		const focusPos = (lines[lines.length - 1] ?? "").length;
-		this.pendingFocus = { id: focusId, cursorStart: focusPos, cursorEnd: focusPos };
-		this.render();
-		this.requestSave();
+		display.replaceChildren();
+		const sourcePath = this.file?.path ?? "";
+		void MarkdownRenderer.render(this.app, b.text ?? "", display, sourcePath, this);
 	}
 
 	private enterEditMode(
 		id: string,
 		opts: { cursorStart: number; cursorEnd: number; scroll: boolean; reuseExisting?: boolean }
 	): void {
-		this.editingId = id;
+		this.ensureRoot();
+		if (!this.editorEl) return;
+		if (!this.outlinerFile) return;
 
-		const textarea = this.textareaById.get(id);
-		const display = this.displayById.get(id);
-		if (!textarea || !display) {
-			if (!opts.reuseExisting) this.render();
+		const block = this.blockById.get(id);
+		const host = this.blockContentElById.get(id);
+		const display = this.displayElById.get(id);
+
+		if (!block || !host || !display) {
+			if (!opts.reuseExisting) this.render({ forceRebuild: true });
 			return;
 		}
 
-		display.style.display = "none";
-		textarea.style.display = "";
-		autoGrow(textarea);
+		if (this.editingId && this.editingId !== id) {
+			this.exitEditMode(this.editingId);
+		}
 
-		textarea.focus();
+		this.editingId = id;
+		for (const [prevId, prevEl] of this.blockElById) {
+			if (prevId !== id) prevEl.classList.remove("is-blp-outliner-active");
+		}
+		this.blockElById.get(id)?.classList.add("is-blp-outliner-active");
+
+		display.style.display = "none";
+		host.appendChild(this.editorEl);
+		this.editorEl.style.display = "";
+		this.editorEl.value = block.text ?? "";
+		autoGrow(this.editorEl);
+
+		this.editorEl.focus();
 		try {
-			textarea.setSelectionRange(opts.cursorStart, opts.cursorEnd);
+			this.editorEl.setSelectionRange(opts.cursorStart, opts.cursorEnd);
 		} catch {
 			// Ignore selection errors (e.g. mobile quirks).
 		}
 
 		if (opts.scroll) {
-			textarea.scrollIntoView({ block: "nearest" });
+			this.editorEl.scrollIntoView({ block: "nearest" });
 		}
 	}
 
 	private exitEditMode(id: string): void {
-		const textarea = this.textareaById.get(id);
-		const display = this.displayById.get(id);
+		const editor = this.editorEl;
+		const display = this.displayElById.get(id);
 		const b = this.blockById.get(id);
-		if (!textarea || !display || !b) return;
+		if (!editor || !display || !b) return;
 
-		b.text = textarea.value;
-		this.dirtyBlockIds.add(id);
+		// Commit latest editor value.
+		const nextText = editor.value;
+		if (b.text !== nextText) {
+			b.text = nextText;
+			this.dirtyBlockIds.add(id);
+		}
 
 		this.editingId = null;
-		textarea.style.display = "none";
+		this.blockElById.get(id)?.classList.remove("is-blp-outliner-active");
+		editor.style.display = "none";
 		display.style.display = "";
-
-		display.empty();
-		const sourcePath = this.file?.path ?? "";
-		void MarkdownRenderer.render(this.app, b.text, display, sourcePath, this);
+		this.renderBlockDisplay(id);
 
 		this.requestSave();
 	}
 
-	private splitBlockAtCursor(id: string, cursorStart: number, cursorEnd: number): void {
-		if (!this.outlinerFile) return;
-		const loc = findBlockLocation(this.outlinerFile.blocks, id, null);
-		if (!loc) return;
+	private getActiveSelection(): OutlinerSelection | null {
+		if (!this.outlinerFile) return null;
+		if (!this.editorEl) return null;
+		const id = this.editingId;
+		if (!id) return null;
+		const block = this.blockById.get(id);
+		if (!block) return null;
 
-		const textarea = this.textareaById.get(id);
-		const currentText = textarea?.value ?? loc.block.text;
+		const value = this.editorEl.value ?? "";
+		// Keep model in sync with the editor before structural ops.
+		block.text = value;
 
-		const start = Math.max(0, Math.min(currentText.length, cursorStart));
-		const end = Math.max(0, Math.min(currentText.length, cursorEnd));
-		const before = currentText.slice(0, Math.min(start, end));
-		const after = currentText.slice(Math.max(start, end));
+		const start = this.editorEl.selectionStart ?? 0;
+		const end = this.editorEl.selectionEnd ?? 0;
+		return { id, start, end };
+	}
 
+	private getEngineContext(): OutlinerEngineContext {
 		const now = formatSystemDate(DateTime.now());
-
-		loc.block.text = before;
-		loc.block.system.updated = now;
-		this.dirtyBlockIds.add(loc.block.id);
-
-		const moveChildren = this.plugin.settings.fileOutlinerChildrenOnSplit === "move";
-		const movedChildren = moveChildren ? loc.block.children : [];
-		if (moveChildren) loc.block.children = [];
-
-		const newId = this.generateUniqueId();
-		const next: OutlinerBlock = {
-			id: newId,
-			depth: loc.block.depth,
-			task: null,
-			text: after,
-			children: movedChildren,
-			system: { date: now, updated: now, extra: {} },
+		return {
+			now,
+			generateId: () => this.generateUniqueId(),
+			childrenOnSplit: this.plugin.settings.fileOutlinerChildrenOnSplit ?? "keep",
+			backspaceWithChildren: this.plugin.settings.fileOutlinerBackspaceWithChildren ?? "merge",
 		};
-
-		loc.siblings.splice(loc.index + 1, 0, next);
-		this.blockById.set(newId, next);
-
-		this.pendingFocus = { id: newId, cursorStart: 0, cursorEnd: 0 };
-		this.render();
-		this.dirtyBlockIds.add(newId);
-		this.requestSave();
 	}
 
-	private indentBlock(id: string): void {
-		if (!this.outlinerFile) return;
-		const loc = findBlockLocation(this.outlinerFile.blocks, id, null);
-		if (!loc) return;
-		if (loc.index <= 0) return;
+	private applyEngineResult(result: {
+		didChange: boolean;
+		file: ParsedOutlinerFile;
+		selection: OutlinerSelection;
+		dirtyIds: Set<string>;
+	}): void {
+		if (!result.didChange) return;
 
-		const prev = loc.siblings[loc.index - 1];
-		if (!prev) return;
+		this.ensureRoot();
 
-		// Remove from current siblings, append to previous sibling's children.
-		loc.siblings.splice(loc.index, 1);
-		prev.children.push(loc.block);
+		this.outlinerFile = result.file;
+		this.rebuildIndex();
 
-		const textarea = this.textareaById.get(id);
+		for (const id of Array.from(result.dirtyIds)) {
+			this.dirtyBlockIds.add(id);
+		}
+
 		this.pendingFocus = {
-			id,
-			cursorStart: textarea?.selectionStart ?? 0,
-			cursorEnd: textarea?.selectionEnd ?? 0,
+			id: result.selection.id,
+			cursorStart: result.selection.start,
+			cursorEnd: result.selection.end,
 		};
+
+		// Re-render and try to keep scroll/focus stable by reusing existing DOM nodes.
 		this.render();
-		this.dirtyBlockIds.add(id);
-		this.dirtyBlockIds.add(prev.id);
+		for (const id of Array.from(result.dirtyIds)) {
+			if (id === this.editingId) continue;
+			this.renderBlockDisplay(id);
+		}
+
 		this.requestSave();
 	}
 
-	private outdentBlock(id: string): void {
-		if (!this.outlinerFile) return;
-		const loc = findBlockLocation(this.outlinerFile.blocks, id, null);
-		if (!loc || !loc.parent) return;
+	private onEditorInput(): void {
+		const id = this.editingId;
+		const editor = this.editorEl;
+		if (!id || !editor) return;
 
-		const parentLoc = findBlockLocation(this.outlinerFile.blocks, loc.parent.id, null);
-		if (!parentLoc) return;
+		const b = this.blockById.get(id);
+		if (!b) return;
 
-		// Remove from parent's children, insert after parent in parent's siblings.
-		loc.siblings.splice(loc.index, 1);
-		parentLoc.siblings.splice(parentLoc.index + 1, 0, loc.block);
-
-		const textarea = this.textareaById.get(id);
-		this.pendingFocus = {
-			id,
-			cursorStart: textarea?.selectionStart ?? 0,
-			cursorEnd: textarea?.selectionEnd ?? 0,
-		};
-		this.render();
+		b.text = editor.value;
+		autoGrow(editor);
 		this.dirtyBlockIds.add(id);
-		this.dirtyBlockIds.add(loc.parent.id);
 		this.requestSave();
 	}
 
-	private mergeWithPrevious(id: string): void {
+	private onEditorBlur(): void {
+		const id = this.editingId;
+		if (!id) return;
+		this.exitEditMode(id);
+	}
+
+	private onEditorKeyDown(evt: KeyboardEvent): void {
+		// Avoid stealing IME accept/confirm keystrokes.
+		if ((evt as any).isComposing) return;
 		if (!this.outlinerFile) return;
-		const loc = findBlockLocation(this.outlinerFile.blocks, id, null);
-		if (!loc) return;
-		if (loc.index <= 0) return;
 
-		const prev = loc.siblings[loc.index - 1];
-		if (!prev) return;
+		// Don't override modified keybinds (users may have custom shortcuts).
+		if (evt.metaKey || evt.ctrlKey || evt.altKey) return;
 
-		const prevTextLen = prev.text.length;
-		prev.text = prev.text + loc.block.text;
-		// Move children to previous block.
-		prev.children.push(...loc.block.children);
+		const sel = this.getActiveSelection();
+		if (!sel) return;
 
-		loc.siblings.splice(loc.index, 1);
-		this.blockById.delete(id);
+		const ctx = this.getEngineContext();
+		const value = this.editorEl?.value ?? "";
 
-		this.pendingFocus = { id: prev.id, cursorStart: prevTextLen, cursorEnd: prevTextLen };
-		this.render();
+		if (evt.key === "Enter" && !evt.shiftKey) {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
+			return;
+		}
 
-		this.dirtyBlockIds.add(prev.id);
-		this.requestSave();
+		if (evt.key === "Tab") {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.applyEngineResult(evt.shiftKey ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel));
+			return;
+		}
+
+		if (evt.key === "Backspace") {
+			if (sel.start === 0 && sel.end === 0) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				this.applyEngineResult(
+					backspaceAtStart(this.outlinerFile, sel, { backspaceWithChildren: ctx.backspaceWithChildren })
+				);
+			}
+			return;
+		}
+
+		if (evt.key === "Delete") {
+			if (sel.start === value.length && sel.end === value.length) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				this.applyEngineResult(mergeWithNext(this.outlinerFile, sel));
+			}
+		}
+	}
+
+	private onEditorPaste(evt: ClipboardEvent): void {
+		if (!this.outlinerFile) return;
+		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return;
+
+		const raw = evt.clipboardData?.getData("text/plain") ?? "";
+		if (!raw.includes("\n") && !raw.includes("\r")) return;
+
+		const sel = this.getActiveSelection();
+		if (!sel) return;
+
+		evt.preventDefault();
+		evt.stopPropagation();
+
+		const ctx = this.getEngineContext();
+		this.applyEngineResult(pasteSplitLines(this.outlinerFile, sel, raw, { now: ctx.now, generateId: ctx.generateId }));
 	}
 
 	private scrollToBlockId(id: string): void {

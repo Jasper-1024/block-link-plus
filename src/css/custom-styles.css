@@ -1,11 +1,63 @@
-/* File-level outliner view (v2). */
+/* File-level outliner view (v2) — Logseq-like block threading (scoped). */
+.blp-file-outliner-view {
+    --blp-outliner-control-width: 42px;
+    --blp-outliner-bullet-container: 14px;
+    --blp-outliner-bullet-size: 6px;
+    --blp-outliner-thread-width: 2px;
+    --blp-outliner-thread-color: var(--background-modifier-border);
+    --blp-outliner-thread-active: hsla(var(--interactive-accent-hsl), 0.9);
+    --blp-outliner-active-bg: hsla(var(--interactive-accent-hsl), 0.08);
+}
+
 .blp-file-outliner-view .blp-file-outliner-root {
     padding: 12px 14px;
 }
 
-.blp-file-outliner-view .blp-file-outliner-block {
+.blp-file-outliner-view .ls-block {
     position: relative;
     margin: 2px 0;
+}
+
+.blp-file-outliner-view .ls-block > .block-main-container {
+    display: flex;
+    align-items: flex-start;
+}
+
+.blp-file-outliner-view .block-control-wrap {
+    flex: 0 0 var(--blp-outliner-control-width);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+.blp-file-outliner-view .bullet-container {
+    width: var(--blp-outliner-bullet-container);
+    height: var(--blp-outliner-bullet-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.blp-file-outliner-view .bullet {
+    width: var(--blp-outliner-bullet-size);
+    height: var(--blp-outliner-bullet-size);
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.blp-file-outliner-view .ls-block:focus-within > .block-main-container .bullet {
+    background: var(--blp-outliner-thread-active);
+}
+
+.blp-file-outliner-view .block-content-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.blp-file-outliner-view .block-content {
+    min-width: 0;
 }
 
 .blp-file-outliner-view .blp-file-outliner-display {
@@ -28,8 +80,37 @@
     color: var(--text-normal);
 }
 
-.blp-file-outliner-view .blp-file-outliner-block.is-blp-outliner-target .blp-file-outliner-display,
-.blp-file-outliner-view .blp-file-outliner-block.is-blp-outliner-target .blp-file-outliner-editor {
-    box-shadow: inset 2px 0 0 hsla(var(--interactive-accent-hsl), 0.9);
-    background: hsla(var(--interactive-accent-hsl), 0.08);
+/* Indent: each level is one control width; threading line anchors to bullet center. */
+.blp-file-outliner-view .block-children-container {
+    position: relative;
+    margin-left: var(--blp-outliner-control-width);
+}
+
+.blp-file-outliner-view .ls-block.has-children > .block-children-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--blp-outliner-control-width) * -0.5);
+    width: var(--blp-outliner-thread-width);
+    background: var(--blp-outliner-thread-color);
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.blp-file-outliner-view .ls-block.has-children:focus-within > .block-children-container::before {
+    background: var(--blp-outliner-thread-active);
+    opacity: 0.85;
+}
+
+.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
+.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
+    box-shadow: inset 2px 0 0 var(--blp-outliner-thread-active);
+    background: var(--blp-outliner-active-bg);
+}
+
+.blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-display,
+.blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-editor {
+    box-shadow: inset 2px 0 0 var(--blp-outliner-thread-active);
+    background: var(--blp-outliner-active-bg);
 }

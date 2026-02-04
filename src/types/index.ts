@@ -110,6 +110,7 @@ export interface PluginSettings {
 	fileOutlinerViewEnabled: boolean;
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
+	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -157,6 +158,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerViewEnabled: true,
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
+	fileOutlinerBackspaceWithChildren: "merge",
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,
