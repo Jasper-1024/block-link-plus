@@ -6,9 +6,12 @@
 
 .blp-file-outliner-view {
 	/* Map Logseq variable names to Obsidian theme variables. */
+	/* Fallback first, then prefer translucent text-muted (closer to Logseq). */
 	--ls-guideline-color: var(--background-modifier-border);
+	--ls-guideline-color: color-mix(in srgb, var(--text-muted) 18%, transparent);
 	--ls-link-text-color: hsla(var(--interactive-accent-hsl), 0.95);
 	--ls-block-bullet-color: var(--text-muted);
+	--ls-block-bullet-color: color-mix(in srgb, var(--text-muted) 55%, transparent);
 	--ls-block-bullet-threading-active-color-overwrite: hsla(var(--interactive-accent-hsl), 0.9);
 	--ls-block-bullet-threading-width-overwrite: 2px;
 
