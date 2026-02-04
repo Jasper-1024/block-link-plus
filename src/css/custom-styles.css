@@ -30,12 +30,14 @@
 
 .blp-file-outliner-view .ls-block {
 	position: relative;
-	margin: 2px 0;
+	margin: 0;
 }
 
 .blp-file-outliner-view .block-main-container {
 	display: flex;
-	align-items: baseline;
+	/* Logseq aligns the bullet/control to the first line (top), not the last-line baseline. */
+	align-items: flex-start;
+	padding-right: 8px; /* matches Logseq's `pr-2` */
 }
 
 .blp-file-outliner-view .block-control-wrap {
@@ -83,6 +85,10 @@
 	cursor: text;
 	padding: 4px 6px;
 	border-radius: 6px;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display p {
+	margin: 0;
 }
 
 .blp-file-outliner-view .blp-file-outliner-editor {
@@ -146,7 +152,7 @@
 	pointer-events: none;
 	content: "";
 	left: calc(var(--ls-block-bullet-threading-width) * -1);
-	right: 20px;
+	right: 16px;
 	top: calc(-50% + var(--ls-block-bullet-threading-width) * 0.5 - 1px);
 	bottom: 50%;
 	position: absolute;
@@ -182,7 +188,7 @@
 	content: "";
 	top: 12px;
 	bottom: 0;
-	left: -21px;
+	left: -13px;
 	position: absolute;
 	border-left: var(--ls-block-bullet-threading-width) solid transparent;
 }

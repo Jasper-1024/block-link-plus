@@ -63,6 +63,7 @@ export class FileOutlinerView extends TextFileView {
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
+	private pendingBlurTimer: number | null = null;
 
 	private readonly indentSize = 2;
 
@@ -96,6 +97,10 @@ export class FileOutlinerView extends TextFileView {
 		this.editingId = null;
 		this.pendingFocus = null;
 		this.pendingScrollToId = null;
+		if (this.pendingBlurTimer) {
+			window.clearTimeout(this.pendingBlurTimer);
+			this.pendingBlurTimer = null;
+		}
 
 		this.editorEl = null;
 		this.rootEl = null;
@@ -379,6 +384,10 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editingId = id;
+		if (this.pendingBlurTimer) {
+			window.clearTimeout(this.pendingBlurTimer);
+			this.pendingBlurTimer = null;
+		}
 		for (const [prevId, prevEl] of this.blockElById) {
 			if (prevId !== id) prevEl.classList.remove("is-blp-outliner-active");
 		}
@@ -407,6 +416,10 @@ export class FileOutlinerView extends TextFileView {
 		const display = this.displayElById.get(id);
 		const b = this.blockById.get(id);
 		if (!editor || !display || !b) return;
+		if (this.pendingBlurTimer) {
+			window.clearTimeout(this.pendingBlurTimer);
+			this.pendingBlurTimer = null;
+		}
 
 		// Commit latest editor value.
 		const nextText = editor.value;
@@ -500,8 +513,18 @@ export class FileOutlinerView extends TextFileView {
 
 	private onEditorBlur(): void {
 		const id = this.editingId;
-		if (!id) return;
-		this.exitEditMode(id);
+		const editor = this.editorEl;
+		if (!id || !editor) return;
+
+		// Blur can happen transiently when we reorder/move DOM nodes during a structural edit.
+		// Defer the decision: if focus immediately returns to our textarea, keep edit mode.
+		if (this.pendingBlurTimer) window.clearTimeout(this.pendingBlurTimer);
+		this.pendingBlurTimer = window.setTimeout(() => {
+			this.pendingBlurTimer = null;
+			if (this.editingId !== id) return;
+			if (document.activeElement === editor) return;
+			this.exitEditMode(id);
+		}, 0);
 	}
 
 	private onEditorKeyDown(evt: KeyboardEvent): void {
