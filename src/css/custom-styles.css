@@ -21,10 +21,56 @@
 	);
 	--ls-block-bullet-threading-width: var(--ls-block-bullet-threading-width-overwrite, 1px);
 
-	/* Layout constants observed from Logseq. */
+	/* Layout tokens (match Logseq geometry). */
 	--blp-outliner-control-width: 42px;
-	--blp-outliner-children-offset: 29px;
+	--blp-outliner-control-padding-right: 6px;
+	--blp-outliner-control-height: 26px;
+	--blp-outliner-main-padding-right: 8px; /* `pr-2` */
+
+	--blp-outliner-bullet-container-size: 14px;
+	--blp-outliner-bullet-size: 6px;
+	--blp-outliner-bullet-translate-x: 1px;
+	--blp-outliner-bullet-translate-y: -1px;
+
+	--blp-outliner-guideline-hitbox-width: 4px;
+	--blp-outliner-guideline-hitbox-radius: 2px;
+	--blp-outliner-guideline-hitbox-opacity: 0.6;
+
+	--blp-outliner-elbow-radius: 10px;
+	--blp-outliner-active-inset-width: 2px;
+
+	/* Derived geometry (avoid scattered magic numbers like -13px/16px/29px/12px). */
+	--blp-outliner-bullet-container-half: calc(var(--blp-outliner-bullet-container-size) / 2);
+	--blp-outliner-children-offset: calc(
+		var(--blp-outliner-control-width) - var(--blp-outliner-bullet-container-size) + var(--blp-outliner-bullet-translate-x)
+	);
+	--blp-outliner-bullet-center-y: calc(
+		((var(--blp-outliner-control-height) - var(--blp-outliner-bullet-container-size)) / 2) +
+			var(--blp-outliner-bullet-translate-y) +
+			var(--blp-outliner-bullet-container-half)
+	);
+	--blp-outliner-thread-x-from-content-left: calc(
+		var(--blp-outliner-bullet-translate-x) -
+			(var(--blp-outliner-control-padding-right) + var(--blp-outliner-bullet-container-half)) -
+			(var(--ls-block-bullet-threading-width) / 2)
+	);
+	--blp-outliner-elbow-gap: calc(
+		(var(--blp-outliner-bullet-container-size) - var(--blp-outliner-bullet-size)) / 2 -
+			var(--blp-outliner-bullet-translate-x)
+	);
+	--blp-outliner-elbow-right: calc(
+		var(--blp-outliner-bullet-container-size) - var(--blp-outliner-bullet-translate-x) + var(--blp-outliner-elbow-gap)
+	);
+	--blp-outliner-guideline-hitbox-left: calc(-1 * (var(--blp-outliner-guideline-hitbox-width) / 4));
+
 	--blp-outliner-active-bg: hsla(var(--interactive-accent-hsl), 0.08);
+}
+
+@media (max-width: 640px) {
+	.blp-file-outliner-view {
+		/* Slightly tighter controls on narrow screens, also matches Logseq's mobile tweak. */
+		--blp-outliner-control-padding-right: 4px;
+	}
 }
 
 .blp-file-outliner-view .blp-file-outliner-root {
@@ -40,35 +86,35 @@
 	display: flex;
 	/* Logseq aligns the bullet/control to the first line (top), not the last-line baseline. */
 	align-items: flex-start;
-	padding-right: 8px; /* matches Logseq's `pr-2` */
+	padding-right: var(--blp-outliner-main-padding-right);
 }
 
 .blp-file-outliner-view .block-control-wrap {
 	flex: 0 0 var(--blp-outliner-control-width);
 	width: var(--blp-outliner-control-width);
 	box-sizing: border-box;
-	padding-right: 6px;
+	padding-right: var(--blp-outliner-control-padding-right);
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
 	position: relative;
-	height: 26px;
+	height: var(--blp-outliner-control-height);
 }
 
 .blp-file-outliner-view .bullet-container {
-	height: 14px;
-	width: 14px;
+	height: var(--blp-outliner-bullet-container-size);
+	width: var(--blp-outliner-bullet-container-size);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
 	position: relative;
-	transform: translate(1px, -1px);
+	transform: translate(var(--blp-outliner-bullet-translate-x), var(--blp-outliner-bullet-translate-y));
 }
 
 .blp-file-outliner-view .bullet {
-	width: 6px;
-	height: 6px;
+	width: var(--blp-outliner-bullet-size);
+	height: var(--blp-outliner-bullet-size);
 	border-radius: 9999px;
 	background-color: var(--ls-block-bullet-color);
 }
@@ -93,6 +139,18 @@
 .blp-file-outliner-view .blp-file-outliner-display p {
 	margin: 0;
 	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */
+}
+
+.blp-file-outliner-view .blp-file-outliner-display :where(ul, ol, blockquote, pre) {
+	margin: 0;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display :where(ul, ol) {
+	padding-left: 1.5em;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display blockquote {
+	padding-left: 0.9em;
 }
 
 .blp-file-outliner-view .blp-file-outliner-editor {
@@ -128,12 +186,12 @@
 	z-index: 1;
 	position: absolute;
 	height: 100%;
-	width: 4px;
+	width: var(--blp-outliner-guideline-hitbox-width);
 	padding-right: 0;
-	border-radius: 2px;
+	border-radius: var(--blp-outliner-guideline-hitbox-radius);
 	background-color: transparent;
-	left: -1px;
-	opacity: 0.6;
+	left: var(--blp-outliner-guideline-hitbox-left);
+	opacity: var(--blp-outliner-guideline-hitbox-opacity);
 	transition: background-color 0.2s;
 }
 
@@ -156,13 +214,13 @@
 	pointer-events: none;
 	content: "";
 	left: calc(var(--ls-block-bullet-threading-width) * -1);
-	right: 16px;
+	right: var(--blp-outliner-elbow-right);
 	top: calc(-50% + var(--ls-block-bullet-threading-width) * 0.5 - 1px);
 	bottom: 50%;
 	position: absolute;
 	border-left: var(--ls-block-bullet-threading-width) solid transparent;
 	border-bottom: var(--ls-block-bullet-threading-width) solid transparent;
-	border-bottom-left-radius: 10px;
+	border-bottom-left-radius: var(--blp-outliner-elbow-radius);
 }
 
 .blp-file-outliner-view .ls-block .ls-block:focus-within > div > div.items-center::before {
@@ -190,9 +248,9 @@
 .blp-file-outliner-view .ls-block[haschild] > div > .block-content-wrapper::before {
 	pointer-events: none;
 	content: "";
-	top: 12px;
+	top: var(--blp-outliner-bullet-center-y);
 	bottom: 0;
-	left: -13px;
+	left: var(--blp-outliner-thread-x-from-content-left);
 	position: absolute;
 	border-left: var(--ls-block-bullet-threading-width) solid transparent;
 }
@@ -201,22 +259,16 @@
 	border-color: var(--ls-block-bullet-active-color);
 }
 
-@media (max-width: 640px) {
-	.blp-file-outliner-view .ls-block[haschild] > div > .block-content-wrapper::before {
-		left: -11px;
-	}
-}
-
 /* --- Active/target highlighting --- */
 
 .blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
 .blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
-	box-shadow: inset 2px 0 0 var(--ls-block-bullet-active-color);
+	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }
 
 .blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-display,
 .blp-file-outliner-view .ls-block.is-blp-outliner-target .blp-file-outliner-editor {
-	box-shadow: inset 2px 0 0 var(--ls-block-bullet-active-color);
+	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }

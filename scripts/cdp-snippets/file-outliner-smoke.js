@@ -9,6 +9,18 @@
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const waitFor = async (cond, { timeoutMs = 2000, intervalMs = 50 } = {}) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try {
+        if (cond()) return true;
+      } catch {
+        // ignore
+      }
+      await wait(intervalMs);
+    }
+    return false;
+  };
 
   const pluginId = "block-link-plus";
   const tmpFolder = "_blp_tmp";
@@ -147,11 +159,52 @@
     editor.value = "hello\nworld";
     editor.dispatchEvent(new Event("input", { bubbles: true }));
     editor.blur();
-    await wait(30);
+    await waitFor(() => (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").includes("world"));
 
     const firstRenderedText =
       (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").trimEnd();
     const newlineRendered = firstRenderedText.includes("\n") && firstRenderedText.includes("world");
+
+    // Minimal markdown reset: avoid theme-dependent block margins/padding causing layout jank.
+    const firstDisplay2 = root.querySelector(".ls-block .blp-file-outliner-display");
+    if (firstDisplay2) {
+      firstDisplay2.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await wait(50);
+    }
+
+    const md = ["> quote", "", "- item", "", "```js", "console.log(1)", "```"].join("\n");
+    editor.value = md;
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    editor.blur();
+    await waitFor(() => !!root.querySelector(".ls-block .blp-file-outliner-display pre"));
+
+    const host = root.querySelector(".ls-block .blp-file-outliner-display");
+    const pre = host?.querySelector("pre");
+    const ul = host?.querySelector("ul");
+    const quote = host?.querySelector("blockquote");
+
+    const markdownReset = {
+      pre: pre
+        ? {
+            marginTop: getComputedStyle(pre).marginTop,
+            marginBottom: getComputedStyle(pre).marginBottom,
+          }
+        : null,
+      ul: ul
+        ? {
+            marginTop: getComputedStyle(ul).marginTop,
+            marginBottom: getComputedStyle(ul).marginBottom,
+            paddingLeft: getComputedStyle(ul).paddingLeft,
+          }
+        : null,
+      blockquote: quote
+        ? {
+            marginTop: getComputedStyle(quote).marginTop,
+            marginBottom: getComputedStyle(quote).marginBottom,
+            paddingLeft: getComputedStyle(quote).paddingLeft,
+          }
+        : null,
+    };
 
     const data = typeof view.getViewData === "function" ? view.getViewData() : null;
     const dataPreview = data ? data.split("\n").slice(0, 12) : null;
@@ -178,6 +231,7 @@
             hasSysMarker: data.includes("blp_sys:: 1"),
             hasHello: data.includes("hello"),
             newlineRendered,
+            markdownReset,
             preview: dataPreview,
           }
         : null,
