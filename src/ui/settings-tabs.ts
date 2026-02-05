@@ -150,6 +150,13 @@ export class SettingsTabsController {
 
 	applySearch(rawQuery: string) {
 		const query = rawQuery.trim().toLowerCase();
+		// Empty query means "not searching". Exiting search mode avoids the confusing
+		// state where all tabs are shown (e.g. when Obsidian auto-focuses the search input
+		// after window switches).
+		if (query === "") {
+			if (this.inSearchMode) this.leaveSearchMode(this.selectedTab);
+			return;
+		}
 		const tabsWithResults = new Set<string>();
 
 		for (const [tabName, tab] of this.tabs) {

@@ -100,5 +100,37 @@ describe("SettingsTabsController", () => {
 		expect(isHidden(tabB.headingEl)).toBe(true);
 		expect(isHidden(zeroStateEl)).toBe(true);
 	});
+
+	test("clearing the search query exits search mode and restores the selected tab", () => {
+		const navEl = document.createElement("div");
+		const contentRootEl = document.createElement("div");
+		const zeroStateEl = document.createElement("div");
+
+		const controller = new SettingsTabsController({ zeroStateEl });
+		const tabA = new SettingsTabPane({ navEl, contentRootEl, name: "a", label: "A" });
+		const tabB = new SettingsTabPane({ navEl, contentRootEl, name: "b", label: "B" });
+
+		controller.addTab(tabA);
+		controller.addTab(tabB);
+		controller.init("a");
+
+		const a1 = document.createElement("div");
+		tabA.contentEl.appendChild(a1);
+		tabA.addSearchItem(a1, ["Foo setting"]);
+
+		controller.enterSearchMode();
+		controller.applySearch("foo");
+
+		expect(controller.isSearchMode()).toBe(true);
+
+		controller.applySearch("");
+
+		expect(controller.isSearchMode()).toBe(false);
+		expect(isHidden(tabA.contentEl)).toBe(false);
+		expect(isHidden(tabB.contentEl)).toBe(true);
+		expect(isHidden(tabA.headingEl)).toBe(true);
+		expect(isHidden(tabB.headingEl)).toBe(true);
+		expect(isHidden(zeroStateEl)).toBe(true);
+	});
 });
 
