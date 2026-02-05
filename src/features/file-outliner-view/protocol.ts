@@ -425,6 +425,37 @@ function serializeBlocks(blocks: OutlinerBlock[], opts: { indentSize: number }):
 	return out;
 }
 
+export function serializeOutlinerBlocksForClipboard(
+	blocks: OutlinerBlock[],
+	opts: { indentSize: number }
+): string {
+	const out: string[] = [];
+	const indentSize = opts.indentSize;
+
+	const walk = (list: OutlinerBlock[], depth: number) => {
+		for (const b of list) {
+			const indent = indentText(depth, indentSize);
+			const bodyIndent = contentIndentText(depth, indentSize);
+
+			const rawLines = String(b.text ?? "").split("\n");
+			const first = rawLines[0] ?? "";
+			out.push(`${indent}- ${first}`);
+
+			let inFence = false;
+			for (let i = 1; i < rawLines.length; i++) {
+				const raw = rawLines[i] ?? "";
+				if (FENCE_LINE_REGEX.test(raw)) inFence = !inFence;
+				out.push(raw.length === 0 ? bodyIndent : `${bodyIndent}${escapeBodyLineIfNeeded(raw, inFence)}`);
+			}
+
+			walk(b.children, depth + 1);
+		}
+	};
+
+	walk(blocks, 0);
+	return out.join("\n").trimEnd();
+}
+
 export function parseOutlinerFile(input: string, opts: { indentSize: number; now: DateTime }): ParsedOutlinerFile {
 	const src = normalizeNewlines(input);
 	const { frontmatter, body } = splitFrontmatter(src);

@@ -1,6 +1,8 @@
 import {
 	backspaceAtStart,
+	deleteBlock,
 	indentBlock,
+	insertAfter,
 	mergeWithNext,
 	mergeWithPrevious,
 	outdentBlock,
@@ -210,5 +212,97 @@ describe("file-outliner-view/engine", () => {
 		expect(out.file.blocks[1]?.depth).toBe(0);
 		expect(out.file.blocks[1]?.children[0]?.depth).toBe(1);
 	});
-});
 
+	test("insertAfter inserts an empty sibling after the target and focuses it", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "a", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "b", depth: 0, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const now = "2026-02-03T00:00:00";
+		const out = insertAfter(input, "a", { now, generateId: () => "x" });
+
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual({ id: "x", start: 0, end: 0 });
+		expect(Array.from(out.dirtyIds)).toEqual(["x"]);
+
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "x", "b"]);
+		expect(out.file.blocks[1]?.text).toBe("");
+		expect(out.file.blocks[1]?.system.date).toBe(now);
+		expect(out.file.blocks[1]?.system.updated).toBe(now);
+		expect(out.file.blocks[1]?.depth).toBe(0);
+
+		// Input is not mutated.
+		expect(input.blocks.map((b) => b.id)).toEqual(["a", "b"]);
+	});
+
+	test("insertAfter inserts a sibling within a nested children list", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "a",
+				children: [
+					{ id: "b", depth: 1, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{ id: "c", depth: 1, text: "c", children: [], system: { date: "d", updated: "u", extra: {} } },
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const out = insertAfter(input, "b", { now: "2026-02-03T00:00:00", generateId: () => "x" });
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["b", "x", "c"]);
+		expect(out.file.blocks[0]?.children[1]?.depth).toBe(1);
+	});
+
+	test("deleteBlock removes a subtree and focuses next/prev/parent", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "a", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "b", depth: 0, text: "bb", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "c", depth: 0, text: "c", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const ctx = { now: "2026-02-03T00:00:00", generateId: () => "x" };
+
+		const delMid = deleteBlock(input, "b", ctx);
+		expect(delMid.file.blocks.map((b) => b.id)).toEqual(["a", "c"]);
+		expect(delMid.selection).toEqual({ id: "c", start: 0, end: 0 });
+
+		const delLast = deleteBlock(input, "c", ctx);
+		expect(delLast.file.blocks.map((b) => b.id)).toEqual(["a", "b"]);
+		expect(delLast.selection).toEqual({ id: "b", start: 2, end: 2 });
+
+		const nested = fileOf([
+			{
+				id: "p",
+				depth: 0,
+				text: "pp",
+				children: [{ id: "k", depth: 1, text: "k", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const delChild = deleteBlock(nested, "k", ctx);
+		expect(delChild.file.blocks[0]?.children).toEqual([]);
+		expect(delChild.selection).toEqual({ id: "p", start: 2, end: 2 });
+	});
+
+	test("deleteBlock keeps the file non-empty when deleting the last remaining block", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "a", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		let calls = 0;
+		const ctx = {
+			now: "2026-02-03T00:00:00",
+			generateId: () => (calls++ === 0 ? "a" : "x"),
+		};
+
+		const out = deleteBlock(input, "a", ctx);
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["x"]);
+		expect(out.selection).toEqual({ id: "x", start: 0, end: 0 });
+		expect(Array.from(out.dirtyIds)).toEqual(["x"]);
+	});
+});

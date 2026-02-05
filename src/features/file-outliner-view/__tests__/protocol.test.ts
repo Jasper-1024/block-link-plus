@@ -1,6 +1,11 @@
 import { DateTime } from "luxon";
 
-import { normalizeOutlinerFile, serializeOutlinerFile, type ParsedOutlinerFile } from "../protocol";
+import {
+	normalizeOutlinerFile,
+	serializeOutlinerBlocksForClipboard,
+	serializeOutlinerFile,
+	type ParsedOutlinerFile,
+} from "../protocol";
 
 describe("file-outliner-view/protocol", () => {
 	test("trims trailing whitespace after ^id (Obsidian indexing is strict)", () => {
@@ -202,5 +207,43 @@ describe("file-outliner-view/protocol", () => {
 			].join("\n")
 		);
 		expect(out.content).not.toContain("^ewwn");
+	});
+
+	test("serializeOutlinerBlocksForClipboard emits a markdown list without system tail lines", () => {
+		const blocks: ParsedOutlinerFile["blocks"] = [
+			{
+				id: "aa",
+				depth: 0,
+				text: "parent\n\n- not a child\n```js\n- inside fence\n```\nend",
+				children: [
+					{
+						id: "bb",
+						depth: 1,
+						text: "child",
+						children: [],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		];
+
+		const out = serializeOutlinerBlocksForClipboard(blocks, { indentSize: 2 });
+		expect(out).toBe(
+			[
+				"- parent",
+				"  ",
+				"  \\- not a child",
+				"  ```js",
+				"  - inside fence",
+				"  ```",
+				"  end",
+				"  - child",
+			].join("\n")
+		);
+
+		expect(out).not.toContain("[date::");
+		expect(out).not.toContain("^aa");
+		expect(out).not.toContain("^bb");
 	});
 });

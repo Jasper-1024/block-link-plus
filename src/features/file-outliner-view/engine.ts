@@ -95,6 +95,47 @@ function normalizeSelection(sel: OutlinerSelection, textLen: number): OutlinerSe
 	return { ...sel, start, end };
 }
 
+export function insertAfter(
+	file: ParsedOutlinerFile,
+	targetId: string,
+	ctx: Pick<OutlinerEngineContext, "now" | "generateId">
+): OutlinerEngineResult {
+	const next = cloneFile(file);
+	const dirtyIds = new Set<string>();
+
+	const loc = findBlockLocation(next.blocks, targetId, null);
+	if (!loc) {
+		return { file, selection: { id: targetId, start: 0, end: 0 }, dirtyIds, didChange: false };
+	}
+
+	const existingIds = new Set<string>();
+	collectIds(next.blocks, existingIds);
+
+	const newId = ensureUniqueGeneratedId(ctx, existingIds);
+	existingIds.add(newId);
+
+	const newBlock: OutlinerBlock = {
+		id: newId,
+		depth: 0, // rebuilt below
+		text: "",
+		children: [],
+		system: { date: ctx.now, updated: ctx.now, extra: {} },
+		_systemHasBlpMarker: true,
+	};
+
+	loc.siblings.splice(loc.index + 1, 0, newBlock);
+	dirtyIds.add(newId);
+
+	rebuildDepths(next.blocks, 0);
+
+	return {
+		file: next,
+		selection: { id: newId, start: 0, end: 0 },
+		dirtyIds,
+		didChange: true,
+	};
+}
+
 export function splitAtSelection(
 	file: ParsedOutlinerFile,
 	sel: OutlinerSelection,
@@ -257,6 +298,70 @@ export function mergeWithNext(
 		dirtyIds,
 		didChange: true,
 	};
+}
+
+export function deleteBlock(
+	file: ParsedOutlinerFile,
+	targetId: string,
+	ctx: Pick<OutlinerEngineContext, "now" | "generateId">
+): OutlinerEngineResult {
+	const next = cloneFile(file);
+	const dirtyIds = new Set<string>();
+
+	const loc = findBlockLocation(next.blocks, targetId, null);
+	if (!loc) {
+		return { file, selection: { id: targetId, start: 0, end: 0 }, dirtyIds, didChange: false };
+	}
+
+	const focusPref: Array<
+		| { kind: "next"; block: OutlinerBlock }
+		| { kind: "prev"; block: OutlinerBlock }
+		| { kind: "parent"; block: OutlinerBlock }
+	> = [];
+
+	const nextSibling = loc.siblings[loc.index + 1];
+	if (nextSibling) focusPref.push({ kind: "next", block: nextSibling });
+
+	const prevSibling = loc.siblings[loc.index - 1];
+	if (prevSibling) focusPref.push({ kind: "prev", block: prevSibling });
+
+	if (loc.parent) focusPref.push({ kind: "parent", block: loc.parent });
+
+	loc.siblings.splice(loc.index, 1);
+
+	// If we deleted the last remaining block, keep the file non-empty so the user can continue typing.
+	if ((next.blocks?.length ?? 0) === 0) {
+		const existingIds = new Set<string>();
+		existingIds.add(targetId);
+		const newId = ensureUniqueGeneratedId(ctx, existingIds);
+		const newBlock: OutlinerBlock = {
+			id: newId,
+			depth: 0,
+			text: "",
+			children: [],
+			system: { date: ctx.now, updated: ctx.now, extra: {} },
+			_systemHasBlpMarker: true,
+		};
+		next.blocks = [newBlock];
+		dirtyIds.add(newId);
+		rebuildDepths(next.blocks, 0);
+		return { file: next, selection: { id: newId, start: 0, end: 0 }, dirtyIds, didChange: true };
+	}
+
+	rebuildDepths(next.blocks, 0);
+
+	const focus = focusPref[0];
+	if (!focus) {
+		// Should be unreachable because we ensured a non-empty file above, but keep a safe fallback.
+		const first = next.blocks[0];
+		if (!first) return { file: next, selection: { id: targetId, start: 0, end: 0 }, dirtyIds, didChange: true };
+		return { file: next, selection: { id: first.id, start: 0, end: 0 }, dirtyIds, didChange: true };
+	}
+
+	const focusText = String(focus.block.text ?? "");
+	const cursor = focus.kind === "next" ? 0 : focusText.length;
+
+	return { file: next, selection: { id: focus.block.id, start: cursor, end: cursor }, dirtyIds, didChange: true };
 }
 
 export function backspaceAtStart(

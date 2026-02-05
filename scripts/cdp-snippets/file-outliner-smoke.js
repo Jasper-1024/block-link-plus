@@ -94,9 +94,10 @@
     }
 
     const root = view.contentEl.querySelector(".blp-file-outliner-root") || view.contentEl;
+    const blocksHost = root.querySelector(".blp-file-outliner-blocks") || root;
 
     // Activate first block.
-    const firstDisplay = root.querySelector(".blp-file-outliner-display");
+    const firstDisplay = blocksHost.querySelector(".blp-file-outliner-display");
     if (!firstDisplay) throw new Error("No display element found");
     firstDisplay.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await wait(50);
@@ -115,7 +116,7 @@
     cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
     await wait(80);
 
-    const countAfterEnter = root.querySelectorAll(".ls-block").length;
+    const countAfterEnter = blocksHost.querySelectorAll(".ls-block").length;
 
     // Backspace-at-start should merge with previous (sibling case).
     cm.dispatch({ selection: { anchor: 0 } });
@@ -124,7 +125,7 @@
     );
     await wait(80);
 
-    const countAfterBackspace = root.querySelectorAll(".ls-block").length;
+    const countAfterBackspace = blocksHost.querySelectorAll(".ls-block").length;
 
     // Create another sibling (Enter).
     cm.dispatch({ selection: { anchor: cm.state.doc.length } });
@@ -136,23 +137,23 @@
     cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", bubbles: true, cancelable: true }));
     await wait(80);
 
-    const rootDirectChildrenAfterIndent = Array.from(
-      (root.querySelector(".blp-file-outliner-root") || root).children
-    ).filter((el) => el.classList && el.classList.contains("ls-block")).length;
+    const rootDirectChildrenAfterIndent = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
 
     cmContent.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Tab", code: "Tab", shiftKey: true, bubbles: true, cancelable: true })
     );
     await wait(80);
 
-    const rootDirectChildrenAfterOutdent = Array.from(
-      (root.querySelector(".blp-file-outliner-root") || root).children
-    ).filter((el) => el.classList && el.classList.contains("ls-block")).length;
+    const rootDirectChildrenAfterOutdent = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
 
     // Focus first block again and merge-with-next via Delete-at-end.
-    const firstBullet = root.querySelector(".ls-block .bullet-container");
-    if (firstBullet) {
-      firstBullet.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const firstDisplay3 = blocksHost.querySelector(".ls-block .blp-file-outliner-display");
+    if (firstDisplay3) {
+      firstDisplay3.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await wait(50);
     }
 
@@ -160,7 +161,7 @@
     cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Delete", code: "Delete", bubbles: true, cancelable: true }));
     await wait(80);
 
-    const countAfterDelete = root.querySelectorAll(".ls-block").length;
+    const countAfterDelete = blocksHost.querySelectorAll(".ls-block").length;
 
     // Ensure Shift+Enter semantics (newlines within a block) stay visible when not editing.
     cm.dispatch({
@@ -168,10 +169,10 @@
       selection: { anchor: 11 },
     });
     cmContent.blur();
-    await waitFor(() => (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").includes("world"));
+    await waitFor(() => (blocksHost.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").includes("world"));
 
     const firstRenderedText =
-      (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").trimEnd();
+      (blocksHost.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").trimEnd();
     const newlineRendered = firstRenderedText.includes("\n") && firstRenderedText.includes("world");
 
     if (!newlineRendered) {
@@ -179,7 +180,7 @@
     }
 
     // Minimal markdown reset: avoid theme-dependent block margins/padding causing layout jank.
-    const firstDisplay2 = root.querySelector(".ls-block .blp-file-outliner-display");
+    const firstDisplay2 = blocksHost.querySelector(".ls-block .blp-file-outliner-display");
     if (firstDisplay2) {
       firstDisplay2.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await wait(50);
@@ -191,9 +192,9 @@
       selection: { anchor: md.length },
     });
     cmContent.blur();
-    await waitFor(() => !!root.querySelector(".ls-block .blp-file-outliner-display pre"));
+    await waitFor(() => !!blocksHost.querySelector(".ls-block .blp-file-outliner-display pre"));
 
-    const host = root.querySelector(".ls-block .blp-file-outliner-display");
+    const host = blocksHost.querySelector(".ls-block .blp-file-outliner-display");
     const pre = host?.querySelector("pre");
     const ul = host?.querySelector("ul");
     const quote = host?.querySelector("blockquote");
@@ -248,6 +249,110 @@
 
     const hasCopyButton = !!host?.querySelector("button.copy-code-button");
     if (hasCopyButton) throw new Error("copy-code-button should not be present in outliner display");
+
+    // Callout margins should be normalized (no extra vertical spacing drift).
+    const calloutMd = ["> [!note]", "> callout"].join("\n");
+    const firstDisplay4 = blocksHost.querySelector(".ls-block .blp-file-outliner-display");
+    if (firstDisplay4) {
+      firstDisplay4.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await wait(50);
+    }
+    cm.dispatch({
+      changes: { from: 0, to: cm.state.doc.length, insert: calloutMd },
+      selection: { anchor: calloutMd.length },
+    });
+    cmContent.blur();
+    await waitFor(() => !!blocksHost.querySelector(".ls-block .blp-file-outliner-display .callout"));
+    const callout = blocksHost.querySelector(".ls-block .blp-file-outliner-display .callout");
+    if (!callout) throw new Error("callout missing");
+    const calloutMargins = {
+      top: getComputedStyle(callout).marginTop,
+      bottom: getComputedStyle(callout).marginBottom,
+    };
+    if (calloutMargins.top !== "0px" || calloutMargins.bottom !== "0px") {
+      throw new Error(`callout margins: ${calloutMargins.top}/${calloutMargins.bottom}`);
+    }
+
+    // Fold toggle: create a parent->child pair, then collapse/expand.
+    const firstDisplay5 = blocksHost.querySelector(".ls-block .blp-file-outliner-display");
+    if (firstDisplay5) {
+      firstDisplay5.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await wait(50);
+    }
+    cm.dispatch({ selection: { anchor: cm.state.doc.length } });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
+    await wait(80);
+
+    // New block is active; indent it under the previous to create children.
+    cm.dispatch({ selection: { anchor: 0 } });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", bubbles: true, cancelable: true }));
+    await wait(80);
+
+    const parentDisplay = blocksHost.querySelector('.ls-block[haschild="true"] .blp-file-outliner-display');
+    if (parentDisplay) {
+      parentDisplay.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await wait(50);
+    }
+    const foldToggle = blocksHost.querySelector('.ls-block[haschild="true"] .blp-outliner-fold-toggle');
+    if (!foldToggle) throw new Error("foldToggle missing on parent block");
+    foldToggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(50);
+    const collapsedContainer = blocksHost.querySelector('.ls-block[haschild="true"] > .block-children-container');
+    if (collapsedContainer && getComputedStyle(collapsedContainer).display !== "none") {
+      throw new Error("foldToggle: expected children container to be display:none");
+    }
+    foldToggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(50);
+
+    // Insert affordance: clicking the insert hint adds a new sibling block.
+    const rootChildCountBeforeInsert = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
+    const insertHint = blocksHost.querySelector('.ls-block[haschild="true"] > .blp-outliner-insert-hint');
+    if (!insertHint) throw new Error("insertHint missing");
+    insertHint.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(120);
+    const rootChildCountAfterInsert = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
+    if (rootChildCountAfterInsert !== rootChildCountBeforeInsert + 1) {
+      throw new Error(`insertHint: expected +1 root child (before=${rootChildCountBeforeInsert} after=${rootChildCountAfterInsert})`);
+    }
+
+    // Zoom: bullet click should show the zoom header + render only the subtree.
+    const zoomHeader = root.querySelector(".blp-file-outliner-zoom-header");
+    const headerVisibleBeforeZoom = zoomHeader ? getComputedStyle(zoomHeader).display !== "none" : false;
+    if (headerVisibleBeforeZoom) throw new Error("zoomHeader should be hidden before zoom");
+
+    const zoomBullet = blocksHost.querySelector('.ls-block[haschild="true"] .bullet-container');
+    if (!zoomBullet) throw new Error("zoomBullet missing");
+    zoomBullet.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(150);
+
+    const headerVisibleAfterZoom = zoomHeader ? getComputedStyle(zoomHeader).display !== "none" : false;
+    if (!headerVisibleAfterZoom) throw new Error("zoomHeader should be visible after zoom");
+
+    const rootChildCountAfterZoom = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
+    if (rootChildCountAfterZoom !== 1) {
+      throw new Error(`zoom: expected 1 root child after zoom, got ${rootChildCountAfterZoom}`);
+    }
+
+    const zoomBack = root.querySelector(".blp-outliner-zoom-back");
+    if (!zoomBack) throw new Error("zoomBack missing");
+    zoomBack.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(150);
+
+    const headerVisibleAfterBack = zoomHeader ? getComputedStyle(zoomHeader).display !== "none" : false;
+    if (headerVisibleAfterBack) throw new Error("zoomHeader should be hidden after back");
+
+    const rootChildCountAfterBack = Array.from(blocksHost.children).filter(
+      (el) => el.classList && el.classList.contains("ls-block")
+    ).length;
+    if (rootChildCountAfterBack !== rootChildCountAfterInsert) {
+      throw new Error(`zoom-back: expected root child count ${rootChildCountAfterInsert}, got ${rootChildCountAfterBack}`);
+    }
 
     const data = typeof view.getViewData === "function" ? view.getViewData() : null;
     const dataPreview = data ? data.split("\n").slice(0, 12) : null;

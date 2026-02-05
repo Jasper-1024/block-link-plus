@@ -1,4 +1,4 @@
-import { Component, MarkdownRenderer, TextFileView, WorkspaceLeaf } from "obsidian";
+import { Component, MarkdownRenderer, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
 import { EditorState, Prec } from "@codemirror/state";
@@ -7,9 +7,12 @@ import { basicSetup } from "@codemirror/basic-setup";
 
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
+import * as Clipboard from "../clipboard-handler";
 import {
 	backspaceAtStart,
+	deleteBlock,
 	indentBlock,
+	insertAfter,
 	mergeWithNext,
 	outdentBlock,
 	pasteSplitLines,
@@ -19,6 +22,7 @@ import {
 } from "./engine";
 import {
 	normalizeOutlinerFile,
+	serializeOutlinerBlocksForClipboard,
 	serializeOutlinerFile,
 	type OutlinerBlock,
 	type ParsedOutlinerFile,
@@ -47,14 +51,17 @@ export class FileOutlinerView extends TextFileView {
 	private outlinerFile: ParsedOutlinerFile | null = null;
 
 	private blockById = new Map<string, OutlinerBlock>();
+	private parentById = new Map<string, string | null>();
 
 	private dirtyBlockIds = new Set<string>();
 
 	private rootEl: HTMLElement | null = null;
+	private zoomHeaderEl: HTMLElement | null = null;
 	private topLevelBlocksEl: HTMLElement | null = null;
 
 	private blockElById = new Map<string, HTMLElement>();
 	private blockContentElById = new Map<string, HTMLElement>();
+	private childrenContainerElById = new Map<string, HTMLElement>();
 	private childrenElById = new Map<string, HTMLElement>();
 	private displayElById = new Map<string, HTMLElement>();
 
@@ -68,6 +75,9 @@ export class FileOutlinerView extends TextFileView {
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
 	private pendingBlurTimer: number | null = null;
+
+	private collapsedIds = new Set<string>();
+	private zoomStack: string[] = [];
 
 	private readonly indentSize = 2;
 
@@ -92,8 +102,10 @@ export class FileOutlinerView extends TextFileView {
 	clear(): void {
 		this.outlinerFile = null;
 		this.blockById.clear();
+		this.parentById.clear();
 		this.blockElById.clear();
 		this.blockContentElById.clear();
+		this.childrenContainerElById.clear();
 		this.childrenElById.clear();
 		this.displayElById.clear();
 		this.displayRenderSeqById.clear();
@@ -123,7 +135,10 @@ export class FileOutlinerView extends TextFileView {
 		this.editorView = null;
 		this.editorHostEl = null;
 		this.rootEl = null;
+		this.zoomHeaderEl = null;
 		this.topLevelBlocksEl = null;
+		this.collapsedIds.clear();
+		this.zoomStack = [];
 		this.contentEl.empty();
 	}
 
@@ -178,13 +193,15 @@ export class FileOutlinerView extends TextFileView {
 
 	private rebuildIndex(): void {
 		this.blockById.clear();
-		const walk = (list: OutlinerBlock[]) => {
+		this.parentById.clear();
+		const walk = (list: OutlinerBlock[], parentId: string | null) => {
 			for (const b of list) {
 				this.blockById.set(b.id, b);
-				walk(b.children);
+				this.parentById.set(b.id, parentId);
+				walk(b.children, b.id);
 			}
 		};
-		walk(this.outlinerFile?.blocks ?? []);
+		walk(this.outlinerFile?.blocks ?? [], null);
 	}
 
 	private generateUniqueId(): string {
@@ -206,13 +223,19 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private ensureRoot(): void {
-		if (this.rootEl && this.topLevelBlocksEl && this.editorHostEl && this.editorView) return;
+		if (this.rootEl && this.zoomHeaderEl && this.topLevelBlocksEl && this.editorHostEl && this.editorView) return;
 
 		this.contentEl.empty();
 
 		const root = this.contentEl.createDiv({ cls: "blp-file-outliner-root" });
 		this.rootEl = root;
-		this.topLevelBlocksEl = root;
+
+		const header = root.createDiv({ cls: "blp-file-outliner-zoom-header" });
+		header.style.display = "none";
+		this.zoomHeaderEl = header;
+
+		const blocks = root.createDiv({ cls: "blp-file-outliner-blocks" });
+		this.topLevelBlocksEl = blocks;
 
 		const host = document.createElement("div");
 		host.className = "blp-file-outliner-editor";
@@ -302,7 +325,10 @@ export class FileOutlinerView extends TextFileView {
 		const file = this.outlinerFile;
 		this.ensureRoot();
 		const root = this.topLevelBlocksEl;
+		this.pruneZoomStack();
 		if (!file || !root) return;
+
+		this.renderZoomHeader();
 
 		// 1) Sync block DOM structure to the current file model.
 		if (opts?.forceRebuild) {
@@ -319,6 +345,7 @@ export class FileOutlinerView extends TextFileView {
 			for (const el of this.blockElById.values()) el.remove();
 			this.blockElById.clear();
 			this.blockContentElById.clear();
+			this.childrenContainerElById.clear();
 			this.childrenElById.clear();
 			this.displayElById.clear();
 			this.displayRenderSeqById.clear();
@@ -332,7 +359,7 @@ export class FileOutlinerView extends TextFileView {
 			this.displayRenderComponentById.clear();
 		}
 
-		this.syncBlockList(root, file.blocks ?? []);
+		this.syncBlockList(root, this.getRenderBlocks(file));
 		this.pruneDom();
 
 		// 2) Restore focus/selection.
@@ -350,12 +377,228 @@ export class FileOutlinerView extends TextFileView {
 		}
 	}
 
+	private getZoomRootId(): string | null {
+		return this.zoomStack.length > 0 ? this.zoomStack[this.zoomStack.length - 1] ?? null : null;
+	}
+
+	private pruneZoomStack(): void {
+		while (this.zoomStack.length > 0) {
+			const id = this.zoomStack[this.zoomStack.length - 1];
+			if (id && this.blockById.has(id)) return;
+			this.zoomStack.pop();
+		}
+	}
+
+	private getRenderBlocks(file: ParsedOutlinerFile): OutlinerBlock[] {
+		const rootId = this.getZoomRootId();
+		if (!rootId) return file.blocks ?? [];
+
+		const root = this.blockById.get(rootId);
+		return root ? [root] : file.blocks ?? [];
+	}
+
+	private renderZoomHeader(): void {
+		const header = this.zoomHeaderEl;
+		if (!header) return;
+
+		const rootId = this.getZoomRootId();
+		if (!rootId) {
+			header.style.display = "none";
+			header.replaceChildren();
+			return;
+		}
+
+		const block = this.blockById.get(rootId);
+		const title = String(block?.text ?? rootId).split("\n")[0] ?? rootId;
+
+		header.style.display = "";
+		header.replaceChildren();
+
+		const back = document.createElement("button");
+		back.type = "button";
+		back.className = "blp-outliner-zoom-back";
+		back.textContent = "Back";
+		back.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.zoomOut();
+		});
+		header.appendChild(back);
+
+		const label = document.createElement("div");
+		label.className = "blp-outliner-zoom-label";
+		label.textContent = title;
+		header.appendChild(label);
+	}
+
+	private isDescendantOrSelf(descendantId: string, ancestorId: string): boolean {
+		let cur: string | null = descendantId;
+		while (cur) {
+			if (cur === ancestorId) return true;
+			cur = this.parentById.get(cur) ?? null;
+		}
+		return false;
+	}
+
+	private setCollapsed(id: string, collapsed: boolean): void {
+		const block = this.blockById.get(id);
+		const hasChildren = (block?.children?.length ?? 0) > 0;
+		if (!hasChildren) {
+			this.collapsedIds.delete(id);
+			collapsed = false;
+		}
+
+		if (collapsed) this.collapsedIds.add(id);
+		else this.collapsedIds.delete(id);
+
+		const el = this.blockElById.get(id);
+		if (el) el.classList.toggle("is-blp-outliner-collapsed", collapsed);
+
+		const childrenContainer = this.childrenContainerElById.get(id);
+		if (childrenContainer) childrenContainer.style.display = collapsed ? "none" : "";
+
+		// If we just hid the active editor, exit edit mode to keep focus predictable.
+		if (collapsed && this.editingId && this.isDescendantOrSelf(this.editingId, id) && this.editingId !== id) {
+			this.exitEditMode(this.editingId);
+		}
+	}
+
+	private toggleCollapsed(id: string): void {
+		this.setCollapsed(id, !this.collapsedIds.has(id));
+	}
+
+	private zoomInto(id: string): void {
+		const current = this.getZoomRootId();
+		if (current === id) return;
+		if (!this.blockById.has(id)) return;
+
+		if (this.editingId) this.exitEditMode(this.editingId);
+
+		this.zoomStack.push(id);
+		const end = String(this.blockById.get(id)?.text ?? "").length;
+		this.pendingFocus = { id, cursorStart: end, cursorEnd: end };
+		this.render({ forceRebuild: true });
+	}
+
+	private zoomOut(): void {
+		if (this.zoomStack.length === 0) return;
+
+		if (this.editingId) this.exitEditMode(this.editingId);
+
+		const popped = this.zoomStack.pop();
+		const focusId = this.getZoomRootId() ?? popped ?? null;
+		if (focusId) {
+			const end = String(this.blockById.get(focusId)?.text ?? "").length;
+			this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+			this.pendingScrollToId = focusId;
+		}
+
+		this.render({ forceRebuild: true });
+	}
+
+	private insertAfterBlock(id: string): void {
+		if (!this.outlinerFile) return;
+		const ctx = this.getEngineContext();
+		this.applyEngineResult(insertAfter(this.outlinerFile, id, ctx));
+	}
+
+	private async copyBlockSubtree(id: string): Promise<void> {
+		const b = this.blockById.get(id);
+		if (!b) return;
+
+		const text = serializeOutlinerBlocksForClipboard([b], { indentSize: this.indentSize });
+		await navigator.clipboard.writeText(text);
+	}
+
+	private openBulletMenu(id: string, evt: MouseEvent): void {
+		if (!this.outlinerFile) return;
+		if (!this.file) return;
+
+		const block = this.blockById.get(id);
+		if (!block) return;
+
+		const menu = new Menu();
+
+		const caretId = `^${id}`;
+
+		menu.addItem((item) => {
+			item.setTitle("Copy block reference").onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, false);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle("Copy block embed").onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, true, undefined, false);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle("Copy block URL").onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, true);
+			});
+		});
+
+		menu.addSeparator();
+
+		menu.addItem((item) => {
+			item.setTitle("Copy").onClick(() => {
+				void this.copyBlockSubtree(id);
+			});
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("Cut").onClick(() => {
+				void (async () => {
+					await this.copyBlockSubtree(id);
+					if (this.editingId) this.exitEditMode(this.editingId);
+					const ctx = this.getEngineContext();
+					this.applyEngineResult(deleteBlock(this.outlinerFile!, id, ctx));
+				})();
+			});
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("Delete").onClick(() => {
+				if (this.editingId) this.exitEditMode(this.editingId);
+				const ctx = this.getEngineContext();
+				this.applyEngineResult(deleteBlock(this.outlinerFile!, id, ctx));
+			});
+		});
+
+		menu.addSeparator();
+
+		const hasChildren = (block.children?.length ?? 0) > 0;
+		const isCollapsed = this.collapsedIds.has(id);
+
+		menu.addItem((item) => {
+			item
+				.setTitle("Collapse")
+				.setDisabled(!hasChildren || isCollapsed)
+				.onClick(() => this.setCollapsed(id, true));
+		});
+		menu.addItem((item) => {
+			item
+				.setTitle("Expand")
+				.setDisabled(!hasChildren || !isCollapsed)
+				.onClick(() => this.setCollapsed(id, false));
+		});
+
+		menu.showAtMouseEvent(evt);
+	}
+
 	private syncBlockList(container: HTMLElement, blocks: OutlinerBlock[]): void {
 		for (const block of blocks) {
 			const el = this.ensureBlockElement(block.id);
 			// Match Logseq DOM conventions so we can reuse its proven CSS selector strategy.
-			el.setAttribute("haschild", (block.children?.length ?? 0) > 0 ? "true" : "false");
+			const hasChildren = (block.children?.length ?? 0) > 0;
+			el.setAttribute("haschild", hasChildren ? "true" : "false");
 			el.setAttribute("level", String((block.depth ?? 0) + 1));
+
+			const collapsed = hasChildren && this.collapsedIds.has(block.id);
+			if (!hasChildren) this.collapsedIds.delete(block.id);
+			el.classList.toggle("is-blp-outliner-collapsed", collapsed);
+			const childrenContainer = this.childrenContainerElById.get(block.id);
+			if (childrenContainer) childrenContainer.style.display = collapsed ? "none" : "";
+
 			container.appendChild(el);
 
 			// Ensure the display is rendered at least once for new blocks.
@@ -384,6 +627,16 @@ export class FileOutlinerView extends TextFileView {
 		const controlWrap = document.createElement("div");
 		controlWrap.className = "block-control-wrap items-center";
 		main.appendChild(controlWrap);
+
+		const foldToggle = document.createElement("button");
+		foldToggle.type = "button";
+		foldToggle.className = "blp-outliner-fold-toggle";
+		foldToggle.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.toggleCollapsed(id);
+		});
+		controlWrap.appendChild(foldToggle);
 
 		const bulletContainer = document.createElement("span");
 		bulletContainer.className = "bullet-container";
@@ -417,11 +670,21 @@ export class FileOutlinerView extends TextFileView {
 		};
 
 		display.addEventListener("click", onActivate);
-		bulletContainer.addEventListener("click", onActivate);
+		bulletContainer.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.zoomInto(id);
+		});
+		bulletContainer.addEventListener("contextmenu", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.openBulletMenu(id, evt);
+		});
 
 		const childrenContainer = document.createElement("div");
 		childrenContainer.className = "block-children-container flex";
 		blockEl.appendChild(childrenContainer);
+		this.childrenContainerElById.set(id, childrenContainer);
 
 		const leftBorder = document.createElement("div");
 		leftBorder.className = "block-children-left-border";
@@ -431,6 +694,21 @@ export class FileOutlinerView extends TextFileView {
 		children.className = "block-children w-full";
 		childrenContainer.appendChild(children);
 		this.childrenElById.set(id, children);
+
+		const insertHint = document.createElement("div");
+		insertHint.className = "blp-outliner-insert-hint";
+		insertHint.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.insertAfterBlock(id);
+		});
+
+		const insertIcon = document.createElement("div");
+		insertIcon.className = "blp-outliner-insert-icon";
+		insertIcon.textContent = "+";
+		insertHint.appendChild(insertIcon);
+
+		blockEl.appendChild(insertHint);
 
 		this.blockElById.set(id, blockEl);
 		return blockEl;
@@ -459,9 +737,11 @@ export class FileOutlinerView extends TextFileView {
 			el.remove();
 			this.blockElById.delete(id);
 			this.blockContentElById.delete(id);
+			this.childrenContainerElById.delete(id);
 			this.childrenElById.delete(id);
 			this.displayElById.delete(id);
 			this.displayRenderSeqById.delete(id);
+			this.collapsedIds.delete(id);
 			const component = this.displayRenderComponentById.get(id);
 			if (component) {
 				try {
