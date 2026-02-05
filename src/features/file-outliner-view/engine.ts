@@ -77,7 +77,7 @@ function collectIds(list: OutlinerBlock[], out: Set<string>): void {
 	}
 }
 
-function ensureUniqueGeneratedId(ctx: OutlinerEngineContext, existing: Set<string>): string {
+function ensureUniqueGeneratedId(ctx: Pick<OutlinerEngineContext, "generateId">, existing: Set<string>): string {
 	for (let i = 0; i < 100; i++) {
 		const id = ctx.generateId();
 		if (!existing.has(id)) return id;
@@ -317,7 +317,7 @@ export function pasteSplitLines(
 	let lastId: string | null = null;
 	for (let i = 1; i < lines.length; i++) {
 		const isLast = i === lines.length - 1;
-		const newId = ensureUniqueGeneratedId({ ...ctx, childrenOnSplit: "keep", backspaceWithChildren: "merge" }, existingIds);
+		const newId = ensureUniqueGeneratedId(ctx, existingIds);
 		existingIds.add(newId);
 
 		const newBlock: OutlinerBlock = {

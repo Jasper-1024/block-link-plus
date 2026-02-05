@@ -39,6 +39,10 @@
 	--blp-outliner-elbow-radius: 10px;
 	--blp-outliner-active-inset-width: 2px;
 
+	/* Micro adjustments (keep centralized; theme/font/zoom can vary). */
+	--blp-outliner-elbow-top-adjust: -1px;
+	--blp-outliner-thread-cap-top: -1rem;
+
 	/* Derived geometry (avoid scattered magic numbers like -13px/16px/29px/12px). */
 	--blp-outliner-bullet-container-half: calc(var(--blp-outliner-bullet-container-size) / 2);
 	--blp-outliner-children-offset: calc(
@@ -141,11 +145,15 @@
 	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */
 }
 
-.blp-file-outliner-view .blp-file-outliner-display :where(ul, ol, blockquote, pre) {
+.blp-file-outliner-view .blp-file-outliner-display ul,
+.blp-file-outliner-view .blp-file-outliner-display ol,
+.blp-file-outliner-view .blp-file-outliner-display blockquote,
+.blp-file-outliner-view .blp-file-outliner-display pre {
 	margin: 0;
 }
 
-.blp-file-outliner-view .blp-file-outliner-display :where(ul, ol) {
+.blp-file-outliner-view .blp-file-outliner-display ul,
+.blp-file-outliner-view .blp-file-outliner-display ol {
 	padding-left: 1.5em;
 }
 
@@ -215,7 +223,7 @@
 	content: "";
 	left: calc(var(--ls-block-bullet-threading-width) * -1);
 	right: var(--blp-outliner-elbow-right);
-	top: calc(-50% + var(--ls-block-bullet-threading-width) * 0.5 - 1px);
+	top: calc(-50% + var(--ls-block-bullet-threading-width) * 0.5 + var(--blp-outliner-elbow-top-adjust));
 	bottom: 50%;
 	position: absolute;
 	border-left: var(--ls-block-bullet-threading-width) solid transparent;
@@ -230,7 +238,7 @@
 .blp-file-outliner-view .ls-block .block-children > .ls-block::before {
 	pointer-events: none;
 	content: "";
-	top: -1rem;
+	top: var(--blp-outliner-thread-cap-top);
 	bottom: 0;
 	border-left: var(--ls-block-bullet-threading-width) solid transparent;
 	left: calc(var(--ls-block-bullet-threading-width) * -1);

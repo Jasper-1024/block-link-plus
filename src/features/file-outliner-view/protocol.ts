@@ -79,8 +79,6 @@ function contentIndentText(depth: number, indentSize: number): string {
 type ParsedSystemLine = {
 	id: string;
 	fields: Record<string, string>;
-	// Whether the caret id token had trailing whitespace (Obsidian won't index that id).
-	hadTrailingWhitespaceAfterId: boolean;
 };
 
 const RESERVED_SYSTEM_KEYS = new Set<string>([
@@ -109,11 +107,10 @@ function stripInlineFields(text: string): string {
 
 function parseSystemLineCandidate(rawLine: string): ParsedSystemLine | null {
 	// Must end with ^id (allowing trailing whitespace so we can repair it).
-	const m = rawLine.match(/\^([a-zA-Z0-9_-]+)(\s*)$/);
+	const m = rawLine.match(/\^([a-zA-Z0-9_-]+)\s*$/);
 	if (!m?.[1]) return null;
 
 	const id = m[1];
-	const trailing = m[2] ?? "";
 	const beforeCaret = rawLine.slice(0, m.index ?? rawLine.length);
 
 	// Ensure there is no other non-field text; keep this strict so we don't
@@ -124,7 +121,6 @@ function parseSystemLineCandidate(rawLine: string): ParsedSystemLine | null {
 	return {
 		id,
 		fields: parseDataviewInlineFields(beforeCaret),
-		hadTrailingWhitespaceAfterId: trailing.length > 0,
 	};
 }
 

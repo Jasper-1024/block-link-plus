@@ -1,4 +1,4 @@
-import { MarkdownRenderer, TextFileView, WorkspaceLeaf } from "obsidian";
+import { Component, MarkdownRenderer, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
 import type BlockLinkPlus from "../../main";
@@ -59,6 +59,9 @@ export class FileOutlinerView extends TextFileView {
 	private childrenElById = new Map<string, HTMLElement>();
 	private displayElById = new Map<string, HTMLElement>();
 
+	private displayRenderSeqById = new Map<string, number>();
+	private displayRenderComponentById = new Map<string, Component>();
+
 	private editorEl: HTMLTextAreaElement | null = null;
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
@@ -92,6 +95,15 @@ export class FileOutlinerView extends TextFileView {
 		this.blockContentElById.clear();
 		this.childrenElById.clear();
 		this.displayElById.clear();
+		this.displayRenderSeqById.clear();
+		for (const component of this.displayRenderComponentById.values()) {
+			try {
+				this.removeChild(component);
+			} catch {
+				// ignore
+			}
+		}
+		this.displayRenderComponentById.clear();
 		this.dirtyBlockIds.clear();
 
 		this.editingId = null;
@@ -223,6 +235,15 @@ export class FileOutlinerView extends TextFileView {
 			this.blockContentElById.clear();
 			this.childrenElById.clear();
 			this.displayElById.clear();
+			this.displayRenderSeqById.clear();
+			for (const component of this.displayRenderComponentById.values()) {
+				try {
+					this.removeChild(component);
+				} catch {
+					// ignore
+				}
+			}
+			this.displayRenderComponentById.clear();
 		}
 
 		this.syncBlockList(root, file.blocks ?? []);
@@ -349,17 +370,73 @@ export class FileOutlinerView extends TextFileView {
 			this.blockContentElById.delete(id);
 			this.childrenElById.delete(id);
 			this.displayElById.delete(id);
+			this.displayRenderSeqById.delete(id);
+			const component = this.displayRenderComponentById.get(id);
+			if (component) {
+				try {
+					this.removeChild(component);
+				} catch {
+					// ignore
+				}
+				this.displayRenderComponentById.delete(id);
+			}
 		}
 	}
 
 	private renderBlockDisplay(id: string): void {
 		const b = this.blockById.get(id);
-		const display = this.displayElById.get(id);
-		if (!b || !display) return;
+		if (!b) return;
+		if (!this.displayElById.get(id)) return;
 
-		display.replaceChildren();
+		const seq = (this.displayRenderSeqById.get(id) ?? 0) + 1;
+		this.displayRenderSeqById.set(id, seq);
+
 		const sourcePath = this.file?.path ?? "";
-		void MarkdownRenderer.render(this.app, b.text ?? "", display, sourcePath, this);
+		const tmp = document.createElement("div");
+		const component = this.addChild(new Component());
+
+		void MarkdownRenderer.render(this.app, b.text ?? "", tmp, sourcePath, component)
+			.then(() => {
+				// If another render happened since we started, discard this one.
+				if (this.displayRenderSeqById.get(id) !== seq) {
+					try {
+						this.removeChild(component);
+					} catch {
+						// ignore
+					}
+					return;
+				}
+
+				const display = this.displayElById.get(id);
+				if (!display) {
+					try {
+						this.removeChild(component);
+					} catch {
+						// ignore
+					}
+					this.displayRenderSeqById.delete(id);
+					return;
+				}
+
+				const prev = this.displayRenderComponentById.get(id);
+				display.replaceChildren(...Array.from(tmp.childNodes));
+				this.displayRenderComponentById.set(id, component);
+
+				if (prev) {
+					try {
+						this.removeChild(prev);
+					} catch {
+						// ignore
+					}
+				}
+			})
+			.catch(() => {
+				try {
+					this.removeChild(component);
+				} catch {
+					// ignore
+				}
+			});
 	}
 
 	private enterEditMode(
@@ -522,9 +599,11 @@ export class FileOutlinerView extends TextFileView {
 		this.pendingBlurTimer = window.setTimeout(() => {
 			this.pendingBlurTimer = null;
 			if (this.editingId !== id) return;
-			if (document.activeElement === editor) return;
+			const active = document.activeElement as HTMLElement | null;
+			if (active === editor) return;
+			if (active && this.contentEl.contains(active)) return;
 			this.exitEditMode(id);
-		}, 0);
+		}, 32);
 	}
 
 	private onEditorKeyDown(evt: KeyboardEvent): void {

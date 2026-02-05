@@ -165,6 +165,10 @@
       (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").trimEnd();
     const newlineRendered = firstRenderedText.includes("\n") && firstRenderedText.includes("world");
 
+    if (!newlineRendered) {
+      throw new Error(`newlineRendered=false: ${JSON.stringify(firstRenderedText)}`);
+    }
+
     // Minimal markdown reset: avoid theme-dependent block margins/padding causing layout jank.
     const firstDisplay2 = root.querySelector(".ls-block .blp-file-outliner-display");
     if (firstDisplay2) {
@@ -205,6 +209,31 @@
           }
         : null,
     };
+
+    const toNum = (v) => Number.parseFloat(String(v ?? "0")) || 0;
+
+    if (!markdownReset.pre) throw new Error("markdownReset: pre missing");
+    if (markdownReset.pre.marginTop !== "0px" || markdownReset.pre.marginBottom !== "0px") {
+      throw new Error(`markdownReset.pre margins: ${markdownReset.pre.marginTop}/${markdownReset.pre.marginBottom}`);
+    }
+
+    if (!markdownReset.ul) throw new Error("markdownReset: ul missing");
+    if (markdownReset.ul.marginTop !== "0px" || markdownReset.ul.marginBottom !== "0px") {
+      throw new Error(`markdownReset.ul margins: ${markdownReset.ul.marginTop}/${markdownReset.ul.marginBottom}`);
+    }
+    if (toNum(markdownReset.ul.paddingLeft) <= 0) {
+      throw new Error(`markdownReset.ul paddingLeft: ${markdownReset.ul.paddingLeft}`);
+    }
+
+    if (!markdownReset.blockquote) throw new Error("markdownReset: blockquote missing");
+    if (markdownReset.blockquote.marginTop !== "0px" || markdownReset.blockquote.marginBottom !== "0px") {
+      throw new Error(
+        `markdownReset.blockquote margins: ${markdownReset.blockquote.marginTop}/${markdownReset.blockquote.marginBottom}`
+      );
+    }
+    if (toNum(markdownReset.blockquote.paddingLeft) <= 0) {
+      throw new Error(`markdownReset.blockquote paddingLeft: ${markdownReset.blockquote.paddingLeft}`);
+    }
 
     const data = typeof view.getViewData === "function" ? view.getViewData() : null;
     const dataPreview = data ? data.split("\n").slice(0, 12) : null;
