@@ -419,9 +419,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	}
 
 	private renderFileOutlinerTab(rootEl: HTMLElement) {
-		this.addHeading("File Outliner (v2)", rootEl).setDesc(
-			"File-level outliner view (Logseq-like). Tail lines use Dataview inline fields + `^id` so `[[file#^id]]` works without the plugin."
-		);
+		const ui = t.settings.fileOutliner;
+		this.addHeading(ui.title, rootEl).setDesc(ui.desc);
 
 		const parseScopeLines = (value: string): string[] =>
 			value
@@ -430,11 +429,11 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 				.filter(Boolean)
 				.map((l) => l.replace(/\\/g, "/"));
 
-		this.addHeading("Scope", rootEl);
+		this.addHeading(ui.groups.scope.title, rootEl);
 
 		new Setting(rootEl)
-			.setName("Enabled folders (vault-relative)")
-			.setDesc("One per line. Files under these folders will open in the outliner view.")
+			.setName(ui.enabledFolders.name)
+			.setDesc(ui.enabledFolders.desc)
 			.addTextArea((text) => {
 				text
 					.setPlaceholder("Daily\nProjects")
@@ -447,8 +446,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(rootEl)
-			.setName("Enabled files (vault-relative)")
-			.setDesc("One per line. Use this when you only want specific files.")
+			.setName(ui.enabledFiles.name)
+			.setDesc(ui.enabledFiles.desc)
 			.addTextArea((text) => {
 				text
 					.setPlaceholder("Daily/2026-01-09.md")
@@ -461,26 +460,26 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(rootEl)
-			.setName("Frontmatter override")
-			.setDesc("Per-file: `blp_outliner: true/false` (legacy alias: `blp_enhanced_list`).");
+			.setName(ui.frontmatterOverride.name)
+			.setDesc(ui.frontmatterOverride.desc);
 
-		this.addHeading("Behavior", rootEl);
+		this.addHeading(ui.groups.behavior.title, rootEl);
 
 		this.addToggleSetting("fileOutlinerViewEnabled", () => this.display(), rootEl)
-			.setName("Enable outliner routing")
-			.setDesc("When enabled, scoped files open in the outliner view instead of the native Markdown editor.");
+			.setName(ui.enableRouting.name)
+			.setDesc(ui.enableRouting.desc);
 
 		this.addToggleSetting("fileOutlinerHideSystemLine", undefined, rootEl)
-			.setName("Hide system tail lines")
-			.setDesc("Hide outliner protocol tail lines in Reading mode when `[blp_sys:: 1]` is present.");
+			.setName(ui.hideSystemTailLines.name)
+			.setDesc(ui.hideSystemTailLines.desc);
 
 		new Setting(rootEl)
-			.setName("Enter split: children behavior")
-			.setDesc("Choose what happens to children when splitting a block with Enter.")
+			.setName(ui.childrenOnSplit.name)
+			.setDesc(ui.childrenOnSplit.desc)
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption("keep", "Keep children on the original block")
-					.addOption("move", "Move children to the new block")
+					.addOption("keep", ui.childrenOnSplit.options.keep)
+					.addOption("move", ui.childrenOnSplit.options.move)
 					.setValue(this.plugin.settings.fileOutlinerChildrenOnSplit ?? "keep")
 					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
 					.onChange(async (value: any) => {
@@ -490,12 +489,12 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(rootEl)
-			.setName("Paste multiline")
-			.setDesc("When pasting multiple lines into a block, either split into blocks or keep as multiline.")
+			.setName(ui.pasteMultiline.name)
+			.setDesc(ui.pasteMultiline.desc)
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption("split", "Split into multiple blocks (default)")
-					.addOption("multiline", "Keep as multiline text in the current block")
+					.addOption("split", ui.pasteMultiline.options.split)
+					.addOption("multiline", ui.pasteMultiline.options.multiline)
 					.setValue(this.plugin.settings.fileOutlinerPasteMultiline ?? "split")
 					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
 					.onChange(async (value: any) => {
@@ -505,12 +504,12 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(rootEl)
-			.setName("Backspace at start (block has children)")
-			.setDesc("Choose whether Backspace merges with previous (default) or outdents the block when it has children.")
+			.setName(ui.backspaceWithChildren.name)
+			.setDesc(ui.backspaceWithChildren.desc)
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption("merge", "Merge with previous (default)")
-					.addOption("outdent", "Prefer outdent")
+					.addOption("merge", ui.backspaceWithChildren.options.merge)
+					.addOption("outdent", ui.backspaceWithChildren.options.outdent)
 					.setValue(this.plugin.settings.fileOutlinerBackspaceWithChildren ?? "merge")
 					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
 					.onChange(async (value: any) => {

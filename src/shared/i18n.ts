@@ -162,6 +162,64 @@ class T {
           }
         },
 
+        // File Outliner (v2)
+        fileOutliner: {
+          title: "File Outliner (v2)",
+          desc: "File-level outliner view (Logseq-like). Tail lines use Dataview inline fields + `^id` so `[[file#^id]]` works without the plugin.",
+          groups: {
+            scope: {
+              title: "Scope",
+            },
+            behavior: {
+              title: "Behavior",
+            },
+          },
+          enabledFolders: {
+            name: "Enabled folders (vault-relative)",
+            desc: "One per line. Files under these folders will open in the outliner view.",
+          },
+          enabledFiles: {
+            name: "Enabled files (vault-relative)",
+            desc: "One per line. Use this when you only want specific files.",
+          },
+          frontmatterOverride: {
+            name: "Frontmatter override",
+            desc: "Per-file: `blp_outliner: true/false` (legacy alias: `blp_enhanced_list`).",
+          },
+          enableRouting: {
+            name: "Enable outliner routing",
+            desc: "When enabled, scoped files open in the outliner view instead of the native Markdown editor.",
+          },
+          hideSystemTailLines: {
+            name: "Hide system tail lines",
+            desc: "Hide outliner protocol tail lines in Reading mode when `[blp_sys:: 1]` is present.",
+          },
+          childrenOnSplit: {
+            name: "Enter split: children behavior",
+            desc: "Choose what happens to children when splitting a block with Enter.",
+            options: {
+              keep: "Keep children on the original block",
+              move: "Move children to the new block",
+            },
+          },
+          pasteMultiline: {
+            name: "Paste multiline",
+            desc: "When pasting multiple lines into a block, either split into blocks or keep as multiline.",
+            options: {
+              split: "Split into multiple blocks (default)",
+              multiline: "Keep as multiline text in the current block",
+            },
+          },
+          backspaceWithChildren: {
+            name: "Backspace at start (block has children)",
+            desc: "Choose whether Backspace merges with previous (default) or outdents the block when it has children.",
+            options: {
+              merge: "Merge with previous (default)",
+              outdent: "Prefer outdent",
+            },
+          },
+        },
+
         // Enhanced List Blocks section
         enhancedListBlocks: {
           title: "Enhanced List",
@@ -648,6 +706,64 @@ class T {
           }
         },
 
+        // 文件 Outliner（v2）
+        fileOutliner: {
+          title: "文件级 Outliner（v2）",
+          desc: "文件级 Outliner 视图（类 Logseq）。协议尾行使用 Dataview inline fields + `^id`，保证即使不安装插件，`[[file#^id]]` 也能跳转。",
+          groups: {
+            scope: {
+              title: "范围",
+            },
+            behavior: {
+              title: "行为",
+            },
+          },
+          enabledFolders: {
+            name: "启用文件夹（vault 相对路径）",
+            desc: "每行一个路径。位于这些文件夹下的文件将使用 Outliner 视图打开。",
+          },
+          enabledFiles: {
+            name: "启用文件（vault 相对路径）",
+            desc: "每行一个路径。用于只对少量指定文件启用。",
+          },
+          frontmatterOverride: {
+            name: "Frontmatter 覆盖",
+            desc: "每文件：`blp_outliner: true/false`（兼容旧名：`blp_enhanced_list`）。",
+          },
+          enableRouting: {
+            name: "启用 Outliner 路由",
+            desc: "启用后，范围内的文件将打开 Outliner 视图，而不是原生 Markdown 编辑器。",
+          },
+          hideSystemTailLines: {
+            name: "隐藏系统尾行",
+            desc: "当存在 `[blp_sys:: 1]` 时，在阅读模式隐藏 Outliner 协议尾行。",
+          },
+          childrenOnSplit: {
+            name: "Enter 拆分：子块处理",
+            desc: "使用 Enter 拆分块时，选择子块保留在原块或移动到新块。",
+            options: {
+              keep: "子块保留在原块",
+              move: "子块移动到新块",
+            },
+          },
+          pasteMultiline: {
+            name: "粘贴多行文本",
+            desc: "在块内粘贴多行文本时，选择拆分为多个块还是保留为单块多行文本。",
+            options: {
+              split: "拆分为多个块（默认）",
+              multiline: "保留为当前块内多行文本",
+            },
+          },
+          backspaceWithChildren: {
+            name: "行首 Backspace（有子块）",
+            desc: "当块有子块时，选择 Backspace 与上一块合并（默认）或优先 Outdent。",
+            options: {
+              merge: "与上一块合并（默认）",
+              outdent: "优先 Outdent",
+            },
+          },
+        },
+
         // 增强 List Blocks
         enhancedListBlocks: {
           title: "增强 List Blocks",
@@ -1132,6 +1248,64 @@ class T {
             name: "區塊 ID 前綴", 
             desc: "區塊 ID 將是：前綴-隨機字串"
           }
+        },
+
+        // 檔案 Outliner（v2）
+        fileOutliner: {
+          title: "檔案級 Outliner（v2）",
+          desc: "檔案級 Outliner 檢視（類 Logseq）。協議尾行使用 Dataview inline fields + `^id`，確保即使不安裝插件，`[[file#^id]]` 也能跳轉。",
+          groups: {
+            scope: {
+              title: "範圍",
+            },
+            behavior: {
+              title: "行為",
+            },
+          },
+          enabledFolders: {
+            name: "啟用資料夾（vault 相對路徑）",
+            desc: "每行一個路徑。位於這些資料夾下的檔案將以 Outliner 檢視開啟。",
+          },
+          enabledFiles: {
+            name: "啟用檔案（vault 相對路徑）",
+            desc: "每行一個路徑。用於只對少量指定檔案啟用。",
+          },
+          frontmatterOverride: {
+            name: "Frontmatter 覆蓋",
+            desc: "每檔案：`blp_outliner: true/false`（相容舊名：`blp_enhanced_list`）。",
+          },
+          enableRouting: {
+            name: "啟用 Outliner 路由",
+            desc: "啟用後，範圍內的檔案會開啟 Outliner 檢視，而不是原生 Markdown 編輯器。",
+          },
+          hideSystemTailLines: {
+            name: "隱藏系統尾行",
+            desc: "當存在 `[blp_sys:: 1]` 時，在閱讀模式隱藏 Outliner 協議尾行。",
+          },
+          childrenOnSplit: {
+            name: "Enter 拆分：子塊處理",
+            desc: "使用 Enter 拆分區塊時，選擇子塊保留在原區塊或移動到新區塊。",
+            options: {
+              keep: "子塊保留在原區塊",
+              move: "子塊移動到新區塊",
+            },
+          },
+          pasteMultiline: {
+            name: "貼上多行文字",
+            desc: "在區塊內貼上多行文字時，選擇拆分為多個區塊或保留為單區塊多行文字。",
+            options: {
+              split: "拆分為多個區塊（預設）",
+              multiline: "保留為目前區塊內多行文字",
+            },
+          },
+          backspaceWithChildren: {
+            name: "行首 Backspace（有子塊）",
+            desc: "當區塊有子塊時，選擇 Backspace 與上一區塊合併（預設）或優先 Outdent。",
+            options: {
+              merge: "與上一區塊合併（預設）",
+              outdent: "優先 Outdent",
+            },
+          },
         },
 
         // 增強 List Blocks
