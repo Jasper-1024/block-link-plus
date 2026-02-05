@@ -40,6 +40,8 @@
 		"jest-environment-jsdom": "^29.7.0",
 		"obsidian": "latest",
 		"obsidian-dataview": "^0.5.68",
+		"pixelmatch": "^5.3.0",
+		"pngjs": "^7.0.0",
 		"prop-types": "^15.7.2",
 		"ts-jest": "^29.1.2",
 		"tslib": "2.4.0",

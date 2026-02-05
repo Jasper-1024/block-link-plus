@@ -1,6 +1,10 @@
 import { Component, MarkdownRenderer, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
+import { EditorState, Prec } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
+import { basicSetup } from "@codemirror/basic-setup";
+
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
 import {
@@ -38,11 +42,6 @@ function extractCaretIdFromSubpath(raw: unknown): string | null {
 	return m?.[1] ?? null;
 }
 
-function autoGrow(textarea: HTMLTextAreaElement): void {
-	textarea.style.height = "auto";
-	textarea.style.height = `${textarea.scrollHeight}px`;
-}
-
 export class FileOutlinerView extends TextFileView {
 	private readonly plugin: BlockLinkPlus;
 	private outlinerFile: ParsedOutlinerFile | null = null;
@@ -62,7 +61,9 @@ export class FileOutlinerView extends TextFileView {
 	private displayRenderSeqById = new Map<string, number>();
 	private displayRenderComponentById = new Map<string, Component>();
 
-	private editorEl: HTMLTextAreaElement | null = null;
+	private editorHostEl: HTMLElement | null = null;
+	private editorView: EditorView | null = null;
+	private suppressEditorSync = false;
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
@@ -114,7 +115,13 @@ export class FileOutlinerView extends TextFileView {
 			this.pendingBlurTimer = null;
 		}
 
-		this.editorEl = null;
+		try {
+			this.editorView?.destroy();
+		} catch {
+			// ignore
+		}
+		this.editorView = null;
+		this.editorHostEl = null;
 		this.rootEl = null;
 		this.topLevelBlocksEl = null;
 		this.contentEl.empty();
@@ -199,7 +206,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private ensureRoot(): void {
-		if (this.rootEl && this.topLevelBlocksEl && this.editorEl) return;
+		if (this.rootEl && this.topLevelBlocksEl && this.editorHostEl && this.editorView) return;
 
 		this.contentEl.empty();
 
@@ -207,18 +214,88 @@ export class FileOutlinerView extends TextFileView {
 		this.rootEl = root;
 		this.topLevelBlocksEl = root;
 
-		const textarea = document.createElement("textarea");
-		textarea.className = "blp-file-outliner-editor";
-		textarea.spellcheck = true;
-		textarea.rows = 1;
-		textarea.style.display = "none";
+		const host = document.createElement("div");
+		host.className = "blp-file-outliner-editor";
+		host.style.display = "none";
+		root.appendChild(host);
+		this.editorHostEl = host;
 
-		textarea.addEventListener("input", () => this.onEditorInput());
-		textarea.addEventListener("keydown", (evt) => this.onEditorKeyDown(evt));
-		textarea.addEventListener("paste", (evt) => this.onEditorPaste(evt));
-		textarea.addEventListener("blur", () => this.onEditorBlur());
+		this.editorView = new EditorView({
+			parent: host,
+			state: this.createEditorState("", { cursorStart: 0, cursorEnd: 0 }),
+		});
 
-		this.editorEl = textarea;
+		// When focus leaves the editor, we typically exit edit mode (with a small debounce,
+		// since structural ops may transiently reparent the editor host).
+		this.editorView.contentDOM.addEventListener("focusout", () => this.onEditorBlur());
+	}
+
+	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }): EditorState {
+		const clamp = (n: number) => Math.max(0, Math.min(doc.length, Math.floor(n)));
+		const anchor = clamp(sel.cursorStart);
+		const head = clamp(sel.cursorEnd);
+
+		return EditorState.create({
+			doc,
+			selection: { anchor, head },
+			extensions: [
+				basicSetup,
+				EditorView.lineWrapping,
+				EditorView.theme({
+					"&": {
+						font: "inherit",
+					},
+					".cm-scroller": {
+						font: "inherit",
+						lineHeight: "inherit",
+					},
+				}),
+				Prec.high(
+					keymap.of([
+						{
+							key: "Shift-Enter",
+							run: (view) => {
+								const r = view.state.selection.main;
+								const from = Math.min(r.from, r.to);
+								const to = Math.max(r.from, r.to);
+								view.dispatch({
+									changes: { from, to, insert: "\n" },
+									selection: { anchor: from + 1 },
+								});
+								return true;
+							},
+						},
+						{
+							key: "Enter",
+							run: () => this.onEditorEnter(),
+						},
+						{
+							key: "Tab",
+							run: () => this.onEditorTab(false),
+						},
+						{
+							key: "Shift-Tab",
+							run: () => this.onEditorTab(true),
+						},
+						{
+							key: "Backspace",
+							run: () => this.onEditorBackspace(),
+						},
+						{
+							key: "Delete",
+							run: () => this.onEditorDelete(),
+						},
+					])
+				),
+				EditorView.updateListener.of((update) => {
+					if (!update.docChanged) return;
+					this.onEditorDocChanged(update.state.doc.toString());
+				}),
+				EditorView.domEventHandlers({
+					paste: (evt) => this.onEditorPaste(evt),
+				}),
+			],
+		});
 	}
 
 	private render(opts?: { forceRebuild?: boolean }): void {
@@ -229,6 +306,15 @@ export class FileOutlinerView extends TextFileView {
 
 		// 1) Sync block DOM structure to the current file model.
 		if (opts?.forceRebuild) {
+			// Keep the editor host alive when we drop/recreate block DOM nodes.
+			try {
+				if (this.editorHostEl && this.rootEl) {
+					this.rootEl.appendChild(this.editorHostEl);
+				}
+			} catch {
+				// ignore
+			}
+
 			// Clear DOM caches but keep the view root/editor.
 			for (const el of this.blockElById.values()) el.remove();
 			this.blockElById.clear();
@@ -359,9 +445,14 @@ export class FileOutlinerView extends TextFileView {
 			if (this.editingId === id) {
 				this.editingId = null;
 				try {
-					this.editorEl?.remove();
+					this.editorHostEl?.remove();
 				} catch {
 					// ignore
+				}
+
+				if (this.editorHostEl && this.rootEl) {
+					this.rootEl.appendChild(this.editorHostEl);
+					this.editorHostEl.style.display = "none";
 				}
 			}
 
@@ -393,6 +484,7 @@ export class FileOutlinerView extends TextFileView {
 
 		const sourcePath = this.file?.path ?? "";
 		const tmp = document.createElement("div");
+		tmp.classList.add("markdown-rendered");
 		const component = this.addChild(new Component());
 
 		void MarkdownRenderer.render(this.app, b.text ?? "", tmp, sourcePath, component)
@@ -418,8 +510,15 @@ export class FileOutlinerView extends TextFileView {
 					return;
 				}
 
+				// Avoid preview-only affordances inside the v2 outliner UI.
+				try {
+					tmp.querySelectorAll("button.copy-code-button").forEach((btn) => btn.remove());
+				} catch {
+					// ignore
+				}
+
 				const prev = this.displayRenderComponentById.get(id);
-				display.replaceChildren(...Array.from(tmp.childNodes));
+				display.replaceChildren(tmp);
 				this.displayRenderComponentById.set(id, component);
 
 				if (prev) {
@@ -444,7 +543,7 @@ export class FileOutlinerView extends TextFileView {
 		opts: { cursorStart: number; cursorEnd: number; scroll: boolean; reuseExisting?: boolean }
 	): void {
 		this.ensureRoot();
-		if (!this.editorEl) return;
+		if (!this.editorHostEl || !this.editorView) return;
 		if (!this.outlinerFile) return;
 
 		const block = this.blockById.get(id);
@@ -471,43 +570,51 @@ export class FileOutlinerView extends TextFileView {
 		this.blockElById.get(id)?.classList.add("is-blp-outliner-active");
 
 		display.style.display = "none";
-		host.appendChild(this.editorEl);
-		this.editorEl.style.display = "";
-		this.editorEl.value = block.text ?? "";
-		autoGrow(this.editorEl);
+		host.appendChild(this.editorHostEl);
+		this.editorHostEl.style.display = "";
 
-		this.editorEl.focus();
-		try {
-			this.editorEl.setSelectionRange(opts.cursorStart, opts.cursorEnd);
-		} catch {
-			// Ignore selection errors (e.g. mobile quirks).
+		if (!opts.reuseExisting) {
+			this.suppressEditorSync = true;
+			try {
+				this.editorView.setState(this.createEditorState(block.text ?? "", opts));
+			} finally {
+				this.suppressEditorSync = false;
+			}
 		}
 
+		this.editorView.focus();
+
 		if (opts.scroll) {
-			this.editorEl.scrollIntoView({ block: "nearest" });
+			this.editorHostEl.scrollIntoView({ block: "nearest" });
 		}
 	}
 
 	private exitEditMode(id: string): void {
-		const editor = this.editorEl;
+		const editor = this.editorView;
+		const editorHost = this.editorHostEl;
 		const display = this.displayElById.get(id);
 		const b = this.blockById.get(id);
-		if (!editor || !display || !b) return;
+		if (!editor || !editorHost || !display) return;
 		if (this.pendingBlurTimer) {
 			window.clearTimeout(this.pendingBlurTimer);
 			this.pendingBlurTimer = null;
 		}
 
 		// Commit latest editor value.
-		const nextText = editor.value;
-		if (b.text !== nextText) {
-			b.text = nextText;
-			this.dirtyBlockIds.add(id);
+		if (b) {
+			const nextText = editor.state.doc.toString();
+			if (b.text !== nextText) {
+				b.text = nextText;
+				this.dirtyBlockIds.add(id);
+			}
 		}
 
 		this.editingId = null;
 		this.blockElById.get(id)?.classList.remove("is-blp-outliner-active");
-		editor.style.display = "none";
+		editorHost.style.display = "none";
+		if (this.rootEl) {
+			this.rootEl.appendChild(editorHost);
+		}
 		display.style.display = "";
 		this.renderBlockDisplay(id);
 
@@ -516,18 +623,19 @@ export class FileOutlinerView extends TextFileView {
 
 	private getActiveSelection(): OutlinerSelection | null {
 		if (!this.outlinerFile) return null;
-		if (!this.editorEl) return null;
+		if (!this.editorView) return null;
 		const id = this.editingId;
 		if (!id) return null;
 		const block = this.blockById.get(id);
 		if (!block) return null;
 
-		const value = this.editorEl.value ?? "";
+		const value = this.editorView.state.doc.toString();
 		// Keep model in sync with the editor before structural ops.
 		block.text = value;
 
-		const start = this.editorEl.selectionStart ?? 0;
-		const end = this.editorEl.selectionEnd ?? 0;
+		const range = this.editorView.state.selection.main;
+		const start = Math.min(range.from, range.to);
+		const end = Math.max(range.from, range.to);
 		return { id, start, end };
 	}
 
@@ -574,101 +682,102 @@ export class FileOutlinerView extends TextFileView {
 		this.requestSave();
 	}
 
-	private onEditorInput(): void {
+	private onEditorDocChanged(nextText: string): void {
+		if (this.suppressEditorSync) return;
+
 		const id = this.editingId;
-		const editor = this.editorEl;
-		if (!id || !editor) return;
+		if (!id) return;
 
 		const b = this.blockById.get(id);
 		if (!b) return;
 
-		b.text = editor.value;
-		autoGrow(editor);
+		b.text = nextText;
 		this.dirtyBlockIds.add(id);
 		this.requestSave();
 	}
 
 	private onEditorBlur(): void {
 		const id = this.editingId;
-		const editor = this.editorEl;
-		if (!id || !editor) return;
+		const editor = this.editorView;
+		const editorHost = this.editorHostEl;
+		if (!id || !editor || !editorHost) return;
 
 		// Blur can happen transiently when we reorder/move DOM nodes during a structural edit.
-		// Defer the decision: if focus immediately returns to our textarea, keep edit mode.
+		// Defer the decision: if focus immediately returns to our editor host, keep edit mode.
 		if (this.pendingBlurTimer) window.clearTimeout(this.pendingBlurTimer);
 		this.pendingBlurTimer = window.setTimeout(() => {
 			this.pendingBlurTimer = null;
 			if (this.editingId !== id) return;
 			const active = document.activeElement as HTMLElement | null;
-			if (active === editor) return;
+			if (active && editorHost.contains(active)) return;
 			if (active && this.contentEl.contains(active)) return;
 			this.exitEditMode(id);
 		}, 32);
 	}
 
-	private onEditorKeyDown(evt: KeyboardEvent): void {
-		// Avoid stealing IME accept/confirm keystrokes.
-		if ((evt as any).isComposing) return;
-		if (!this.outlinerFile) return;
-
-		// Don't override modified keybinds (users may have custom shortcuts).
-		if (evt.metaKey || evt.ctrlKey || evt.altKey) return;
+	private onEditorEnter(): boolean {
+		if (!this.outlinerFile) return false;
 
 		const sel = this.getActiveSelection();
-		if (!sel) return;
+		if (!sel) return false;
 
 		const ctx = this.getEngineContext();
-		const value = this.editorEl?.value ?? "";
-
-		if (evt.key === "Enter" && !evt.shiftKey) {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
-			return;
-		}
-
-		if (evt.key === "Tab") {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.applyEngineResult(evt.shiftKey ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel));
-			return;
-		}
-
-		if (evt.key === "Backspace") {
-			if (sel.start === 0 && sel.end === 0) {
-				evt.preventDefault();
-				evt.stopPropagation();
-				this.applyEngineResult(
-					backspaceAtStart(this.outlinerFile, sel, { backspaceWithChildren: ctx.backspaceWithChildren })
-				);
-			}
-			return;
-		}
-
-		if (evt.key === "Delete") {
-			if (sel.start === value.length && sel.end === value.length) {
-				evt.preventDefault();
-				evt.stopPropagation();
-				this.applyEngineResult(mergeWithNext(this.outlinerFile, sel));
-			}
-		}
+		this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
+		return true;
 	}
 
-	private onEditorPaste(evt: ClipboardEvent): void {
-		if (!this.outlinerFile) return;
-		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return;
-
-		const raw = evt.clipboardData?.getData("text/plain") ?? "";
-		if (!raw.includes("\n") && !raw.includes("\r")) return;
+	private onEditorTab(shift: boolean): boolean {
+		if (!this.outlinerFile) return false;
 
 		const sel = this.getActiveSelection();
-		if (!sel) return;
+		if (!sel) return false;
+
+		this.applyEngineResult(shift ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel));
+		return true;
+	}
+
+	private onEditorBackspace(): boolean {
+		if (!this.outlinerFile) return false;
+
+		const sel = this.getActiveSelection();
+		if (!sel) return false;
+		if (sel.start !== 0 || sel.end !== 0) return false;
+
+		const ctx = this.getEngineContext();
+		this.applyEngineResult(backspaceAtStart(this.outlinerFile, sel, { backspaceWithChildren: ctx.backspaceWithChildren }));
+		return true;
+	}
+
+	private onEditorDelete(): boolean {
+		if (!this.outlinerFile) return false;
+
+		const sel = this.getActiveSelection();
+		if (!sel) return false;
+		if (!this.editorView) return false;
+
+		const valueLen = this.editorView.state.doc.length;
+		if (sel.start !== valueLen || sel.end !== valueLen) return false;
+
+		this.applyEngineResult(mergeWithNext(this.outlinerFile, sel));
+		return true;
+	}
+
+	private onEditorPaste(evt: ClipboardEvent): boolean {
+		if (!this.outlinerFile) return false;
+		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return false;
+
+		const raw = evt.clipboardData?.getData("text/plain") ?? "";
+		if (!raw.includes("\n") && !raw.includes("\r")) return false;
+
+		const sel = this.getActiveSelection();
+		if (!sel) return false;
 
 		evt.preventDefault();
 		evt.stopPropagation();
 
 		const ctx = this.getEngineContext();
 		this.applyEngineResult(pasteSplitLines(this.outlinerFile, sel, raw, { now: ctx.now, generateId: ctx.generateId }));
+		return true;
 	}
 
 	private scrollToBlockId(id: string): void {

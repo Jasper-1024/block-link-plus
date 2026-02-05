@@ -101,41 +101,48 @@
     firstDisplay.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await wait(50);
 
-    const editor = root.querySelector("textarea.blp-file-outliner-editor");
-    if (!editor) throw new Error("No outliner editor textarea found");
-    editor.focus();
+    const cm = view.editorView;
+    if (!cm) throw new Error("No outliner CodeMirror editorView found");
+    const cmContent = cm.contentDOM || cm.dom?.querySelector?.(".cm-content");
+    if (!cmContent) throw new Error("No outliner CodeMirror contentDOM found");
+    cm.focus();
 
     // Type "hello" then split with Enter.
-    editor.value = "hello";
-    editor.dispatchEvent(new Event("input", { bubbles: true }));
-    editor.setSelectionRange(5, 5);
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    cm.dispatch({
+      changes: { from: 0, to: cm.state.doc.length, insert: "hello" },
+      selection: { anchor: 5 },
+    });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
     await wait(80);
 
     const countAfterEnter = root.querySelectorAll(".ls-block").length;
 
     // Backspace-at-start should merge with previous (sibling case).
-    editor.setSelectionRange(0, 0);
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Backspace", bubbles: true }));
+    cm.dispatch({ selection: { anchor: 0 } });
+    cmContent.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Backspace", code: "Backspace", bubbles: true, cancelable: true })
+    );
     await wait(80);
 
     const countAfterBackspace = root.querySelectorAll(".ls-block").length;
 
     // Create another sibling (Enter).
-    editor.setSelectionRange(editor.value.length, editor.value.length);
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    cm.dispatch({ selection: { anchor: cm.state.doc.length } });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
     await wait(80);
 
     // Indent with Tab, then outdent with Shift+Tab.
-    editor.setSelectionRange(0, 0);
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    cm.dispatch({ selection: { anchor: 0 } });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", bubbles: true, cancelable: true }));
     await wait(80);
 
     const rootDirectChildrenAfterIndent = Array.from(
       (root.querySelector(".blp-file-outliner-root") || root).children
     ).filter((el) => el.classList && el.classList.contains("ls-block")).length;
 
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+    cmContent.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", code: "Tab", shiftKey: true, bubbles: true, cancelable: true })
+    );
     await wait(80);
 
     const rootDirectChildrenAfterOutdent = Array.from(
@@ -149,16 +156,18 @@
       await wait(50);
     }
 
-    editor.setSelectionRange(editor.value.length, editor.value.length);
-    editor.dispatchEvent(new KeyboardEvent("keydown", { key: "Delete", bubbles: true }));
+    cm.dispatch({ selection: { anchor: cm.state.doc.length } });
+    cmContent.dispatchEvent(new KeyboardEvent("keydown", { key: "Delete", code: "Delete", bubbles: true, cancelable: true }));
     await wait(80);
 
     const countAfterDelete = root.querySelectorAll(".ls-block").length;
 
     // Ensure Shift+Enter semantics (newlines within a block) stay visible when not editing.
-    editor.value = "hello\nworld";
-    editor.dispatchEvent(new Event("input", { bubbles: true }));
-    editor.blur();
+    cm.dispatch({
+      changes: { from: 0, to: cm.state.doc.length, insert: "hello\nworld" },
+      selection: { anchor: 11 },
+    });
+    cmContent.blur();
     await waitFor(() => (root.querySelector(".ls-block .blp-file-outliner-display")?.innerText ?? "").includes("world"));
 
     const firstRenderedText =
@@ -177,9 +186,11 @@
     }
 
     const md = ["> quote", "", "- item", "", "```js", "console.log(1)", "```"].join("\n");
-    editor.value = md;
-    editor.dispatchEvent(new Event("input", { bubbles: true }));
-    editor.blur();
+    cm.dispatch({
+      changes: { from: 0, to: cm.state.doc.length, insert: md },
+      selection: { anchor: md.length },
+    });
+    cmContent.blur();
     await waitFor(() => !!root.querySelector(".ls-block .blp-file-outliner-display pre"));
 
     const host = root.querySelector(".ls-block .blp-file-outliner-display");
@@ -234,6 +245,9 @@
     if (toNum(markdownReset.blockquote.paddingLeft) <= 0) {
       throw new Error(`markdownReset.blockquote paddingLeft: ${markdownReset.blockquote.paddingLeft}`);
     }
+
+    const hasCopyButton = !!host?.querySelector("button.copy-code-button");
+    if (hasCopyButton) throw new Error("copy-code-button should not be present in outliner display");
 
     const data = typeof view.getViewData === "function" ? view.getViewData() : null;
     const dataPreview = data ? data.split("\n").slice(0, 12) : null;

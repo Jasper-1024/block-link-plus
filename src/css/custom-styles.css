@@ -162,18 +162,34 @@
 }
 
 .blp-file-outliner-view .blp-file-outliner-editor {
+	display: block;
 	width: 100%;
 	box-sizing: border-box;
-	resize: none;
-	overflow: hidden;
 	padding: 4px 6px;
-	font: inherit;
-	line-height: inherit;
 	border-radius: 6px;
-	border: 0;
-	outline: none;
 	background: transparent;
 	color: inherit;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor .cm-editor,
+.blp-file-outliner-view .blp-file-outliner-editor .cm-scroller,
+.blp-file-outliner-view .blp-file-outliner-editor .cm-content {
+	background: transparent !important;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor .cm-scroller {
+	font: inherit;
+	line-height: inherit;
+	/* We auto-size to content; avoid a nested scroll within a block. */
+	overflow: hidden !important;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor .cm-content {
+	padding: 0 !important;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor .cm-gutters {
+	display: none !important;
 }
 
 /* --- Logseq bullet threading (adapted) --- */
