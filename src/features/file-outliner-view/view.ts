@@ -99,6 +99,28 @@ export class FileOutlinerView extends TextFileView {
 		return "list";
 	}
 
+	onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string): void {
+		super.onPaneMenu(menu, source);
+
+		// "More options" is the top-right pane menu button.
+		if (source !== "more-options") return;
+		if (!this.file) return;
+
+		menu.addSeparator();
+		menu.addItem((item) => {
+			item
+				.setTitle("Open source view (Markdown)")
+				.setIcon("file-text")
+				.onClick(() => void this.openSourceMarkdownView({ newLeaf: false }));
+		});
+		menu.addItem((item) => {
+			item
+				.setTitle("Open source view (new tab)")
+				.setIcon("copy")
+				.onClick(() => void this.openSourceMarkdownView({ newLeaf: "tab" }));
+		});
+	}
+
 	clear(): void {
 		this.outlinerFile = null;
 		this.blockById.clear();
@@ -219,6 +241,35 @@ export class FileOutlinerView extends TextFileView {
 			const id = Math.random().toString(36).slice(2, 10);
 			if (this.blockById.has(id)) continue;
 			return id;
+		}
+	}
+
+	private async openSourceMarkdownView(opts: { newLeaf: "tab" | "split" | false }): Promise<void> {
+		const file = this.file;
+		if (!file) return;
+
+		try {
+			if (this.editingId) this.exitEditMode(this.editingId);
+		} catch {
+			// ignore
+		}
+
+		try {
+			await this.save();
+		} catch {
+			// ignore
+		}
+
+		const leaf = opts.newLeaf ? this.app.workspace.getLeaf(opts.newLeaf) : this.leaf;
+		await leaf.setViewState({
+			type: "markdown",
+			state: { file: file.path, mode: "source" },
+			active: true,
+		});
+		try {
+			this.app.workspace.setActiveLeaf(leaf, { focus: true });
+		} catch {
+			// ignore
 		}
 	}
 
