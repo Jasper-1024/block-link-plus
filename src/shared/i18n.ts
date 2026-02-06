@@ -1638,8 +1638,41 @@ class T {
     },
   };
 
+  private ensureFileOutlinerPaneMenuStrings(): void {
+    const en = (this.all as any)?.en?.settings?.fileOutliner;
+    if (en) {
+      en.paneMenu ??= {
+        openAsMarkdown: "Open as Markdown (source)",
+        openAsMarkdownNewTab: "Open as Markdown (new tab)",
+        openAsOutliner: "Open as Outliner",
+        openAsOutlinerNewTab: "Open as Outliner (new tab)",
+      };
+    }
+
+    const zh = (this.all as any)?.zh?.settings?.fileOutliner;
+    if (zh) {
+      zh.paneMenu ??= {
+        openAsMarkdown: "打开为 Markdown（源码）",
+        openAsMarkdownNewTab: "打开为 Markdown（新标签页）",
+        openAsOutliner: "打开为 Outliner",
+        openAsOutlinerNewTab: "打开为 Outliner（新标签页）",
+      };
+    }
+
+    const zhTw = (this.all as any)?.["zh-TW"]?.settings?.fileOutliner;
+    if (zhTw) {
+      zhTw.paneMenu ??= {
+        openAsMarkdown: "以 Markdown（原始碼）開啟",
+        openAsMarkdownNewTab: "以 Markdown（新分頁）開啟",
+        openAsOutliner: "以 Outliner 開啟",
+        openAsOutlinerNewTab: "以 Outliner（新分頁）開啟",
+      };
+    }
+  }
+
   constructor() {
     this.lang = "en";
+    this.ensureFileOutlinerPaneMenuStrings();
     
     // Use Obsidian's native language detection
     const obsidianLang = window.localStorage.getItem('language');

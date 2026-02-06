@@ -28,7 +28,8 @@ import {
 	type ParsedOutlinerFile,
 } from "./protocol";
 
-export const FILE_OUTLINER_VIEW_TYPE = "blp-file-outliner-view";
+import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
 
 type PendingFocus = {
 	id: string;
@@ -106,16 +107,17 @@ export class FileOutlinerView extends TextFileView {
 		if (source !== "more-options") return;
 		if (!this.file) return;
 
+		const labels = getFileOutlinerPaneMenuLabels();
 		menu.addSeparator();
 		menu.addItem((item) => {
 			item
-				.setTitle("Open source view (Markdown)")
+				.setTitle(labels.openAsMarkdown)
 				.setIcon("file-text")
 				.onClick(() => void this.openSourceMarkdownView({ newLeaf: false }));
 		});
 		menu.addItem((item) => {
 			item
-				.setTitle("Open source view (new tab)")
+				.setTitle(labels.openAsMarkdownNewTab)
 				.setIcon("copy")
 				.onClick(() => void this.openSourceMarkdownView({ newLeaf: "tab" }));
 		});

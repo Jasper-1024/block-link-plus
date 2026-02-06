@@ -3,7 +3,7 @@ import { TFile, WorkspaceLeaf, type OpenViewState, type ViewState } from "obsidi
 
 import type BlockLinkPlus from "../../main";
 import { isFileOutlinerEnabledFile } from "./enable-scope";
-import { FILE_OUTLINER_VIEW_TYPE } from "./view";
+import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 
 export function registerFileOutlinerRouting(plugin: BlockLinkPlus): void {
 	plugin.register(
