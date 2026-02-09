@@ -84,7 +84,14 @@ export function buildFenceStateMapFromDoc(doc: DocLike): boolean[] {
 		const text = doc.line(ln).text ?? "";
 
 		if (!inFence) {
-			const m = text.match(FENCE_LINE_REGEX);
+			// Markdown allows fenced code blocks to start at the beginning of a list item:
+			// `- ```lang` / `1. ```lang` (and even task items like `- [ ] ```lang`).
+			// Many list-based features (outliner, etc) rely on fences being treated as opaque,
+			// so the fence detector MUST look past the list-item marker.
+			const prefixLen = getListItemPrefixLength(text);
+			const fenceText = prefixLen !== null ? text.slice(prefixLen) : text;
+
+			const m = fenceText.match(FENCE_LINE_REGEX);
 			if (m) {
 				inFence = true;
 				fenceChar = (m[2] ?? "")[0] ?? "";

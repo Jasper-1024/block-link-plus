@@ -153,6 +153,26 @@ describe("file-outliner-view/protocol", () => {
 		);
 	});
 
+	test("treats fenced code blocks that start on the list-item line (`- ```lang`) as opaque when parsing structure", () => {
+		const now = DateTime.fromISO("2026-02-03T00:00:00");
+		const input = [
+			"- ```bash",
+			"  echo 1",
+			"  ```",
+			"  - child",
+			"    [date:: 2026-02-06T00:00:01] [updated:: 2026-02-06T00:00:01] [blp_sys:: 1] [blp_ver:: 2] ^child",
+			"  ",
+			"  [date:: 2026-02-06T00:00:00] [updated:: 2026-02-06T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^root",
+			"- sibling",
+			"  [date:: 2026-02-06T00:00:02] [updated:: 2026-02-06T00:00:02] [blp_sys:: 1] [blp_ver:: 2] ^sib",
+			"",
+		].join("\n");
+
+		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
+		expect(out.content).toBe(input);
+		expect(out.didChange).toBe(false);
+	});
+
 	test("escapes list-looking body lines outside fences during serialization", () => {
 		const file: ParsedOutlinerFile = {
 			frontmatter: null,
@@ -175,6 +195,25 @@ describe("file-outliner-view/protocol", () => {
 		expect(out).toContain("  \\- not a child");
 		expect(out).toContain("  \\- [ ] not a child");
 		expect(out).toContain("  1\\. not a list");
+	});
+
+	test("does not escape list-looking lines inside fences that start on the first line during serialization", () => {
+		const file: ParsedOutlinerFile = {
+			frontmatter: null,
+			blocks: [
+				{
+					id: "aa",
+					depth: 0,
+					text: "```js\n- inside fence\n```",
+					children: [],
+					system: { date: "d", updated: "u", extra: {} },
+				},
+			],
+		};
+
+		const out = serializeOutlinerFile(file, { indentSize: 2 });
+		expect(out).toContain("  - inside fence");
+		expect(out).not.toContain("  \\\\- inside fence");
 	});
 
 	test("treats task checkbox markers as plain text (no structural task state)", () => {
@@ -245,5 +284,20 @@ describe("file-outliner-view/protocol", () => {
 		expect(out).not.toContain("[date::");
 		expect(out).not.toContain("^aa");
 		expect(out).not.toContain("^bb");
+	});
+
+	test("serializeOutlinerBlocksForClipboard does not escape list-looking lines inside fences that start on the first line", () => {
+		const blocks: ParsedOutlinerFile["blocks"] = [
+			{
+				id: "aa",
+				depth: 0,
+				text: "```js\n- inside fence\n```",
+				children: [],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		];
+
+		const out = serializeOutlinerBlocksForClipboard(blocks, { indentSize: 2 });
+		expect(out).toBe(["- ```js", "  - inside fence", "  ```"].join("\n"));
 	});
 });

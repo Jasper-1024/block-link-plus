@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 import { MARKDOWN_TAB_WIDTH, normalizeLineLeadingIndentTabsToSpaces } from "../../shared/markdown/indent-utils";
-import { buildFenceStateMapFromLines, FENCE_LINE_REGEX, LIST_ITEM_PREFIX_RE } from "../../shared/markdown/list-parse";
+import { buildFenceStateMapFromLines, LIST_ITEM_PREFIX_RE } from "../../shared/markdown/list-parse";
 import { generateRandomId } from "../../utils";
 
 export const OUTLINER_PROTOCOL_VERSION = 2;
@@ -203,7 +203,13 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 		const line = mergedLines[i] ?? "";
 		const inFence = fenceMap[lineNo] ?? false;
 
-		if (!inFence) {
+		// Fence contents are opaque for structural parsing, BUT a fence may start on the
+		// list-item line itself (`- ```lang`). In that case we MUST still parse the list
+		// item boundary, otherwise we'd drop the opening fence line and corrupt the tree.
+		const prevInFence = fenceMap[Math.max(0, lineNo - 1)] ?? false;
+		const allowStructure = !inFence || (inFence && !prevInFence);
+
+		if (allowStructure) {
 			const listMatch = line.match(OUTLINER_LIST_ITEM_PREFIX_RE);
 			if (listMatch) {
 				const indent = (listMatch[1] ?? "").length;
@@ -391,10 +397,10 @@ function serializeBlocks(blocks: OutlinerBlock[], opts: { indentSize: number }):
 			const first = rawLines[0] ?? "";
 			out.push(`${indent}- ${first}`);
 
-			let inFence = false;
+			const fenceMap = buildFenceStateMapFromLines(rawLines);
 			for (let i = 1; i < rawLines.length; i++) {
 				const raw = rawLines[i] ?? "";
-				if (FENCE_LINE_REGEX.test(raw)) inFence = !inFence;
+				const inFence = fenceMap[i + 1] ?? false;
 				out.push(raw.length === 0 ? bodyIndent : `${bodyIndent}${escapeBodyLineIfNeeded(raw, inFence)}`);
 			}
 
@@ -441,10 +447,10 @@ export function serializeOutlinerBlocksForClipboard(
 			const first = rawLines[0] ?? "";
 			out.push(`${indent}- ${first}`);
 
-			let inFence = false;
+			const fenceMap = buildFenceStateMapFromLines(rawLines);
 			for (let i = 1; i < rawLines.length; i++) {
 				const raw = rawLines[i] ?? "";
-				if (FENCE_LINE_REGEX.test(raw)) inFence = !inFence;
+				const inFence = fenceMap[i + 1] ?? false;
 				out.push(raw.length === 0 ? bodyIndent : `${bodyIndent}${escapeBodyLineIfNeeded(raw, inFence)}`);
 			}
 
