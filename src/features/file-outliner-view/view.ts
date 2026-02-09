@@ -461,9 +461,6 @@ export class FileOutlinerView extends TextFileView {
 			return;
 		}
 
-		const block = this.blockById.get(rootId);
-		const title = String(block?.text ?? rootId).split("\n")[0] ?? rootId;
-
 		header.style.display = "";
 		header.replaceChildren();
 
@@ -478,10 +475,80 @@ export class FileOutlinerView extends TextFileView {
 		});
 		header.appendChild(back);
 
-		const label = document.createElement("div");
-		label.className = "blp-outliner-zoom-label";
-		label.textContent = title;
-		header.appendChild(label);
+		const crumbs = document.createElement("div");
+		crumbs.className = "blp-outliner-zoom-breadcrumbs";
+		header.appendChild(crumbs);
+
+		const addSep = () => {
+			const sep = document.createElement("span");
+			sep.className = "blp-outliner-zoom-sep";
+			sep.textContent = ">";
+			crumbs.appendChild(sep);
+		};
+
+		const addCrumb = (opts: { text: string; onClick?: () => void; isCurrent?: boolean }) => {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "blp-outliner-zoom-crumb";
+			if (opts.isCurrent) btn.classList.add("is-blp-outliner-zoom-current");
+			btn.textContent = opts.text;
+
+			if (opts.onClick) {
+				btn.addEventListener("click", (evt) => {
+					evt.preventDefault();
+					evt.stopPropagation();
+					opts.onClick?.();
+				});
+			} else {
+				btn.disabled = true;
+			}
+
+			crumbs.appendChild(btn);
+		};
+
+		const fileCrumbText = this.file?.basename ?? this.file?.path ?? "File";
+		addCrumb({
+			text: fileCrumbText,
+			onClick: () => {
+				const focusId = this.getZoomRootId();
+				if (this.editingId) this.exitEditMode(this.editingId);
+				this.zoomStack = [];
+				if (focusId && this.blockById.has(focusId)) {
+					const end = String(this.blockById.get(focusId)?.text ?? "").length;
+					this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+					this.pendingScrollToId = focusId;
+				}
+				this.render({ forceRebuild: true });
+			},
+		});
+
+		for (let i = 0; i < this.zoomStack.length; i++) {
+			const id = this.zoomStack[i];
+			if (!id) continue;
+			addSep();
+
+			const block = this.blockById.get(id);
+			const title = String(block?.text ?? id).split("\n")[0] ?? id;
+			const isCurrent = i === this.zoomStack.length - 1;
+
+			addCrumb({
+				text: title,
+				isCurrent,
+				onClick: isCurrent
+					? undefined
+					: () => {
+							if (this.editingId) this.exitEditMode(this.editingId);
+							this.zoomStack = this.zoomStack.slice(0, i + 1);
+							const focusId = this.getZoomRootId();
+							if (focusId && this.blockById.has(focusId)) {
+								const end = String(this.blockById.get(focusId)?.text ?? "").length;
+								this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+								this.pendingScrollToId = focusId;
+							}
+							this.render({ forceRebuild: true });
+						},
+			});
+		}
 	}
 
 	private isDescendantOrSelf(descendantId: string, ancestorId: string): boolean {

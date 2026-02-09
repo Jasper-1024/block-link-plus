@@ -98,6 +98,47 @@
 	cursor: pointer;
 }
 
+.blp-file-outliner-view .blp-outliner-zoom-breadcrumbs {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.blp-file-outliner-view .blp-outliner-zoom-crumb {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: var(--text-muted);
+	cursor: pointer;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.blp-file-outliner-view .blp-outliner-zoom-crumb:hover {
+	text-decoration: underline;
+}
+
+.blp-file-outliner-view .blp-outliner-zoom-crumb:disabled {
+	opacity: 1;
+	cursor: default;
+}
+
+.blp-file-outliner-view .blp-outliner-zoom-crumb.is-blp-outliner-zoom-current {
+	color: var(--text-normal);
+	text-decoration: none;
+}
+
+.blp-file-outliner-view .blp-outliner-zoom-sep {
+	color: var(--text-muted);
+	opacity: 0.6;
+}
+
 .blp-file-outliner-view .blp-outliner-zoom-label {
 	min-width: 0;
 	overflow: hidden;
@@ -140,10 +181,16 @@
 	border: 0;
 	padding: 0;
 	margin: 0;
-	color: var(--text-muted);
+	/* Match the bullet coloring semantics (muted vs active). */
+	color: var(--ls-block-bullet-color);
 	opacity: 0;
 	cursor: pointer;
 	transform: translate(var(--blp-outliner-bullet-translate-x), var(--blp-outliner-bullet-translate-y));
+}
+
+.blp-file-outliner-view .ls-block:focus-within .blp-outliner-fold-toggle,
+.blp-file-outliner-view .ls-block.is-blp-outliner-active .blp-outliner-fold-toggle {
+	color: var(--ls-block-bullet-active-color);
 }
 
 .blp-file-outliner-view .ls-block[haschild="false"] .blp-outliner-fold-toggle {
@@ -162,9 +209,14 @@
 	height: 0;
 	border-top: 4px solid transparent;
 	border-bottom: 4px solid transparent;
-	border-left: 6px solid var(--text-muted);
+	border-left: 6px solid var(--ls-block-bullet-color);
 	/* Default: expanded (down arrow) */
 	transform: rotate(90deg);
+}
+
+.blp-file-outliner-view .ls-block:focus-within .blp-outliner-fold-toggle::before,
+.blp-file-outliner-view .ls-block.is-blp-outliner-active .blp-outliner-fold-toggle::before {
+	border-left: 6px solid var(--ls-block-bullet-active-color) !important;
 }
 
 .blp-file-outliner-view .ls-block.is-blp-outliner-collapsed .blp-outliner-fold-toggle::before {
@@ -232,7 +284,8 @@
 }
 
 .blp-file-outliner-view .blp-outliner-insert-hint {
-	display: flex;
+	/* Only show a single insert affordance at the end of the root list (Logseq-like). */
+	display: none;
 	align-items: center;
 	height: 12px;
 	cursor: pointer;
@@ -242,6 +295,10 @@
 			var(--blp-outliner-bullet-translate-x)
 	);
 	padding-right: var(--blp-outliner-main-padding-right);
+}
+
+.blp-file-outliner-view .blp-file-outliner-blocks > .ls-block:last-child > .blp-outliner-insert-hint {
+	display: flex;
 }
 
 .blp-file-outliner-view .ls-block > .block-main-container:hover ~ .blp-outliner-insert-hint,
@@ -309,6 +366,9 @@
 	border-left-color: var(--ls-guideline-color);
 	border-left-style: solid;
 	border-left-width: var(--ls-block-bullet-threading-width) !important;
+	/* The children list MUST fill the available width so the block row is clickable across the full editor width. */
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .blp-file-outliner-view .block-children-container {
