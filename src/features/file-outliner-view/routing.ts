@@ -2,6 +2,7 @@ import { around } from "monkey-around";
 import { TFile, WorkspaceLeaf, type OpenViewState, type ViewState } from "obsidian";
 
 import type BlockLinkPlus from "../../main";
+import { isDetachedLeaf } from "../../shared/utils/workspaceLeafFlags";
 import { isFileOutlinerEnabledFile } from "./enable-scope";
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 
@@ -10,6 +11,13 @@ export function registerFileOutlinerRouting(plugin: BlockLinkPlus): void {
 		around(WorkspaceLeaf.prototype, {
 			openFile(old) {
 				return async function (this: WorkspaceLeaf, file: TFile, openState?: OpenViewState): Promise<void> {
+					// Never route "detached"/internal leaves (embeds, internal MarkdownViews, etc).
+					// Routing is a user-facing concern for workspace leaves only.
+					const leafAny = this as any;
+					if (isDetachedLeaf(this) || leafAny?.parent == null) {
+						return old.call(this, file, openState);
+					}
+
 					try {
 						if (file instanceof TFile && file.extension?.toLowerCase() === "md") {
 							if (isFileOutlinerEnabledFile(plugin, file)) {

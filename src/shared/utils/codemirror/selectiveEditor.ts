@@ -43,6 +43,9 @@ export const editableRange =
   Annotation.define<ContentRangeType>();
 export const hiddenLine = Decoration.replace({ inclusive: true, block: true });
 
+// Outliner v2 system tail line marker (Dataview inline field).
+const OUTLINER_SYS_MARKER_RE = /\[blp_sys::\s*1\]/;
+
 //partial note editor
 
 export const hideLine = StateField.define<DecorationSet>({
@@ -72,6 +75,20 @@ export const hideLine = StateField.define<DecorationSet>({
           tr.state.doc.line(tr.state.doc.lines).to,
           hiddenLine
         );
+      }
+
+      // Hide outliner system tail lines inside the visible range.
+      // This keeps embeds/editable ranges free of internal maintenance lines.
+      for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+        const line = tr.state.doc.line(lineNumber);
+        if (!OUTLINER_SYS_MARKER_RE.test(line.text)) continue;
+
+        // Hide the whole line; include the newline when it's not the last visible line,
+        // so we don't leave blank spacing behind.
+        const to = lineNumber === endLine
+          ? line.to
+          : tr.state.doc.line(Math.min(tr.state.doc.lines, lineNumber + 1)).from;
+        builder.add(line.from, to, hiddenLine);
       }
     }
     const dec = builder.finish();

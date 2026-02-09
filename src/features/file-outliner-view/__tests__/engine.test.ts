@@ -3,6 +3,7 @@ import {
 	deleteBlock,
 	indentBlock,
 	insertAfter,
+	moveBlockSubtree,
 	mergeWithNext,
 	mergeWithPrevious,
 	outdentBlock,
@@ -120,6 +121,71 @@ describe("file-outliner-view/engine", () => {
 		expect(outdented.didChange).toBe(true);
 		expect(outdented.file.blocks.map((b) => b.id)).toEqual(["a", "b", "c"]);
 		expect(outdented.file.blocks[1]?.depth).toBe(0);
+	});
+
+	test("moveBlockSubtree reorders siblings (after)", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "a", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "b", depth: 0, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "c", depth: 0, text: "c", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const out = moveBlockSubtree(input, "b", "c", "after");
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual({ id: "b", start: 0, end: 0 });
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "c", "b"]);
+		expect(Array.from(out.dirtyIds).sort()).toEqual(["b"]);
+
+		// Input is not mutated.
+		expect(input.blocks.map((b) => b.id)).toEqual(["a", "b", "c"]);
+	});
+
+	test("moveBlockSubtree moves a root block inside another block (append child)", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "a",
+				children: [
+					{ id: "b", depth: 1, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{ id: "c", depth: 0, text: "c", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const out = moveBlockSubtree(input, "c", "a", "inside");
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a"]);
+		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["b", "c"]);
+		// Depths are recomputed.
+		expect(out.file.blocks[0]?.depth).toBe(0);
+		expect(out.file.blocks[0]?.children[1]?.depth).toBe(1);
+		expect(Array.from(out.dirtyIds).sort()).toEqual(["a", "c"]);
+	});
+
+	test("moveBlockSubtree refuses to move a block relative to its descendants", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "a",
+				children: [
+					{
+						id: "b",
+						depth: 1,
+						text: "b",
+						children: [{ id: "c", depth: 2, text: "c", children: [], system: { date: "d", updated: "u", extra: {} } }],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const out = moveBlockSubtree(input, "a", "c", "after");
+		expect(out.didChange).toBe(false);
+		expect(out.file.blocks[0]?.children[0]?.children.map((b) => b.id)).toEqual(["c"]);
 	});
 
 	test("mergeWithPrevious concatenates text and moves children", () => {

@@ -24,6 +24,8 @@ export type OutlinerEngineResult = {
 	didChange: boolean;
 };
 
+export type OutlinerMoveWhere = "before" | "after" | "inside";
+
 function cloneBlock(b: OutlinerBlock): OutlinerBlock {
 	return {
 		id: b.id,
@@ -236,6 +238,72 @@ export function outdentBlock(
 	rebuildDepths(next.blocks, 0);
 
 	return { file: next, selection: sel, dirtyIds, didChange: true };
+}
+
+export function moveBlockSubtree(
+	file: ParsedOutlinerFile,
+	sourceId: string,
+	targetId: string,
+	where: OutlinerMoveWhere
+): OutlinerEngineResult {
+	if (!sourceId || !targetId) {
+		return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds: new Set(), didChange: false };
+	}
+	if (sourceId === targetId) {
+		return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds: new Set(), didChange: false };
+	}
+
+	const next = cloneFile(file);
+	const dirtyIds = new Set<string>();
+
+	const src = findBlockLocation(next.blocks, sourceId, null);
+	if (!src) return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: false };
+
+	// Disallow moving a subtree into itself (or relative to its descendants) to avoid cycles.
+	const srcIds = new Set<string>();
+	collectIds([src.block], srcIds);
+	if (srcIds.has(targetId)) {
+		return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: false };
+	}
+
+	const tgt = findBlockLocation(next.blocks, targetId, null);
+	if (!tgt) return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: false };
+
+	let destSiblings: OutlinerBlock[];
+	let destIndex: number;
+	let destParent: OutlinerBlock | null;
+
+	if (where === "inside") {
+		destParent = tgt.block;
+		destSiblings = tgt.block.children;
+		destIndex = destSiblings.length; // append
+	} else {
+		destParent = tgt.parent;
+		destSiblings = tgt.siblings;
+		destIndex = tgt.index + (where === "after" ? 1 : 0);
+	}
+
+	// Adjust insertion index when moving within the same siblings list.
+	if (destSiblings === src.siblings && destIndex > src.index) {
+		destIndex -= 1;
+	}
+
+	// No-op: already in the right place.
+	if (destSiblings === src.siblings && destIndex === src.index) {
+		return { file, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: false };
+	}
+
+	// Remove then insert.
+	src.siblings.splice(src.index, 1);
+	destSiblings.splice(Math.max(0, Math.min(destSiblings.length, destIndex)), 0, src.block);
+
+	rebuildDepths(next.blocks, 0);
+
+	dirtyIds.add(src.block.id);
+	if (src.parent) dirtyIds.add(src.parent.id);
+	if (destParent) dirtyIds.add(destParent.id);
+
+	return { file: next, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: true };
 }
 
 export function mergeWithPrevious(

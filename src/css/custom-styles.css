@@ -79,6 +79,7 @@
 
 .blp-file-outliner-view .blp-file-outliner-root {
 	padding: 12px 14px;
+	position: relative;
 }
 
 .blp-file-outliner-view .blp-file-outliner-zoom-header {
@@ -229,9 +230,24 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	cursor: pointer;
+	cursor: grab;
 	position: relative;
 	transform: translate(var(--blp-outliner-bullet-translate-x), var(--blp-outliner-bullet-translate-y));
+}
+
+body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
+.blp-file-outliner-view .ls-block.is-blp-outliner-dnd-source .bullet-container {
+	cursor: grabbing;
+}
+
+.blp-file-outliner-view .blp-outliner-dnd-indicator {
+	position: absolute;
+	height: 0;
+	border-top: 2px solid var(--ls-block-bullet-active-color);
+	border-radius: 2px;
+	pointer-events: none;
+	z-index: 10;
+	transform: translateY(-1px);
 }
 
 .blp-file-outliner-view .bullet {

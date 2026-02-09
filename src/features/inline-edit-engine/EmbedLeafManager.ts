@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, MarkdownView, TFile, WorkspaceLeaf } from "obsidian";
 import type BlockLinkPlus from "../../main";
+import { markLeafAsDetached } from "../../shared/utils/workspaceLeafFlags";
 
 export interface ManagedEmbedLeaf {
 	containerEl: HTMLElement;
@@ -84,6 +85,7 @@ export class EmbedLeafManager {
 		subpath?: string;
 	}): Promise<ManagedEmbedLeaf> {
 		const leaf = new (WorkspaceLeaf as any)(this.plugin.app) as WorkspaceLeaf;
+		markLeafAsDetached(leaf);
 
 		const embed: ManagedEmbedLeaf = {
 			containerEl: args.containerEl,
