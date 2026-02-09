@@ -93,7 +93,6 @@
       "---",
       "blp_outliner: true",
       "---",
-      "",
       "- ```bash",
       "  echo 1",
       "  ```",
