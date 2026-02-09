@@ -153,6 +153,29 @@
     await wait(80);
     assert(view.editingId === "v", `expected editingId=v after right-edge click, got ${String(view.editingId)}`);
 
+    // --- Selection highlight uses Obsidian theme variable (--text-selection), not CM defaults.
+    const cm = view.editorView;
+    assert(cm, "missing view.editorView");
+    const docLen = cm.state.doc.length;
+    assert(docLen > 0, "expected non-empty editor doc for v");
+    cm.dispatch({ selection: { anchor: 0, head: Math.min(1, docLen) } });
+    await wait(50);
+    const selBg = root.querySelector(".blp-file-outliner-editor .cm-selectionBackground");
+    assert(selBg, "missing .cm-selectionBackground after selection dispatch");
+    const expectedSel = (() => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--text-selection)";
+      document.body.appendChild(probe);
+      const c = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return c;
+    })();
+    const actualSel = getComputedStyle(selBg).backgroundColor;
+    assert(
+      actualSel === expectedSel,
+      `expected selectionBackground=${expectedSel}, got ${actualSel}`
+    );
+
     // --- 2) Fold caret color matches bullet state.
     // Activate the parent to show fold toggle and apply active bullet styling.
     const aDisplay = blocksHost.querySelector(`.ls-block[data-blp-outliner-id="a"] .blp-file-outliner-display`);
@@ -200,6 +223,21 @@
     await wait(200);
     assert(Array.isArray(view.zoomStack) && view.zoomStack.length === 0, `expected zoomStack=[] after file crumb click, got ${JSON.stringify(view.zoomStack)}`);
 
+    // Direct zoom into a deep child from full view should still include ancestors in breadcrumbs.
+    const bulletV2 = blocksHost.querySelector(`.ls-block[data-blp-outliner-id="v"] .bullet-container`);
+    assert(bulletV2, "missing bullet-container for v (direct zoom)");
+    bulletV2.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(200);
+    assert(
+      Array.isArray(view.zoomStack) &&
+        view.zoomStack.length === 2 &&
+        view.zoomStack[0] === "a" &&
+        view.zoomStack[1] === "v",
+      `expected zoomStack=['a','v'] after direct child zoom, got ${JSON.stringify(view.zoomStack)}`
+    );
+    const crumbButtons2 = Array.from(root.querySelectorAll(".blp-outliner-zoom-crumb"));
+    assert(crumbButtons2.length >= 3, `expected >=3 crumbs (file,a,v) after direct zoom, got ${crumbButtons2.length}`);
+
     return { ok: true };
   } finally {
     try {
@@ -228,4 +266,3 @@
     }
   }
 })();
-

@@ -360,6 +360,21 @@
 	display: none !important;
 }
 
+/* --- CodeMirror selection (match Obsidian's Live Preview colors) --- */
+
+/* Obsidian scopes these rules under `.markdown-source-view.mod-cm6`; our file-level view isn't,
+ * so we mirror the same selectors with our own view scope.
+ */
+.blp-file-outliner-view .blp-file-outliner-editor .cm-selectionBackground,
+.blp-file-outliner-view .blp-file-outliner-editor .cm-editor > .cm-scroller > .cm-selectionLayer > .cm-selectionBackground {
+	background-color: var(--text-selection) !important;
+}
+
+.blp-file-outliner-view .blp-file-outliner-editor .cm-line .cm-selection,
+.blp-file-outliner-view .blp-file-outliner-editor .cm-line .cm-inline-code .cm-selection {
+	background-color: var(--text-selection) !important;
+}
+
 /* --- Logseq bullet threading (adapted) --- */
 
 .blp-file-outliner-view .block-children {

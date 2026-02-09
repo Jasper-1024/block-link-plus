@@ -594,7 +594,18 @@ export class FileOutlinerView extends TextFileView {
 
 		if (this.editingId) this.exitEditMode(this.editingId);
 
-		this.zoomStack.push(id);
+		// Zoom stack is a path (root -> ... -> id), not a navigation history.
+		// This makes breadcrumbs stable even when the user zooms directly into a deep child.
+		const nextStack: string[] = [];
+		const visited = new Set<string>();
+		let cur: string | null = id;
+		while (cur && !visited.has(cur)) {
+			visited.add(cur);
+			nextStack.push(cur);
+			cur = this.parentById.get(cur) ?? null;
+		}
+		nextStack.reverse();
+		this.zoomStack = nextStack;
 		const end = String(this.blockById.get(id)?.text ?? "").length;
 		this.pendingFocus = { id, cursorStart: end, cursorEnd: end };
 		this.render({ forceRebuild: true });
