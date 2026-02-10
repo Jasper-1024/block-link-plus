@@ -194,6 +194,18 @@ class T {
             name: "Hide system tail lines",
             desc: "Hide outliner protocol tail lines in Reading mode when `[blp_sys:: 1]` is present.",
           },
+          dragAndDrop: {
+            name: "Enable drag & drop",
+            desc: "Drag the bullet to move blocks and their subtrees.",
+          },
+          zoom: {
+            name: "Enable zoom",
+            desc: "Click the bullet to zoom into a block subtree.",
+          },
+          activeHighlight: {
+            name: "Highlight active block",
+            desc: "Show an emphasis line/highlight for the block being edited.",
+          },
           childrenOnSplit: {
             name: "Enter split: children behavior",
             desc: "Choose what happens to children when splitting a block with Enter.",
@@ -737,6 +749,18 @@ class T {
           hideSystemTailLines: {
             name: "隐藏系统尾行",
             desc: "当存在 `[blp_sys:: 1]` 时，在阅读模式隐藏 Outliner 协议尾行。",
+          },
+          dragAndDrop: {
+            name: "启用拖拽移动",
+            desc: "拖拽圆点以移动块及其子树。",
+          },
+          zoom: {
+            name: "启用 Zoom",
+            desc: "点击圆点以 Zoom 进入块的子树视图。",
+          },
+          activeHighlight: {
+            name: "高亮当前块",
+            desc: "编辑时为当前块显示强调线/高亮。",
           },
           childrenOnSplit: {
             name: "Enter 拆分：子块处理",
@@ -1282,6 +1306,18 @@ class T {
             name: "隱藏系統尾行",
             desc: "當存在 `[blp_sys:: 1]` 時，在閱讀模式隱藏 Outliner 協議尾行。",
           },
+          dragAndDrop: {
+            name: "啟用拖曳移動",
+            desc: "拖曳圓點以移動區塊及其子樹。",
+          },
+          zoom: {
+            name: "啟用 Zoom",
+            desc: "點擊圓點以 Zoom 進入區塊的子樹檢視。",
+          },
+          activeHighlight: {
+            name: "高亮目前區塊",
+            desc: "編輯時為目前區塊顯示強調線/高亮。",
+          },
           childrenOnSplit: {
             name: "Enter 拆分：子塊處理",
             desc: "使用 Enter 拆分區塊時，選擇子塊保留在原區塊或移動到新區塊。",
@@ -1674,17 +1710,30 @@ class T {
     this.lang = "en";
     this.ensureFileOutlinerPaneMenuStrings();
     
-    // Use Obsidian's native language detection
-    const obsidianLang = window.localStorage.getItem('language');
-    
-    if (obsidianLang === 'zh') {
-      this.lang = 'zh';
-    } else if (obsidianLang === 'zh-TW') {
-      this.lang = 'zh-TW';
-    } else if (obsidianLang === null || obsidianLang === 'en') {
-      this.lang = 'en';
-    }
-    // For any other language, fall back to English
+    // Prefer Obsidian's stored language; fall back to moment locale.
+    const rawLang = window.localStorage.getItem("language") || moment.locale() || "";
+    const lower = String(rawLang).trim().toLowerCase();
+
+    const isZhTw =
+      lower === "zh-tw" ||
+      lower === "zh_tw" ||
+      lower.startsWith("zh-tw") ||
+      lower.startsWith("zh_tw") ||
+      lower.startsWith("zh-hant") ||
+      lower.startsWith("zh-hk") ||
+      lower.startsWith("zh-mo");
+
+    const isZh =
+      lower === "zh" ||
+      lower === "zh-cn" ||
+      lower === "zh_cn" ||
+      lower.startsWith("zh-cn") ||
+      lower.startsWith("zh_cn") ||
+      lower.startsWith("zh-hans");
+
+    if (isZhTw) this.lang = "zh-TW";
+    else if (isZh) this.lang = "zh";
+    else this.lang = "en";
   }
 
   get texts(): typeof this.all.en {

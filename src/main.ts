@@ -34,7 +34,7 @@ import { WhatsNewModal } from "ui/WhatsNewModal";
 import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
-import { handleBlpView, registerFileOutlinerView } from "features/file-outliner-view";
+import { handleBlpView, notifyFileOutlinerViewsSettingsChanged, registerFileOutlinerView } from "features/file-outliner-view";
 import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-scope";
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
@@ -236,6 +236,7 @@ export default class BlockLinkPlus extends Plugin {
 		this.inlineEditEngine?.onSettingsChanged();
 		this.builtInVslinko?.onSettingsChanged(false);
 		getFileOutlinerScopeManager(this).onSettingsChanged();
+		notifyFileOutlinerViewsSettingsChanged(this);
 	}
 
 	async onunload() {

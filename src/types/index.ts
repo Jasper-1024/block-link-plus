@@ -108,6 +108,9 @@ export interface PluginSettings {
 	fileOutlinerEnabledFiles: string[];
 	fileOutlinerHideSystemLine: boolean;
 	fileOutlinerViewEnabled: boolean;
+	fileOutlinerDragAndDropEnabled: boolean;
+	fileOutlinerZoomEnabled: boolean;
+	fileOutlinerActiveHighlightEnabled: boolean;
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
 	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
@@ -156,6 +159,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerEnabledFiles: [],
 	fileOutlinerHideSystemLine: true,
 	fileOutlinerViewEnabled: true,
+	fileOutlinerDragAndDropEnabled: true,
+	fileOutlinerZoomEnabled: true,
+	fileOutlinerActiveHighlightEnabled: true,
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
 	fileOutlinerBackspaceWithChildren: "merge",

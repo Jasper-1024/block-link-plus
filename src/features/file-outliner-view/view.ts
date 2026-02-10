@@ -113,6 +113,45 @@ export class FileOutlinerView extends TextFileView {
 		super(leaf);
 		this.plugin = plugin;
 		this.contentEl.addClass("blp-file-outliner-view");
+		this.syncFeatureToggles();
+	}
+
+	/**
+	 * Keep purely-visual feature flags as root CSS classes so behavior and styling can be gated
+	 * without touching the core protocol/engine.
+	 */
+	private syncFeatureToggles(): void {
+		try {
+			this.contentEl.classList.toggle(
+				"blp-outliner-active-highlight-enabled",
+				this.plugin.settings.fileOutlinerActiveHighlightEnabled !== false
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	/**
+	 * Called after plugin settings are saved to apply feature toggles to already-open leaves.
+	 */
+	public onFileOutlinerSettingsChanged(): void {
+		this.syncFeatureToggles();
+
+		// If a toggle is turned off mid-session, leave the view in a sane state.
+		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) {
+			this.dndPreStart = null;
+			if (this.dndState) this.stopDragging({ apply: false });
+		}
+
+		if (this.plugin.settings.fileOutlinerZoomEnabled === false && this.zoomStack.length > 0) {
+			try {
+				if (this.editingId) this.exitEditMode(this.editingId);
+			} catch {
+				// ignore
+			}
+			this.zoomStack = [];
+			this.render({ forceRebuild: true });
+		}
 	}
 
 	getViewType(): string {
@@ -763,6 +802,7 @@ export class FileOutlinerView extends TextFileView {
 	private onBulletPointerDown(id: string, evt: PointerEvent): void {
 		if (evt.button !== 0) return;
 		if (!this.outlinerFile) return;
+		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
 		if (this.dndState) return;
 
 		this.dndPreStart = { sourceId: id, pointerId: evt.pointerId, startX: evt.clientX, startY: evt.clientY };
@@ -776,6 +816,7 @@ export class FileOutlinerView extends TextFileView {
 	private onBulletPointerMove(evt: PointerEvent): void {
 		const pre = this.dndPreStart;
 		if (pre && evt.pointerId === pre.pointerId) {
+			if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
 			const dx = evt.clientX - pre.startX;
 			const dy = evt.clientY - pre.startY;
 			if (Math.hypot(dx, dy) >= 4) {
@@ -786,6 +827,11 @@ export class FileOutlinerView extends TextFileView {
 		const state = this.dndState;
 		if (!state) return;
 		if (evt.pointerId !== state.pointerId) return;
+
+		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) {
+			this.stopDragging({ apply: false });
+			return;
+		}
 
 		evt.preventDefault();
 
@@ -835,6 +881,7 @@ export class FileOutlinerView extends TextFileView {
 	private startDragging(pre: OutlinerDndPreStart): void {
 		this.dndPreStart = null;
 		if (!this.outlinerFile) return;
+		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
 
 		// Ensure latest editor value is committed before we perform structural moves.
 		if (this.editingId) {
@@ -1087,6 +1134,10 @@ export class FileOutlinerView extends TextFileView {
 			evt.stopPropagation();
 			// Suppress click actions immediately after a drag gesture.
 			if (Date.now() - this.dndLastEndAt < 250) return;
+			if (this.plugin.settings.fileOutlinerZoomEnabled === false) {
+				onActivate(evt);
+				return;
+			}
 			this.zoomInto(id);
 		});
 		bulletContainer.addEventListener("pointerdown", (evt) => this.onBulletPointerDown(id, evt));

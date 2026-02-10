@@ -487,8 +487,8 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 
 /* --- Active/target highlighting --- */
 
-.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
-.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
+.blp-file-outliner-view.blp-outliner-active-highlight-enabled .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
+.blp-file-outliner-view.blp-outliner-active-highlight-enabled .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
 	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }

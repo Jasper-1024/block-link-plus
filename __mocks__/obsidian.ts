@@ -278,6 +278,47 @@ export class MarkdownView {
   }
 }
 
+// TextFileView stub (enough for module evaluation in unit tests).
+export class TextFileView {
+  app: App;
+  leaf: any;
+  contentEl: HTMLElement;
+  file: TFile | null = null;
+  data: string = "";
+
+  constructor(leaf?: any) {
+    this.leaf = leaf;
+    this.app = leaf?.app ?? new App();
+    this.contentEl = document.createElement("div");
+  }
+
+  getViewType(): string {
+    return "text";
+  }
+
+  onPaneMenu(_menu: any, _source: any): void {}
+
+  setEphemeralState(_state: any): void {}
+
+  clear(): void {}
+
+  setViewData(data: string, _clear?: boolean): void {
+    this.data = data;
+  }
+
+  getViewData(): string {
+    return this.data;
+  }
+
+  requestSave(): void {}
+
+  async save(): Promise<void> {}
+
+  addChild(_child: any): void {}
+
+  removeChild(_child: any): void {}
+}
+
 // MarkdownRenderChild 类模拟（用于 Markdown 渲染子组件）
 // Minimal UI stubs used by feature-level unit tests.
 function enhanceEl<T extends HTMLElement>(el: T): T {

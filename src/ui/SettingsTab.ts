@@ -473,6 +473,18 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(ui.hideSystemTailLines.name)
 			.setDesc(ui.hideSystemTailLines.desc);
 
+		this.addToggleSetting("fileOutlinerDragAndDropEnabled", undefined, rootEl)
+			.setName(ui.dragAndDrop.name)
+			.setDesc(ui.dragAndDrop.desc);
+
+		this.addToggleSetting("fileOutlinerZoomEnabled", undefined, rootEl)
+			.setName(ui.zoom.name)
+			.setDesc(ui.zoom.desc);
+
+		this.addToggleSetting("fileOutlinerActiveHighlightEnabled", undefined, rootEl)
+			.setName(ui.activeHighlight.name)
+			.setDesc(ui.activeHighlight.desc);
+
 		new Setting(rootEl)
 			.setName(ui.childrenOnSplit.name)
 			.setDesc(ui.childrenOnSplit.desc)
