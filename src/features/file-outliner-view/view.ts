@@ -36,6 +36,7 @@ import {
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
 import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
+import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-shortcuts";
 
 type PendingFocus = {
 	id: string;
@@ -100,6 +101,8 @@ export class FileOutlinerView extends TextFileView {
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
 	private pendingBlurTimer: number | null = null;
+
+	private lastPlainPasteShortcutAt = 0;
 
 	private collapsedIds = new Set<string>();
 	private zoomStack: string[] = [];
@@ -419,6 +422,10 @@ export class FileOutlinerView extends TextFileView {
 				Prec.high(
 					keymap.of([
 						{
+							key: "Mod-Enter",
+							run: () => this.onEditorToggleTask(),
+						},
+						{
 							key: "Shift-Enter",
 							run: (view) => {
 								const r = view.state.selection.main;
@@ -458,6 +465,10 @@ export class FileOutlinerView extends TextFileView {
 					this.onEditorDocChanged(update.state.doc.toString());
 				}),
 				EditorView.domEventHandlers({
+					keydown: (evt) => {
+						if (isPlainTextPasteShortcut(evt)) this.lastPlainPasteShortcutAt = Date.now();
+						return false;
+					},
 					paste: (evt) => this.onEditorPaste(evt),
 				}),
 			],
@@ -1571,8 +1582,40 @@ export class FileOutlinerView extends TextFileView {
 		return true;
 	}
 
+	private consumePlainTextPasteBypass(): boolean {
+		const t = this.lastPlainPasteShortcutAt;
+		this.lastPlainPasteShortcutAt = 0;
+		return t !== 0 && Date.now() - t < 750;
+	}
+
+	private onEditorToggleTask(): boolean {
+		const editor = this.editorView;
+		if (!editor) return false;
+		if (!this.editingId) return false;
+
+		const doc = editor.state.doc.toString();
+		const nl = doc.indexOf("\n");
+		const firstLineEnd = nl >= 0 ? nl : doc.length;
+
+		const firstLine = doc.slice(0, firstLineEnd);
+		const nextFirstLine = toggleTaskMarkerPrefix(firstLine);
+		if (nextFirstLine === firstLine) return false;
+
+		const delta = nextFirstLine.length - firstLine.length;
+		const nextLen = doc.length + delta;
+		const clamp = (n: number) => Math.max(0, Math.min(nextLen, Math.floor(n)));
+
+		const r = editor.state.selection.main;
+		editor.dispatch({
+			changes: { from: 0, to: firstLineEnd, insert: nextFirstLine },
+			selection: { anchor: clamp(r.anchor + delta), head: clamp(r.head + delta) },
+		});
+		return true;
+	}
+
 	private onEditorPaste(evt: ClipboardEvent): boolean {
 		if (!this.outlinerFile) return false;
+		if (this.consumePlainTextPasteBypass()) return false;
 		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return false;
 
 		const raw = evt.clipboardData?.getData("text/plain") ?? "";
