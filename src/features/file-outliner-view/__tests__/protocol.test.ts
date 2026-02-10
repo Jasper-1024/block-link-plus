@@ -28,7 +28,7 @@ describe("file-outliner-view/protocol", () => {
 		expect(out.didChange).toBe(true);
 	});
 
-	test("inserts a blank continuation line before parent tail line when children exist", () => {
+	test("normalizes parent tail lines to appear before children (canonical)", () => {
 		const now = DateTime.fromISO("2026-02-03T00:00:00");
 		const input = [
 			"- parent",
@@ -43,13 +43,13 @@ describe("file-outliner-view/protocol", () => {
 		expect(out.content).toBe(
 			[
 				"- parent",
+				"  [date:: 2026-02-03T10:00:01] [updated:: 2026-02-03T10:00:01] [blp_sys:: 1] [blp_ver:: 2] ^parent",
 				"  - child",
 				"    [date:: 2026-02-03T10:00:00] [updated:: 2026-02-03T10:00:00] [blp_sys:: 1] [blp_ver:: 2] ^child",
-				"  ",
-				"  [date:: 2026-02-03T10:00:01] [updated:: 2026-02-03T10:00:01] [blp_sys:: 1] [blp_ver:: 2] ^parent",
 				"",
 			].join("\n")
 		);
+		expect(out.didChange).toBe(true);
 	});
 
 	test("preserves extra Dataview fields on the system tail line", () => {
@@ -169,8 +169,20 @@ describe("file-outliner-view/protocol", () => {
 		].join("\n");
 
 		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
-		expect(out.content).toBe(input);
-		expect(out.didChange).toBe(false);
+		expect(out.content).toBe(
+			[
+				"- ```bash",
+				"  echo 1",
+				"  ```",
+				"  [date:: 2026-02-06T00:00:00] [updated:: 2026-02-06T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^root",
+				"  - child",
+				"    [date:: 2026-02-06T00:00:01] [updated:: 2026-02-06T00:00:01] [blp_sys:: 1] [blp_ver:: 2] ^child",
+				"- sibling",
+				"  [date:: 2026-02-06T00:00:02] [updated:: 2026-02-06T00:00:02] [blp_sys:: 1] [blp_ver:: 2] ^sib",
+				"",
+			].join("\n")
+		);
+		expect(out.didChange).toBe(true);
 	});
 
 	test("escapes list-looking body lines outside fences during serialization", () => {

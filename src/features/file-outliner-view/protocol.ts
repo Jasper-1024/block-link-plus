@@ -253,10 +253,14 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 				}
 
 				if (owner) {
-					// Strip a single trailing spacer line (canonical uses it).
-					const textLines = owner.block.text.split("\n");
-					if (textLines.length > 0 && textLines[textLines.length - 1] === "") {
-						owner.block.text = textLines.slice(0, -1).join("\n");
+					// Legacy v2 canonical (tail-after-children) injected a blank continuation spacer line
+					// right before the tail line. Only strip it when the tail line is after a subtree so
+					// we don't eat user-authored blank lines in the new canonical (tail-before-children).
+					if ((owner.block.children?.length ?? 0) > 0) {
+						const textLines = owner.block.text.split("\n");
+						if (textLines.length > 0 && textLines[textLines.length - 1] === "") {
+							owner.block.text = textLines.slice(0, -1).join("\n");
+						}
 					}
 
 					// Prefer BLP-marked system lines if multiple exist; otherwise keep the first.
@@ -404,14 +408,6 @@ function serializeBlocks(blocks: OutlinerBlock[], opts: { indentSize: number }):
 				out.push(raw.length === 0 ? bodyIndent : `${bodyIndent}${escapeBodyLineIfNeeded(raw, inFence)}`);
 			}
 
-			walk(b.children, depth + 1);
-
-			// Spacer line is only needed when the block has children: without it, Obsidian-native
-			// embeds (`![[file#^id]]`) may attach the id to the last child instead of the parent.
-			if (b.children.length > 0) {
-				out.push(bodyIndent);
-			}
-
 			const extraKeys = Object.keys(b.system.extra ?? {}).sort();
 			const extraFields = extraKeys.map((k) => `[${k}:: ${b.system.extra[k]}]`);
 
@@ -424,6 +420,8 @@ function serializeBlocks(blocks: OutlinerBlock[], opts: { indentSize: number }):
 			].join(" ");
 
 			out.push(`${bodyIndent}${tailFields} ^${b.id}`.trimEnd());
+
+			walk(b.children, depth + 1);
 		}
 	};
 
