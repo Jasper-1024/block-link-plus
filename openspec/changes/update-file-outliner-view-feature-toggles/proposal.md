@@ -7,7 +7,7 @@ The v2 File Outliner View aims to provide a Logseq-like block editing experience
 - Add Outliner (v2) settings toggles to enable/disable:
   - bullet-handle drag-and-drop
   - bullet-click zoom navigation
-  - active block emphasis line/highlight
+  - active-block left emphasis connector line (not the block highlight)
 - Ensure the settings are localized (en/zh/zh-TW) and apply to already-open Outliner View leaves.
 
 ## Non-Goals
@@ -18,4 +18,3 @@ The v2 File Outliner View aims to provide a Logseq-like block editing experience
 - Affected capability: `file-outliner-view`, `settings-configuration`.
 - Affected code: `src/types/index.ts`, `src/ui/SettingsTab.ts`, `src/features/file-outliner-view/*`, `src/css/custom-styles.css`, `src/shared/i18n.ts`.
 - Backwards compatible: defaults preserve current behavior.
-

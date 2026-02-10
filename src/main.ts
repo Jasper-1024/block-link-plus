@@ -197,6 +197,15 @@ export default class BlockLinkPlus extends Plugin {
 					shouldSave = true;
 				}
 
+				// v2: rename "active highlight" toggle -> "emphasis line" (left connector line).
+				if ("fileOutlinerActiveHighlightEnabled" in raw && !("fileOutlinerEmphasisLineEnabled" in raw)) {
+					// @ts-ignore - settings object is user data.
+					raw.fileOutlinerEmphasisLineEnabled = (raw as any).fileOutlinerActiveHighlightEnabled;
+					// @ts-ignore
+					delete (raw as any).fileOutlinerActiveHighlightEnabled;
+					shouldSave = true;
+				}
+
 			const legacyKeys = [
 				"editorFlow",
 				"editorFlowStyle",

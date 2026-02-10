@@ -202,9 +202,9 @@ class T {
             name: "Enable zoom",
             desc: "Click the bullet to zoom into a block subtree.",
           },
-          activeHighlight: {
-            name: "Highlight active block",
-            desc: "Show an emphasis line/highlight for the block being edited.",
+          emphasisLine: {
+            name: "Emphasis line (left)",
+            desc: "Emphasize the active block's left connector line. When disabled, it stays muted.",
           },
           childrenOnSplit: {
             name: "Enter split: children behavior",
@@ -758,9 +758,9 @@ class T {
             name: "启用 Zoom",
             desc: "点击圆点以 Zoom 进入块的子树视图。",
           },
-          activeHighlight: {
-            name: "高亮当前块",
-            desc: "编辑时为当前块显示强调线/高亮。",
+          emphasisLine: {
+            name: "启用强调线（左侧）",
+            desc: "强调当前块左侧的连接线。关闭后保持为弱化颜色。",
           },
           childrenOnSplit: {
             name: "Enter 拆分：子块处理",
@@ -1314,9 +1314,9 @@ class T {
             name: "啟用 Zoom",
             desc: "點擊圓點以 Zoom 進入區塊的子樹檢視。",
           },
-          activeHighlight: {
-            name: "高亮目前區塊",
-            desc: "編輯時為目前區塊顯示強調線/高亮。",
+          emphasisLine: {
+            name: "啟用強調線（左側）",
+            desc: "強調目前區塊左側的連接線。關閉後保持為弱化顏色。",
           },
           childrenOnSplit: {
             name: "Enter 拆分：子塊處理",

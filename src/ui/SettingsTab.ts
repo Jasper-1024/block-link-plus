@@ -481,9 +481,9 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(ui.zoom.name)
 			.setDesc(ui.zoom.desc);
 
-		this.addToggleSetting("fileOutlinerActiveHighlightEnabled", undefined, rootEl)
-			.setName(ui.activeHighlight.name)
-			.setDesc(ui.activeHighlight.desc);
+		this.addToggleSetting("fileOutlinerEmphasisLineEnabled", undefined, rootEl)
+			.setName(ui.emphasisLine.name)
+			.setDesc(ui.emphasisLine.desc);
 
 		new Setting(rootEl)
 			.setName(ui.childrenOnSplit.name)

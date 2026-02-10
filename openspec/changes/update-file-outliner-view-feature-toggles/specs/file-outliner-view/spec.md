@@ -6,7 +6,7 @@
 The system SHALL provide user-facing settings (with localization support) to enable/disable the following Outliner View behaviors:
 - bullet-handle drag-and-drop (move block subtrees)
 - bullet-click zoom navigation (zoom into subtree)
-- active-block emphasis line/highlight
+- active-block left emphasis connector line
 
 Disabling a behavior MUST gate the corresponding UI interactions without changing the underlying file protocol.
 
@@ -22,9 +22,9 @@ Disabling a behavior MUST gate the corresponding UI interactions without changin
 - **WHEN** the user clicks a block bullet
 - **THEN** the view does not enter a zoomed subtree state
 
-#### Scenario: Active highlight disabled removes emphasis line
+#### Scenario: Emphasis line disabled keeps the connector muted
 - **GIVEN** an outliner file is open in the Outliner View
-- **AND** active highlight is disabled in settings
+- **AND** emphasis line is disabled in settings
 - **WHEN** the user edits a block
-- **THEN** the active block does not render with an emphasis line/highlight style
-
+- **THEN** the active block highlight remains
+- **AND** the active connector line is rendered in a muted color (not the accent/emphasis color)

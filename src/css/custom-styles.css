@@ -68,6 +68,12 @@
 	--blp-outliner-guideline-hitbox-left: calc(-1 * (var(--blp-outliner-guideline-hitbox-width) / 4));
 
 	--blp-outliner-active-bg: hsla(var(--interactive-accent-hsl), 0.08);
+	--blp-outliner-emphasis-color: var(--ls-block-bullet-active-color);
+}
+
+/* When "emphasis line" is disabled, keep the connector line muted (still present, but not accent-colored). */
+.blp-file-outliner-view:not(.blp-outliner-emphasis-line-enabled) {
+	--blp-outliner-emphasis-color: var(--ls-guideline-color);
 }
 
 @media (max-width: 640px) {
@@ -230,9 +236,13 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	cursor: grab;
+	cursor: pointer;
 	position: relative;
 	transform: translate(var(--blp-outliner-bullet-translate-x), var(--blp-outliner-bullet-translate-y));
+}
+
+.blp-file-outliner-view.blp-outliner-dnd-enabled .bullet-container {
+	cursor: grab;
 }
 
 body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
@@ -450,7 +460,7 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 }
 
 .blp-file-outliner-view .ls-block .ls-block:focus-within > div > div.items-center::before {
-	border-color: var(--ls-block-bullet-active-color);
+	border-color: var(--blp-outliner-emphasis-color);
 }
 
 .blp-file-outliner-view .ls-block .block-children > .ls-block::before {
@@ -464,7 +474,7 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 }
 
 .blp-file-outliner-view .ls-block .block-children:focus-within > .ls-block:not(:focus-within)::before {
-	border-color: var(--ls-block-bullet-active-color);
+	border-color: var(--blp-outliner-emphasis-color);
 }
 
 .blp-file-outliner-view .ls-block .block-children:focus-within > .ls-block:focus-within ~ .ls-block::before {
@@ -482,13 +492,13 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 }
 
 .blp-file-outliner-view .ls-block[haschild]:focus-within > div > .block-content-wrapper::before {
-	border-color: var(--ls-block-bullet-active-color);
+	border-color: var(--blp-outliner-emphasis-color);
 }
 
 /* --- Active/target highlighting --- */
 
-.blp-file-outliner-view.blp-outliner-active-highlight-enabled .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
-.blp-file-outliner-view.blp-outliner-active-highlight-enabled .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
+.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-display,
+.blp-file-outliner-view .ls-block.is-blp-outliner-active > .block-main-container .blp-file-outliner-editor {
 	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }

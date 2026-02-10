@@ -123,8 +123,12 @@ export class FileOutlinerView extends TextFileView {
 	private syncFeatureToggles(): void {
 		try {
 			this.contentEl.classList.toggle(
-				"blp-outliner-active-highlight-enabled",
-				this.plugin.settings.fileOutlinerActiveHighlightEnabled !== false
+				"blp-outliner-dnd-enabled",
+				this.plugin.settings.fileOutlinerDragAndDropEnabled !== false
+			);
+			this.contentEl.classList.toggle(
+				"blp-outliner-emphasis-line-enabled",
+				this.plugin.settings.fileOutlinerEmphasisLineEnabled !== false
 			);
 		} catch {
 			// ignore
