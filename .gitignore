@@ -30,6 +30,9 @@ package-lock.json
 # Local research scratch space
 _research/
 
+# Local scratch tmp space (cdp screenshots, downloaded refs, etc.)
+.tmp/
+
 # CDP debug artifacts (screenshots, dumps, etc.)
 doc/**/_cdp-*
 

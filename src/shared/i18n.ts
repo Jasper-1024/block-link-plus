@@ -558,7 +558,10 @@ class T {
       },
 
       // Notices
-      notices: {}
+      notices: {
+        fileOutlinerUnsupportedBlockMarkdown:
+          "Block contains list/heading syntax. Rendered as plain text to preserve outliner structure.",
+      }
     },
     zh: {
       // Flow Editor buttons - 流程编辑器按钮文本
@@ -1114,7 +1117,9 @@ class T {
       },
 
       // Notices
-      notices: {}
+      notices: {
+        fileOutlinerUnsupportedBlockMarkdown: "此块包含列表/标题语法。为保持 Outliner 结构，将其按纯文本渲染。",
+      }
     },
     "zh-TW": {
       // Flow Editor buttons - 流程編輯器按鈕文字
@@ -1670,7 +1675,9 @@ class T {
       },
 
       // Notices
-      notices: {}
+      notices: {
+        fileOutlinerUnsupportedBlockMarkdown: "此區塊包含列表/標題語法。為保持 Outliner 結構，將其以純文字渲染。",
+      }
     },
   };
 

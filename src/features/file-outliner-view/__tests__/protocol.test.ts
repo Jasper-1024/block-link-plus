@@ -237,7 +237,29 @@ describe("file-outliner-view/protocol", () => {
 		].join("\n");
 
 		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
+		expect(out.file.blocks[0]?.text).toBe("[ ] a");
 		expect(out.content).toBe(input);
+	});
+
+	test("normalizes tail line to be the last continuation line before children", () => {
+		const now = DateTime.fromISO("2026-02-03T00:00:00");
+		const input = [
+			"- parent",
+			"  [date:: 2026-02-03T10:00:01] [updated:: 2026-02-03T10:00:01] [blp_sys:: 1] [blp_ver:: 2] ^pp",
+			"  after",
+			"",
+		].join("\n");
+
+		const out = normalizeOutlinerFile(input, { idPrefix: "t", idLength: 5, now });
+		expect(out.content).toBe(
+			[
+				"- parent",
+				"  after",
+				"  [date:: 2026-02-03T10:00:01] [updated:: 2026-02-03T10:00:01] [blp_sys:: 1] [blp_ver:: 2] ^pp",
+				"",
+			].join("\n")
+		);
+		expect(out.didChange).toBe(true);
 	});
 
 	test("drops nested/misindented legacy system tail lines", () => {

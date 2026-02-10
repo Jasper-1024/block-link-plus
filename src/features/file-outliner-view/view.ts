@@ -5,6 +5,8 @@ import { EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "@codemirror/basic-setup";
 
+import i18n from "shared/i18n";
+
 import type BlockLinkPlus from "../../main";
 import { fileOutlinerMarkdownPostProcessor } from "../../ui/MarkdownPostOutliner";
 import { generateRandomId } from "../../utils";
@@ -33,6 +35,7 @@ import {
 
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
+import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
 
 type PendingFocus = {
 	id: string;
@@ -1235,12 +1238,13 @@ export class FileOutlinerView extends TextFileView {
 		const seq = (this.displayRenderSeqById.get(id) ?? 0) + 1;
 		this.displayRenderSeqById.set(id, seq);
 
+		const md = sanitizeOutlinerBlockMarkdownForDisplay(b.text ?? "");
 		const sourcePath = this.file?.path ?? "";
 		const tmp = document.createElement("div");
 		tmp.classList.add("markdown-rendered");
 		const component = this.addChild(new Component());
 
-		void MarkdownRenderer.render(this.app, b.text ?? "", tmp, sourcePath, component)
+		void MarkdownRenderer.render(this.app, md.sanitized, tmp, sourcePath, component)
 			.then(() => {
 				// If another render happened since we started, discard this one.
 				if (this.displayRenderSeqById.get(id) !== seq) {
@@ -1289,6 +1293,31 @@ export class FileOutlinerView extends TextFileView {
 				}
 
 				const prev = this.displayRenderComponentById.get(id);
+
+				if (md.issues.length > 0) {
+					try {
+						const banner = document.createElement("div");
+						banner.className = "blp-outliner-block-warning";
+
+						const icon = document.createElement("span");
+						icon.className = "blp-outliner-block-warning-icon";
+						icon.textContent = "!";
+						banner.appendChild(icon);
+
+						const text = document.createElement("span");
+						text.className = "blp-outliner-block-warning-text";
+						text.textContent = String(
+							(i18n.notices as any)?.fileOutlinerUnsupportedBlockMarkdown ??
+								"Block contains list/heading syntax. Rendered as plain text to preserve outliner structure."
+						);
+						banner.appendChild(text);
+
+						tmp.prepend(banner);
+					} catch {
+						// ignore
+					}
+				}
+
 				display.replaceChildren(tmp);
 				this.displayRenderComponentById.set(id, component);
 

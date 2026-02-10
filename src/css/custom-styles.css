@@ -309,6 +309,42 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	margin: 0;
 }
 
+.blp-file-outliner-view .blp-outliner-block-warning {
+	display: flex;
+	gap: 6px;
+	align-items: flex-start;
+	padding: 4px 6px;
+	margin: 0 0 4px 0;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	font-size: 12px;
+	line-height: 1.2;
+}
+
+.blp-file-outliner-view .blp-outliner-block-warning-icon {
+	flex: 0 0 auto;
+	width: 14px;
+	height: 14px;
+	border-radius: 9999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-muted);
+	font-weight: 600;
+	font-size: 11px;
+	line-height: 1;
+	margin-top: 1px;
+}
+
+.blp-file-outliner-view .blp-outliner-block-warning-text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 .blp-file-outliner-view .blp-outliner-insert-hint {
 	/* Only show a single insert affordance at the end of the root list (Logseq-like). */
 	display: none;
