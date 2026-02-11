@@ -38,6 +38,7 @@ import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
 import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
 import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-shortcuts";
 import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
+import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
 
 type PendingFocus = {
 	id: string;
@@ -97,6 +98,7 @@ export class FileOutlinerView extends TextFileView {
 
 	private editorHostEl: HTMLElement | null = null;
 	private editorView: EditorView | null = null;
+	private suggestEditor: OutlinerSuggestEditor | null = null;
 	private suppressEditorSync = false;
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
@@ -394,6 +396,7 @@ export class FileOutlinerView extends TextFileView {
 			parent: host,
 			state: this.createEditorState("", { cursorStart: 0, cursorEnd: 0 }),
 		});
+		this.suggestEditor = new OutlinerSuggestEditor(this.editorView);
 
 		// When focus leaves the editor, we typically exit edit mode (with a small debounce,
 		// since structural ops may transiently reparent the editor host).
@@ -462,8 +465,10 @@ export class FileOutlinerView extends TextFileView {
 					])
 				),
 				EditorView.updateListener.of((update) => {
+					if (this.suppressEditorSync) return;
 					if (!update.docChanged) return;
 					this.onEditorDocChanged(update.state.doc.toString());
+					this.maybeTriggerEditorSuggest();
 				}),
 				EditorView.domEventHandlers({
 					keydown: (evt) => {
@@ -474,6 +479,32 @@ export class FileOutlinerView extends TextFileView {
 				}),
 			],
 		});
+	}
+
+	private maybeTriggerEditorSuggest(): void {
+		const id = this.editingId;
+		const file = this.file;
+		const editor = this.suggestEditor;
+		if (!id) return;
+		if (!file) return;
+		if (!editor) return;
+		if (!editor.hasFocus()) return;
+
+		const mgr = (this.app.workspace as any)?.editorSuggest;
+		triggerEditorSuggest(mgr, editor, file);
+	}
+
+	private closeEditorSuggests(): void {
+		const mgr = (this.app.workspace as any)?.editorSuggest;
+		const suggests: any[] = Array.isArray(mgr?.suggests) ? mgr.suggests : [];
+		for (const s of suggests) {
+			if (!s?.isOpen) continue;
+			try {
+				s.close?.();
+			} catch {
+				// ignore
+			}
+		}
 	}
 
 	private render(opts?: { forceRebuild?: boolean }): void {
@@ -1430,6 +1461,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editingId = null;
+		this.closeEditorSuggests();
 		this.blockElById.get(id)?.classList.remove("is-blp-outliner-active");
 		editorHost.style.display = "none";
 		if (this.rootEl) {

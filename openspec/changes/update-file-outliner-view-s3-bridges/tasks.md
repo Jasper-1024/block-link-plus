@@ -9,9 +9,9 @@
 - [x] 2.3 Add/extend a CDP snippet that asserts `![[file#^id-id]]` renders multiple lines in outliner display (9222)
 
 ## 3. EditorSuggest Bridging (Outliner editor)
-- [ ] 3.1 Implement a minimal editor wrapper for the outliner CM6 view (`coordsAtPos/getLine/posAtCoords/containerEl.win/hasFocus`)
-- [ ] 3.2 Bridge `workspace.editorSuggest` for `[[` and `/` triggers (no full CM6 stack copy)
-- [ ] 3.3 Add CDP snippet coverage to verify link suggest + slash suggest show in outliner editor (9222)
+- [x] 3.1 Implement a minimal editor wrapper for the outliner CM6 view (`coordsAtPos/getLine/posAtCoords/containerEl.win/hasFocus`)
+- [x] 3.2 Bridge `workspace.editorSuggest` for `[[` and `/` triggers (no full CM6 stack copy)
+- [x] 3.3 Add CDP snippet coverage to verify link suggest + slash suggest show in outliner editor (9222)
 
 ## 4. Validation
 - [ ] 4.1 `npm test`
