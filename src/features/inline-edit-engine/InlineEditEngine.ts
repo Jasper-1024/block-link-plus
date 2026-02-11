@@ -1,4 +1,5 @@
 import type BlockLinkPlus from "../../main";
+import { StateEffect, Transaction } from "@codemirror/state";
 import {
 	MarkdownPostProcessorContext,
 	MarkdownRenderChild,
@@ -8,7 +9,14 @@ import {
 	editorLivePreviewField,
 } from "obsidian";
 import { around } from "monkey-around";
-import { contentRange, editableRange } from "shared/utils/codemirror/selectiveEditor";
+import {
+	editBlockExtensions,
+	contentRange,
+	editableRange,
+	frontmatterFacet,
+	hideLine,
+	selectiveLinesFacet,
+} from "shared/utils/codemirror/selectiveEditor";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
 import { EmbedLeafManager } from "./EmbedLeafManager";
 import { FocusTracker } from "./FocusTracker";
@@ -147,6 +155,43 @@ export class InlineEditEngine {
 
 		this.debugSkipCache.set(embedEl, { key, at: now });
 		this.debugLog(key, data ?? embedEl.getAttribute("src"));
+	}
+
+	private ensureEmbedEditorExtensions(cm: any): void {
+		// Embed leaves are created via detached WorkspaceLeafs; editor extensions registered through
+		// Obsidian's workspace pipeline may not be present. Ensure our selective-editor extensions
+		// exist so contentRange/editableRange annotations can hide the outliner system tail lines.
+		if (!cm?.state || typeof cm.dispatch !== "function") return;
+
+		let hasHideLine = false;
+		try {
+			// `hideLine` is part of `editBlockExtensions()`; if it's already present, do nothing.
+			hasHideLine = cm.state.field(hideLine, false) !== undefined;
+		} catch {
+			hasHideLine = false;
+		}
+
+		try {
+			(cm as any).__blpInlineEditHasHideLine = hasHideLine;
+		} catch {
+			// ignore
+		}
+
+		if (hasHideLine) return;
+
+		try {
+			// Detached MarkdownView leaves can carry CM6 transaction filters that drop custom effects.
+			// Bypass filters so our config extension is actually applied.
+			cm.dispatch({ filter: false, effects: StateEffect.appendConfig.of(editBlockExtensions()) });
+		} catch {
+			// ignore
+		}
+
+		try {
+			(cm as any).__blpInlineEditHasHideLine = cm.state.field(hideLine, false) !== undefined;
+		} catch {
+			// ignore
+		}
 	}
 
 	private isInlineEditActive(): boolean {
@@ -964,7 +1009,7 @@ export class InlineEditEngine {
 
 	private async waitForEditorView(
 		view: { editor?: { cm?: unknown } },
-		timeoutMs = 500
+		timeoutMs = 2000
 	): Promise<unknown | null> {
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
@@ -1342,11 +1387,85 @@ export class InlineEditEngine {
 	private prepareEmbedShell(embedEl: HTMLElement): { hostEl: HTMLElement; cleanup: () => void } {
 		embedEl.addClass(INLINE_EDIT_ACTIVE_CLASS);
 
-		const contentEl = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
-		const hostParent = contentEl ?? embedEl;
-		const hostEl = hostParent.createDiv({ cls: INLINE_EDIT_HOST_CLASS });
+		// Inline edit replaces the native embed preview with a detached MarkdownView editor.
+		// Detach the preview DOM so system tail lines (Dataview inline fields) cannot leak.
+		let nativeContent = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+		let nativeLink = embedEl.querySelector<HTMLElement>(".markdown-embed-link");
+
+		let contentParent = nativeContent?.parentElement ?? null;
+		let contentNext = nativeContent?.nextSibling ?? null;
+		let linkParent = nativeLink?.parentElement ?? null;
+		let linkNext = nativeLink?.nextSibling ?? null;
+
+		const detachNative = (el: HTMLElement | null) => {
+			if (!el) return;
+			try {
+				el.detach();
+				return;
+			} catch {
+				// ignore
+			}
+			try {
+				el.remove();
+			} catch {
+				// ignore
+			}
+		};
+
+		const scanAndDetach = () => {
+			// Native embed content/link can be created after we start inline edit; keep detaching it.
+			const currentContent = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
+			if (currentContent) {
+				if (!nativeContent) {
+					nativeContent = currentContent;
+					contentParent = currentContent.parentElement ?? contentParent;
+					contentNext = currentContent.nextSibling ?? contentNext;
+				}
+				detachNative(currentContent);
+			}
+
+			const currentLink = embedEl.querySelector<HTMLElement>(".markdown-embed-link");
+			if (currentLink) {
+				if (!nativeLink) {
+					nativeLink = currentLink;
+					linkParent = currentLink.parentElement ?? linkParent;
+					linkNext = currentLink.nextSibling ?? linkNext;
+				}
+				detachNative(currentLink);
+			}
+		};
+
+		scanAndDetach();
+
+		let detachObserver: MutationObserver | null = null;
+		try {
+			detachObserver = new MutationObserver(() => scanAndDetach());
+			detachObserver.observe(embedEl, { childList: true, subtree: true });
+		} catch {
+			detachObserver = null;
+		}
+
+		const hostEl = document.createElement("div");
+		hostEl.className = INLINE_EDIT_HOST_CLASS;
+		try {
+			const parent = contentParent ?? embedEl;
+			const before = contentNext && parent.contains(contentNext) ? contentNext : null;
+			parent.insertBefore(hostEl, before);
+		} catch {
+			try {
+				embedEl.appendChild(hostEl);
+			} catch {
+				// ignore
+			}
+		}
 
 		const cleanup = () => {
+			try {
+				detachObserver?.disconnect();
+			} catch {
+				// ignore
+			}
+
 			try {
 				hostEl.detach();
 			} catch {
@@ -1355,6 +1474,26 @@ export class InlineEditEngine {
 
 			try {
 				embedEl.removeClass(INLINE_EDIT_ACTIVE_CLASS);
+			} catch {
+				// ignore
+			}
+
+			try {
+				if (nativeLink) {
+					const parent = linkParent ?? embedEl;
+					const before = linkNext && parent.contains(linkNext) ? linkNext : null;
+					parent.insertBefore(nativeLink, before);
+				}
+			} catch {
+				// ignore
+			}
+
+			try {
+				if (nativeContent) {
+					const parent = contentParent ?? embedEl;
+					const before = contentNext && parent.contains(contentNext) ? contentNext : null;
+					parent.insertBefore(nativeContent, before);
+				}
 			} catch {
 				// ignore
 			}
@@ -1537,14 +1676,43 @@ export class InlineEditEngine {
 					// ignore
 				}
 
-				const resolvedRanges = this.resolveEmbedLineRanges(parsed, cm);
+				this.ensureEmbedEditorExtensions(cm);
 
+				const resolvedRanges = this.resolveEmbedLineRanges(parsed, cm);
+				try {
+					(cm as any).__blpInlineEditResolvedVisibleRange = resolvedRanges.visibleRange;
+					(cm as any).__blpInlineEditResolvedEditableRange = resolvedRanges.editableRange;
+				} catch {
+					// ignore
+				}
+
+				const prevState = cm.state;
+				// Set visible/editable line ranges for the embed editor. Use `filter:false` to bypass
+				// Obsidian's editor transaction filters, which can otherwise drop custom annotations.
 				cm.dispatch({
+					filter: false,
 					annotations: [
 						contentRange.of(resolvedRanges.visibleRange),
 						editableRange.of(resolvedRanges.editableRange),
 					],
 				});
+
+				// Debug-only surface (queried via CDP): whether hideLine is producing any decorations.
+				try {
+					(cm as any).__blpInlineEditStateChanged = prevState !== cm.state;
+					const dec = cm.state.field(hideLine, false);
+					let count = 0;
+					if (dec && typeof dec.between === "function") {
+						dec.between(0, cm.state.doc.length, () => {
+							count += 1;
+						});
+					}
+					(cm as any).__blpInlineEditHideLineDecCount = count;
+					(cm as any).__blpInlineEditContentRange = cm.state.field(frontmatterFacet, false) ?? null;
+					(cm as any).__blpInlineEditEditableRange = cm.state.field(selectiveLinesFacet, false) ?? null;
+				} catch {
+					// ignore
+				}
 
 				try {
 					const startLine = Math.max(0, resolvedRanges.editableRange[0] - 1);
@@ -1566,6 +1734,12 @@ export class InlineEditEngine {
 			this.debugLog("mount:done", embedEl.getAttribute("src"));
 		} catch (error) {
 			cleanup();
+			try {
+				(window as any).__blpInlineEditLastError = String((error as any)?.message ?? error);
+				(window as any).__blpInlineEditLastErrorStack = String((error as any)?.stack ?? "");
+			} catch {
+				// ignore
+			}
 			console.error("InlineEditEngine: failed to mount embed editor", error);
 		} finally {
 			this.pendingEmbeds.delete(embedEl);

@@ -65,23 +65,25 @@
 		};
 
 		await upsert(targetPath, "target");
-		await upsert(outlinerPath, outlinerContent);
+		const outlinerFile = await upsert(outlinerPath, outlinerContent);
 
 		plugin.settings.fileOutlinerEnabledFiles = Array.from(new Set([...prevEnabledFiles, outlinerPath]));
 		plugin.settings.fileOutlinerViewEnabled = true;
 		await plugin.saveSettings();
 
-		await app.workspace.getLeaf(false).setViewState({
-			type: "markdown",
-			state: { file: outlinerPath, mode: "source" },
-			active: true,
+		const leaf = app.workspace.getLeaf(false);
+		await leaf.openFile(outlinerFile, { active: true });
+		await waitFor(() => (leaf.view?.getViewType?.() === "blp-file-outliner-view" ? true : null), {
+			timeoutMs: 8000,
+			stepMs: 50,
 		});
-
-		const leaf = await waitFor(() => {
-			const l = app.workspace.activeLeaf;
-			return l?.view?.getViewType?.() === "blp-file-outliner-view" ? l : null;
-		});
-		assert(leaf, "expected active leaf to be the outliner view");
+		assert(leaf.view?.getViewType?.() === "blp-file-outliner-view", "expected active leaf to be the outliner view");
+		try {
+			app.workspace.setActiveLeaf(leaf, { focus: true });
+		} catch {
+			// ignore
+		}
+		await wait(50);
 
 		const view = leaf.view;
 		const id = await waitFor(() => {
@@ -96,6 +98,9 @@
 
 		const cm = view.editorView;
 		assert(cm && cm.state && cm.dispatch, "missing CM6 editorView");
+		cm.focus();
+		const focused = await waitFor(() => (cm.hasFocus ? true : null), { timeoutMs: 1000, stepMs: 50 });
+		assert(focused, "expected outliner CM6 editor to have focus");
 
 		const mgr = app.workspace.editorSuggest;
 		assert(mgr && Array.isArray(mgr.suggests), "missing workspace.editorSuggest");
@@ -119,17 +124,12 @@
 			stepMs: 50,
 		});
 		assert(linkSuggest, "expected link suggest to open on `[[`");
-		assert(Array.isArray(linkSuggest.suggestions), "suggestions not available");
-
-		const beforeLen = cm.state.doc.length;
-		try {
-			const item = linkSuggest.suggestions?.[0];
-			linkSuggest.selectSuggestion?.(item, new MouseEvent("click"));
-		} catch {
-			// ignore (some suggest impls may not expose this)
-		}
-		await wait(50);
-		assert(cm.state.doc.length >= beforeLen, "link suggest selection should not shrink doc");
+		const linkItems = await waitFor(() => {
+			const el = document.querySelector(".suggestion-container");
+			const items = el?.querySelectorAll?.(".suggestion-item") ?? [];
+			return items.length > 0 ? true : null;
+		}, { timeoutMs: 6000, stepMs: 50 });
+		assert(linkItems, "expected link suggestion items to render");
 
 		// --- 2) Slash suggest on `/`
 		closeAll();
@@ -140,6 +140,12 @@
 			stepMs: 50,
 		});
 		assert(slashSuggest, "expected slash suggest to open on `/`");
+		const slashItems = await waitFor(() => {
+			const el = document.querySelector(".suggestion-container");
+			const items = el?.querySelectorAll?.(".suggestion-item") ?? [];
+			return items.length > 0 ? true : null;
+		}, { timeoutMs: 6000, stepMs: 50 });
+		assert(slashItems, "expected slash suggestion items to render");
 
 		return { ok: true };
 	} finally {
@@ -167,4 +173,3 @@
 		}
 	}
 })();
-

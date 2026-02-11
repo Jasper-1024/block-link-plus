@@ -49,12 +49,55 @@ export class OutlinerSuggestEditor extends Editor {
 	readonly cm: EditorView;
 	readonly containerEl: HTMLElement;
 
-	constructor(cm: EditorView) {
+	constructor(cm: EditorView, opts?: { logicalHasFocus?: () => boolean }) {
 		super();
 		this.cm = cm;
 		this.containerEl = cm.dom as HTMLElement;
+
+		// Workspace editorSuggest uses `editor.cm.hasFocus` as a hard gate. In CDP-driven tests (and
+		// occasionally in custom view flows), `document.hasFocus()` can be false even when the outliner
+		// editor is the active target. Provide a narrow "logical focus" shim when requested.
+		//
+		// Keep this limited in scope: we only patch *this* CM6 instance, and we only OR in the override
+		// when the original CM6 `hasFocus` getter reports false.
+		try {
+			const logicalHasFocus = opts?.logicalHasFocus;
+			if (logicalHasFocus && !Object.prototype.hasOwnProperty.call(cm as any, "hasFocus")) {
+				const proto = Object.getPrototypeOf(cm);
+				const desc = Object.getOwnPropertyDescriptor(proto, "hasFocus");
+				const baseGet = desc?.get;
+				if (typeof baseGet === "function") {
+					Object.defineProperty(cm as any, "hasFocus", {
+						get() {
+							try {
+								if (baseGet.call(this)) return true;
+							} catch {
+								// ignore
+							}
+							try {
+								return !!logicalHasFocus();
+							} catch {
+								return false;
+							}
+						},
+						configurable: true,
+					});
+				}
+			}
+		} catch {
+			// ignore
+		}
+
 		// Some core suggests read `editor.containerEl.win` to resolve coordinates.
-		(this.containerEl as any).win = (this.containerEl as any).win ?? window;
+		// In Obsidian's CM6 environment `win` may exist as a read-only getter, so avoid assignment.
+		try {
+			const elAny = this.containerEl as any;
+			if (elAny && !("win" in elAny)) {
+				Object.defineProperty(elAny, "win", { value: window, configurable: true });
+			}
+		} catch {
+			// ignore
+		}
 	}
 
 	refresh(): void {
@@ -301,6 +344,16 @@ export function triggerEditorSuggest(
 	editor: OutlinerSuggestEditor,
 	file: TFile | null
 ): { triggered: boolean } {
+	// Prefer Obsidian's own manager entrypoint when available. It may coordinate internal state
+	// beyond the per-suggest `trigger()` methods (and keeps us aligned with core behavior).
+	try {
+		if (mgr && typeof mgr.trigger === "function") {
+			return { triggered: !!mgr.trigger(editor, file, true) };
+		}
+	} catch {
+		// fall back
+	}
+
 	if (!mgr?.suggests || typeof mgr.setCurrentSuggest !== "function") return { triggered: false };
 
 	for (const s of mgr.suggests) {

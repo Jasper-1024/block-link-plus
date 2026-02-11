@@ -14,9 +14,9 @@
 - [x] 3.3 Add CDP snippet coverage to verify link suggest + slash suggest show in outliner editor (9222)
 
 ## 4. Validation
-- [ ] 4.1 `npm test`
-- [ ] 4.2 `npm run build-with-types`
-- [ ] 4.3 Run relevant CDP snippets (9222):
+- [x] 4.1 `npm test`
+- [x] 4.2 `npm run build-with-types`
+- [x] 4.3 Run relevant CDP snippets (9222):
   - `scripts/cdp-snippets/file-outliner-smoke.js`
   - `scripts/cdp-snippets/file-outliner-inline-embed-hide-system-lines.js`
   - `scripts/cdp-snippets/file-outliner-inline-embed-routing.js`

@@ -81,24 +81,13 @@
 		plugin.settings.fileOutlinerHideSystemLine = true;
 		await plugin.saveSettings();
 
-		// Wait until metadata cache sees `blp_outliner: true`.
-		await app.workspace.getLeaf(false).setViewState({
-			type: "markdown",
-			state: { file: outlinerPath, mode: "source" },
-			active: true,
+		const leaf = app.workspace.getLeaf(false);
+		await leaf.openFile(outlinerFile, { active: true });
+		await waitFor(() => (leaf.view?.getViewType?.() === "blp-file-outliner-view" ? true : null), {
+			timeoutMs: 8000,
+			stepMs: 50,
 		});
-
-		await waitFor(() => {
-			const cache = app.metadataCache.getCache(outlinerPath);
-			return cache?.frontmatter?.blp_outliner === true ? true : null;
-		}, { timeoutMs: 4000, stepMs: 50 });
-
-		// Ensure the outliner view is actually active.
-		const leaf = await waitFor(() => {
-			const l = app.workspace.activeLeaf;
-			return l?.view?.getViewType?.() === "blp-file-outliner-view" ? l : null;
-		});
-		assert(leaf, "expected active leaf to be the outliner view");
+		assert(leaf.view?.getViewType?.() === "blp-file-outliner-view", "expected active leaf to be the outliner view");
 
 		// Wait for the embed + the reading-range host.
 		const embedEl = await waitFor(() => {
@@ -136,4 +125,3 @@
 		}
 	}
 })();
-

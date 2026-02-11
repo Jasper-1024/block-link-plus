@@ -1,7 +1,9 @@
 import {
   Annotation,
   EditorState,
+  Facet,
   RangeSetBuilder,
+  StateEffect,
   StateField,
   Transaction
 } from "@codemirror/state";
@@ -41,6 +43,19 @@ export const editableRange =
   Annotation.define<ContentRangeType>();
   export const contentRange =
   Annotation.define<ContentRangeType>();
+
+// Effects-based API (more robust than transaction annotations in some Obsidian editor stacks).
+export const setEditableRange = StateEffect.define<ContentRangeType>();
+export const setContentRange = StateEffect.define<ContentRangeType>();
+
+// Config-based API: set initial ranges via facets (usable with `StateEffect.appendConfig`).
+// This avoids relying on transaction annotations/effects that may be dropped by other CM6 filters.
+export const initialEditableRangeFacet = Facet.define<ContentRangeType, ContentRangeType>({
+  combine: (values) => (values.length > 0 ? values[values.length - 1] : [undefined, undefined]),
+});
+export const initialContentRangeFacet = Facet.define<ContentRangeType, ContentRangeType>({
+  combine: (values) => (values.length > 0 ? values[values.length - 1] : [undefined, undefined]),
+});
 export const hiddenLine = Decoration.replace({ inclusive: true, block: true });
 
 // Outliner v2 system tail line marker (Dataview inline field).
@@ -69,14 +84,6 @@ export const hideLine = StateField.define<DecorationSet>({
         }
       }
 
-      if (endLine < tr.state.doc.lines) {
-        builder.add(
-          tr.state.doc.line(endLine).to,
-          tr.state.doc.line(tr.state.doc.lines).to,
-          hiddenLine
-        );
-      }
-
       // Hide outliner system tail lines inside the visible range.
       // This keeps embeds/editable ranges free of internal maintenance lines.
       for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
@@ -90,6 +97,15 @@ export const hideLine = StateField.define<DecorationSet>({
           : tr.state.doc.line(Math.min(tr.state.doc.lines, lineNumber + 1)).from;
         builder.add(line.from, to, hiddenLine);
       }
+
+      // Add the tail hider after system-line ranges so RangeSetBuilder sees sorted `from` values.
+      if (endLine < tr.state.doc.lines) {
+        builder.add(
+          tr.state.doc.line(endLine).to,
+          tr.state.doc.line(tr.state.doc.lines).to,
+          hiddenLine
+        );
+      }
     }
     const dec = builder.finish();
     return dec;
@@ -102,7 +118,20 @@ export const frontmatterFacet = StateField.define<
 >({
   create: () => [undefined, undefined],
   update(value, tr) {
-    const next = tr.annotation(contentRange);
+    let next: ContentRangeType | undefined = undefined;
+    for (const effect of tr.effects) {
+      if (effect.is(setContentRange)) next = effect.value;
+    }
+    if (next === undefined) {
+      next = tr.annotation(contentRange);
+    }
+    if (next === undefined) {
+      const facetNext = tr.state.facet(initialContentRangeFacet);
+      if (facetNext?.[0] !== undefined || facetNext?.[1] !== undefined) {
+        next = facetNext;
+      }
+    }
+
     if (next !== undefined) {
       const [startLine, endLine] = next;
       if (startLine !== undefined) {
@@ -121,7 +150,20 @@ export const selectiveLinesFacet = StateField.define<
 >({
   create: () => [undefined, undefined],
   update(value, tr) {
-    const next = tr.annotation(editableRange);
+    let next: ContentRangeType | undefined = undefined;
+    for (const effect of tr.effects) {
+      if (effect.is(setEditableRange)) next = effect.value;
+    }
+    if (next === undefined) {
+      next = tr.annotation(editableRange);
+    }
+    if (next === undefined) {
+      const facetNext = tr.state.facet(initialEditableRangeFacet);
+      if (facetNext?.[0] !== undefined || facetNext?.[1] !== undefined) {
+        next = facetNext;
+      }
+    }
+
     if (next !== undefined) {
       const [startLine, endLine] = next;
       if (startLine !== undefined) {

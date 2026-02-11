@@ -396,7 +396,18 @@ export class FileOutlinerView extends TextFileView {
 			parent: host,
 			state: this.createEditorState("", { cursorStart: 0, cursorEnd: 0 }),
 		});
-		this.suggestEditor = new OutlinerSuggestEditor(this.editorView);
+		this.suggestEditor = new OutlinerSuggestEditor(this.editorView, {
+			logicalHasFocus: () => {
+				if (!this.editingId) return false;
+				try {
+					if (this.leaf !== this.app.workspace.activeLeaf) return false;
+				} catch {
+					// ignore
+				}
+				if (!this.editorHostEl || this.editorHostEl.style.display === "none") return false;
+				return true;
+			},
+		});
 
 		// When focus leaves the editor, we typically exit edit mode (with a small debounce,
 		// since structural ops may transiently reparent the editor host).

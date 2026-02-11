@@ -35,9 +35,16 @@
   const plugin = app?.plugins?.plugins?.[pluginId];
   if (!plugin) throw new Error(`Plugin not found after reload: ${pluginId}`);
 
+  // Wait until the view type is registered; routing to an unregistered view can yield an empty leaf.
+  await waitFor(() => typeof app.viewRegistry?.viewByType?.["blp-file-outliner-view"] === "function", {
+    timeoutMs: 5000,
+    intervalMs: 50,
+  });
+
   const prevSettingsEnabledFiles = Array.isArray(plugin.settings?.fileOutlinerEnabledFiles)
     ? [...plugin.settings.fileOutlinerEnabledFiles]
     : [];
+  const prevRouting = plugin.settings.fileOutlinerViewEnabled;
 
   const prevActivePath = app.workspace.getActiveFile?.()?.path ?? null;
 
@@ -74,13 +81,20 @@
     plugin.settings.fileOutlinerEnabledFiles = Array.from(
       new Set([...prevSettingsEnabledFiles, tmpPath])
     );
+    plugin.settings.fileOutlinerViewEnabled = true;
     await plugin.saveSettings();
 
     // Open file (routing should switch to blp-file-outliner-view).
-    await app.workspace.getLeaf(false).openFile(f);
-    await wait(150);
+    // Routing is implemented by patching `WorkspaceLeaf.openFile()`.
+    const leaf = app.workspace.getLeaf(false);
+    await leaf.openFile(f, { active: true });
 
-    const leaf = app.workspace.activeLeaf;
+    // Routing/view init can lag behind the `openFile()` await; wait deterministically.
+    await waitFor(() => leaf.view?.getViewType?.() === "blp-file-outliner-view", {
+      timeoutMs: 5000,
+      intervalMs: 50,
+    });
+
     const view = leaf?.view;
     const viewType = view?.getViewType?.() ?? null;
 
@@ -89,7 +103,7 @@
         ok: false,
         step: "open",
         viewType,
-        activeFile: app.workspace.getActiveFile?.()?.path ?? null,
+        activeFile: view?.file?.path ?? app.workspace.getActiveFile?.()?.path ?? null,
       };
     }
 
@@ -206,13 +220,6 @@
             marginBottom: getComputedStyle(pre).marginBottom,
           }
         : null,
-      ul: ul
-        ? {
-            marginTop: getComputedStyle(ul).marginTop,
-            marginBottom: getComputedStyle(ul).marginBottom,
-            paddingLeft: getComputedStyle(ul).paddingLeft,
-          }
-        : null,
       blockquote: quote
         ? {
             marginTop: getComputedStyle(quote).marginTop,
@@ -229,12 +236,12 @@
       throw new Error(`markdownReset.pre margins: ${markdownReset.pre.marginTop}/${markdownReset.pre.marginBottom}`);
     }
 
-    if (!markdownReset.ul) throw new Error("markdownReset: ul missing");
-    if (markdownReset.ul.marginTop !== "0px" || markdownReset.ul.marginBottom !== "0px") {
-      throw new Error(`markdownReset.ul margins: ${markdownReset.ul.marginTop}/${markdownReset.ul.marginBottom}`);
-    }
-    if (toNum(markdownReset.ul.paddingLeft) <= 0) {
-      throw new Error(`markdownReset.ul paddingLeft: ${markdownReset.ul.paddingLeft}`);
+    // Nested list markers inside a single block should be escaped (not rendered as real lists),
+    // otherwise we risk accidental structural corruption of the underlying outliner file.
+    if (ul) throw new Error("markdownReset: ul should not be rendered inside a block");
+    const hostText = (host?.innerText ?? "").replace(/\s+/g, " ").trim();
+    if (!hostText.includes("- item")) {
+      throw new Error(`markdownReset: expected escaped list marker text, got: ${JSON.stringify(hostText.slice(0, 200))}`);
     }
 
     if (!markdownReset.blockquote) throw new Error("markdownReset: blockquote missing");
@@ -388,6 +395,7 @@
     try {
       // Restore settings.
       plugin.settings.fileOutlinerEnabledFiles = prevSettingsEnabledFiles;
+      plugin.settings.fileOutlinerViewEnabled = prevRouting;
       await plugin.saveSettings();
     } catch {
       // ignore

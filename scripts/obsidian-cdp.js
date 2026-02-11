@@ -142,6 +142,17 @@ class CdpClient {
   }
 }
 
+async function tryBringToFront(client) {
+  try {
+    // CDP-driven runs can execute while the Obsidian window is unfocused; in that case
+    // `.focus()`/`.blur()` inside the app becomes unreliable. Bringing the page to front
+    // makes editor focus/blur deterministic for snippets.
+    await client.send("Page.bringToFront", {});
+  } catch {
+    // ignore
+  }
+}
+
 function printTargets(targets) {
   for (const t of targets) {
     const line = [
@@ -224,11 +235,20 @@ Env:
       const expr = args.slice(1).join(" ");
       if (!expr) die("eval requires a JS expression");
 
+      await tryBringToFront(client);
       const res = await client.send("Runtime.evaluate", {
         expression: expr,
         awaitPromise: true,
         returnByValue: true,
       });
+      if (res?.exceptionDetails) {
+        const desc =
+          res.exceptionDetails?.exception?.description ||
+          res.exceptionDetails?.exception?.value ||
+          res.exceptionDetails?.text ||
+          "Runtime.evaluate exception";
+        die(desc);
+      }
       // When returnByValue is true, primitives/JSON-ish values appear in `value`.
       if (res?.result && Object.prototype.hasOwnProperty.call(res.result, "value")) {
         console.log(JSON.stringify(res.result.value, null, 2));
@@ -243,11 +263,20 @@ Env:
       if (!localFile) die("eval-file requires a local file path");
 
       const code = fs.readFileSync(path.resolve(localFile), "utf8");
+      await tryBringToFront(client);
       const res = await client.send("Runtime.evaluate", {
         expression: code,
         awaitPromise: true,
         returnByValue: true,
       });
+      if (res?.exceptionDetails) {
+        const desc =
+          res.exceptionDetails?.exception?.description ||
+          res.exceptionDetails?.exception?.value ||
+          res.exceptionDetails?.text ||
+          "Runtime.evaluate exception";
+        die(desc);
+      }
       if (res?.result && Object.prototype.hasOwnProperty.call(res.result, "value")) {
         console.log(JSON.stringify(res.result.value, null, 2));
       } else {
@@ -263,6 +292,7 @@ Env:
         die("mouse-click requires numeric <x> <y>");
       }
 
+      await tryBringToFront(client);
       const flags = new Set(args.slice(3));
       // Chrome DevTools Protocol modifier bitmask:
       // Alt=1, Ctrl=2, Meta=4, Shift=8
@@ -303,6 +333,7 @@ Env:
       const combo = args.slice(1).join(" ").trim();
       if (!combo) die('key requires a combo string, e.g. "ctrl+c"');
 
+      await tryBringToFront(client);
       const parts = combo
         .split("+")
         .map((p) => String(p || "").trim().toLowerCase())
