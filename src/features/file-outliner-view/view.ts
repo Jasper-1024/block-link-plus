@@ -37,6 +37,7 @@ import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
 import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
 import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-shortcuts";
+import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
 
 type PendingFocus = {
 	id: string;
@@ -1281,6 +1282,14 @@ export class FileOutlinerView extends TextFileView {
 				// Avoid preview-only affordances inside the v2 outliner UI.
 				try {
 					tmp.querySelectorAll("button.copy-code-button").forEach((btn) => btn.remove());
+				} catch {
+					// ignore
+				}
+
+				// MarkdownRenderer embeds inside this view can miss `.markdown-embed-content`, which breaks
+				// reading-range (`^id-id`) rendering and other post-processing that expects native embed DOM.
+				try {
+					normalizeInternalMarkdownEmbeds(tmp);
 				} catch {
 					// ignore
 				}

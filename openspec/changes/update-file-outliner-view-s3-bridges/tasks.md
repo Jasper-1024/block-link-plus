@@ -4,9 +4,9 @@
 - [x] 1.3 Confirm proposal approval before implementation
 
 ## 2. Embed DOM Normalize (Outliner display)
-- [ ] 2.1 Add a renderer post-pass that normalizes internal markdown embeds to include `.markdown-embed-content`
-- [ ] 2.2 Add Jest coverage for the DOM normalize helper (pure function over a jsdom tree)
-- [ ] 2.3 Add/extend a CDP snippet that asserts `![[file#^id-id]]` renders multiple lines in outliner display (9222)
+- [x] 2.1 Add a renderer post-pass that normalizes internal markdown embeds to include `.markdown-embed-content`
+- [x] 2.2 Add Jest coverage for the DOM normalize helper (pure function over a jsdom tree)
+- [x] 2.3 Add/extend a CDP snippet that asserts `![[file#^id-id]]` renders multiple lines in outliner display (9222)
 
 ## 3. EditorSuggest Bridging (Outliner editor)
 - [ ] 3.1 Implement a minimal editor wrapper for the outliner CM6 view (`coordsAtPos/getLine/posAtCoords/containerEl.win/hasFocus`)
