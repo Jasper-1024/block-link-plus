@@ -2,6 +2,11 @@ import type { OutlinerBlock } from "./protocol";
 
 export type ArrowNavDirection = "up" | "down";
 
+export type VisibleBlockNav = {
+	order: string[];
+	indexById: Map<string, number>;
+};
+
 export function computeVisibleBlockOrder(renderBlocks: OutlinerBlock[], collapsedIds: ReadonlySet<string>): string[] {
 	const out: string[] = [];
 
@@ -19,14 +24,24 @@ export function computeVisibleBlockOrder(renderBlocks: OutlinerBlock[], collapse
 }
 
 export function findAdjacentVisibleBlockId(
-	visibleOrder: readonly string[],
+	nav: VisibleBlockNav,
 	currentId: string,
 	dir: ArrowNavDirection
 ): string | null {
-	const idx = visibleOrder.indexOf(currentId);
-	if (idx < 0) return null;
-	if (dir === "up") return idx > 0 ? visibleOrder[idx - 1] ?? null : null;
-	return idx + 1 < visibleOrder.length ? visibleOrder[idx + 1] ?? null : null;
+	const idx = nav.indexById.get(currentId);
+	if (idx === undefined) return null;
+	if (dir === "up") return idx > 0 ? nav.order[idx - 1] ?? null : null;
+	return idx + 1 < nav.order.length ? nav.order[idx + 1] ?? null : null;
+}
+
+export function computeVisibleBlockNav(renderBlocks: OutlinerBlock[], collapsedIds: ReadonlySet<string>): VisibleBlockNav {
+	const order = computeVisibleBlockOrder(renderBlocks, collapsedIds);
+	const indexById = new Map<string, number>();
+	for (let i = 0; i < order.length; i++) {
+		const id = order[i];
+		if (id) indexById.set(id, i);
+	}
+	return { order, indexById };
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -48,4 +63,3 @@ export function cursorPosAtLastLine(text: string, goalCh: number): number {
 	const ch = clamp(Math.floor(goalCh), 0, last.length);
 	return lastNl + 1 + ch;
 }
-

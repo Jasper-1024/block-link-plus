@@ -40,11 +40,12 @@ import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-short
 import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
 import {
-	computeVisibleBlockOrder,
+	computeVisibleBlockNav,
 	cursorPosAtFirstLine,
 	cursorPosAtLastLine,
 	findAdjacentVisibleBlockId,
 	type ArrowNavDirection,
+	type VisibleBlockNav,
 } from "./arrow-navigation";
 
 type PendingFocus = {
@@ -117,6 +118,8 @@ export class FileOutlinerView extends TextFileView {
 	private collapsedIds = new Set<string>();
 	private zoomStack: string[] = [];
 
+	private visibleNavCache: VisibleBlockNav | null = null;
+
 	private arrowNavGoalCh: number | null = null;
 	private arrowNavDispatching = false;
 	private preserveArrowNavGoalOnce = false;
@@ -174,6 +177,7 @@ export class FileOutlinerView extends TextFileView {
 				// ignore
 			}
 			this.zoomStack = [];
+			this.visibleNavCache = null;
 			this.render({ forceRebuild: true });
 		}
 	}
@@ -253,6 +257,7 @@ export class FileOutlinerView extends TextFileView {
 		this.topLevelBlocksEl = null;
 		this.collapsedIds.clear();
 		this.zoomStack = [];
+		this.visibleNavCache = null;
 
 		this.dndPreStart = null;
 		this.dndState = null;
@@ -295,6 +300,7 @@ export class FileOutlinerView extends TextFileView {
 
 		this.data = content;
 		this.outlinerFile = file;
+		this.visibleNavCache = null;
 		this.rebuildIndex();
 		this.render({ forceRebuild: true });
 
@@ -620,11 +626,15 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private pruneZoomStack(): void {
+		let changed = false;
 		while (this.zoomStack.length > 0) {
 			const id = this.zoomStack[this.zoomStack.length - 1];
-			if (id && this.blockById.has(id)) return;
+			if (id && this.blockById.has(id)) break;
 			this.zoomStack.pop();
+			changed = true;
 		}
+
+		if (changed) this.visibleNavCache = null;
 	}
 
 	private getRenderBlocks(file: ParsedOutlinerFile): OutlinerBlock[] {
@@ -698,6 +708,7 @@ export class FileOutlinerView extends TextFileView {
 				const focusId = this.getZoomRootId();
 				if (this.editingId) this.exitEditMode(this.editingId);
 				this.zoomStack = [];
+				this.visibleNavCache = null;
 				if (focusId && this.blockById.has(focusId)) {
 					const end = String(this.blockById.get(focusId)?.text ?? "").length;
 					this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
@@ -724,6 +735,7 @@ export class FileOutlinerView extends TextFileView {
 					: () => {
 							if (this.editingId) this.exitEditMode(this.editingId);
 							this.zoomStack = this.zoomStack.slice(0, i + 1);
+							this.visibleNavCache = null;
 							const focusId = this.getZoomRootId();
 							if (focusId && this.blockById.has(focusId)) {
 								const end = String(this.blockById.get(focusId)?.text ?? "").length;
@@ -755,6 +767,7 @@ export class FileOutlinerView extends TextFileView {
 
 		if (collapsed) this.collapsedIds.add(id);
 		else this.collapsedIds.delete(id);
+		this.visibleNavCache = null;
 
 		const el = this.blockElById.get(id);
 		if (el) el.classList.toggle("is-blp-outliner-collapsed", collapsed);
@@ -791,6 +804,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 		nextStack.reverse();
 		this.zoomStack = nextStack;
+		this.visibleNavCache = null;
 		const end = String(this.blockById.get(id)?.text ?? "").length;
 		this.pendingFocus = { id, cursorStart: end, cursorEnd: end };
 		this.render({ forceRebuild: true });
@@ -802,6 +816,7 @@ export class FileOutlinerView extends TextFileView {
 		if (this.editingId) this.exitEditMode(this.editingId);
 
 		const popped = this.zoomStack.pop();
+		this.visibleNavCache = null;
 		const focusId = this.getZoomRootId() ?? popped ?? null;
 		if (focusId) {
 			const end = String(this.blockById.get(focusId)?.text ?? "").length;
@@ -1033,6 +1048,7 @@ export class FileOutlinerView extends TextFileView {
 		// If we move a block into a collapsed subtree, expand so the result is visible.
 		if (drop.where === "inside") {
 			this.collapsedIds.delete(drop.targetId);
+			this.visibleNavCache = null;
 		}
 
 		this.applyEngineResult(moveBlockSubtree(this.outlinerFile, state.sourceId, drop.targetId, drop.where), { focus: false });
@@ -1575,6 +1591,7 @@ export class FileOutlinerView extends TextFileView {
 		this.ensureRoot();
 
 		this.outlinerFile = result.file;
+		this.visibleNavCache = null;
 		this.rebuildIndex();
 
 		for (const id of Array.from(result.dirtyIds)) {
@@ -1640,9 +1657,13 @@ export class FileOutlinerView extends TextFileView {
 		this.arrowNavGoalCh = null;
 	}
 
-	private getVisibleBlockOrder(): string[] {
-		if (!this.outlinerFile) return [];
-		return computeVisibleBlockOrder(this.getRenderBlocks(this.outlinerFile), this.collapsedIds);
+	private getVisibleBlockNav(): VisibleBlockNav {
+		if (this.visibleNavCache) return this.visibleNavCache;
+		if (!this.outlinerFile) return { order: [], indexById: new Map() };
+
+		const nav = computeVisibleBlockNav(this.getRenderBlocks(this.outlinerFile), this.collapsedIds);
+		this.visibleNavCache = nav;
+		return nav;
 	}
 
 	private onEditorArrowNavigate(dir: ArrowNavDirection, editor: EditorView): boolean {
@@ -1702,8 +1723,8 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		const currentId = this.editingId;
-		const order = this.getVisibleBlockOrder();
-		const nextId = findAdjacentVisibleBlockId(order, currentId, dir);
+		const nav = this.getVisibleBlockNav();
+		const nextId = findAdjacentVisibleBlockId(nav, currentId, dir);
 		if (!nextId) return true;
 
 		const nextBlock = this.blockById.get(nextId);
