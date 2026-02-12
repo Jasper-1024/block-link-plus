@@ -136,6 +136,53 @@ export class InlineEditEngine {
 		return this.loaded;
 	}
 
+	/**
+	 * File Outliner View renders markdown outside Live Preview. This opt-in API allows the outliner
+	 * surface to mount an inline embed editor on demand (e.g. for `![[note#^id-id]]`).
+	 *
+	 * Safety: guarded by a `.blp-file-outliner-view` DOM check so normal MarkdownView preview
+	 * cannot accidentally trigger embed editing.
+	 */
+	async mountInlineEmbedInOutliner(embedEl: HTMLElement, sourcePath: string): Promise<boolean> {
+		if (!this.loaded) return false;
+		if (!this.isInlineEditActive()) return false;
+		if (!embedEl?.isConnected) return false;
+		if (!embedEl.classList.contains("internal-embed") || !embedEl.classList.contains("markdown-embed")) return false;
+		if (!embedEl.closest(".blp-file-outliner-view")) return false;
+		// Never mount in Live Preview (InlineEditEngine already owns that surface).
+		if (this.isInLivePreview(embedEl)) return false;
+
+		// If already mounted, treat as success and focus the existing editor.
+		const existingRoot = embedEl.querySelector<HTMLElement>(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`);
+		if (existingRoot) {
+			try {
+				this.leaves.getEmbedFromElement(existingRoot)?.view.editor?.focus();
+			} catch {
+				// ignore
+			}
+			return true;
+		}
+		if (this.pendingEmbeds.has(embedEl)) return false;
+
+		const ctx = {
+			sourcePath,
+			addChild: () => {},
+		} as unknown as MarkdownPostProcessorContext;
+
+		await this.mountInlineEmbedCore(embedEl, ctx, { requireLivePreview: false, origin: "outliner" });
+
+		const root = embedEl.querySelector<HTMLElement>(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`);
+		if (!root) return false;
+
+		try {
+			this.leaves.getEmbedFromElement(root)?.view.editor?.focus();
+		} catch {
+			// ignore
+		}
+
+		return true;
+	}
+
 	private isDebugEnabled(): boolean {
 		return (window as any).BLP_INLINE_EDIT_DEBUG === true;
 	}
@@ -420,6 +467,10 @@ export class InlineEditEngine {
 		if (!embedEl.isConnected) return;
 		if (embedEl.closest(".markdown-source-view")) {
 			this.debugSkip(embedEl, "reading:skip:source-view", { origin });
+			return;
+		}
+		if (embedEl.classList.contains(INLINE_EDIT_ACTIVE_CLASS)) {
+			this.debugSkip(embedEl, "reading:skip:inline-edit-active", { origin });
 			return;
 		}
 		if (this.leaves.isNestedWithinEmbed(embedEl)) {
@@ -1556,33 +1607,42 @@ export class InlineEditEngine {
 		ctx: MarkdownPostProcessorContext,
 		hostView?: MarkdownView
 	): Promise<void> {
-		if (!this.isInLivePreview(embedEl)) {
-			this.debugSkip(embedEl, "skip:not-live-preview");
+		await this.mountInlineEmbedCore(embedEl, ctx, { requireLivePreview: true, hostView, origin: "live-preview" });
+	}
+
+	private async mountInlineEmbedCore(
+		embedEl: HTMLElement,
+		ctx: MarkdownPostProcessorContext,
+		opts: { requireLivePreview: boolean; hostView?: MarkdownView; origin: string }
+	): Promise<void> {
+		if (opts.requireLivePreview && !this.isInLivePreview(embedEl)) {
+			this.debugSkip(embedEl, "skip:not-live-preview", { origin: opts.origin });
 			return;
 		}
 		if (this.leaves.isNestedWithinEmbed(embedEl)) {
-			this.debugSkip(embedEl, "skip:nested");
+			this.debugSkip(embedEl, "skip:nested", { origin: opts.origin });
 			return;
 		}
 		if (this.leaves.isLegacyDoubleBangEmbed(embedEl)) {
-			this.debugSkip(embedEl, "skip:legacy-doublebang");
+			this.debugSkip(embedEl, "skip:legacy-doublebang", { origin: opts.origin });
 			return;
 		}
 
 		this.cleanupOrphanedShell(embedEl);
 
 		if (embedEl.querySelector(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)) {
-			this.debugSkip(embedEl, "skip:already-mounted");
+			this.debugSkip(embedEl, "skip:already-mounted", { origin: opts.origin });
 			return;
 		}
 		if (this.pendingEmbeds.has(embedEl)) {
-			this.debugSkip(embedEl, "skip:pending");
+			this.debugSkip(embedEl, "skip:pending", { origin: opts.origin });
 			return;
 		}
 
 		const parsed = this.parseInlineEmbed(embedEl, ctx);
 		if (!parsed) {
 			this.debugSkip(embedEl, "skip:parse-failed", {
+				origin: opts.origin,
 				src: embedEl.getAttribute("src"),
 				alt: embedEl.getAttribute("alt"),
 				ctxSourcePath: ctx.sourcePath,
@@ -1591,7 +1651,13 @@ export class InlineEditEngine {
 		}
 
 		if (parsed.kind === "range") {
+			// Clear any legacy multiline embed shells and suspend reading-range preview for this embed.
 			this.cleanupLegacyMultilineEmbed(embedEl);
+			try {
+				this.cleanupReadingRangeChildrenInNode(embedEl);
+			} catch {
+				// ignore
+			}
 		}
 
 		this.pendingEmbeds.add(embedEl);
@@ -1606,6 +1672,7 @@ export class InlineEditEngine {
 				subpath: parsed.subpath,
 				visibleRange: parsed.visibleRange,
 				editableRange: parsed.editableRange,
+				origin: opts.origin,
 			});
 
 			const embed = await this.leaves.createEmbedLeaf({
@@ -1627,7 +1694,7 @@ export class InlineEditEngine {
 			hostEl.addEventListener("click", focusEditor);
 			hostEl.addEventListener("keydown", stopPropagation);
 
-			const stopRemeasure = this.attachHostRemeasure(hostEl, hostView);
+			const stopRemeasure = this.attachHostRemeasure(hostEl, opts.hostView);
 
 			embed.restore = () => {
 				try {
@@ -1717,7 +1784,10 @@ export class InlineEditEngine {
 				try {
 					const startLine = Math.max(0, resolvedRanges.editableRange[0] - 1);
 					embed.view.editor?.setCursor({ line: startLine, ch: 0 });
-					embed.view.editor?.scrollIntoView({ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } }, true);
+					embed.view.editor?.scrollIntoView(
+						{ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } },
+						true
+					);
 				} catch {
 					// ignore
 				}
@@ -1726,7 +1796,7 @@ export class InlineEditEngine {
 			}
 
 			try {
-				(hostView?.editor?.cm as any)?.requestMeasure?.();
+				(opts.hostView?.editor?.cm as any)?.requestMeasure?.();
 			} catch {
 				// ignore
 			}
