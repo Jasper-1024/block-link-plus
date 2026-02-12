@@ -1,7 +1,7 @@
 import { Component, MarkdownRenderer, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
-import { EditorState, Prec } from "@codemirror/state";
+import { EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "@codemirror/basic-setup";
 
@@ -39,6 +39,13 @@ import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
 import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-shortcuts";
 import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
+import {
+	computeVisibleBlockOrder,
+	cursorPosAtFirstLine,
+	cursorPosAtLastLine,
+	findAdjacentVisibleBlockId,
+	type ArrowNavDirection,
+} from "./arrow-navigation";
 
 type PendingFocus = {
 	id: string;
@@ -109,6 +116,10 @@ export class FileOutlinerView extends TextFileView {
 
 	private collapsedIds = new Set<string>();
 	private zoomStack: string[] = [];
+
+	private arrowNavGoalCh: number | null = null;
+	private arrowNavDispatching = false;
+	private preserveArrowNavGoalOnce = false;
 
 	private dndPreStart: OutlinerDndPreStart | null = null;
 	private dndState: OutlinerDndState | null = null;
@@ -441,6 +452,14 @@ export class FileOutlinerView extends TextFileView {
 							run: () => this.onEditorToggleTask(),
 						},
 						{
+							key: "ArrowUp",
+							run: (view) => this.onEditorArrowNavigate("up", view),
+						},
+						{
+							key: "ArrowDown",
+							run: (view) => this.onEditorArrowNavigate("down", view),
+						},
+						{
 							key: "Shift-Enter",
 							run: (view) => {
 								const r = view.state.selection.main;
@@ -477,13 +496,35 @@ export class FileOutlinerView extends TextFileView {
 				),
 				EditorView.updateListener.of((update) => {
 					if (this.suppressEditorSync) return;
-					if (!update.docChanged) return;
-					this.onEditorDocChanged(update.state.doc.toString());
-					this.maybeTriggerEditorSuggest();
+
+					if (update.docChanged) {
+						this.onEditorDocChanged(update.state.doc.toString());
+						this.maybeTriggerEditorSuggest();
+					}
+
+					// Keep ArrowUp/Down "goal column" stable across real vertical navigation, but reset it
+					// whenever selection changes through other means (mouse click, programmatic dispatch, etc.).
+					if (update.selectionSet && !this.arrowNavDispatching && !this.preserveArrowNavGoalOnce) {
+						this.resetArrowNavGoalColumn();
+					}
 				}),
 				EditorView.domEventHandlers({
 					keydown: (evt) => {
 						if (isPlainTextPasteShortcut(evt)) this.lastPlainPasteShortcutAt = Date.now();
+
+						const key = String((evt as any)?.key ?? "");
+						const isPlainArrow =
+							(key === "ArrowUp" || key === "ArrowDown") &&
+							!Boolean((evt as any)?.shiftKey) &&
+							!Boolean((evt as any)?.ctrlKey) &&
+							!Boolean((evt as any)?.metaKey) &&
+							!Boolean((evt as any)?.altKey);
+						if (!isPlainArrow) this.resetArrowNavGoalColumn();
+
+						return false;
+					},
+					pointerdown: () => {
+						this.resetArrowNavGoalColumn();
 						return false;
 					},
 					paste: (evt) => this.onEditorPaste(evt),
@@ -1408,6 +1449,10 @@ export class FileOutlinerView extends TextFileView {
 		if (!this.editorHostEl || !this.editorView) return;
 		if (!this.outlinerFile) return;
 
+		if (this.editingId !== id && !this.preserveArrowNavGoalOnce) {
+			this.resetArrowNavGoalColumn();
+		}
+
 		const block = this.blockById.get(id);
 		const host = this.blockContentElById.get(id);
 		const display = this.displayElById.get(id);
@@ -1480,6 +1525,10 @@ export class FileOutlinerView extends TextFileView {
 		}
 		display.style.display = "";
 		this.renderBlockDisplay(id);
+
+		if (!this.preserveArrowNavGoalOnce) {
+			this.resetArrowNavGoalColumn();
+		}
 
 		this.requestSave();
 	}
@@ -1585,6 +1634,92 @@ export class FileOutlinerView extends TextFileView {
 			if (active && this.contentEl.contains(active)) return;
 			this.exitEditMode(id);
 		}, 32);
+	}
+
+	private resetArrowNavGoalColumn(): void {
+		this.arrowNavGoalCh = null;
+	}
+
+	private getVisibleBlockOrder(): string[] {
+		if (!this.outlinerFile) return [];
+		return computeVisibleBlockOrder(this.getRenderBlocks(this.outlinerFile), this.collapsedIds);
+	}
+
+	private onEditorArrowNavigate(dir: ArrowNavDirection, editor: EditorView): boolean {
+		if (!this.outlinerFile) return false;
+		if (!this.editingId) return false;
+
+		// When EditorSuggest is open, arrow keys should navigate the suggestion UI.
+		const mgr = (this.app.workspace as any)?.editorSuggest;
+		if (mgr?.currentSuggest?.isOpen) return false;
+
+		const r = editor.state.selection.main;
+		if (!r.empty) return false;
+
+		const before = { anchor: r.anchor, head: r.head };
+		const beforeLine = editor.state.doc.lineAt(before.head);
+		const beforeCh = before.head - beforeLine.from;
+
+		if (this.arrowNavGoalCh === null) this.arrowNavGoalCh = beforeCh;
+		const goalCh = this.arrowNavGoalCh;
+
+		const beforeCoords = editor.coordsAtPos(before.head);
+		const moved = editor.moveVertically(r, dir === "down");
+
+		if (beforeCoords) {
+			const afterCoords = editor.coordsAtPos(moved.head);
+			if (!afterCoords) {
+				this.arrowNavDispatching = true;
+				try {
+					editor.dispatch({ selection: EditorSelection.create([moved]) });
+				} finally {
+					this.arrowNavDispatching = false;
+				}
+				return true;
+			}
+
+			const dy = afterCoords.top - beforeCoords.top;
+			const movedVert = Math.abs(dy) >= 1;
+			if (movedVert) {
+				this.arrowNavDispatching = true;
+				try {
+					editor.dispatch({ selection: EditorSelection.create([moved]) });
+				} finally {
+					this.arrowNavDispatching = false;
+				}
+				return true;
+			}
+		} else {
+			// If we can't measure the caret, fall back to applying the in-block move. Cross-block
+			// navigation requires reliable visual-line boundary detection.
+			this.arrowNavDispatching = true;
+			try {
+				editor.dispatch({ selection: EditorSelection.create([moved]) });
+			} finally {
+				this.arrowNavDispatching = false;
+			}
+			return true;
+		}
+
+		const currentId = this.editingId;
+		const order = this.getVisibleBlockOrder();
+		const nextId = findAdjacentVisibleBlockId(order, currentId, dir);
+		if (!nextId) return true;
+
+		const nextBlock = this.blockById.get(nextId);
+		if (!nextBlock) return true;
+
+		const cursor =
+			dir === "up" ? cursorPosAtLastLine(nextBlock.text ?? "", goalCh) : cursorPosAtFirstLine(nextBlock.text ?? "", goalCh);
+
+		this.preserveArrowNavGoalOnce = true;
+		try {
+			this.enterEditMode(nextId, { cursorStart: cursor, cursorEnd: cursor, scroll: true });
+		} finally {
+			this.preserveArrowNavGoalOnce = false;
+		}
+
+		return true;
 	}
 
 	private onEditorEnter(): boolean {
