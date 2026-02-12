@@ -1,4 +1,4 @@
-import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "../editor-shortcuts";
+import { isPlainTextPasteShortcut } from "../editor-shortcuts";
 
 describe("file-outliner-view/editor-shortcuts", () => {
 	test("detects Mod+Shift+V as plain text paste shortcut", () => {
@@ -20,12 +20,4 @@ describe("file-outliner-view/editor-shortcuts", () => {
 		const evt = new KeyboardEvent("keydown", { key: "V", metaKey: true, shiftKey: true });
 		expect(isPlainTextPasteShortcut(evt)).toBe(true);
 	});
-
-	test("toggles task marker prefixes", () => {
-		expect(toggleTaskMarkerPrefix("hello")).toBe("[ ] hello");
-		expect(toggleTaskMarkerPrefix("[ ] hello")).toBe("[x] hello");
-		expect(toggleTaskMarkerPrefix("[x] hello")).toBe("[ ] hello");
-		expect(toggleTaskMarkerPrefix("[X] hello")).toBe("[ ] hello");
-	});
 });
-

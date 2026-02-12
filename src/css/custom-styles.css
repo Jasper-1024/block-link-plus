@@ -284,6 +284,23 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	border-radius: 6px;
 }
 
+.blp-file-outliner-view .blp-outliner-task-row {
+	display: flex;
+	gap: 6px;
+	align-items: flex-start;
+}
+
+.blp-file-outliner-view .blp-outliner-task-checkbox {
+	flex: 0 0 auto;
+	margin: 2px 0 0 0; /* align checkbox to the first line baseline */
+	cursor: pointer;
+}
+
+.blp-file-outliner-view .blp-outliner-task-content {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 .blp-file-outliner-view .blp-file-outliner-display p {
 	margin: 0;
 	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */

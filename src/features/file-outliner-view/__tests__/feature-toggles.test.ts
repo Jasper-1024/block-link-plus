@@ -23,6 +23,11 @@ describe("file outliner view feature toggles", () => {
 				expect(typeof ui[key]?.desc).toBe("string");
 				expect(String(ui[key]?.desc)).not.toBe("");
 			}
+
+			expect(typeof ui.tasksHelp?.name).toBe("string");
+			expect(String(ui.tasksHelp?.name)).not.toBe("");
+			expect(typeof ui.tasksHelp?.desc).toBe("string");
+			expect(String(ui.tasksHelp?.desc)).not.toBe("");
 		}
 	});
 

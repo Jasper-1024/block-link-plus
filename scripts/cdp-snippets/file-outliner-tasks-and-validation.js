@@ -3,7 +3,7 @@
 //   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/file-outliner-tasks-and-validation.js"
 //
 // Covers:
-// - Task blocks preserve `[ ]`/`[x]` markers as plain text in the outliner view.
+// - Task blocks render with a checkbox UI and hide `[ ]`/`[x]` marker text in the outliner display.
 // - Blocks containing list/heading syntax show a warning banner and render sanitized content (no nested structure).
 
 (async () => {
@@ -75,12 +75,29 @@
     const root = view.contentEl.querySelector(".blp-file-outliner-root") || view.contentEl;
     const blocksHost = root.querySelector(".blp-file-outliner-blocks") || root;
 
-    // --- Task marker: visible text preserves `[ ]`.
+    // --- Task marker: checkbox UI + hidden marker text.
     const taskRow = blocksHost.querySelector(`.ls-block[data-blp-outliner-id="task"]`);
     assert(taskRow, "missing task row");
-    const taskText = String(taskRow.textContent || "");
-    assert(taskText.includes("[ ]"), `expected task row to include '[ ]', got: ${taskText}`);
+    const taskDisplay = taskRow.querySelector(".blp-file-outliner-display");
+    assert(taskDisplay, "missing task display node");
+    const checkbox = taskDisplay.querySelector('input.blp-outliner-task-checkbox[type="checkbox"]');
+    assert(checkbox, "expected a task checkbox UI");
+
+    const taskText = String(taskDisplay.textContent || "");
+    assert(!taskText.includes("[ ]") && !taskText.includes("[x]"), `expected marker prefix to be hidden, got: ${taskText}`);
+    assert(taskText.includes("task block"), `expected task text to include content, got: ${taskText}`);
     assert(!taskRow.querySelector(".blp-outliner-block-warning"), "did not expect a warning banner on the task row");
+
+    // Toggle task via checkbox click: should not enter edit mode.
+    checkbox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await wait(250);
+    assert(view.editingId == null, `expected checkbox click not to enter edit mode, got editingId=${String(view.editingId)}`);
+
+    // Persist: force a save and read from vault.
+    await view.save?.();
+    await wait(150);
+    const nextContent = await app.vault.read(f);
+    assert(nextContent.includes("- [x] task block"), "expected checkbox click to persist `- [x] task block`");
 
     // --- Block-internal markdown validation + sanitization.
     // Inject invalid block text into the view model and force a re-render of that block.
@@ -142,4 +159,3 @@
     }
   }
 })();
-

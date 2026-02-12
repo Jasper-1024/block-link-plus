@@ -6,6 +6,7 @@
 // - Mod+Shift+V bypasses split-paste behavior (multiline stays in one block).
 // - Mod+V follows the existing "Paste multiline = split" behavior (multiline splits into blocks).
 // - Mod+Enter toggles `[ ]` / `[x]` task marker prefix on the first line.
+// - Mod+Shift+Enter toggles task marker (task <-> normal) on the first line.
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -84,21 +85,24 @@
     const editor = view.editorView;
     assert(editor, "missing editorView");
 
-    // ---- Task toggle (Mod+Enter).
+    // ---- Task toggles.
     editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: "hello" }, selection: { anchor: 5 } });
     await wait(50);
 
-    // Prefer exercising the keymap path via a synthetic keydown; fall back to calling the handler.
+    // A) Toggle task marker (Mod+Shift+Enter): `hello` -> `[ ] hello`.
     editor.focus();
-    editor.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, bubbles: true }));
+    editor.contentDOM.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, shiftKey: true, bubbles: true })
+    );
     await wait(50);
     if (!editor.state.doc.toString().startsWith("[ ] ")) {
       // Fallback: call the private method (TypeScript private is runtime-accessible).
-      view.onEditorToggleTask();
+      view.onEditorToggleTaskMarker();
       await wait(50);
     }
-    assert(editor.state.doc.toString().startsWith("[ ] "), "expected Mod+Enter to insert `[ ] ` task marker");
+    assert(editor.state.doc.toString().startsWith("[ ] "), "expected Mod+Shift+Enter to insert `[ ] ` task marker");
 
+    // B) Toggle task status (Mod+Enter): `[ ]` -> `[x]`.
     editor.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, bubbles: true }));
     await wait(50);
     if (!editor.state.doc.toString().startsWith("[x] ")) {
@@ -106,6 +110,17 @@
       await wait(50);
     }
     assert(editor.state.doc.toString().startsWith("[x] "), "expected second Mod+Enter to toggle to `[x] `");
+
+    // C) Toggle task marker (Mod+Shift+Enter): task -> normal.
+    editor.contentDOM.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, shiftKey: true, bubbles: true })
+    );
+    await wait(50);
+    if (editor.state.doc.toString().startsWith("[")) {
+      view.onEditorToggleTaskMarker();
+      await wait(50);
+    }
+    assert(editor.state.doc.toString() === "hello", `expected Mod+Shift+Enter to remove marker, got: ${editor.state.doc.toString()}`);
 
     // ---- Paste branching.
     const multiline = "one\ntwo\nthree";
@@ -179,4 +194,3 @@
     }
   }
 })();
-

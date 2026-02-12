@@ -230,6 +230,10 @@ class T {
               outdent: "Prefer outdent",
             },
           },
+          tasksHelp: {
+            name: "Tasks",
+            desc: 'Task blocks use Obsidian-native `- [ ]` / `- [x]` on disk. Commands: "Outliner: Toggle task status" (Mod+Enter) and "Outliner: Toggle task marker" (Mod+Shift+Enter). Configure hotkeys in Settings -> Hotkeys.',
+          },
         },
 
         // Enhanced List Blocks section
@@ -789,6 +793,10 @@ class T {
               outdent: "优先 Outdent",
             },
           },
+          tasksHelp: {
+            name: "任务",
+            desc: "任务块在磁盘上使用 Obsidian 原生的 `- [ ]` / `- [x]` 语法。命令：\"Outliner: Toggle task status\"（Mod+Enter）与 \"Outliner: Toggle task marker\"（Mod+Shift+Enter）。可在 设置 -> 快捷键 中配置。",
+          },
         },
 
         // 增强 List Blocks
@@ -1346,6 +1354,10 @@ class T {
               merge: "與上一區塊合併（預設）",
               outdent: "優先 Outdent",
             },
+          },
+          tasksHelp: {
+            name: "任務",
+            desc: "任務區塊在磁碟上使用 Obsidian 原生的 `- [ ]` / `- [x]` 語法。命令：\"Outliner: Toggle task status\"（Mod+Enter）與 \"Outliner: Toggle task marker\"（Mod+Shift+Enter）。可在 設定 -> 快捷鍵 中設定。",
           },
         },
 

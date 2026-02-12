@@ -10,13 +10,3 @@ export function isPlainTextPasteShortcut(evt: KeyboardEvent): boolean {
 	// Mod+Shift+V (ignore Alt/Option variants).
 	return Boolean((evt as any)?.shiftKey) && !Boolean((evt as any)?.altKey);
 }
-
-export function toggleTaskMarkerPrefix(firstLine: string): string {
-	const line = String(firstLine ?? "");
-
-	if (line.startsWith("[ ] ")) return `[x] ${line.slice(4)}`;
-	if (line.startsWith("[x] ") || line.startsWith("[X] ")) return `[ ] ${line.slice(4)}`;
-
-	return `[ ] ${line}`;
-}
-

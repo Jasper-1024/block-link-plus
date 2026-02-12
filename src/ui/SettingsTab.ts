@@ -530,6 +530,8 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(rootEl).setName(ui.tasksHelp.name).setDesc(ui.tasksHelp.desc);
+
 		// blp-view.
 		this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(
 			t.settings.enhancedListBlocks.blpView.desc

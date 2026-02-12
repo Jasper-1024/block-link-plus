@@ -33,15 +33,16 @@ import {
 	type ParsedOutlinerFile,
 } from "./protocol";
 
-import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
-import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
-import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
-import { isPlainTextPasteShortcut, toggleTaskMarkerPrefix } from "./editor-shortcuts";
-import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
-import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
-import {
-	computeVisibleBlockNav,
-	cursorPosAtFirstLine,
+ import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+ import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
+ import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
+ import { isPlainTextPasteShortcut } from "./editor-shortcuts";
+ import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
+ import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
+ import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
+ import {
+ 	computeVisibleBlockNav,
+ 	cursorPosAtFirstLine,
 	cursorPosAtLastLine,
 	findAdjacentVisibleBlockId,
 	type ArrowNavDirection,
@@ -137,6 +138,16 @@ export class FileOutlinerView extends TextFileView {
 		this.plugin = plugin;
 		this.contentEl.addClass("blp-file-outliner-view");
 		this.syncFeatureToggles();
+	}
+
+	public toggleActiveTaskStatus(): boolean {
+		if (!this.editingId) return false;
+		return this.onEditorToggleTask();
+	}
+
+	public toggleActiveTaskMarker(): boolean {
+		if (!this.editingId) return false;
+		return this.onEditorToggleTaskMarker();
 	}
 
 	/**
@@ -523,6 +534,10 @@ export class FileOutlinerView extends TextFileView {
 							run: () => this.onEditorToggleTask(),
 						},
 						{
+							key: "Mod-Shift-Enter",
+							run: () => this.onEditorToggleTaskMarker(),
+						},
+						{
 							key: "ArrowUp",
 							run: (view) => this.onEditorArrowNavigate("up", view),
 						},
@@ -898,6 +913,42 @@ export class FileOutlinerView extends TextFileView {
 		this.applyEngineResult(insertAfter(this.outlinerFile, id, ctx));
 	}
 
+	private toggleTaskStatusForBlock(id: string): void {
+		const b = this.blockById.get(id);
+		if (!b) return;
+
+		const doc = String(b.text ?? "");
+		const nl = doc.indexOf("\n");
+		const firstLineEnd = nl >= 0 ? nl : doc.length;
+		const firstLine = doc.slice(0, firstLineEnd);
+
+		const nextFirstLine = toggleTaskStatusMarkerPrefix(firstLine);
+		if (nextFirstLine === firstLine) return;
+
+		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
+		this.dirtyBlockIds.add(id);
+		this.requestSave();
+		this.renderBlockDisplay(id);
+	}
+
+	private toggleTaskMarkerForBlock(id: string): void {
+		const b = this.blockById.get(id);
+		if (!b) return;
+
+		const doc = String(b.text ?? "");
+		const nl = doc.indexOf("\n");
+		const firstLineEnd = nl >= 0 ? nl : doc.length;
+		const firstLine = doc.slice(0, firstLineEnd);
+
+		const nextFirstLine = toggleTaskMarkerPrefix(firstLine);
+		if (nextFirstLine === firstLine) return;
+
+		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
+		this.dirtyBlockIds.add(id);
+		this.requestSave();
+		this.renderBlockDisplay(id);
+	}
+
 	private async copyBlockSubtree(id: string): Promise<void> {
 		const b = this.blockById.get(id);
 		if (!b) return;
@@ -930,6 +981,19 @@ export class FileOutlinerView extends TextFileView {
 		menu.addItem((item) => {
 			item.setTitle("Copy block URL").onClick(() => {
 				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, true);
+			});
+		});
+
+		menu.addSeparator();
+
+		const isTask = Boolean(getTaskMarkerFromBlockText(block.text ?? ""));
+		menu.addItem((item) => {
+			item.setTitle(isTask ? "Convert to normal block" : "Convert to task").onClick(() => {
+				if (this.editingId === id) {
+					this.onEditorToggleTaskMarker();
+					return;
+				}
+				this.toggleTaskMarkerForBlock(id);
 			});
 		});
 
@@ -1414,7 +1478,9 @@ export class FileOutlinerView extends TextFileView {
 		const seq = (this.displayRenderSeqById.get(id) ?? 0) + 1;
 		this.displayRenderSeqById.set(id, seq);
 
-		const md = sanitizeOutlinerBlockMarkdownForDisplay(b.text ?? "");
+		const task = getTaskMarkerFromBlockText(b.text ?? "");
+		const renderText = task ? task.renderText : (b.text ?? "");
+		const md = sanitizeOutlinerBlockMarkdownForDisplay(renderText);
 		const sourcePath = this.file?.path ?? "";
 		const tmp = document.createElement("div");
 		tmp.classList.add("markdown-rendered");
@@ -1502,7 +1568,29 @@ export class FileOutlinerView extends TextFileView {
 					}
 				}
 
-				display.replaceChildren(tmp);
+				if (task) {
+					const row = document.createElement("div");
+					row.className = "blp-outliner-task-row";
+
+					const checkbox = document.createElement("input");
+					checkbox.type = "checkbox";
+					checkbox.className = "blp-outliner-task-checkbox";
+					checkbox.checked = task.checked;
+					checkbox.addEventListener("click", (evt) => {
+						evt.stopPropagation();
+						this.toggleTaskStatusForBlock(id);
+					});
+					row.appendChild(checkbox);
+
+					const content = document.createElement("div");
+					content.className = "blp-outliner-task-content";
+					content.appendChild(tmp);
+					row.appendChild(content);
+
+					display.replaceChildren(row);
+				} else {
+					display.replaceChildren(tmp);
+				}
 				this.displayRenderComponentById.set(id, component);
 
 				if (prev) {
@@ -1862,6 +1950,31 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private onEditorToggleTask(): boolean {
+		const editor = this.editorView;
+		if (!editor) return false;
+		if (!this.editingId) return false;
+
+		const doc = editor.state.doc.toString();
+		const nl = doc.indexOf("\n");
+		const firstLineEnd = nl >= 0 ? nl : doc.length;
+
+		const firstLine = doc.slice(0, firstLineEnd);
+		const nextFirstLine = toggleTaskStatusMarkerPrefix(firstLine);
+		if (nextFirstLine === firstLine) return false;
+
+		const delta = nextFirstLine.length - firstLine.length;
+		const nextLen = doc.length + delta;
+		const clamp = (n: number) => Math.max(0, Math.min(nextLen, Math.floor(n)));
+
+		const r = editor.state.selection.main;
+		editor.dispatch({
+			changes: { from: 0, to: firstLineEnd, insert: nextFirstLine },
+			selection: { anchor: clamp(r.anchor + delta), head: clamp(r.head + delta) },
+		});
+		return true;
+	}
+
+	private onEditorToggleTaskMarker(): boolean {
 		const editor = this.editorView;
 		if (!editor) return false;
 		if (!this.editingId) return false;
