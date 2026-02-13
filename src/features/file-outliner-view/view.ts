@@ -38,6 +38,7 @@ import {
  import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
  import { isPlainTextPasteShortcut } from "./editor-shortcuts";
  import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
+import { DisplayRenderScheduler } from "./display-render-scheduler";
  import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
  import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
  import {
@@ -97,6 +98,7 @@ export class FileOutlinerView extends TextFileView {
 	private topLevelBlocksEl: HTMLElement | null = null;
 
 	private blockElById = new Map<string, HTMLElement>();
+	private blockRowElById = new Map<string, HTMLElement>();
 	private blockContentElById = new Map<string, HTMLElement>();
 	private childrenContainerElById = new Map<string, HTMLElement>();
 	private childrenElById = new Map<string, HTMLElement>();
@@ -104,6 +106,9 @@ export class FileOutlinerView extends TextFileView {
 
 	private displayRenderSeqById = new Map<string, number>();
 	private displayRenderComponentById = new Map<string, Component>();
+	private displayRenderScheduler = new DisplayRenderScheduler();
+	private displayRenderDrainTimer: number | null = null;
+	private visibleRefreshTimer: number | null = null;
 
 	private editorHostEl: HTMLElement | null = null;
 	private editorView: EditorView | null = null;
@@ -138,6 +143,7 @@ export class FileOutlinerView extends TextFileView {
 		this.plugin = plugin;
 		this.contentEl.addClass("blp-file-outliner-view");
 		this.syncFeatureToggles();
+		this.registerDomEvent(this.contentEl, "scroll", () => this.scheduleVisibleBlockRefresh());
 	}
 
 	public toggleActiveTaskStatus(): boolean {
@@ -233,6 +239,7 @@ export class FileOutlinerView extends TextFileView {
 		this.blockById.clear();
 		this.parentById.clear();
 		this.blockElById.clear();
+		this.blockRowElById.clear();
 		this.blockContentElById.clear();
 		this.childrenContainerElById.clear();
 		this.childrenElById.clear();
@@ -246,6 +253,15 @@ export class FileOutlinerView extends TextFileView {
 			}
 		}
 		this.displayRenderComponentById.clear();
+		this.displayRenderScheduler.reset();
+		if (this.displayRenderDrainTimer) {
+			window.clearTimeout(this.displayRenderDrainTimer);
+			this.displayRenderDrainTimer = null;
+		}
+		if (this.visibleRefreshTimer) {
+			window.clearTimeout(this.visibleRefreshTimer);
+			this.visibleRefreshTimer = null;
+		}
 		this.dirtyBlockIds.clear();
 
 		this.editingId = null;
@@ -317,7 +333,7 @@ export class FileOutlinerView extends TextFileView {
 
 		if (didChange) {
 			// Persist normalization invariants (tail lines, ids, etc).
-			this.requestSave();
+			this.markDirtyAndRequestSave();
 		}
 	}
 
@@ -337,6 +353,20 @@ export class FileOutlinerView extends TextFileView {
 		const content = serializeOutlinerFile(this.outlinerFile, { indentSize: this.indentSize });
 		this.data = content;
 		return content;
+	}
+
+	private markDirtyAndRequestSave(opts?: { dirtyIds?: Iterable<string> }): void {
+		if (opts?.dirtyIds) {
+			for (const id of opts.dirtyIds) this.dirtyBlockIds.add(id);
+		}
+
+		// Delegate persistence scheduling to Obsidian's TextFileView debounce.
+		this.requestSave();
+	}
+
+	private async flushSave(): Promise<void> {
+		// Delegate persistence semantics (including pending debounced saves) to TextFileView.
+		await this.save();
 	}
 
 	private rebuildIndex(): void {
@@ -381,7 +411,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		try {
-			await this.save();
+			await this.flushSave();
 		} catch {
 			// ignore
 		}
@@ -668,6 +698,7 @@ export class FileOutlinerView extends TextFileView {
 			// Clear DOM caches but keep the view root/editor.
 			for (const el of this.blockElById.values()) el.remove();
 			this.blockElById.clear();
+			this.blockRowElById.clear();
 			this.blockContentElById.clear();
 			this.childrenContainerElById.clear();
 			this.childrenElById.clear();
@@ -681,6 +712,15 @@ export class FileOutlinerView extends TextFileView {
 				}
 			}
 			this.displayRenderComponentById.clear();
+			this.displayRenderScheduler.reset();
+			if (this.displayRenderDrainTimer) {
+				window.clearTimeout(this.displayRenderDrainTimer);
+				this.displayRenderDrainTimer = null;
+			}
+			if (this.visibleRefreshTimer) {
+				window.clearTimeout(this.visibleRefreshTimer);
+				this.visibleRefreshTimer = null;
+			}
 		}
 
 		this.syncBlockList(root, this.getRenderBlocks(file));
@@ -699,6 +739,14 @@ export class FileOutlinerView extends TextFileView {
 		if (this.pendingScrollToId) {
 			this.scrollToBlockId(this.pendingScrollToId);
 		}
+
+		// 4) Lazy-render: refresh which blocks are in/near viewport, then drain render queue.
+		try {
+			this.refreshVisibleBlocksFromDom();
+		} catch {
+			// ignore
+		}
+		this.scheduleDisplayRenderDrain();
 	}
 
 	private getZoomRootId(): string | null {
@@ -926,8 +974,7 @@ export class FileOutlinerView extends TextFileView {
 		if (nextFirstLine === firstLine) return;
 
 		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
-		this.dirtyBlockIds.add(id);
-		this.requestSave();
+		this.markDirtyAndRequestSave({ dirtyIds: [id] });
 		this.renderBlockDisplay(id);
 	}
 
@@ -944,8 +991,7 @@ export class FileOutlinerView extends TextFileView {
 		if (nextFirstLine === firstLine) return;
 
 		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
-		this.dirtyBlockIds.add(id);
-		this.requestSave();
+		this.markDirtyAndRequestSave({ dirtyIds: [id] });
 		this.renderBlockDisplay(id);
 	}
 
@@ -1308,7 +1354,8 @@ export class FileOutlinerView extends TextFileView {
 			// Ensure the display is rendered at least once for new blocks.
 			const display = this.displayElById.get(block.id);
 			if (display && display.childNodes.length === 0 && this.editingId !== block.id) {
-				this.renderBlockDisplay(block.id);
+				this.renderBlockPlaceholder(block.id);
+				this.displayRenderScheduler.markNeedsRender(block.id);
 			}
 
 			const children = this.childrenElById.get(block.id);
@@ -1327,6 +1374,7 @@ export class FileOutlinerView extends TextFileView {
 		const main = document.createElement("div");
 		main.className = "block-main-container items-baseline";
 		blockEl.appendChild(main);
+		this.blockRowElById.set(id, main);
 
 		const controlWrap = document.createElement("div");
 		controlWrap.className = "block-control-wrap items-center";
@@ -1435,6 +1483,9 @@ export class FileOutlinerView extends TextFileView {
 		for (const [id, el] of Array.from(this.blockElById.entries())) {
 			if (this.blockById.has(id)) continue;
 
+			this.displayRenderScheduler.remove(id);
+			this.blockRowElById.delete(id);
+
 			// If we just deleted the active block, force exit edit mode.
 			if (this.editingId === id) {
 				this.editingId = null;
@@ -1468,6 +1519,99 @@ export class FileOutlinerView extends TextFileView {
 				this.displayRenderComponentById.delete(id);
 			}
 		}
+	}
+
+	private scheduleVisibleBlockRefresh(): void {
+		if (this.visibleRefreshTimer) return;
+		this.visibleRefreshTimer = window.setTimeout(() => {
+			this.visibleRefreshTimer = null;
+			try {
+				this.refreshVisibleBlocksFromDom();
+			} catch {
+				// ignore
+			}
+			this.scheduleDisplayRenderDrain();
+		}, 0);
+	}
+
+	private refreshVisibleBlocksFromDom(): void {
+		const rootRect = this.contentEl.getBoundingClientRect();
+		const buffer = 500;
+		const top = rootRect.top - buffer;
+		const bottom = rootRect.bottom + buffer;
+
+		for (const [id, rowEl] of this.blockRowElById) {
+			let visible = false;
+			try {
+				// If the row is not in the layout tree (e.g., collapsed subtree), treat it as non-visible.
+				if (rowEl.getClientRects().length > 0) {
+					const r = rowEl.getBoundingClientRect();
+					visible = r.bottom >= top && r.top <= bottom;
+				}
+			} catch {
+				// ignore
+			}
+			this.displayRenderScheduler.setVisible(id, visible);
+		}
+	}
+
+	private scheduleDisplayRenderDrain(): void {
+		if (this.displayRenderDrainTimer) return;
+		this.displayRenderDrainTimer = window.setTimeout(() => {
+			this.displayRenderDrainTimer = null;
+			this.drainDisplayRenderQueue();
+		}, 0);
+	}
+
+	private drainDisplayRenderQueue(): void {
+		const budget = 12;
+		const ids = this.displayRenderScheduler.takeNextBatch(budget);
+		for (const id of ids) {
+			if (id === this.editingId) continue;
+			this.renderBlockDisplay(id);
+		}
+
+		if (this.displayRenderScheduler.hasPendingWork()) {
+			this.scheduleDisplayRenderDrain();
+		}
+	}
+
+	private renderBlockPlaceholder(id: string): void {
+		const b = this.blockById.get(id);
+		const display = this.displayElById.get(id);
+		if (!b || !display) return;
+		if (this.editingId === id) return;
+
+		const task = getTaskMarkerFromBlockText(b.text ?? "");
+		const text = task ? task.renderText : String(b.text ?? "");
+
+		const p = document.createElement("p");
+		p.textContent = text;
+
+		if (!task) {
+			display.replaceChildren(p);
+			return;
+		}
+
+		const row = document.createElement("div");
+		row.className = "blp-outliner-task-row";
+
+		const checkbox = document.createElement("input");
+		checkbox.type = "checkbox";
+		checkbox.className = "blp-outliner-task-checkbox";
+		checkbox.checked = task.checked;
+		checkbox.addEventListener("click", (evt) => {
+			evt.stopPropagation();
+			this.toggleTaskStatusForBlock(id);
+		});
+		row.appendChild(checkbox);
+
+		const content = document.createElement("div");
+		content.className = "blp-outliner-task-content";
+		content.appendChild(p);
+		row.appendChild(content);
+
+		display.replaceChildren(row);
 	}
 
 	private renderBlockDisplay(id: string): void {
@@ -1592,6 +1736,7 @@ export class FileOutlinerView extends TextFileView {
 					display.replaceChildren(tmp);
 				}
 				this.displayRenderComponentById.set(id, component);
+				this.displayRenderScheduler.markRendered(id);
 
 				if (prev) {
 					try {
@@ -1699,7 +1844,7 @@ export class FileOutlinerView extends TextFileView {
 			this.resetArrowNavGoalColumn();
 		}
 
-		this.requestSave();
+		this.markDirtyAndRequestSave();
 	}
 
 	private getActiveSelection(): OutlinerSelection | null {
@@ -1767,10 +1912,13 @@ export class FileOutlinerView extends TextFileView {
 		this.render();
 		for (const id of Array.from(result.dirtyIds)) {
 			if (id === this.editingId) continue;
-			this.renderBlockDisplay(id);
+			// Avoid stale display: show a cheap placeholder immediately, then render markdown when visible.
+			this.renderBlockPlaceholder(id);
+			this.displayRenderScheduler.markNeedsRender(id);
 		}
+		this.scheduleDisplayRenderDrain();
 
-		this.requestSave();
+		this.markDirtyAndRequestSave();
 	}
 
 	private onEditorDocChanged(nextText: string): void {
@@ -1783,8 +1931,7 @@ export class FileOutlinerView extends TextFileView {
 		if (!b) return;
 
 		b.text = nextText;
-		this.dirtyBlockIds.add(id);
-		this.requestSave();
+		this.markDirtyAndRequestSave({ dirtyIds: [id] });
 	}
 
 	private onEditorBlur(): void {
