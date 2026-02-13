@@ -94,6 +94,52 @@
 	font-weight: 700;
 }
 
+/* Outliner settings list editors (folder/file/plugin allowlist). */
+.blp-settings-list {
+	margin-bottom: 10px;
+}
+
+.blp-settings-list-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.blp-settings-list-row.setting-item {
+	border-top: none;
+	padding-top: 0;
+}
+
+.blp-settings-list-row.setting-item .setting-item-control {
+	flex: 1;
+	justify-content: flex-end;
+	gap: 6px;
+}
+
+.blp-settings-list-row.setting-item .setting-item-control input {
+	min-width: 240px;
+}
+
+.blp-settings-list-add-row.setting-item {
+	border-top: none;
+	padding-top: 0;
+}
+
+.blp-settings-list-add-row.setting-item .setting-item-info {
+	display: none;
+}
+
+.blp-settings-list-add-row.setting-item .setting-item-control {
+	justify-content: flex-end;
+}
+
+.blp-settings-suggest-desc {
+	color: var(--text-muted);
+	font-size: 12px;
+	margin-top: 2px;
+}
+
 /* Hide elements (avoid keyboard focus inside inactive tabs / filtered items). */
 .blp-visually-hidden {
 	display: none !important;

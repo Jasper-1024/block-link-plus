@@ -1,9 +1,11 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { AbstractInputSuggest, App, PluginSettingTab, Setting, TFile, TFolder, prepareFuzzySearch } from "obsidian";
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
 import { detectDataviewStatus } from "../utils/dataview-detector";
 import { getFileOutlinerCommandLabels } from "features/file-outliner-view/labels";
+import { normalizeFileOutlinerScopePath } from "features/file-outliner-view/scope-manager";
+import { dedupeKeepOrder, normalizePluginId } from "./file-outliner-settings-utils";
 import {
 	BLP_VISUALLY_HIDDEN_CLASS,
 	SettingsTabPane,
@@ -109,6 +111,125 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	addHeading(heading: string, containerEl?: HTMLElement) {
 		const rootEl = containerEl ?? this.containerEl;
 		return new Setting(rootEl).setName(heading).setHeading();
+	}
+
+	private renderStringListEditor(
+		rootEl: HTMLElement,
+		opts: {
+			name: string;
+			desc: string;
+			addButtonText: string;
+			placeholder: string;
+			getValue: () => string[];
+			setValue: (next: string[]) => Promise<void>;
+			normalizeItem?: (raw: string) => string;
+			attachSuggest?: (inputEl: HTMLInputElement) => void;
+			disabled?: () => boolean;
+		}
+	): void {
+		const labels = getFileOutlinerListEditorLabels();
+		const normalize = opts.normalizeItem ?? ((s) => String(s ?? "").trim());
+
+		// Keep a per-render in-memory draft so we can show an empty row without persisting it.
+		let draft = (opts.getValue() ?? []).map((s) => String(s ?? "")).filter(Boolean);
+
+		const persist = async () => {
+			// Never persist empty entries (empty scope folders are especially dangerous: they match everything).
+			const next = dedupeKeepOrder(draft.map(normalize).filter(Boolean));
+			await opts.setValue(next);
+		};
+
+		const listRoot = rootEl.createDiv({ cls: "blp-settings-list" });
+		new Setting(listRoot).setName(opts.name).setDesc(opts.desc);
+
+		const rowsEl = listRoot.createDiv({ cls: "blp-settings-list-rows" });
+
+		const render = () => {
+			rowsEl.empty();
+
+			const isDisabled = Boolean(opts.disabled?.());
+
+			draft.forEach((value, idx) => {
+				const row = new Setting(rowsEl).setName(opts.name).setClass("blp-settings-list-row");
+				row.infoEl.style.display = "none";
+
+				let inputEl: HTMLInputElement | null = null;
+
+				row.addSearch((search) => {
+					search
+						.setPlaceholder(opts.placeholder)
+						.setValue(String(value ?? ""))
+						.setDisabled(isDisabled)
+						.onChange(async (raw) => {
+							draft[idx] = String(raw ?? "");
+							if (!normalize(raw)) return;
+							await persist();
+						});
+
+					inputEl = search.inputEl;
+					if (inputEl && opts.attachSuggest) opts.attachSuggest(inputEl);
+				});
+
+				row.addExtraButton((btn) => {
+					btn.setIcon("chevron-up")
+						.setTooltip(labels.moveUp)
+						.setDisabled(isDisabled || idx === 0)
+						.onClick(async () => {
+							if (idx === 0) return;
+							[draft[idx - 1], draft[idx]] = [draft[idx], draft[idx - 1]];
+							await persist();
+							render();
+						});
+				});
+
+				row.addExtraButton((btn) => {
+					btn.setIcon("chevron-down")
+						.setTooltip(labels.moveDown)
+						.setDisabled(isDisabled || idx === draft.length - 1)
+						.onClick(async () => {
+							if (idx >= draft.length - 1) return;
+							[draft[idx], draft[idx + 1]] = [draft[idx + 1], draft[idx]];
+							await persist();
+							render();
+						});
+				});
+
+				row.addExtraButton((btn) => {
+					btn.setIcon("x")
+						.setTooltip(labels.remove)
+						.setDisabled(isDisabled)
+						.onClick(async () => {
+							draft.splice(idx, 1);
+							await persist();
+							render();
+						});
+				});
+
+				// UX: clicking empty space on the row focuses the input.
+				row.settingEl.addEventListener("click", (evt) => {
+					if (!(evt.target instanceof HTMLElement)) return;
+					if (evt.target.closest("button, input")) return;
+					inputEl?.focus();
+				});
+			});
+		};
+
+		render();
+
+		new Setting(listRoot)
+			.setName(opts.name)
+			.setClass("blp-settings-list-add-row")
+			.addButton((btn) => {
+				btn.setButtonText(opts.addButtonText)
+					.setCta()
+					.setDisabled(Boolean(opts.disabled?.()))
+					.onClick(() => {
+						draft.push("");
+						render();
+						const inputs = rowsEl.querySelectorAll<HTMLInputElement>(".setting-item-control input");
+						inputs[inputs.length - 1]?.focus();
+					});
+			});
 	}
 
 	display(): void {
@@ -413,56 +534,55 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const ui = t.settings.fileOutliner;
 		this.addHeading(ui.title, rootEl).setDesc(ui.desc);
 
-		const parseScopeLines = (value: string): string[] =>
-			value
-				.split(/\r?\n/)
-				.map((l) => l.trim())
-				.filter(Boolean)
-				.map((l) => l.replace(/\\/g, "/"));
-
 		this.addHeading(ui.groups.scope.title, rootEl);
 
-		new Setting(rootEl)
-			.setName(ui.enabledFolders.name)
-			.setDesc(ui.enabledFolders.desc)
-			.addTextArea((text) => {
-				text
-					.setPlaceholder("Daily\nProjects")
-					.setValue((this.plugin.settings.fileOutlinerEnabledFolders ?? []).join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.fileOutlinerEnabledFolders = parseScopeLines(value);
-						await this.plugin.saveSettings();
-					});
-				text.inputEl.rows = 3;
-			});
+		this.renderStringListEditor(rootEl, {
+			name: ui.enabledFolders.name,
+			desc: ui.enabledFolders.desc,
+			addButtonText: ui.enabledFolders.addButton ?? "Add enabled folder",
+			placeholder: ui.enabledFolders.placeholder ?? "Daily",
+			getValue: () => this.plugin.settings.fileOutlinerEnabledFolders ?? [],
+			setValue: async (next) => {
+				this.plugin.settings.fileOutlinerEnabledFolders = next;
+				await this.plugin.saveSettings();
+			},
+			normalizeItem: normalizeFileOutlinerScopePath,
+			attachSuggest: (inputEl) => void new VaultFolderSuggest(this.app, inputEl),
+		});
 
-		new Setting(rootEl)
-			.setName(ui.enabledFiles.name)
-			.setDesc(ui.enabledFiles.desc)
-			.addTextArea((text) => {
-				text
-					.setPlaceholder("Daily/2026-01-09.md")
-					.setValue((this.plugin.settings.fileOutlinerEnabledFiles ?? []).join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.fileOutlinerEnabledFiles = parseScopeLines(value);
-						await this.plugin.saveSettings();
-					});
-				text.inputEl.rows = 3;
-			});
+		this.renderStringListEditor(rootEl, {
+			name: ui.enabledFiles.name,
+			desc: ui.enabledFiles.desc,
+			addButtonText: ui.enabledFiles.addButton ?? "Add enabled file",
+			placeholder: ui.enabledFiles.placeholder ?? "Daily/2026-01-09.md",
+			getValue: () => this.plugin.settings.fileOutlinerEnabledFiles ?? [],
+			setValue: async (next) => {
+				this.plugin.settings.fileOutlinerEnabledFiles = next;
+				await this.plugin.saveSettings();
+			},
+			normalizeItem: normalizeFileOutlinerScopePath,
+			attachSuggest: (inputEl) => void new VaultFileSuggest(this.app, inputEl),
+		});
 
-		new Setting(rootEl)
-			.setName(ui.frontmatterOverride.name)
-			.setDesc(ui.frontmatterOverride.desc);
+		new Setting(rootEl).setName(ui.frontmatterOverride.name).setDesc(ui.frontmatterOverride.desc);
 
-		this.addHeading(ui.groups.behavior.title, rootEl);
+		this.addHeading(ui.groups.routing?.title ?? "Routing", rootEl);
 
 		this.addToggleSetting("fileOutlinerViewEnabled", () => this.display(), rootEl)
 			.setName(ui.enableRouting.name)
 			.setDesc(ui.enableRouting.desc);
 
+		this.addHeading(ui.groups.display?.title ?? "Display", rootEl);
+
 		this.addToggleSetting("fileOutlinerHideSystemLine", undefined, rootEl)
 			.setName(ui.hideSystemTailLines.name)
 			.setDesc(ui.hideSystemTailLines.desc);
+
+		this.addToggleSetting("fileOutlinerEmphasisLineEnabled", undefined, rootEl)
+			.setName(ui.emphasisLine.name)
+			.setDesc(ui.emphasisLine.desc);
+
+		this.addHeading(ui.groups.interactions?.title ?? "Interactions", rootEl);
 
 		this.addToggleSetting("fileOutlinerDragAndDropEnabled", undefined, rootEl)
 			.setName(ui.dragAndDrop.name)
@@ -472,37 +592,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(ui.zoom.name)
 			.setDesc(ui.zoom.desc);
 
-		this.addToggleSetting("fileOutlinerEmphasisLineEnabled", undefined, rootEl)
-			.setName(ui.emphasisLine.name)
-			.setDesc(ui.emphasisLine.desc);
-
-		this.addToggleSetting("fileOutlinerEditorContextMenuEnabled", undefined, rootEl)
-			.setName(ui.editorContextMenu.enabled.name)
-			.setDesc(ui.editorContextMenu.enabled.desc);
-
-		new Setting(rootEl)
-			.setName(ui.editorContextMenu.allowedPlugins.name)
-			.setDesc(ui.editorContextMenu.allowedPlugins.desc)
-			.addTextArea((text) => {
-				const parsePluginIds = (value: string): string[] =>
-					Array.from(
-						new Set(
-							value
-								.split(/\r?\n/)
-								.map((l) => l.trim())
-								.filter(Boolean)
-						)
-					);
-
-				text
-					.setPlaceholder("metadata-menu\nhighlightr-plugin\ncore")
-					.setValue((this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins ?? []).join("\n"))
-					.onChange(async (value) => {
-						this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins = parsePluginIds(value);
-						await this.plugin.saveSettings();
-					});
-				text.inputEl.rows = 3;
-			});
+		this.addHeading(ui.groups.editing?.title ?? "Editing", rootEl);
 
 		new Setting(rootEl)
 			.setName(ui.childrenOnSplit.name)
@@ -554,6 +644,29 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.replace("${toggleTaskStatus}", cmdLabels.toggleTaskStatus)
 			.replace("${toggleTaskMarker}", cmdLabels.toggleTaskMarker);
 		new Setting(rootEl).setName(ui.tasksHelp.name).setDesc(tasksHelpDesc);
+
+		this.addHeading(ui.groups.integrations?.title ?? "Integrations", rootEl);
+
+		this.addToggleSetting("fileOutlinerEditorContextMenuEnabled", () => this.display(), rootEl)
+			.setName(ui.editorContextMenu.enabled.name)
+			.setDesc(ui.editorContextMenu.enabled.desc);
+
+		this.renderStringListEditor(rootEl, {
+			name: ui.editorContextMenu.allowedPlugins.name,
+			desc: ui.editorContextMenu.allowedPlugins.desc,
+			addButtonText: ui.editorContextMenu.allowedPlugins.addButton ?? "Add allowlisted plugin",
+			placeholder: ui.editorContextMenu.allowedPlugins.placeholder ?? "metadata-menu",
+			getValue: () => this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins ?? [],
+			setValue: async (next) => {
+				this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins = next;
+				await this.plugin.saveSettings();
+			},
+			normalizeItem: normalizePluginId,
+			attachSuggest: (inputEl) => void new InstalledPluginIdSuggest(this.app, inputEl),
+			disabled: () => this.plugin.settings.fileOutlinerEditorContextMenuEnabled === false,
+		});
+
+		this.addHeading(ui.groups.debug?.title ?? "Debug", rootEl);
 
 		this.addToggleSetting("fileOutlinerDebugLogging", undefined, rootEl)
 			.setName(ui.debug.name)
@@ -619,6 +732,167 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
+	}
+}
+
+type FileOutlinerListEditorLabels = {
+	moveUp: string;
+	moveDown: string;
+	remove: string;
+};
+
+function getFileOutlinerListEditorLabels(): FileOutlinerListEditorLabels {
+	const raw = (t.settings as any)?.fileOutliner?.listEditor;
+	return {
+		moveUp: String(raw?.moveUp ?? "Move up"),
+		moveDown: String(raw?.moveDown ?? "Move down"),
+		remove: String(raw?.remove ?? "Remove"),
+	};
+}
+
+function getVaultFolders(app: App): string[] {
+	const files = (app as any)?.vault?.getAllLoadedFiles?.();
+	if (!Array.isArray(files)) return [];
+	const out: string[] = [];
+	for (const f of files) {
+		if (!(f instanceof TFolder)) continue;
+		const path = String((f as any).path ?? "").trim();
+		if (!path) continue;
+		out.push(path);
+	}
+	return out;
+}
+
+function getVaultMarkdownFiles(app: App): string[] {
+	const files = (app as any)?.vault?.getFiles?.();
+	if (!Array.isArray(files)) return [];
+	const out: string[] = [];
+	for (const f of files) {
+		if (!(f instanceof TFile)) continue;
+		if (String((f as any).extension ?? "").toLowerCase() !== "md") continue;
+		const path = String((f as any).path ?? "").trim();
+		if (!path) continue;
+		out.push(path);
+	}
+	return out;
+}
+
+function fuzzyFilter(query: string, candidates: string[], limit = 50): string[] {
+	const q = String(query ?? "").trim();
+	if (!q) return candidates.slice(0, limit);
+
+	const search = prepareFuzzySearch(q);
+	const scored: { value: string; score: number }[] = [];
+	for (const c of candidates) {
+		const r = search(c);
+		if (!r) continue;
+		scored.push({ value: c, score: r.score });
+	}
+	scored.sort((a, b) => b.score - a.score);
+	return scored.slice(0, limit).map((x) => x.value);
+}
+
+class VaultFolderSuggest extends AbstractInputSuggest<string> {
+	private inputEl: HTMLInputElement;
+
+	constructor(app: App, inputEl: HTMLInputElement) {
+		super(app, inputEl);
+		this.inputEl = inputEl;
+	}
+
+	getSuggestions(query: string): string[] {
+		return fuzzyFilter(query, getVaultFolders(this.app));
+	}
+
+	renderSuggestion(value: string, el: HTMLElement): void {
+		el.setText(value);
+	}
+
+	selectSuggestion(value: string, _evt: MouseEvent | KeyboardEvent): void {
+		this.setValue(value);
+		this.inputEl.dispatchEvent(new Event("input"));
+		this.close();
+	}
+}
+
+class VaultFileSuggest extends AbstractInputSuggest<string> {
+	private inputEl: HTMLInputElement;
+
+	constructor(app: App, inputEl: HTMLInputElement) {
+		super(app, inputEl);
+		this.inputEl = inputEl;
+	}
+
+	getSuggestions(query: string): string[] {
+		return fuzzyFilter(query, getVaultMarkdownFiles(this.app));
+	}
+
+	renderSuggestion(value: string, el: HTMLElement): void {
+		el.setText(value);
+	}
+
+	selectSuggestion(value: string, _evt: MouseEvent | KeyboardEvent): void {
+		this.setValue(value);
+		this.inputEl.dispatchEvent(new Event("input"));
+		this.close();
+	}
+}
+
+type InstalledPluginEntry = { id: string; name?: string };
+
+function getInstalledPluginEntries(app: App): InstalledPluginEntry[] {
+	const manifests = (app as any)?.plugins?.manifests;
+	const out: InstalledPluginEntry[] = [{ id: "core", name: "Core" }];
+	if (!manifests || typeof manifests !== "object") return out;
+
+	for (const [id, manifest] of Object.entries(manifests as Record<string, any>)) {
+		const pluginId = String(id ?? "").trim();
+		if (!pluginId) continue;
+		out.push({ id: pluginId, name: typeof manifest?.name === "string" ? manifest.name : undefined });
+	}
+
+	// Stable ordering: core first, then alphabetical by id.
+	out.sort((a, b) => {
+		if (a.id === "core") return -1;
+		if (b.id === "core") return 1;
+		return a.id.localeCompare(b.id);
+	});
+
+	return out;
+}
+
+class InstalledPluginIdSuggest extends AbstractInputSuggest<string> {
+	private inputEl: HTMLInputElement;
+	private namesById = new Map<string, string>();
+
+	constructor(app: App, inputEl: HTMLInputElement) {
+		super(app, inputEl);
+		this.inputEl = inputEl;
+
+		for (const entry of getInstalledPluginEntries(app)) {
+			if (entry.name) this.namesById.set(entry.id.toLowerCase(), entry.name);
+		}
+	}
+
+	getSuggestions(query: string): string[] {
+		const candidates = getInstalledPluginEntries(this.app).map((e) => e.id);
+		return fuzzyFilter(query, candidates);
+	}
+
+	renderSuggestion(value: string, el: HTMLElement): void {
+		const id = String(value ?? "");
+		const name = this.namesById.get(id.toLowerCase());
+		if (!name) return el.setText(id);
+
+		const root = el.createDiv({ cls: "blp-settings-suggest" });
+		root.createDiv({ text: id });
+		root.createDiv({ text: name, cls: "blp-settings-suggest-desc" });
+	}
+
+	selectSuggestion(value: string, _evt: MouseEvent | KeyboardEvent): void {
+		this.setValue(value);
+		this.inputEl.dispatchEvent(new Event("input"));
+		this.close();
 	}
 }
 

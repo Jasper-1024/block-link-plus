@@ -170,17 +170,39 @@ class T {
             scope: {
               title: "Scope",
             },
+            routing: {
+              title: "Routing",
+            },
+            display: {
+              title: "Display",
+            },
+            interactions: {
+              title: "Interactions",
+            },
+            editing: {
+              title: "Editing",
+            },
+            integrations: {
+              title: "Integrations",
+            },
+            debug: {
+              title: "Debug",
+            },
             behavior: {
               title: "Behavior",
             },
           },
           enabledFolders: {
             name: "Enabled folders (vault-relative)",
-            desc: "One per line. Files under these folders will open in the outliner view.",
+            desc: "One per row. Files under these folders will open in the outliner view.",
+            addButton: "Add enabled folder",
+            placeholder: "Daily",
           },
           enabledFiles: {
             name: "Enabled files (vault-relative)",
-            desc: "One per line. Use this when you only want specific files.",
+            desc: "One per row. Use this when you only want specific files.",
+            addButton: "Add enabled file",
+            placeholder: "Daily/2026-01-09.md",
           },
           frontmatterOverride: {
             name: "Frontmatter override",
@@ -213,8 +235,15 @@ class T {
             },
             allowedPlugins: {
               name: "Editor menu plugin allowlist",
-              desc: "One plugin id per line. Only allowlisted plugins may add items to the outliner editor menu. Add `core` to include core items.",
+              desc: "One plugin id per row. Only allowlisted plugins may add items to the outliner editor menu. Add `core` to include core items.",
+              addButton: "Add allowlisted plugin",
+              placeholder: "metadata-menu",
             },
+          },
+          listEditor: {
+            moveUp: "Move up",
+            moveDown: "Move down",
+            remove: "Remove",
           },
           childrenOnSplit: {
             name: "Enter split: children behavior",
@@ -680,17 +709,39 @@ class T {
             scope: {
               title: "范围",
             },
+            routing: {
+              title: "路由",
+            },
+            display: {
+              title: "显示",
+            },
+            interactions: {
+              title: "交互",
+            },
+            editing: {
+              title: "编辑",
+            },
+            integrations: {
+              title: "集成",
+            },
+            debug: {
+              title: "调试",
+            },
             behavior: {
               title: "行为",
             },
           },
           enabledFolders: {
             name: "启用文件夹（vault 相对路径）",
-            desc: "每行一个路径。位于这些文件夹下的文件将使用 Outliner 视图打开。",
+            desc: "每项一个路径。位于这些文件夹下的文件将使用 Outliner 视图打开。",
+            addButton: "添加文件夹",
+            placeholder: "Daily",
           },
           enabledFiles: {
             name: "启用文件（vault 相对路径）",
-            desc: "每行一个路径。用于只对少量指定文件启用。",
+            desc: "每项一个路径。用于只对少量指定文件启用。",
+            addButton: "添加文件",
+            placeholder: "Daily/2026-01-09.md",
           },
           frontmatterOverride: {
             name: "Frontmatter 覆盖",
@@ -723,8 +774,15 @@ class T {
             },
             allowedPlugins: {
               name: "允许注入的插件 ID",
-              desc: "一行一个插件 ID。只有白名单内插件可向 Outliner 编辑菜单添加项。添加 `core` 以包含核心菜单项。",
+              desc: "每项一个插件 ID。只有白名单内插件可向 Outliner 编辑菜单添加项。添加 `core` 以包含核心菜单项。",
+              addButton: "添加插件",
+              placeholder: "metadata-menu",
             },
+          },
+          listEditor: {
+            moveUp: "上移",
+            moveDown: "下移",
+            remove: "移除",
           },
           childrenOnSplit: {
             name: "Enter 拆分：子块处理",
@@ -1189,17 +1247,39 @@ class T {
             scope: {
               title: "範圍",
             },
+            routing: {
+              title: "路由",
+            },
+            display: {
+              title: "顯示",
+            },
+            interactions: {
+              title: "互動",
+            },
+            editing: {
+              title: "編輯",
+            },
+            integrations: {
+              title: "整合",
+            },
+            debug: {
+              title: "除錯",
+            },
             behavior: {
               title: "行為",
             },
           },
           enabledFolders: {
             name: "啟用資料夾（vault 相對路徑）",
-            desc: "每行一個路徑。位於這些資料夾下的檔案將以 Outliner 檢視開啟。",
+            desc: "每項一個路徑。位於這些資料夾下的檔案將以 Outliner 檢視開啟。",
+            addButton: "新增資料夾",
+            placeholder: "Daily",
           },
           enabledFiles: {
             name: "啟用檔案（vault 相對路徑）",
-            desc: "每行一個路徑。用於只對少量指定檔案啟用。",
+            desc: "每項一個路徑。用於只對少量指定檔案啟用。",
+            addButton: "新增檔案",
+            placeholder: "Daily/2026-01-09.md",
           },
           frontmatterOverride: {
             name: "Frontmatter 覆蓋",
@@ -1232,8 +1312,15 @@ class T {
             },
             allowedPlugins: {
               name: "允許注入的外掛 ID",
-              desc: "一行一個外掛 ID。只有白名單內外掛可向 Outliner 編輯選單新增項目。加入 `core` 以包含核心選單項目。",
+              desc: "每項一個外掛 ID。只有白名單內外掛可向 Outliner 編輯選單新增項目。加入 `core` 以包含核心選單項目。",
+              addButton: "新增外掛",
+              placeholder: "metadata-menu",
             },
+          },
+          listEditor: {
+            moveUp: "上移",
+            moveDown: "下移",
+            remove: "移除",
           },
           childrenOnSplit: {
             name: "Enter 拆分：子塊處理",
