@@ -1,14 +1,11 @@
-import { Component, MarkdownRenderer, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
+import { Component, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
 import { EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "@codemirror/basic-setup";
 
-import i18n from "shared/i18n";
-
 import type BlockLinkPlus from "../../main";
-import { fileOutlinerMarkdownPostProcessor } from "../../ui/MarkdownPostOutliner";
 import { generateRandomId } from "../../utils";
 import * as Clipboard from "../clipboard-handler";
 import {
@@ -34,10 +31,8 @@ import {
 
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
-import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
 import { isPlainTextPasteShortcut } from "./editor-shortcuts";
-import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
-import { DisplayRenderScheduler } from "./display-render-scheduler";
+import { OutlinerDisplayController } from "./display-controller";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
 import { getFileOutlinerContextMenuLabels } from "./labels";
 import { OutlinerDndController, type OutlinerDndDrop } from "./dnd-controller";
@@ -87,11 +82,7 @@ export class FileOutlinerView extends TextFileView {
 	private childrenElById = new Map<string, HTMLElement>();
 	private displayElById = new Map<string, HTMLElement>();
 
-	private displayRenderSeqById = new Map<string, number>();
-	private displayRenderComponentById = new Map<string, Component>();
-	private displayRenderScheduler = new DisplayRenderScheduler();
-	private displayRenderDrainTimer: number | null = null;
-	private visibleRefreshTimer: number | null = null;
+	private readonly display: OutlinerDisplayController;
 
 	private editorHostEl: HTMLElement | null = null;
 	private editorView: EditorView | null = null;
@@ -120,6 +111,21 @@ export class FileOutlinerView extends TextFileView {
 	constructor(leaf: WorkspaceLeaf, plugin: BlockLinkPlus) {
 		super(leaf);
 		this.plugin = plugin;
+		this.display = new OutlinerDisplayController({
+			app: this.app,
+			plugin: this.plugin,
+			contentEl: this.contentEl,
+			getSourcePath: () => this.file?.path ?? "",
+			getEditingId: () => this.editingId,
+			getBlock: (id) => this.blockById.get(id) ?? null,
+			getDisplayEl: (id) => this.displayElById.get(id) ?? null,
+			getRowElEntries: () => this.blockRowElById.entries(),
+			addChildComponent: () => this.addChild(new Component()),
+			removeChildComponent: (component) => this.removeChild(component),
+			toggleTaskStatusForBlock: (id) => this.toggleTaskStatusForBlock(id),
+			debugLog: (scope, err) => this.debugLog(scope, err),
+			tryOrLog: (scope, fn) => this.tryOrLog(scope, fn),
+		});
 		this.dnd = new OutlinerDndController({
 			isEnabled: () => this.plugin.settings.fileOutlinerDragAndDropEnabled !== false,
 			hasOutlinerFile: () => Boolean(this.outlinerFile),
@@ -147,7 +153,7 @@ export class FileOutlinerView extends TextFileView {
 		});
 		this.contentEl.addClass("blp-file-outliner-view");
 		this.syncFeatureToggles();
-		this.registerDomEvent(this.contentEl, "scroll", () => this.scheduleVisibleBlockRefresh());
+		this.registerDomEvent(this.contentEl, "scroll", () => this.display.scheduleVisibleBlockRefresh());
 	}
 
 	public toggleActiveTaskStatus(): boolean {
@@ -262,20 +268,7 @@ export class FileOutlinerView extends TextFileView {
 		this.childrenContainerElById.clear();
 		this.childrenElById.clear();
 		this.displayElById.clear();
-		this.displayRenderSeqById.clear();
-		for (const component of this.displayRenderComponentById.values()) {
-			this.tryOrLog("clear/removeChild", () => this.removeChild(component));
-		}
-		this.displayRenderComponentById.clear();
-		this.displayRenderScheduler.reset();
-		if (this.displayRenderDrainTimer) {
-			window.clearTimeout(this.displayRenderDrainTimer);
-			this.displayRenderDrainTimer = null;
-		}
-		if (this.visibleRefreshTimer) {
-			window.clearTimeout(this.visibleRefreshTimer);
-			this.visibleRefreshTimer = null;
-		}
+		this.display.reset();
 		this.dirtyBlockIds.clear();
 
 		this.editingId = null;
@@ -690,20 +683,7 @@ export class FileOutlinerView extends TextFileView {
 			this.childrenContainerElById.clear();
 			this.childrenElById.clear();
 			this.displayElById.clear();
-			this.displayRenderSeqById.clear();
-			for (const component of this.displayRenderComponentById.values()) {
-				this.tryOrLog("render/forceRebuild/removeChild", () => this.removeChild(component));
-			}
-			this.displayRenderComponentById.clear();
-			this.displayRenderScheduler.reset();
-			if (this.displayRenderDrainTimer) {
-				window.clearTimeout(this.displayRenderDrainTimer);
-				this.displayRenderDrainTimer = null;
-			}
-			if (this.visibleRefreshTimer) {
-				window.clearTimeout(this.visibleRefreshTimer);
-				this.visibleRefreshTimer = null;
-			}
+			this.display.reset();
 		}
 
 		this.syncBlockList(root, this.getRenderBlocks(file));
@@ -725,11 +705,11 @@ export class FileOutlinerView extends TextFileView {
 
 		// 4) Lazy-render: refresh which blocks are in/near viewport, then drain render queue.
 		try {
-			this.refreshVisibleBlocksFromDom();
+			this.display.refreshVisibleBlocksFromDom();
 		} catch (err) {
 			this.debugLog("render/refreshVisibleBlocksFromDom", err);
 		}
-		this.scheduleDisplayRenderDrain();
+		this.display.scheduleDisplayRenderDrain();
 	}
 
 	private getZoomRootId(): string | null {
@@ -958,7 +938,7 @@ export class FileOutlinerView extends TextFileView {
 
 		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
 		this.markDirtyAndRequestSave({ dirtyIds: [id] });
-		this.renderBlockDisplay(id);
+		this.display.renderBlockDisplay(id);
 	}
 
 	private toggleTaskMarkerForBlock(id: string): void {
@@ -975,7 +955,7 @@ export class FileOutlinerView extends TextFileView {
 
 		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
 		this.markDirtyAndRequestSave({ dirtyIds: [id] });
-		this.renderBlockDisplay(id);
+		this.display.renderBlockDisplay(id);
 	}
 
 	private async copyBlockSubtree(id: string): Promise<void> {
@@ -1101,11 +1081,7 @@ export class FileOutlinerView extends TextFileView {
 			container.appendChild(el);
 
 			// Ensure the display is rendered at least once for new blocks.
-			const display = this.displayElById.get(block.id);
-			if (display && display.childNodes.length === 0 && this.editingId !== block.id) {
-				this.renderBlockPlaceholder(block.id);
-				this.displayRenderScheduler.markNeedsRender(block.id);
-			}
+			this.display.ensurePlaceholderAndScheduleFirstRender(block.id);
 
 			const children = this.childrenElById.get(block.id);
 			if (children) this.syncBlockList(children, block.children ?? []);
@@ -1232,7 +1208,7 @@ export class FileOutlinerView extends TextFileView {
 		for (const [id, el] of Array.from(this.blockElById.entries())) {
 			if (this.blockById.has(id)) continue;
 
-			this.displayRenderScheduler.remove(id);
+			this.display.removeBlock(id);
 			this.blockRowElById.delete(id);
 
 			// If we just deleted the active block, force exit edit mode.
@@ -1252,229 +1228,8 @@ export class FileOutlinerView extends TextFileView {
 			this.childrenContainerElById.delete(id);
 			this.childrenElById.delete(id);
 			this.displayElById.delete(id);
-			this.displayRenderSeqById.delete(id);
 			this.collapsedIds.delete(id);
-			const component = this.displayRenderComponentById.get(id);
-			if (component) {
-				this.tryOrLog("pruneDom/removeChild", () => this.removeChild(component));
-				this.displayRenderComponentById.delete(id);
-			}
 		}
-	}
-
-	private scheduleVisibleBlockRefresh(): void {
-		if (this.visibleRefreshTimer) return;
-		this.visibleRefreshTimer = window.setTimeout(() => {
-			this.visibleRefreshTimer = null;
-			try {
-				this.refreshVisibleBlocksFromDom();
-			} catch (err) {
-				this.debugLog("scheduleVisibleBlockRefresh/refreshVisibleBlocksFromDom", err);
-			}
-			this.scheduleDisplayRenderDrain();
-		}, 0);
-	}
-
-	private refreshVisibleBlocksFromDom(): void {
-		const rootRect = this.contentEl.getBoundingClientRect();
-		const buffer = 500;
-		const top = rootRect.top - buffer;
-		const bottom = rootRect.bottom + buffer;
-
-		for (const [id, rowEl] of this.blockRowElById) {
-			let visible = false;
-			try {
-				// If the row is not in the layout tree (e.g., collapsed subtree), treat it as non-visible.
-				if (rowEl.getClientRects().length > 0) {
-					const r = rowEl.getBoundingClientRect();
-					visible = r.bottom >= top && r.top <= bottom;
-				}
-			} catch (err) {
-				this.debugLog("refreshVisibleBlocksFromDom/rowRect", err);
-			}
-			this.displayRenderScheduler.setVisible(id, visible);
-		}
-	}
-
-	private scheduleDisplayRenderDrain(): void {
-		if (this.displayRenderDrainTimer) return;
-		this.displayRenderDrainTimer = window.setTimeout(() => {
-			this.displayRenderDrainTimer = null;
-			this.drainDisplayRenderQueue();
-		}, 0);
-	}
-
-	private drainDisplayRenderQueue(): void {
-		const budget = 12;
-		const ids = this.displayRenderScheduler.takeNextBatch(budget);
-		for (const id of ids) {
-			if (id === this.editingId) continue;
-			this.renderBlockDisplay(id);
-		}
-
-		if (this.displayRenderScheduler.hasPendingWork()) {
-			this.scheduleDisplayRenderDrain();
-		}
-	}
-
-	private renderBlockPlaceholder(id: string): void {
-		const b = this.blockById.get(id);
-		const display = this.displayElById.get(id);
-		if (!b || !display) return;
-		if (this.editingId === id) return;
-
-		const task = getTaskMarkerFromBlockText(b.text ?? "");
-		const text = task ? task.renderText : String(b.text ?? "");
-
-		const p = document.createElement("p");
-		p.textContent = text;
-
-		if (!task) {
-			display.replaceChildren(p);
-			return;
-		}
-
-		const row = document.createElement("div");
-		row.className = "blp-outliner-task-row";
-
-		const checkbox = document.createElement("input");
-		checkbox.type = "checkbox";
-		checkbox.className = "blp-outliner-task-checkbox";
-		checkbox.checked = task.checked;
-		checkbox.addEventListener("click", (evt) => {
-			evt.stopPropagation();
-			this.toggleTaskStatusForBlock(id);
-		});
-		row.appendChild(checkbox);
-
-		const content = document.createElement("div");
-		content.className = "blp-outliner-task-content";
-		content.appendChild(p);
-		row.appendChild(content);
-
-		display.replaceChildren(row);
-	}
-
-	private renderBlockDisplay(id: string): void {
-		const b = this.blockById.get(id);
-		if (!b) return;
-		if (!this.displayElById.get(id)) return;
-
-		const seq = (this.displayRenderSeqById.get(id) ?? 0) + 1;
-		this.displayRenderSeqById.set(id, seq);
-
-		const task = getTaskMarkerFromBlockText(b.text ?? "");
-		const renderText = task ? task.renderText : (b.text ?? "");
-		const md = sanitizeOutlinerBlockMarkdownForDisplay(renderText);
-		const sourcePath = this.file?.path ?? "";
-		const tmp = document.createElement("div");
-		tmp.classList.add("markdown-rendered");
-		const component = this.addChild(new Component());
-
-		void MarkdownRenderer.render(this.app, md.sanitized, tmp, sourcePath, component)
-			.then(() => {
-				// If another render happened since we started, discard this one.
-				if (this.displayRenderSeqById.get(id) !== seq) {
-					this.tryOrLog("renderBlockDisplay/discard/removeChild(component)", () =>
-						this.removeChild(component)
-					);
-					return;
-				}
-
-				const display = this.displayElById.get(id);
-				if (!display) {
-					this.tryOrLog("renderBlockDisplay/noDisplay/removeChild(component)", () =>
-						this.removeChild(component)
-					);
-					this.displayRenderSeqById.delete(id);
-					return;
-				}
-
-				// Avoid preview-only affordances inside the v2 outliner UI.
-				this.tryOrLog("renderBlockDisplay/removeCopyCodeButtons", () => {
-					tmp.querySelectorAll("button.copy-code-button").forEach((btn) => btn.remove());
-				});
-
-				// MarkdownRenderer embeds inside this view can miss `.markdown-embed-content`, which breaks
-				// reading-range (`^id-id`) rendering and other post-processing that expects native embed DOM.
-				this.tryOrLog("renderBlockDisplay/normalizeInternalMarkdownEmbeds", () =>
-					normalizeInternalMarkdownEmbeds(tmp)
-				);
-
-				// Hide outliner v2 system tail lines inside embeds rendered by MarkdownRenderer.
-				// Call the post-processor before insertion so it doesn't early-return for `.blp-file-outliner-view`.
-				if (this.plugin.settings.fileOutlinerHideSystemLine !== false) {
-					this.tryOrLog("renderBlockDisplay/hideSystemLines", () => {
-						const hasMarker =
-							Boolean(
-								tmp.querySelector(
-									'.dataview.inline-field-key[data-dv-key="blp_sys"], .dataview.inline-field-key[data-dv-norm-key="blp_sys"]'
-								)
-							) || (tmp.textContent ?? "").includes("blp_sys::");
-						if (hasMarker) {
-							fileOutlinerMarkdownPostProcessor(tmp, { sourcePath } as any, this.plugin);
-						}
-					});
-				}
-
-				const prev = this.displayRenderComponentById.get(id);
-
-				if (md.issues.length > 0) {
-					this.tryOrLog("renderBlockDisplay/issuesBanner", () => {
-						const banner = document.createElement("div");
-						banner.className = "blp-outliner-block-warning";
-
-						const icon = document.createElement("span");
-						icon.className = "blp-outliner-block-warning-icon";
-						icon.textContent = "!";
-						banner.appendChild(icon);
-
-						const text = document.createElement("span");
-						text.className = "blp-outliner-block-warning-text";
-						text.textContent = String(
-							(i18n.notices as any)?.fileOutlinerUnsupportedBlockMarkdown ??
-								"Block contains list/heading syntax. Rendered as plain text to preserve outliner structure."
-						);
-						banner.appendChild(text);
-
-						tmp.prepend(banner);
-					});
-				}
-
-				if (task) {
-					const row = document.createElement("div");
-					row.className = "blp-outliner-task-row";
-
-					const checkbox = document.createElement("input");
-					checkbox.type = "checkbox";
-					checkbox.className = "blp-outliner-task-checkbox";
-					checkbox.checked = task.checked;
-					checkbox.addEventListener("click", (evt) => {
-						evt.stopPropagation();
-						this.toggleTaskStatusForBlock(id);
-					});
-					row.appendChild(checkbox);
-
-					const content = document.createElement("div");
-					content.className = "blp-outliner-task-content";
-					content.appendChild(tmp);
-					row.appendChild(content);
-
-					display.replaceChildren(row);
-				} else {
-					display.replaceChildren(tmp);
-				}
-				this.displayRenderComponentById.set(id, component);
-				this.displayRenderScheduler.markRendered(id);
-
-				if (prev) {
-					this.tryOrLog("renderBlockDisplay/removeChild(prev)", () => this.removeChild(prev));
-				}
-			})
-			.catch((err) => {
-				this.debugLog("renderBlockDisplay/markdownRenderer", err);
-				this.tryOrLog("renderBlockDisplay/catch/removeChild(component)", () => this.removeChild(component));
-			});
 	}
 
 	private enterEditMode(
@@ -1560,7 +1315,7 @@ export class FileOutlinerView extends TextFileView {
 			this.rootEl.appendChild(editorHost);
 		}
 		display.style.display = "";
-		this.renderBlockDisplay(id);
+		this.display.renderBlockDisplay(id);
 
 		if (!this.preserveArrowNavGoalOnce) {
 			this.resetArrowNavGoalColumn();
@@ -1635,10 +1390,10 @@ export class FileOutlinerView extends TextFileView {
 		for (const id of Array.from(result.dirtyIds)) {
 			if (id === this.editingId) continue;
 			// Avoid stale display: show a cheap placeholder immediately, then render markdown when visible.
-			this.renderBlockPlaceholder(id);
-			this.displayRenderScheduler.markNeedsRender(id);
+			this.display.renderBlockPlaceholder(id);
+			this.display.markNeedsRender(id);
 		}
-		this.scheduleDisplayRenderDrain();
+		this.display.scheduleDisplayRenderDrain();
 
 		this.markDirtyAndRequestSave();
 	}
