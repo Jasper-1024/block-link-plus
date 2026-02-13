@@ -1,0 +1,114 @@
+﻿// Measure how often outliner edit triggers requestSave + vault.modify.
+(async () => {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+
+  const pluginId = 'block-link-plus';
+  const tmpFolder = '_blp_tmp';
+  const tmpPath = `${tmpFolder}/_cdp_save_frequency.md`;
+  const now0 = '2026-02-12T00:00:00';
+
+  const content = [
+    '---',
+    'blp_outliner: true',
+    '---',
+    '',
+    '- hello',
+    `  [date:: ${now0}] [updated:: ${now0}] [blp_sys:: 1] [blp_ver:: 2] ^a`,
+    '',
+  ].join('\n');
+
+  await app.plugins.disablePlugin(pluginId);
+  await app.plugins.enablePlugin(pluginId);
+  await wait(250);
+
+  const plugin = app?.plugins?.plugins?.[pluginId];
+  assert(plugin, 'plugin not found');
+
+  const prevEnabledFiles = Array.isArray(plugin.settings?.fileOutlinerEnabledFiles)
+    ? [...plugin.settings.fileOutlinerEnabledFiles]
+    : [];
+
+  try {
+    if (!app.vault.getAbstractFileByPath(tmpFolder)) {
+      try { await app.vault.createFolder(tmpFolder); } catch {}
+    }
+
+    let f = app.vault.getAbstractFileByPath(tmpPath);
+    if (!f) f = await app.vault.create(tmpPath, content);
+    else await app.vault.modify(f, content);
+
+    plugin.settings.fileOutlinerEnabledFiles = Array.from(new Set([...prevEnabledFiles, tmpPath]));
+    await plugin.saveSettings();
+
+    await app.workspace.getLeaf(false).openFile(f);
+    await wait(350);
+
+    const view = app.workspace.activeLeaf?.view;
+    assert(view?.getViewType?.() === 'blp-file-outliner-view', 'not in outliner view');
+
+    // Enter edit mode.
+    const root = view.contentEl.querySelector('.blp-file-outliner-root') || view.contentEl;
+    const blocksHost = root.querySelector('.blp-file-outliner-blocks') || root;
+    const aDisplay = blocksHost.querySelector('.ls-block[data-blp-outliner-id="a"] .blp-file-outliner-display');
+    assert(aDisplay, 'missing a display');
+    aDisplay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await wait(120);
+    assert(view.editingId === 'a', `expected editingId=a, got ${String(view.editingId)}`);
+
+    const editor = view.editorView;
+    assert(editor, 'missing editor');
+
+    // Instrument.
+    const origRequestSave = view.requestSave.bind(view);
+    let requestSaveCalls = 0;
+    view.requestSave = () => {
+      requestSaveCalls += 1;
+      return origRequestSave();
+    };
+
+    const vault = app.vault;
+    const origModify = vault.modify.bind(vault);
+    let modifyCalls = 0;
+    vault.modify = async (...args) => {
+      modifyCalls += 1;
+      return origModify(...args);
+    };
+
+    // Reset editor content and wait for any scheduled saves.
+    editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: '' }, selection: { anchor: 0 } });
+    await wait(600);
+    requestSaveCalls = 0;
+    modifyCalls = 0;
+
+    // Simulate typing 10 chars with small gaps.
+    for (const ch of 'abcdefghij') {
+      const pos = editor.state.doc.length;
+      editor.dispatch({ changes: { from: pos, to: pos, insert: ch }, selection: { anchor: pos + 1 } });
+      await wait(40);
+    }
+
+    // Allow debounced save to flush.
+    await wait(1500);
+
+    const disk = await app.vault.read(f);
+
+    return {
+      ok: true,
+      requestSaveCalls,
+      modifyCalls,
+      diskHasText: /- abcdefghij/.test(disk) || /- \[ \] abcdefghij/.test(disk) || disk.includes('abcdefghij'),
+      diskSnippet: disk.split('\n').slice(0, 12).join('\n'),
+    };
+  } finally {
+    try {
+      plugin.settings.fileOutlinerEnabledFiles = prevEnabledFiles;
+      await plugin.saveSettings();
+    } catch {}
+
+    try {
+      const f = app.vault.getAbstractFileByPath(tmpPath);
+      if (f) await app.vault.delete(f);
+    } catch {}
+  }
+})();
