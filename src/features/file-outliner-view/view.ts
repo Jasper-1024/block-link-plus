@@ -34,7 +34,13 @@ import { OutlinerDisplayController } from "./display-controller";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
 import { getFileOutlinerContextMenuLabels } from "./labels";
 import { OutlinerDndController, type OutlinerDndDrop } from "./dnd-controller";
-import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
+import {
+	ensureTaskMarkerPrefixInBlockText,
+	ensureTodoTaskMarkerPrefixInBlockText,
+	getTaskMarkerFromBlockText,
+	toggleTaskMarkerPrefix,
+	toggleTaskStatusMarkerPrefix,
+} from "./task-marker";
 import { OutlinerDomController } from "./dom-controller";
 import { createOutlinerEditorState } from "./editor-state";
 import { handleOutlinerRootClickCapture } from "./root-click-router";
@@ -486,6 +492,7 @@ export class FileOutlinerView extends TextFileView {
 			onToggleTaskMarker: () => this.onEditorToggleTaskMarker(),
 			onArrowNavigate: (dir, editor) => this.onEditorArrowNavigate(dir, editor),
 			onEnter: () => this.onEditorEnter(),
+			onSoftEnter: (editor) => this.onEditorSoftEnter(editor),
 			onTab: (shift) => this.onEditorTab(shift),
 			onBackspace: () => this.onEditorBackspace(),
 			onDelete: () => this.onEditorDelete(),
@@ -804,9 +811,59 @@ export class FileOutlinerView extends TextFileView {
 		const nextFirstLine = toggleTaskMarkerPrefix(firstLine);
 		if (nextFirstLine === firstLine) return;
 
-		b.text = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
+		const nextDoc = `${nextFirstLine}${doc.slice(firstLineEnd)}`;
+		b.text = nextDoc;
+
+		// Enforce "task blocks are single-line" even when converting an existing multi-line block to a task.
+		if (getTaskMarkerFromBlockText(nextDoc) && nextDoc.includes("\n")) {
+			this.extractTaskRemainderToChildBlock(id, nextDoc);
+			return;
+		}
+
 		this.markDirtyAndRequestSave({ dirtyIds: [id] });
 		this.display.renderBlockDisplay(id);
+	}
+
+	private extractTaskRemainderToChildBlock(id: string, doc: string): void {
+		if (!this.outlinerFile) return;
+
+		const b = this.blockById.get(id);
+		if (!b) return;
+
+		const nl = doc.indexOf("\n");
+		if (nl < 0) return;
+
+		const firstLine = doc.slice(0, nl);
+		const rest = doc.slice(nl + 1);
+
+		if (!getTaskMarkerFromBlockText(firstLine)) return;
+
+		b.text = firstLine;
+
+		const dirtyIds: string[] = [id];
+		if (rest.trim().length > 0) {
+			const ctx = this.getEngineContext();
+			const childId = this.generateUniqueId();
+
+			const child: OutlinerBlock = {
+				id: childId,
+				depth: Math.max(0, (b.depth ?? 0) + 1),
+				text: rest,
+				children: [],
+				system: { date: ctx.now, updated: ctx.now, extra: {} },
+				_systemHasBlpMarker: true,
+			};
+
+			b.children = [child, ...(b.children ?? [])];
+			dirtyIds.push(childId);
+		}
+
+		// Structural change: refresh indexes + DOM so the new child is visible immediately.
+		this.visibleNavCache = null;
+		this.rebuildIndex();
+		this.render();
+
+		this.markDirtyAndRequestSave({ dirtyIds });
 	}
 
 	private async copyBlockSubtree(id: string): Promise<void> {
@@ -1250,6 +1307,39 @@ export class FileOutlinerView extends TextFileView {
 		return true;
 	}
 
+	private onEditorSoftEnter(editor: EditorView): boolean {
+		if (!this.outlinerFile) return false;
+		if (!this.editingId) return false;
+
+		const doc = editor.state.doc.toString();
+		const isTask = Boolean(getTaskMarkerFromBlockText(doc));
+		if (isTask) {
+			// Task blocks are single-line: treat soft-enter as structural split.
+			return this.onEditorEnter();
+		}
+
+		const r = editor.state.selection.main;
+		const from = Math.min(r.from, r.to);
+		const to = Math.max(r.from, r.to);
+		editor.dispatch({
+			changes: { from, to, insert: "\n" },
+			selection: { anchor: from + 1 },
+		});
+		return true;
+	}
+
+	private findBlockInFile(file: ParsedOutlinerFile, id: string): OutlinerBlock | null {
+		const walk = (list: OutlinerBlock[]): OutlinerBlock | null => {
+			for (const b of list) {
+				if (b.id === id) return b;
+				const child = walk(b.children ?? []);
+				if (child) return child;
+			}
+			return null;
+		};
+		return walk(file.blocks ?? []);
+	}
+
 	private onEditorEnter(): boolean {
 		if (!this.outlinerFile) return false;
 
@@ -1257,7 +1347,37 @@ export class FileOutlinerView extends TextFileView {
 		if (!sel) return false;
 
 		const ctx = this.getEngineContext();
-		this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
+
+		const activeId = sel.id;
+		const active = this.blockById.get(activeId);
+		const activeText = String(active?.text ?? "");
+		const isTask = Boolean(getTaskMarkerFromBlockText(activeText));
+		if (!isTask) {
+			this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
+			return true;
+		}
+
+		// Keep the marker prefix intact: never split "inside" `[ ] ` / `[x] `.
+		const markerLen = "[ ] ".length;
+		const clamped = {
+			...sel,
+			start: Math.max(sel.start, markerLen),
+			end: Math.max(sel.end, markerLen),
+		};
+
+		const result = splitAtSelection(this.outlinerFile, clamped, ctx);
+		if (!result.didChange) return true;
+
+		const createdId = result.selection.id;
+		const created = this.findBlockInFile(result.file, createdId);
+		if (created) {
+			// Continue task entry with a fresh todo marker on the new block.
+			created.text = ensureTodoTaskMarkerPrefixInBlockText(created.text ?? "");
+		}
+		result.selection.start = markerLen;
+		result.selection.end = markerLen;
+
+		this.applyEngineResult(result);
 		return true;
 	}
 
@@ -1350,16 +1470,39 @@ export class FileOutlinerView extends TextFileView {
 			changes: { from: 0, to: firstLineEnd, insert: nextFirstLine },
 			selection: { anchor: clamp(r.anchor + delta), head: clamp(r.head + delta) },
 		});
+
+		// If we just converted a multi-line block to a task, enforce the single-line invariant by
+		// moving the remainder into a child block and truncating the editor text.
+		const nextDoc = editor.state.doc.toString();
+		if (getTaskMarkerFromBlockText(nextDoc) && nextDoc.includes("\n")) {
+			const nl2 = nextDoc.indexOf("\n");
+			this.extractTaskRemainderToChildBlock(this.editingId, nextDoc);
+
+			const r2 = editor.state.selection.main;
+			const clamp2 = (n: number) => Math.max(0, Math.min(nl2, Math.floor(n)));
+			editor.dispatch({
+				changes: { from: nl2, to: nextDoc.length, insert: "" },
+				selection: { anchor: clamp2(r2.anchor), head: clamp2(r2.head) },
+			});
+		}
 		return true;
 	}
 
 	private onEditorPaste(evt: ClipboardEvent): boolean {
 		if (!this.outlinerFile) return false;
-		if (this.consumePlainTextPasteBypass()) return false;
-		if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return false;
 
 		const raw = evt.clipboardData?.getData("text/plain") ?? "";
 		if (!raw.includes("\n") && !raw.includes("\r")) return false;
+
+		const editor = this.editorView;
+		const isTask = Boolean(editor && getTaskMarkerFromBlockText(editor.state.doc.toString()));
+
+		// Task blocks are single-line: always split multiline paste, even when user requested "plain paste".
+		const bypass = this.consumePlainTextPasteBypass();
+		if (!isTask) {
+			if (bypass) return false;
+			if (this.plugin.settings.fileOutlinerPasteMultiline !== "split") return false;
+		}
 
 		const sel = this.getActiveSelection();
 		if (!sel) return false;
@@ -1368,7 +1511,36 @@ export class FileOutlinerView extends TextFileView {
 		evt.stopPropagation();
 
 		const ctx = this.getEngineContext();
-		this.applyEngineResult(pasteSplitLines(this.outlinerFile, sel, raw, { now: ctx.now, generateId: ctx.generateId }));
+		const markerLen = "[ ] ".length;
+		const engineSel = isTask
+			? { ...sel, start: Math.max(sel.start, markerLen), end: Math.max(sel.end, markerLen) }
+			: sel;
+
+		const result = pasteSplitLines(this.outlinerFile, engineSel, raw, { now: ctx.now, generateId: ctx.generateId });
+		if (!result.didChange) return true;
+
+		if (isTask) {
+			const focusId = result.selection.id;
+			for (const id of Array.from(result.dirtyIds)) {
+				// Keep the original task marker state; only ensure new blocks are tasks.
+				if (id === engineSel.id) continue;
+				const b = this.findBlockInFile(result.file, id);
+				if (!b) continue;
+
+				const prev = String(b.text ?? "");
+				const next = ensureTaskMarkerPrefixInBlockText(prev);
+				if (next === prev) continue;
+
+				b.text = next;
+				if (id === focusId) {
+					const delta = next.length - prev.length;
+					result.selection.start += delta;
+					result.selection.end += delta;
+				}
+			}
+		}
+
+		this.applyEngineResult(result);
 		return true;
 	}
 

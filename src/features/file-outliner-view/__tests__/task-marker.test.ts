@@ -1,5 +1,9 @@
 import {
 	getTaskMarkerFromBlockText,
+	ensureTaskMarkerPrefix,
+	ensureTaskMarkerPrefixInBlockText,
+	ensureTodoTaskMarkerPrefix,
+	ensureTodoTaskMarkerPrefixInBlockText,
 	parseTaskMarkerPrefix,
 	stripTaskMarkerPrefix,
 	toggleTaskMarkerPrefix,
@@ -34,6 +38,30 @@ describe("file-outliner-view/task-marker", () => {
 		expect(toggleTaskMarkerPrefix("[X] hello")).toBe("hello");
 	});
 
+	test("ensures todo task marker prefix (non-toggle)", () => {
+		expect(ensureTodoTaskMarkerPrefix("hello")).toBe("[ ] hello");
+		expect(ensureTodoTaskMarkerPrefix("[ ] hello")).toBe("[ ] hello");
+		expect(ensureTodoTaskMarkerPrefix("[x] hello")).toBe("[ ] hello");
+		expect(ensureTodoTaskMarkerPrefix("[X] hello")).toBe("[ ] hello");
+	});
+
+	test("ensures task marker prefix (idempotent add)", () => {
+		expect(ensureTaskMarkerPrefix("hello")).toBe("[ ] hello");
+		expect(ensureTaskMarkerPrefix("[ ] hello")).toBe("[ ] hello");
+		expect(ensureTaskMarkerPrefix("[x] hello")).toBe("[x] hello");
+		expect(ensureTaskMarkerPrefix("[X] hello")).toBe("[X] hello");
+	});
+
+	test("ensures task marker prefix for block text (first line only)", () => {
+		expect(ensureTaskMarkerPrefixInBlockText("hello\nworld")).toBe("[ ] hello\nworld");
+		expect(ensureTaskMarkerPrefixInBlockText("[x] hello\nworld")).toBe("[x] hello\nworld");
+	});
+
+	test("ensures todo task marker prefix for block text (first line only)", () => {
+		expect(ensureTodoTaskMarkerPrefixInBlockText("hello\nworld")).toBe("[ ] hello\nworld");
+		expect(ensureTodoTaskMarkerPrefixInBlockText("[x] hello\nworld")).toBe("[ ] hello\nworld");
+	});
+
 	test("extracts marker and renderText from block text", () => {
 		expect(getTaskMarkerFromBlockText("hello")).toBeNull();
 
@@ -44,4 +72,3 @@ describe("file-outliner-view/task-marker", () => {
 		expect(done).toEqual({ marker: "done", checked: true, renderText: "hello\nworld" });
 	});
 });
-

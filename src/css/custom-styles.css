@@ -301,6 +301,11 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	min-width: 0;
 }
 
+.blp-file-outliner-view .blp-outliner-task-checkbox:checked + .blp-outliner-task-content {
+	text-decoration-line: line-through;
+	opacity: 0.75;
+}
+
 .blp-file-outliner-view .blp-file-outliner-display p {
 	margin: 0;
 	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */

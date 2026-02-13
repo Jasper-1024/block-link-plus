@@ -241,6 +241,39 @@ describe("file-outliner-view/protocol", () => {
 		expect(out.content).toBe(input);
 	});
 
+	test("normalizes multi-line task block to single-line + child content", () => {
+		const now = DateTime.fromISO("2026-02-03T00:00:00");
+		const input = [
+			"- [ ] a",
+			"  b",
+			"  [date:: 2026-02-03T10:00:00] [updated:: 2026-02-03T10:00:00] [blp_sys:: 1] [blp_ver:: 2] ^aa",
+			"",
+		].join("\n");
+
+		let calls = 0;
+		const out = normalizeOutlinerFile(input, {
+			idPrefix: "t",
+			idLength: 5,
+			now,
+			generateId: () => (calls++ === 0 ? "bb" : "cc"),
+		});
+
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks[0]?.text).toBe("[ ] a");
+		expect(out.file.blocks[0]?.children[0]?.text).toBe("b");
+		expect(out.file.blocks[0]?.children[0]?.id).toBe("bb");
+
+		expect(out.content).toBe(
+			[
+				"- [ ] a",
+				"  [date:: 2026-02-03T10:00:00] [updated:: 2026-02-03T10:00:00] [blp_sys:: 1] [blp_ver:: 2] ^aa",
+				"  - b",
+				"    [date:: 2026-02-03T00:00:00] [updated:: 2026-02-03T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^bb",
+				"",
+			].join("\n")
+		);
+	});
+
 	test("normalizes tail line to be the last continuation line before children", () => {
 		const now = DateTime.fromISO("2026-02-03T00:00:00");
 		const input = [

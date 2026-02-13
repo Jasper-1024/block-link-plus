@@ -21,6 +21,7 @@ export type OutlinerEditorStateHost = {
 	onToggleTaskMarker: () => boolean;
 	onArrowNavigate: (dir: ArrowNavDirection, editor: EditorView) => boolean;
 	onEnter: () => boolean;
+	onSoftEnter: (editor: EditorView) => boolean;
 	onTab: (shift: boolean) => boolean;
 	onBackspace: () => boolean;
 	onDelete: () => boolean;
@@ -70,16 +71,7 @@ export function createOutlinerEditorState(
 					},
 					{
 						key: "Shift-Enter",
-						run: (view) => {
-							const r = view.state.selection.main;
-							const from = Math.min(r.from, r.to);
-							const to = Math.max(r.from, r.to);
-							view.dispatch({
-								changes: { from, to, insert: "\n" },
-								selection: { anchor: from + 1 },
-							});
-							return true;
-						},
+						run: (view) => host.onSoftEnter(view),
 					},
 					{
 						key: "Enter",
@@ -145,4 +137,3 @@ export function createOutlinerEditorState(
 		],
 	});
 }
-

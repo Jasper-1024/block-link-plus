@@ -362,6 +362,50 @@ function ensureUniqueIds(blocks: OutlinerBlock[], opts: OutlinerNormalizeOptions
 	walk(blocks);
 }
 
+const TASK_MARKER_PREFIXES = ["[ ] ", "[x] ", "[X] "] as const;
+
+function isTaskMarkerLine(firstLine: string): boolean {
+	const line = String(firstLine ?? "");
+	for (const p of TASK_MARKER_PREFIXES) {
+		if (line.startsWith(p)) return true;
+	}
+	return false;
+}
+
+function normalizeTaskBlocksSingleLine(blocks: OutlinerBlock[]): void {
+	const walk = (list: OutlinerBlock[]) => {
+		for (const b of list) {
+			const doc = String(b.text ?? "");
+			const nl = doc.indexOf("\n");
+			if (nl >= 0) {
+				const firstLine = doc.slice(0, nl);
+				if (isTaskMarkerLine(firstLine)) {
+					const rest = doc.slice(nl + 1);
+					b.text = firstLine;
+
+					// Preserve any additional content by moving it into a new first child block.
+					// This keeps it inside the parent's subtree (so `![[file#^id]]` still includes it).
+					if (rest.trim().length > 0) {
+						const child: OutlinerBlock = {
+							id: "",
+							depth: Math.max(0, (b.depth ?? 0) + 1),
+							text: rest,
+							children: [],
+							system: { date: "", updated: "", extra: {} },
+							_systemHasBlpMarker: true,
+						};
+						b.children = [child, ...(b.children ?? [])];
+					}
+				}
+			}
+
+			walk(b.children ?? []);
+		}
+	};
+
+	walk(blocks);
+}
+
 function normalizeSystemMarkers(blocks: OutlinerBlock[], opts: OutlinerNormalizeOptions): void {
 	const now = opts.now ?? DateTime.now();
 	const walk = (list: OutlinerBlock[]) => {
@@ -482,6 +526,7 @@ export function normalizeOutlinerFile(
 	const src = normalizeNewlines(input);
 
 	const file = parseOutlinerFile(src, { indentSize, now });
+	normalizeTaskBlocksSingleLine(file.blocks);
 	ensureUniqueIds(file.blocks, opts);
 	normalizeSystemMarkers(file.blocks, { ...opts, indentSize, now });
 

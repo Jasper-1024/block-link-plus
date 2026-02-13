@@ -52,6 +52,55 @@ export function toggleTaskMarkerPrefix(firstLine: string): string {
 	return parsed.rest;
 }
 
+/**
+ * Ensure the first line has a task marker prefix (idempotent add; does not change `[x]` to `[ ]`).
+ * - `foo` -> `[ ] foo`
+ * - `[ ] foo` -> `[ ] foo`
+ * - `[x] foo` -> `[x] foo`
+ */
+export function ensureTaskMarkerPrefix(firstLine: string): string {
+	const line = String(firstLine ?? "");
+	const parsed = parseTaskMarkerPrefix(line);
+	if (parsed) return line;
+	return `${TODO_PREFIX}${line}`;
+}
+
+/**
+ * Ensure the first line of a block-text has a task marker prefix, preserving continuation lines verbatim.
+ */
+export function ensureTaskMarkerPrefixInBlockText(text: string): string {
+	const doc = String(text ?? "");
+	const nl = doc.indexOf("\n");
+	const firstLineEnd = nl >= 0 ? nl : doc.length;
+	const firstLine = doc.slice(0, firstLineEnd);
+	return `${ensureTaskMarkerPrefix(firstLine)}${doc.slice(firstLineEnd)}`;
+}
+
+/**
+ * Ensure the first line uses the todo marker prefix (`[ ] `), regardless of its current marker.
+ * - `foo` -> `[ ] foo`
+ * - `[x] foo` -> `[ ] foo`
+ * - `[ ] foo` -> `[ ] foo`
+ */
+export function ensureTodoTaskMarkerPrefix(firstLine: string): string {
+	const line = String(firstLine ?? "");
+	const parsed = parseTaskMarkerPrefix(line);
+	const rest = parsed ? parsed.rest : line;
+	return `${TODO_PREFIX}${rest}`;
+}
+
+/**
+ * Ensure the first line of a block-text uses the todo marker prefix (`[ ] `) while preserving
+ * any continuation lines verbatim.
+ */
+export function ensureTodoTaskMarkerPrefixInBlockText(text: string): string {
+	const doc = String(text ?? "");
+	const nl = doc.indexOf("\n");
+	const firstLineEnd = nl >= 0 ? nl : doc.length;
+	const firstLine = doc.slice(0, firstLineEnd);
+	return `${ensureTodoTaskMarkerPrefix(firstLine)}${doc.slice(firstLineEnd)}`;
+}
+
 export type OutlinerTaskMarkerFromBlockText = {
 	marker: OutlinerTaskMarker;
 	checked: boolean;
@@ -75,4 +124,3 @@ export function getTaskMarkerFromBlockText(text: string): OutlinerTaskMarkerFrom
 	const checked = parsed.marker === "done";
 	return { marker: parsed.marker, checked, renderText };
 }
-
