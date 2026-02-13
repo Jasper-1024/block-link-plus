@@ -232,7 +232,27 @@ class T {
           },
           tasksHelp: {
             name: "Tasks",
-            desc: 'Task blocks use Obsidian-native `- [ ]` / `- [x]` on disk. Commands: "Outliner: Toggle task status" (Mod+Enter) and "Outliner: Toggle task marker" (Mod+Shift+Enter). Configure hotkeys in Settings -> Hotkeys.',
+            desc: 'Task blocks use Obsidian-native `- [ ]` / `- [x]` on disk. Commands: "${toggleTaskStatus}" (Mod+Enter) and "${toggleTaskMarker}" (Mod+Shift+Enter). Configure hotkeys in Settings -> Hotkeys.',
+          },
+          debug: {
+            name: "Debug logging",
+            desc: "Log internal outliner errors to the DevTools console.",
+          },
+          commands: {
+            toggleTaskStatus: "Outliner: Toggle task status",
+            toggleTaskMarker: "Outliner: Toggle task marker",
+          },
+          contextMenu: {
+            copyBlockReference: "Copy block reference",
+            copyBlockEmbed: "Copy block embed",
+            copyBlockUrl: "Copy block URL",
+            convertToTask: "Convert to task",
+            convertToNormalBlock: "Convert to normal block",
+            copy: "Copy",
+            cut: "Cut",
+            delete: "Delete",
+            collapse: "Collapse",
+            expand: "Expand",
           },
         },
 
@@ -795,7 +815,27 @@ class T {
           },
           tasksHelp: {
             name: "任务",
-            desc: "任务块在磁盘上使用 Obsidian 原生的 `- [ ]` / `- [x]` 语法。命令：\"Outliner: Toggle task status\"（Mod+Enter）与 \"Outliner: Toggle task marker\"（Mod+Shift+Enter）。可在 设置 -> 快捷键 中配置。",
+            desc: "任务块在磁盘上使用 Obsidian 原生的 `- [ ]` / `- [x]` 语法。命令：\"${toggleTaskStatus}\"（Mod+Enter）与 \"${toggleTaskMarker}\"（Mod+Shift+Enter）。可在 设置 -> 快捷键 中配置。",
+          },
+          debug: {
+            name: "调试日志",
+            desc: "将 Outliner 内部错误输出到 DevTools 控制台。",
+          },
+          commands: {
+            toggleTaskStatus: "Outliner：切换任务状态",
+            toggleTaskMarker: "Outliner：切换任务标记",
+          },
+          contextMenu: {
+            copyBlockReference: "复制块引用",
+            copyBlockEmbed: "复制块嵌入",
+            copyBlockUrl: "复制块 URL",
+            convertToTask: "转为任务",
+            convertToNormalBlock: "转为普通块",
+            copy: "复制",
+            cut: "剪切",
+            delete: "删除",
+            collapse: "折叠",
+            expand: "展开",
           },
         },
 
@@ -1357,7 +1397,27 @@ class T {
           },
           tasksHelp: {
             name: "任務",
-            desc: "任務區塊在磁碟上使用 Obsidian 原生的 `- [ ]` / `- [x]` 語法。命令：\"Outliner: Toggle task status\"（Mod+Enter）與 \"Outliner: Toggle task marker\"（Mod+Shift+Enter）。可在 設定 -> 快捷鍵 中設定。",
+            desc: "任務區塊在磁碟上使用 Obsidian 原生的 `- [ ]` / `- [x]` 語法。命令：\"${toggleTaskStatus}\"（Mod+Enter）與 \"${toggleTaskMarker}\"（Mod+Shift+Enter）。可在 設定 -> 快捷鍵 中設定。",
+          },
+          debug: {
+            name: "除錯記錄",
+            desc: "將 Outliner 內部錯誤輸出到 DevTools 主控台。",
+          },
+          commands: {
+            toggleTaskStatus: "Outliner：切換任務狀態",
+            toggleTaskMarker: "Outliner：切換任務標記",
+          },
+          contextMenu: {
+            copyBlockReference: "複製區塊引用",
+            copyBlockEmbed: "複製區塊嵌入",
+            copyBlockUrl: "複製區塊 URL",
+            convertToTask: "轉為任務",
+            convertToNormalBlock: "轉為一般區塊",
+            copy: "複製",
+            cut: "剪下",
+            delete: "刪除",
+            collapse: "摺疊",
+            expand: "展開",
           },
         },
 

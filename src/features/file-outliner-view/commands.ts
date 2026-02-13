@@ -1,5 +1,6 @@
 import type BlockLinkPlus from "../../main";
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+import { getFileOutlinerCommandLabels } from "./labels";
 
 export const FILE_OUTLINER_COMMAND_IDS = {
 	toggleTaskStatus: "file-outliner-toggle-task-status",
@@ -19,9 +20,11 @@ function getActiveOutlinerView(plugin: BlockLinkPlus): any | null {
 }
 
 export function registerFileOutlinerCommands(plugin: BlockLinkPlus): void {
+	const labels = getFileOutlinerCommandLabels();
+
 	plugin.addCommand({
 		id: FILE_OUTLINER_COMMAND_IDS.toggleTaskStatus,
-		name: "Outliner: Toggle task status",
+		name: labels.toggleTaskStatus,
 		hotkeys: [{ modifiers: ["Mod"], key: "Enter" }],
 		checkCallback: (checking) => {
 			const view = getActiveOutlinerView(plugin);
@@ -34,7 +37,7 @@ export function registerFileOutlinerCommands(plugin: BlockLinkPlus): void {
 
 	plugin.addCommand({
 		id: FILE_OUTLINER_COMMAND_IDS.toggleTaskMarker,
-		name: "Outliner: Toggle task marker",
+		name: labels.toggleTaskMarker,
 		hotkeys: [{ modifiers: ["Mod", "Shift"], key: "Enter" }],
 		checkCallback: (checking) => {
 			const view = getActiveOutlinerView(plugin);
@@ -45,4 +48,3 @@ export function registerFileOutlinerCommands(plugin: BlockLinkPlus): void {
 		},
 	});
 }
-

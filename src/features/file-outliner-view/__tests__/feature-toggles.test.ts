@@ -8,6 +8,7 @@ describe("file outliner view feature toggles", () => {
 		expect(DEFAULT_SETTINGS.fileOutlinerDragAndDropEnabled).toBe(true);
 		expect(DEFAULT_SETTINGS.fileOutlinerZoomEnabled).toBe(true);
 		expect(DEFAULT_SETTINGS.fileOutlinerEmphasisLineEnabled).toBe(true);
+		expect(DEFAULT_SETTINGS.fileOutlinerDebugLogging).toBe(false);
 	});
 
 	test("i18n provides toggle strings for en/zh/zh-TW", () => {
@@ -17,7 +18,7 @@ describe("file outliner view feature toggles", () => {
 			const ui = (i18n as any).all?.[lang]?.settings?.fileOutliner;
 			expect(ui).toBeTruthy();
 
-			for (const key of ["dragAndDrop", "zoom", "emphasisLine"] as const) {
+			for (const key of ["dragAndDrop", "zoom", "emphasisLine", "debug"] as const) {
 				expect(typeof ui[key]?.name).toBe("string");
 				expect(String(ui[key]?.name)).not.toBe("");
 				expect(typeof ui[key]?.desc).toBe("string");
@@ -28,6 +29,27 @@ describe("file outliner view feature toggles", () => {
 			expect(String(ui.tasksHelp?.name)).not.toBe("");
 			expect(typeof ui.tasksHelp?.desc).toBe("string");
 			expect(String(ui.tasksHelp?.desc)).not.toBe("");
+
+			for (const key of ["toggleTaskStatus", "toggleTaskMarker"] as const) {
+				expect(typeof ui.commands?.[key]).toBe("string");
+				expect(String(ui.commands?.[key])).not.toBe("");
+			}
+
+			for (const key of [
+				"copyBlockReference",
+				"copyBlockEmbed",
+				"copyBlockUrl",
+				"convertToTask",
+				"convertToNormalBlock",
+				"copy",
+				"cut",
+				"delete",
+				"collapse",
+				"expand",
+			] as const) {
+				expect(typeof ui.contextMenu?.[key]).toBe("string");
+				expect(String(ui.contextMenu?.[key])).not.toBe("");
+			}
 		}
 	});
 

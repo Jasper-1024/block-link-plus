@@ -22,7 +22,6 @@ import {
 	pasteSplitLines,
 	splitAtSelection,
 	type OutlinerEngineContext,
-	type OutlinerMoveWhere,
 	type OutlinerSelection,
 } from "./engine";
 import {
@@ -33,17 +32,19 @@ import {
 	type ParsedOutlinerFile,
 } from "./protocol";
 
- import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
- import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
- import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
- import { isPlainTextPasteShortcut } from "./editor-shortcuts";
- import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
+import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
+import { sanitizeOutlinerBlockMarkdownForDisplay } from "./block-markdown";
+import { isPlainTextPasteShortcut } from "./editor-shortcuts";
+import { normalizeInternalMarkdownEmbeds } from "./embed-dom";
 import { DisplayRenderScheduler } from "./display-render-scheduler";
- import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
- import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
- import {
- 	computeVisibleBlockNav,
- 	cursorPosAtFirstLine,
+import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
+import { getFileOutlinerContextMenuLabels } from "./labels";
+import { OutlinerDndController, type OutlinerDndDrop } from "./dnd-controller";
+import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
+import {
+	computeVisibleBlockNav,
+	cursorPosAtFirstLine,
 	cursorPosAtLastLine,
 	findAdjacentVisibleBlockId,
 	type ArrowNavDirection,
@@ -54,24 +55,6 @@ type PendingFocus = {
 	id: string;
 	cursorStart: number;
 	cursorEnd: number;
-};
-
-type OutlinerDndDrop = {
-	targetId: string;
-	where: OutlinerMoveWhere;
-};
-
-type OutlinerDndPreStart = {
-	sourceId: string;
-	pointerId: number;
-	startX: number;
-	startY: number;
-};
-
-type OutlinerDndState = {
-	sourceId: string;
-	pointerId: number;
-	drop: OutlinerDndDrop | null;
 };
 
 function formatSystemDate(dt: DateTime): string {
@@ -130,17 +113,38 @@ export class FileOutlinerView extends TextFileView {
 	private arrowNavDispatching = false;
 	private preserveArrowNavGoalOnce = false;
 
-	private dndPreStart: OutlinerDndPreStart | null = null;
-	private dndState: OutlinerDndState | null = null;
-	private dndIndicatorEl: HTMLElement | null = null;
-	private dndDropTargetId: string | null = null;
-	private dndLastEndAt = 0;
+	private readonly dnd: OutlinerDndController;
 
 	private readonly indentSize = 2;
 
 	constructor(leaf: WorkspaceLeaf, plugin: BlockLinkPlus) {
 		super(leaf);
 		this.plugin = plugin;
+		this.dnd = new OutlinerDndController({
+			isEnabled: () => this.plugin.settings.fileOutlinerDragAndDropEnabled !== false,
+			hasOutlinerFile: () => Boolean(this.outlinerFile),
+			getEditingId: () => this.editingId,
+			exitEditMode: (id) => this.exitEditMode(id),
+			getContentEl: () => this.contentEl,
+			ensureRoot: () => this.ensureRoot(),
+			getRootEl: () => this.rootEl,
+			getBlockEl: (id) => this.blockElById.get(id) ?? null,
+			isSelfOrDescendant: (rootId, id) => this.isSelfOrDescendant(rootId, id),
+			applyDrop: (sourceId: string, drop: OutlinerDndDrop) => {
+				if (!this.outlinerFile) return;
+
+				// If we move a block into a collapsed subtree, expand so the result is visible.
+				if (drop.where === "inside") {
+					this.collapsedIds.delete(drop.targetId);
+					this.visibleNavCache = null;
+				}
+
+				this.applyEngineResult(moveBlockSubtree(this.outlinerFile, sourceId, drop.targetId, drop.where), {
+					focus: false,
+				});
+			},
+			debugLog: (scope, err) => this.debugLog(scope, err),
+		});
 		this.contentEl.addClass("blp-file-outliner-view");
 		this.syncFeatureToggles();
 		this.registerDomEvent(this.contentEl, "scroll", () => this.scheduleVisibleBlockRefresh());
@@ -154,6 +158,23 @@ export class FileOutlinerView extends TextFileView {
 	public toggleActiveTaskMarker(): boolean {
 		if (!this.editingId) return false;
 		return this.onEditorToggleTaskMarker();
+	}
+
+	private debugLog(scope: string, err: unknown): void {
+		if (this.plugin.settings.fileOutlinerDebugLogging !== true) return;
+		try {
+			console.error(`[BLP Outliner] ${scope}`, err);
+		} catch {
+			// ignore
+		}
+	}
+
+	private tryOrLog(scope: string, fn: () => void): void {
+		try {
+			fn();
+		} catch (err) {
+			this.debugLog(scope, err);
+		}
 	}
 
 	/**
@@ -170,8 +191,8 @@ export class FileOutlinerView extends TextFileView {
 				"blp-outliner-emphasis-line-enabled",
 				this.plugin.settings.fileOutlinerEmphasisLineEnabled !== false
 			);
-		} catch {
-			// ignore
+		} catch (err) {
+			this.debugLog("syncFeatureToggles", err);
 		}
 	}
 
@@ -182,16 +203,13 @@ export class FileOutlinerView extends TextFileView {
 		this.syncFeatureToggles();
 
 		// If a toggle is turned off mid-session, leave the view in a sane state.
-		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) {
-			this.dndPreStart = null;
-			if (this.dndState) this.stopDragging({ apply: false });
-		}
+		this.dnd.onSettingsChanged();
 
 		if (this.plugin.settings.fileOutlinerZoomEnabled === false && this.zoomStack.length > 0) {
 			try {
 				if (this.editingId) this.exitEditMode(this.editingId);
-			} catch {
-				// ignore
+			} catch (err) {
+				this.debugLog("onSettingsChanged/exitEditMode", err);
 			}
 			this.zoomStack = [];
 			this.visibleNavCache = null;
@@ -246,11 +264,7 @@ export class FileOutlinerView extends TextFileView {
 		this.displayElById.clear();
 		this.displayRenderSeqById.clear();
 		for (const component of this.displayRenderComponentById.values()) {
-			try {
-				this.removeChild(component);
-			} catch {
-				// ignore
-			}
+			this.tryOrLog("clear/removeChild", () => this.removeChild(component));
 		}
 		this.displayRenderComponentById.clear();
 		this.displayRenderScheduler.reset();
@@ -272,11 +286,7 @@ export class FileOutlinerView extends TextFileView {
 			this.pendingBlurTimer = null;
 		}
 
-		try {
-			this.editorView?.destroy();
-		} catch {
-			// ignore
-		}
+		this.tryOrLog("clear/editor.destroy", () => this.editorView?.destroy());
 		this.editorView = null;
 		this.editorHostEl = null;
 		this.rootEl = null;
@@ -286,21 +296,7 @@ export class FileOutlinerView extends TextFileView {
 		this.zoomStack = [];
 		this.visibleNavCache = null;
 
-		this.dndPreStart = null;
-		this.dndState = null;
-		this.dndDropTargetId = null;
-		this.dndLastEndAt = 0;
-		try {
-			document.body.classList.remove("blp-outliner-dragging");
-		} catch {
-			// ignore
-		}
-		try {
-			this.dndIndicatorEl?.remove();
-		} catch {
-			// ignore
-		}
-		this.dndIndicatorEl = null;
+		this.dnd.clear();
 
 		this.contentEl.empty();
 	}
@@ -404,16 +400,14 @@ export class FileOutlinerView extends TextFileView {
 		const file = this.file;
 		if (!file) return;
 
-		try {
+		this.tryOrLog("openSourceMarkdownView/exitEditMode", () => {
 			if (this.editingId) this.exitEditMode(this.editingId);
-		} catch {
-			// ignore
-		}
+		});
 
 		try {
 			await this.flushSave();
-		} catch {
-			// ignore
+		} catch (err) {
+			this.debugLog("openSourceMarkdownView/flushSave", err);
 		}
 
 		const leaf = opts.newLeaf ? this.app.workspace.getLeaf(opts.newLeaf) : this.leaf;
@@ -422,11 +416,9 @@ export class FileOutlinerView extends TextFileView {
 			state: { file: file.path, mode: "source" },
 			active: true,
 		});
-		try {
-			this.app.workspace.setActiveLeaf(leaf, { focus: true });
-		} catch {
-			// ignore
-		}
+		this.tryOrLog("openSourceMarkdownView/setActiveLeaf", () =>
+			this.app.workspace.setActiveLeaf(leaf, { focus: true })
+		);
 	}
 
 	private ensureRoot(): void {
@@ -461,8 +453,8 @@ export class FileOutlinerView extends TextFileView {
 				if (!this.editingId) return false;
 				try {
 					if (this.leaf !== this.app.workspace.activeLeaf) return false;
-				} catch {
-					// ignore
+				} catch (err) {
+					this.debugLog("suggest/logicalHasFocus/activeLeaf", err);
 				}
 				if (!this.editorHostEl || this.editorHostEl.style.display === "none") return false;
 				return true;
@@ -492,7 +484,8 @@ export class FileOutlinerView extends TextFileView {
 		try {
 			const file = this.app.metadataCache.getFirstLinkpathDest(notePath, defaultSourcePath);
 			return file?.path ?? defaultSourcePath;
-		} catch {
+		} catch (err) {
+			this.debugLog("resolveSourcePathForInternalLink", err);
 			return defaultSourcePath;
 		}
 	}
@@ -667,11 +660,7 @@ export class FileOutlinerView extends TextFileView {
 		const suggests: any[] = Array.isArray(mgr?.suggests) ? mgr.suggests : [];
 		for (const s of suggests) {
 			if (!s?.isOpen) continue;
-			try {
-				s.close?.();
-			} catch {
-				// ignore
-			}
+			this.tryOrLog("closeEditorSuggests/close", () => s.close?.());
 		}
 	}
 
@@ -687,13 +676,11 @@ export class FileOutlinerView extends TextFileView {
 		// 1) Sync block DOM structure to the current file model.
 		if (opts?.forceRebuild) {
 			// Keep the editor host alive when we drop/recreate block DOM nodes.
-			try {
+			this.tryOrLog("render/forceRebuild/keepEditorHost", () => {
 				if (this.editorHostEl && this.rootEl) {
 					this.rootEl.appendChild(this.editorHostEl);
 				}
-			} catch {
-				// ignore
-			}
+			});
 
 			// Clear DOM caches but keep the view root/editor.
 			for (const el of this.blockElById.values()) el.remove();
@@ -705,11 +692,7 @@ export class FileOutlinerView extends TextFileView {
 			this.displayElById.clear();
 			this.displayRenderSeqById.clear();
 			for (const component of this.displayRenderComponentById.values()) {
-				try {
-					this.removeChild(component);
-				} catch {
-					// ignore
-				}
+				this.tryOrLog("render/forceRebuild/removeChild", () => this.removeChild(component));
 			}
 			this.displayRenderComponentById.clear();
 			this.displayRenderScheduler.reset();
@@ -743,8 +726,8 @@ export class FileOutlinerView extends TextFileView {
 		// 4) Lazy-render: refresh which blocks are in/near viewport, then drain render queue.
 		try {
 			this.refreshVisibleBlocksFromDom();
-		} catch {
-			// ignore
+		} catch (err) {
+			this.debugLog("render/refreshVisibleBlocksFromDom", err);
 		}
 		this.scheduleDisplayRenderDrain();
 	}
@@ -1011,21 +994,22 @@ export class FileOutlinerView extends TextFileView {
 		if (!block) return;
 
 		const menu = new Menu();
+		const labels = getFileOutlinerContextMenuLabels();
 
 		const caretId = `^${id}`;
 
 		menu.addItem((item) => {
-			item.setTitle("Copy block reference").onClick(() => {
+			item.setTitle(labels.copyBlockReference).onClick(() => {
 				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, false);
 			});
 		});
 		menu.addItem((item) => {
-			item.setTitle("Copy block embed").onClick(() => {
+			item.setTitle(labels.copyBlockEmbed).onClick(() => {
 				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, true, undefined, false);
 			});
 		});
 		menu.addItem((item) => {
-			item.setTitle("Copy block URL").onClick(() => {
+			item.setTitle(labels.copyBlockUrl).onClick(() => {
 				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, true);
 			});
 		});
@@ -1034,7 +1018,7 @@ export class FileOutlinerView extends TextFileView {
 
 		const isTask = Boolean(getTaskMarkerFromBlockText(block.text ?? ""));
 		menu.addItem((item) => {
-			item.setTitle(isTask ? "Convert to normal block" : "Convert to task").onClick(() => {
+			item.setTitle(isTask ? labels.convertToNormalBlock : labels.convertToTask).onClick(() => {
 				if (this.editingId === id) {
 					this.onEditorToggleTaskMarker();
 					return;
@@ -1046,13 +1030,13 @@ export class FileOutlinerView extends TextFileView {
 		menu.addSeparator();
 
 		menu.addItem((item) => {
-			item.setTitle("Copy").onClick(() => {
+			item.setTitle(labels.copy).onClick(() => {
 				void this.copyBlockSubtree(id);
 			});
 		});
 
 		menu.addItem((item) => {
-			item.setTitle("Cut").onClick(() => {
+			item.setTitle(labels.cut).onClick(() => {
 				void (async () => {
 					await this.copyBlockSubtree(id);
 					if (this.editingId) this.exitEditMode(this.editingId);
@@ -1063,7 +1047,7 @@ export class FileOutlinerView extends TextFileView {
 		});
 
 		menu.addItem((item) => {
-			item.setTitle("Delete").onClick(() => {
+			item.setTitle(labels.delete).onClick(() => {
 				if (this.editingId) this.exitEditMode(this.editingId);
 				const ctx = this.getEngineContext();
 				this.applyEngineResult(deleteBlock(this.outlinerFile!, id, ctx));
@@ -1077,156 +1061,18 @@ export class FileOutlinerView extends TextFileView {
 
 		menu.addItem((item) => {
 			item
-				.setTitle("Collapse")
+				.setTitle(labels.collapse)
 				.setDisabled(!hasChildren || isCollapsed)
 				.onClick(() => this.setCollapsed(id, true));
 		});
 		menu.addItem((item) => {
 			item
-				.setTitle("Expand")
+				.setTitle(labels.expand)
 				.setDisabled(!hasChildren || !isCollapsed)
 				.onClick(() => this.setCollapsed(id, false));
 		});
 
 		menu.showAtMouseEvent(evt);
-	}
-
-	private onBulletPointerDown(id: string, evt: PointerEvent): void {
-		if (evt.button !== 0) return;
-		if (!this.outlinerFile) return;
-		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
-		if (this.dndState) return;
-
-		this.dndPreStart = { sourceId: id, pointerId: evt.pointerId, startX: evt.clientX, startY: evt.clientY };
-		try {
-			(evt.currentTarget as HTMLElement | null)?.setPointerCapture?.(evt.pointerId);
-		} catch {
-			// ignore
-		}
-	}
-
-	private onBulletPointerMove(evt: PointerEvent): void {
-		const pre = this.dndPreStart;
-		if (pre && evt.pointerId === pre.pointerId) {
-			if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
-			const dx = evt.clientX - pre.startX;
-			const dy = evt.clientY - pre.startY;
-			if (Math.hypot(dx, dy) >= 4) {
-				this.startDragging(pre);
-			}
-		}
-
-		const state = this.dndState;
-		if (!state) return;
-		if (evt.pointerId !== state.pointerId) return;
-
-		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) {
-			this.stopDragging({ apply: false });
-			return;
-		}
-
-		evt.preventDefault();
-
-		const drop = this.computeDropVariant(evt.clientX, evt.clientY, state.sourceId);
-		state.drop = drop;
-		this.renderDropIndicator(drop);
-	}
-
-	private onBulletPointerUp(evt: PointerEvent): void {
-		const pre = this.dndPreStart;
-		if (pre && evt.pointerId === pre.pointerId) {
-			this.dndPreStart = null;
-		}
-
-		try {
-			(evt.currentTarget as HTMLElement | null)?.releasePointerCapture?.(evt.pointerId);
-		} catch {
-			// ignore
-		}
-
-		const state = this.dndState;
-		if (!state) return;
-		if (evt.pointerId !== state.pointerId) return;
-
-		this.stopDragging({ apply: true });
-	}
-
-	private onBulletPointerCancel(evt: PointerEvent): void {
-		const pre = this.dndPreStart;
-		if (pre && evt.pointerId === pre.pointerId) {
-			this.dndPreStart = null;
-		}
-
-		try {
-			(evt.currentTarget as HTMLElement | null)?.releasePointerCapture?.(evt.pointerId);
-		} catch {
-			// ignore
-		}
-
-		const state = this.dndState;
-		if (!state) return;
-		if (evt.pointerId !== state.pointerId) return;
-
-		this.stopDragging({ apply: false });
-	}
-
-	private startDragging(pre: OutlinerDndPreStart): void {
-		this.dndPreStart = null;
-		if (!this.outlinerFile) return;
-		if (this.plugin.settings.fileOutlinerDragAndDropEnabled === false) return;
-
-		// Ensure latest editor value is committed before we perform structural moves.
-		if (this.editingId) {
-			try {
-				this.exitEditMode(this.editingId);
-			} catch {
-				// ignore
-			}
-		}
-
-		this.dndState = { sourceId: pre.sourceId, pointerId: pre.pointerId, drop: null };
-		try {
-			document.body.classList.add("blp-outliner-dragging");
-		} catch {
-			// ignore
-		}
-		this.blockElById.get(pre.sourceId)?.classList.add("is-blp-outliner-dnd-source");
-
-		this.ensureDropIndicator();
-	}
-
-	private stopDragging(opts: { apply: boolean }): void {
-		const state = this.dndState;
-		this.dndState = null;
-		this.dndPreStart = null;
-
-		if (!state) return;
-
-		this.dndLastEndAt = Date.now();
-
-		try {
-			document.body.classList.remove("blp-outliner-dragging");
-		} catch {
-			// ignore
-		}
-
-		this.blockElById.get(state.sourceId)?.classList.remove("is-blp-outliner-dnd-source");
-		if (this.dndDropTargetId) {
-			this.blockElById.get(this.dndDropTargetId)?.classList.remove("is-blp-outliner-dnd-target");
-		}
-		this.dndDropTargetId = null;
-		this.renderDropIndicator(null);
-
-		const drop = state.drop;
-		if (!opts.apply || !drop || !this.outlinerFile) return;
-
-		// If we move a block into a collapsed subtree, expand so the result is visible.
-		if (drop.where === "inside") {
-			this.collapsedIds.delete(drop.targetId);
-			this.visibleNavCache = null;
-		}
-
-		this.applyEngineResult(moveBlockSubtree(this.outlinerFile, state.sourceId, drop.targetId, drop.where), { focus: false });
 	}
 
 	private isSelfOrDescendant(rootId: string, id: string): boolean {
@@ -1236,103 +1082,6 @@ export class FileOutlinerView extends TextFileView {
 			cur = this.parentById.get(cur) ?? null;
 		}
 		return false;
-	}
-
-	private computeDropVariant(x: number, y: number, sourceId: string): OutlinerDndDrop | null {
-		const hit = document.elementFromPoint(x, y) as HTMLElement | null;
-		if (!hit) return null;
-		if (!this.contentEl.contains(hit)) return null;
-
-		const blockEl = hit.closest(".ls-block") as HTMLElement | null;
-		if (!blockEl) return null;
-
-		const targetId = blockEl.dataset.blpOutlinerId;
-		if (!targetId) return null;
-		if (this.isSelfOrDescendant(sourceId, targetId)) return null;
-
-		const rowEl = blockEl.querySelector(":scope > .block-main-container") as HTMLElement | null;
-		const rowRect = rowEl?.getBoundingClientRect() ?? blockEl.getBoundingClientRect();
-
-		const contentWrap = blockEl.querySelector(":scope > .block-main-container > .block-content-wrapper") as HTMLElement | null;
-		const contentRect = contentWrap?.getBoundingClientRect() ?? rowRect;
-
-		const childrenContainer = blockEl.querySelector(":scope > .block-children-container") as HTMLElement | null;
-		const childrenOffsetPx = childrenContainer ? Number.parseFloat(getComputedStyle(childrenContainer).marginLeft) || 0 : 0;
-
-		const baseWhere: OutlinerMoveWhere = y < rowRect.top + rowRect.height / 2 ? "before" : "after";
-
-		let where: OutlinerMoveWhere = baseWhere;
-		if (baseWhere === "after" && childrenOffsetPx > 0) {
-			// Similar to Logseq: dragging horizontally (toward the content) indents as a child.
-			const insideThreshold = Math.max(12, Math.min(24, childrenOffsetPx * 0.6));
-			if (x > contentRect.left + insideThreshold) where = "inside";
-		}
-
-		return { targetId, where };
-	}
-
-	private ensureDropIndicator(): void {
-		if (this.dndIndicatorEl && this.rootEl?.contains(this.dndIndicatorEl)) return;
-		this.ensureRoot();
-		if (!this.rootEl) return;
-
-		const el = document.createElement("div");
-		el.className = "blp-outliner-dnd-indicator";
-		el.style.display = "none";
-		this.rootEl.appendChild(el);
-		this.dndIndicatorEl = el;
-	}
-
-	private renderDropIndicator(drop: OutlinerDndDrop | null): void {
-		const indicator = this.dndIndicatorEl;
-		const root = this.rootEl;
-		if (!indicator || !root) return;
-
-		// Clear previous target highlight.
-		if (!drop && this.dndDropTargetId) {
-			this.blockElById.get(this.dndDropTargetId)?.classList.remove("is-blp-outliner-dnd-target");
-			this.dndDropTargetId = null;
-		}
-
-		if (!drop) {
-			indicator.style.display = "none";
-			return;
-		}
-
-		const targetEl = this.blockElById.get(drop.targetId);
-		if (!targetEl) {
-			indicator.style.display = "none";
-			return;
-		}
-
-		if (this.dndDropTargetId !== drop.targetId) {
-			if (this.dndDropTargetId) {
-				this.blockElById.get(this.dndDropTargetId)?.classList.remove("is-blp-outliner-dnd-target");
-			}
-			this.dndDropTargetId = drop.targetId;
-			targetEl.classList.add("is-blp-outliner-dnd-target");
-		}
-
-		const rootRect = root.getBoundingClientRect();
-		const targetRect = targetEl.getBoundingClientRect();
-
-		const contentWrap = targetEl.querySelector(":scope > .block-main-container > .block-content-wrapper") as HTMLElement | null;
-		const contentRect = contentWrap?.getBoundingClientRect() ?? targetRect;
-
-		const childrenContainer = targetEl.querySelector(":scope > .block-children-container") as HTMLElement | null;
-		const childrenOffsetPx = childrenContainer ? Number.parseFloat(getComputedStyle(childrenContainer).marginLeft) || 0 : 0;
-
-		const lineLeft = drop.where === "inside" ? contentRect.left + childrenOffsetPx : contentRect.left;
-		const lineTop = drop.where === "before" ? targetRect.top : targetRect.bottom;
-
-		const left = Math.max(0, lineLeft - rootRect.left);
-		const top = Math.max(0, lineTop - rootRect.top);
-		const width = Math.max(16, rootRect.right - lineLeft - 12);
-
-		indicator.style.display = "";
-		indicator.style.left = `${Math.round(left)}px`;
-		indicator.style.top = `${Math.round(top)}px`;
-		indicator.style.width = `${Math.round(width)}px`;
 	}
 
 	private syncBlockList(container: HTMLElement, blocks: OutlinerBlock[]): void {
@@ -1428,17 +1177,17 @@ export class FileOutlinerView extends TextFileView {
 			evt.preventDefault();
 			evt.stopPropagation();
 			// Suppress click actions immediately after a drag gesture.
-			if (Date.now() - this.dndLastEndAt < 250) return;
+			if (Date.now() - this.dnd.getLastEndAt() < 250) return;
 			if (this.plugin.settings.fileOutlinerZoomEnabled === false) {
 				onActivate(evt);
 				return;
 			}
 			this.zoomInto(id);
 		});
-		bulletContainer.addEventListener("pointerdown", (evt) => this.onBulletPointerDown(id, evt));
-		bulletContainer.addEventListener("pointermove", (evt) => this.onBulletPointerMove(evt));
-		bulletContainer.addEventListener("pointerup", (evt) => this.onBulletPointerUp(evt));
-		bulletContainer.addEventListener("pointercancel", (evt) => this.onBulletPointerCancel(evt));
+		bulletContainer.addEventListener("pointerdown", (evt) => this.dnd.onPointerDown(id, evt));
+		bulletContainer.addEventListener("pointermove", (evt) => this.dnd.onPointerMove(evt));
+		bulletContainer.addEventListener("pointerup", (evt) => this.dnd.onPointerUp(evt));
+		bulletContainer.addEventListener("pointercancel", (evt) => this.dnd.onPointerCancel(evt));
 		bulletContainer.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
 			evt.stopPropagation();
@@ -1489,11 +1238,7 @@ export class FileOutlinerView extends TextFileView {
 			// If we just deleted the active block, force exit edit mode.
 			if (this.editingId === id) {
 				this.editingId = null;
-				try {
-					this.editorHostEl?.remove();
-				} catch {
-					// ignore
-				}
+				this.tryOrLog("pruneDom/removeEditorHost", () => this.editorHostEl?.remove());
 
 				if (this.editorHostEl && this.rootEl) {
 					this.rootEl.appendChild(this.editorHostEl);
@@ -1511,11 +1256,7 @@ export class FileOutlinerView extends TextFileView {
 			this.collapsedIds.delete(id);
 			const component = this.displayRenderComponentById.get(id);
 			if (component) {
-				try {
-					this.removeChild(component);
-				} catch {
-					// ignore
-				}
+				this.tryOrLog("pruneDom/removeChild", () => this.removeChild(component));
 				this.displayRenderComponentById.delete(id);
 			}
 		}
@@ -1527,8 +1268,8 @@ export class FileOutlinerView extends TextFileView {
 			this.visibleRefreshTimer = null;
 			try {
 				this.refreshVisibleBlocksFromDom();
-			} catch {
-				// ignore
+			} catch (err) {
+				this.debugLog("scheduleVisibleBlockRefresh/refreshVisibleBlocksFromDom", err);
 			}
 			this.scheduleDisplayRenderDrain();
 		}, 0);
@@ -1548,8 +1289,8 @@ export class FileOutlinerView extends TextFileView {
 					const r = rowEl.getBoundingClientRect();
 					visible = r.bottom >= top && r.top <= bottom;
 				}
-			} catch {
-				// ignore
+			} catch (err) {
+				this.debugLog("refreshVisibleBlocksFromDom/rowRect", err);
 			}
 			this.displayRenderScheduler.setVisible(id, visible);
 		}
@@ -1634,44 +1375,36 @@ export class FileOutlinerView extends TextFileView {
 			.then(() => {
 				// If another render happened since we started, discard this one.
 				if (this.displayRenderSeqById.get(id) !== seq) {
-					try {
-						this.removeChild(component);
-					} catch {
-						// ignore
-					}
+					this.tryOrLog("renderBlockDisplay/discard/removeChild(component)", () =>
+						this.removeChild(component)
+					);
 					return;
 				}
 
 				const display = this.displayElById.get(id);
 				if (!display) {
-					try {
-						this.removeChild(component);
-					} catch {
-						// ignore
-					}
+					this.tryOrLog("renderBlockDisplay/noDisplay/removeChild(component)", () =>
+						this.removeChild(component)
+					);
 					this.displayRenderSeqById.delete(id);
 					return;
 				}
 
 				// Avoid preview-only affordances inside the v2 outliner UI.
-				try {
+				this.tryOrLog("renderBlockDisplay/removeCopyCodeButtons", () => {
 					tmp.querySelectorAll("button.copy-code-button").forEach((btn) => btn.remove());
-				} catch {
-					// ignore
-				}
+				});
 
 				// MarkdownRenderer embeds inside this view can miss `.markdown-embed-content`, which breaks
 				// reading-range (`^id-id`) rendering and other post-processing that expects native embed DOM.
-				try {
-					normalizeInternalMarkdownEmbeds(tmp);
-				} catch {
-					// ignore
-				}
+				this.tryOrLog("renderBlockDisplay/normalizeInternalMarkdownEmbeds", () =>
+					normalizeInternalMarkdownEmbeds(tmp)
+				);
 
 				// Hide outliner v2 system tail lines inside embeds rendered by MarkdownRenderer.
 				// Call the post-processor before insertion so it doesn't early-return for `.blp-file-outliner-view`.
 				if (this.plugin.settings.fileOutlinerHideSystemLine !== false) {
-					try {
+					this.tryOrLog("renderBlockDisplay/hideSystemLines", () => {
 						const hasMarker =
 							Boolean(
 								tmp.querySelector(
@@ -1681,15 +1414,13 @@ export class FileOutlinerView extends TextFileView {
 						if (hasMarker) {
 							fileOutlinerMarkdownPostProcessor(tmp, { sourcePath } as any, this.plugin);
 						}
-					} catch {
-						// ignore
-					}
+					});
 				}
 
 				const prev = this.displayRenderComponentById.get(id);
 
 				if (md.issues.length > 0) {
-					try {
+					this.tryOrLog("renderBlockDisplay/issuesBanner", () => {
 						const banner = document.createElement("div");
 						banner.className = "blp-outliner-block-warning";
 
@@ -1707,9 +1438,7 @@ export class FileOutlinerView extends TextFileView {
 						banner.appendChild(text);
 
 						tmp.prepend(banner);
-					} catch {
-						// ignore
-					}
+					});
 				}
 
 				if (task) {
@@ -1739,19 +1468,12 @@ export class FileOutlinerView extends TextFileView {
 				this.displayRenderScheduler.markRendered(id);
 
 				if (prev) {
-					try {
-						this.removeChild(prev);
-					} catch {
-						// ignore
-					}
+					this.tryOrLog("renderBlockDisplay/removeChild(prev)", () => this.removeChild(prev));
 				}
 			})
-			.catch(() => {
-				try {
-					this.removeChild(component);
-				} catch {
-					// ignore
-				}
+			.catch((err) => {
+				this.debugLog("renderBlockDisplay/markdownRenderer", err);
+				this.tryOrLog("renderBlockDisplay/catch/removeChild(component)", () => this.removeChild(component));
 			});
 	}
 

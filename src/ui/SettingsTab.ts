@@ -3,6 +3,7 @@ import t from "shared/i18n";
 import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
 import { detectDataviewStatus } from "../utils/dataview-detector";
+import { getFileOutlinerCommandLabels } from "features/file-outliner-view/labels";
 import {
 	BLP_VISUALLY_HIDDEN_CLASS,
 	SettingsTabPane,
@@ -530,7 +531,15 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(rootEl).setName(ui.tasksHelp.name).setDesc(ui.tasksHelp.desc);
+		const cmdLabels = getFileOutlinerCommandLabels();
+		const tasksHelpDesc = String(ui.tasksHelp.desc ?? "")
+			.replace("${toggleTaskStatus}", cmdLabels.toggleTaskStatus)
+			.replace("${toggleTaskMarker}", cmdLabels.toggleTaskMarker);
+		new Setting(rootEl).setName(ui.tasksHelp.name).setDesc(tasksHelpDesc);
+
+		this.addToggleSetting("fileOutlinerDebugLogging", undefined, rootEl)
+			.setName(ui.debug.name)
+			.setDesc(ui.debug.desc);
 
 		// blp-view.
 		this.addHeading(t.settings.enhancedListBlocks.blpView.title, rootEl).setDesc(

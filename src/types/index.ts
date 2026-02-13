@@ -111,6 +111,7 @@ export interface PluginSettings {
 	fileOutlinerDragAndDropEnabled: boolean;
 	fileOutlinerZoomEnabled: boolean;
 	fileOutlinerEmphasisLineEnabled: boolean;
+	fileOutlinerDebugLogging: boolean;
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
 	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
@@ -162,6 +163,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerDragAndDropEnabled: true,
 	fileOutlinerZoomEnabled: true,
 	fileOutlinerEmphasisLineEnabled: true,
+	fileOutlinerDebugLogging: false,
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
 	fileOutlinerBackspaceWithChildren: "merge",
