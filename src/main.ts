@@ -23,8 +23,6 @@ import "css/DefaultVibe.css";
 import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
 import "css/Obsidian/SettingsTabs.css";
-import "css/vendor-obsidian-outliner.css";
-import "css/vendor-obsidian-zoom.css";
 import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
@@ -39,7 +37,6 @@ import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-
 import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
-import { BuiltInVslinkoManager } from "features/built-in-vslinko";
 
 const MAX_ALIAS_LENGTH = 100;
 
@@ -52,7 +49,6 @@ export default class BlockLinkPlus extends Plugin {
 	flowEditorManager: FlowEditorManager;
 	inlineEditEngine: InlineEditEngine;
 	private hasExistingSettingsData = false;
-	private builtInVslinko: BuiltInVslinkoManager | null = null;
 	private viewPluginRegistered = false;
 
 	public get enactor(): Enactor {
@@ -82,14 +78,6 @@ export default class BlockLinkPlus extends Plugin {
 		getEnactor: () => this.flowEditorManager.enactor
 	};
 
-	public getBuiltInOutlinerSettings() {
-		return this.builtInVslinko?.getOutlinerSettings() ?? null;
-	}
-
-	public getBuiltInZoomSettings() {
-		return this.builtInVslinko?.getZoomSettings() ?? null;
-	}
-
 	/**
 	 * Update the view plugin
 	 */
@@ -114,10 +102,6 @@ export default class BlockLinkPlus extends Plugin {
 		await this.loadSettings();
 		// Create settings tab.
 		this.addSettingTab(new BlockLinkPlusSettingsTab(this.app, this));
-
-		// Built-in vendored plugins (vslinko).
-		this.builtInVslinko = new BuiltInVslinkoManager(this);
-		await this.builtInVslinko.load();
 
 		// File-level outliner view (v2).
 		registerFileOutlinerView(this);
@@ -243,16 +227,11 @@ export default class BlockLinkPlus extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.inlineEditEngine?.onSettingsChanged();
-		this.builtInVslinko?.onSettingsChanged(false);
 		getFileOutlinerScopeManager(this).onSettingsChanged();
 		notifyFileOutlinerViewsSettingsChanged(this);
 	}
 
 	async onunload() {
-		if (this.builtInVslinko) {
-			await this.builtInVslinko.unload();
-			this.builtInVslinko = null;
-		}
 	}
 
 	private async maybeShowWhatsNew() {

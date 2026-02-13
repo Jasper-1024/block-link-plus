@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Notice } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import t from "shared/i18n";
 import { KeysOfType, PluginSettings, MultLineHandle, BlockLinkAliasType } from "../types";
 import BlockLinkPlus from "main";
@@ -12,7 +12,7 @@ import {
 	unhideEl,
 } from "./settings-tabs";
 
-type SettingsTabName = "basics" | "outliner" | "built-in-plugins";
+type SettingsTabName = "basics" | "outliner";
 
 export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	plugin: BlockLinkPlus;
@@ -139,12 +139,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const tabs: Record<SettingsTabName, SettingsTabPane> = {
 			basics: new SettingsTabPane({ navEl, contentRootEl, name: "basics", label: uiText.tabs.basics }),
 			outliner: new SettingsTabPane({ navEl, contentRootEl, name: "outliner", label: uiText.tabs.outliner }),
-			"built-in-plugins": new SettingsTabPane({
-				navEl,
-				contentRootEl,
-				name: "built-in-plugins",
-				label: uiText.tabs.builtInPlugins,
-			}),
 		};
 
 		const allTabs = Object.values(tabs);
@@ -157,7 +151,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		this.renderBasicsTab(tabs.basics.contentEl);
 		this.renderFileOutlinerTab(tabs.outliner.contentEl);
-		this.renderBuiltInPluginsTab(tabs["built-in-plugins"].contentEl);
 
 		for (const tab of allTabs) this.buildSearchIndex(tab);
 
@@ -208,7 +201,7 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 	private getSettingsUiText(): {
 		searchPlaceholder: string;
 		emptyState: string;
-		tabs: { basics: string; outliner: string; builtInPlugins: string };
+		tabs: { basics: string; outliner: string };
 	} {
 		switch (t.lang) {
 			case "zh":
@@ -218,7 +211,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					tabs: {
 						basics: "基础",
 						outliner: "Outliner",
-						builtInPlugins: "内置插件",
 					},
 				};
 			case "zh-TW":
@@ -228,7 +220,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					tabs: {
 						basics: "基礎",
 						outliner: "Outliner",
-						builtInPlugins: "內建外掛",
 					},
 				};
 			default:
@@ -238,7 +229,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 					tabs: {
 						basics: "Basics",
 						outliner: "Outliner",
-						builtInPlugins: "Built-in Plugins",
 					},
 				};
 		}
@@ -601,214 +591,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("blpViewShowDiagnostics", undefined, rootEl)
 			.setName(t.settings.enhancedListBlocks.blpView.showDiagnostics.name)
 			.setDesc(t.settings.enhancedListBlocks.blpView.showDiagnostics.desc);
-	}
-
-	private renderBuiltInPluginsTab(rootEl: HTMLElement) {
-		const isThirdPartyPluginEnabled = (pluginId: string): boolean => {
-			try {
-				return Boolean((this.plugin.app as any)?.plugins?.enabledPlugins?.has?.(pluginId));
-			} catch {
-				return false;
-			}
-		};
-
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.title, rootEl).setDesc(t.settings.enhancedListBlocks.builtIn.desc);
-
-		this.addToggleSetting("builtInVslinkoScopeToEnhancedList", undefined, rootEl)
-			.setName(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.name)
-			.setDesc(t.settings.enhancedListBlocks.builtIn.scopeToEnhancedList.desc);
-
-		// Built-in Outliner
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.outliner.title, rootEl);
-		new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.builtIn.outliner.enable.name)
-			.setDesc(
-				isThirdPartyPluginEnabled("obsidian-outliner")
-					? t.settings.enhancedListBlocks.builtIn.outliner.enable.conflictDesc
-					: t.settings.enhancedListBlocks.builtIn.outliner.enable.desc
-			)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.builtInObsidianOutlinerEnabled).onChange(async (value) => {
-					if (value && isThirdPartyPluginEnabled("obsidian-outliner")) {
-						new Notice(
-							"Block Link Plus: Built-in Outliner is disabled because external plugin 'obsidian-outliner' is enabled.",
-							5000
-						);
-						toggle.setValue(false);
-						return;
-					}
-
-					this.plugin.settings.builtInObsidianOutlinerEnabled = value;
-					await this.plugin.saveSettings();
-					this.display();
-				});
-			});
-
-		const outlinerSettings = this.plugin.getBuiltInOutlinerSettings();
-		if (this.plugin.settings.builtInObsidianOutlinerEnabled && outlinerSettings) {
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.desc)
-				.addDropdown((dropdown) => {
-					dropdown
-						.addOptions({
-							never: t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.never,
-							"bullet-only": t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.bulletOnly,
-							"bullet-and-checkbox":
-								t.settings.enhancedListBlocks.builtIn.outliner.stickCursor.options.bulletAndCheckbox,
-						} as any)
-						.setValue(outlinerSettings.keepCursorWithinContent)
-						.onChange(async (value: any) => {
-							outlinerSettings.keepCursorWithinContent = value;
-							await outlinerSettings.save();
-						});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceTab.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.overrideTabBehaviour).onChange(async (value) => {
-						outlinerSettings.overrideTabBehaviour = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceEnter.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.overrideEnterBehaviour).onChange(async (value) => {
-						outlinerSettings.overrideEnterBehaviour = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.vimO.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.vimO.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.overrideVimOBehaviour).onChange(async (value) => {
-						outlinerSettings.overrideVimOBehaviour = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.enhanceSelectAll.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.overrideSelectAllBehaviour).onChange(async (value) => {
-						outlinerSettings.overrideSelectAllBehaviour = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.betterListStyles.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.betterListsStyles).onChange(async (value) => {
-						outlinerSettings.betterListsStyles = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.verticalLines.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.verticalLines).onChange(async (value) => {
-						outlinerSettings.verticalLines = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.name)
-				.addDropdown((dropdown) => {
-					dropdown
-						.addOptions({
-							none: t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.none,
-							"zoom-in": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.zoomIn,
-							"toggle-folding": t.settings.enhancedListBlocks.builtIn.outliner.verticalLinesAction.options.toggleFolding,
-						} as any)
-						.setValue(outlinerSettings.verticalLinesAction)
-						.onChange(async (value: any) => {
-							outlinerSettings.verticalLinesAction = value;
-							await outlinerSettings.save();
-						});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.dragAndDrop.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.dragAndDrop).onChange(async (value) => {
-						outlinerSettings.dragAndDrop = value;
-						await outlinerSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.outliner.debug.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.outliner.debug.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(outlinerSettings.debug).onChange(async (value) => {
-						outlinerSettings.debug = value;
-						await outlinerSettings.save();
-					});
-				});
-		}
-
-		// Built-in Zoom
-		this.addHeading(t.settings.enhancedListBlocks.builtIn.zoom.title, rootEl);
-		new Setting(rootEl)
-			.setName(t.settings.enhancedListBlocks.builtIn.zoom.enable.name)
-			.setDesc(
-				isThirdPartyPluginEnabled("obsidian-zoom")
-					? t.settings.enhancedListBlocks.builtIn.zoom.enable.conflictDesc
-					: t.settings.enhancedListBlocks.builtIn.zoom.enable.desc
-			)
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.builtInObsidianZoomEnabled).onChange(async (value) => {
-					if (value && isThirdPartyPluginEnabled("obsidian-zoom")) {
-						new Notice(
-							"Block Link Plus: Built-in Zoom is disabled because external plugin 'obsidian-zoom' is enabled.",
-							5000
-						);
-						toggle.setValue(false);
-						return;
-					}
-
-					this.plugin.settings.builtInObsidianZoomEnabled = value;
-					await this.plugin.saveSettings();
-					this.display();
-				});
-			});
-
-		const zoomSettings = this.plugin.getBuiltInZoomSettings();
-		if (this.plugin.settings.builtInObsidianZoomEnabled && zoomSettings) {
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.zoomOnClick.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(zoomSettings.zoomOnClick).onChange(async (value) => {
-						zoomSettings.zoomOnClick = value;
-						await zoomSettings.save();
-					});
-				});
-
-			new Setting(rootEl)
-				.setName(t.settings.enhancedListBlocks.builtIn.zoom.debug.name)
-				.setDesc(t.settings.enhancedListBlocks.builtIn.zoom.debug.desc)
-				.addToggle((toggle) => {
-					toggle.setValue(zoomSettings.debug).onChange(async (value) => {
-						zoomSettings.debug = value;
-						await zoomSettings.save();
-					});
-				});
-		}
 	}
 }
 

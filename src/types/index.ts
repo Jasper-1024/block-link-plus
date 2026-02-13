@@ -68,26 +68,6 @@ export type BlockLinkPlusViewPlugin = ViewPlugin<{
 	update(u: ViewUpdate): void;
 }>;
 
-export type BuiltInObsidianOutlinerSettings = {
-	styleLists: boolean;
-	debug: boolean;
-	stickCursor: "never" | "bullet-only" | "bullet-and-checkbox" | boolean;
-	betterEnter: boolean;
-	betterVimO: boolean;
-	betterTab: boolean;
-	selectAll: boolean;
-	listLines: boolean;
-	listLineAction: "none" | "zoom-in" | "toggle-folding";
-	dnd: boolean;
-	previousRelease: string | null;
-};
-
-export type BuiltInObsidianZoomSettings = {
-	debug: boolean;
-	zoomOnClick: boolean;
-	zoomOnClickMobile: boolean;
-};
-
 export interface PluginSettings {
 	mult_line_handle: MultLineHandle;
 	alias_type: BlockLinkAliasType;
@@ -121,14 +101,6 @@ export interface PluginSettings {
 	blpViewMaxSourceFiles: number; // 0 = unlimited
 	blpViewMaxResults: number; // 0 = unlimited
 	blpViewShowDiagnostics: boolean;
-
-	// Built-in vslinko plugins (vendored)
-	builtInObsidianOutlinerEnabled: boolean;
-	builtInObsidianOutlinerSettings: BuiltInObsidianOutlinerSettings;
-	builtInObsidianZoomEnabled: boolean;
-	builtInObsidianZoomSettings: BuiltInObsidianZoomSettings;
-	// When enabled, limit vendored list UX (styles + interactions) to Enhanced List Blocks enabled files.
-	builtInVslinkoScopeToEnhancedList: boolean;
 
 	// Inline Edit
 	inlineEditEnabled: boolean;
@@ -173,29 +145,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	blpViewMaxSourceFiles: 0,
 	blpViewMaxResults: 0,
 	blpViewShowDiagnostics: false,
-
-	// Built-in vslinko plugins (vendored)
-	builtInObsidianOutlinerEnabled: false,
-	builtInObsidianOutlinerSettings: {
-		styleLists: true,
-		debug: false,
-		stickCursor: "bullet-and-checkbox",
-		betterEnter: true,
-		betterVimO: true,
-		betterTab: true,
-		selectAll: true,
-		listLines: false,
-		listLineAction: "toggle-folding",
-		dnd: true,
-		previousRelease: null,
-	},
-	builtInObsidianZoomEnabled: false,
-	builtInObsidianZoomSettings: {
-		debug: false,
-		zoomOnClick: true,
-		zoomOnClickMobile: false,
-	},
-	builtInVslinkoScopeToEnhancedList: false,
 	
 	// Inline edit (default: enabled, but file-embed editing off)
 	inlineEditEnabled: true,
