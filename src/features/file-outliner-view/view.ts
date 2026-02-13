@@ -1,9 +1,8 @@
 import { Component, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
-import { EditorSelection, EditorState, Prec } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
-import { basicSetup } from "@codemirror/basic-setup";
+import { EditorSelection } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 
 import type BlockLinkPlus from "../../main";
 import { generateRandomId } from "../../utils";
@@ -31,12 +30,14 @@ import {
 
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
-import { isPlainTextPasteShortcut } from "./editor-shortcuts";
 import { OutlinerDisplayController } from "./display-controller";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
 import { getFileOutlinerContextMenuLabels } from "./labels";
 import { OutlinerDndController, type OutlinerDndDrop } from "./dnd-controller";
 import { getTaskMarkerFromBlockText, toggleTaskMarkerPrefix, toggleTaskStatusMarkerPrefix } from "./task-marker";
+import { OutlinerDomController } from "./dom-controller";
+import { createOutlinerEditorState } from "./editor-state";
+import { handleOutlinerRootClickCapture } from "./root-click-router";
 import {
 	computeVisibleBlockNav,
 	cursorPosAtFirstLine,
@@ -75,13 +76,7 @@ export class FileOutlinerView extends TextFileView {
 	private zoomHeaderEl: HTMLElement | null = null;
 	private topLevelBlocksEl: HTMLElement | null = null;
 
-	private blockElById = new Map<string, HTMLElement>();
-	private blockRowElById = new Map<string, HTMLElement>();
-	private blockContentElById = new Map<string, HTMLElement>();
-	private childrenContainerElById = new Map<string, HTMLElement>();
-	private childrenElById = new Map<string, HTMLElement>();
-	private displayElById = new Map<string, HTMLElement>();
-
+	private readonly dom: OutlinerDomController;
 	private readonly display: OutlinerDisplayController;
 
 	private editorHostEl: HTMLElement | null = null;
@@ -111,6 +106,17 @@ export class FileOutlinerView extends TextFileView {
 	constructor(leaf: WorkspaceLeaf, plugin: BlockLinkPlus) {
 		super(leaf);
 		this.plugin = plugin;
+		this.dom = new OutlinerDomController({
+			isZoomEnabled: () => this.plugin.settings.fileOutlinerZoomEnabled !== false,
+			getBlockTextLength: (id) => String(this.blockById.get(id)?.text ?? "").length,
+			enterEditMode: (id, opts) => this.enterEditMode(id, opts),
+			zoomInto: (id) => this.zoomInto(id),
+			toggleCollapsed: (id) => this.toggleCollapsed(id),
+			openBulletMenu: (id, evt) => this.openBulletMenu(id, evt),
+			insertAfterBlock: (id) => this.insertAfterBlock(id),
+			getDnd: () => this.dnd,
+			debugLog: (scope, err) => this.debugLog(scope, err),
+		});
 		this.display = new OutlinerDisplayController({
 			app: this.app,
 			plugin: this.plugin,
@@ -118,8 +124,8 @@ export class FileOutlinerView extends TextFileView {
 			getSourcePath: () => this.file?.path ?? "",
 			getEditingId: () => this.editingId,
 			getBlock: (id) => this.blockById.get(id) ?? null,
-			getDisplayEl: (id) => this.displayElById.get(id) ?? null,
-			getRowElEntries: () => this.blockRowElById.entries(),
+			getDisplayEl: (id) => this.dom.getDisplayEl(id),
+			getRowElEntries: () => this.dom.getRowElEntries(),
 			addChildComponent: () => this.addChild(new Component()),
 			removeChildComponent: (component) => this.removeChild(component),
 			toggleTaskStatusForBlock: (id) => this.toggleTaskStatusForBlock(id),
@@ -134,7 +140,7 @@ export class FileOutlinerView extends TextFileView {
 			getContentEl: () => this.contentEl,
 			ensureRoot: () => this.ensureRoot(),
 			getRootEl: () => this.rootEl,
-			getBlockEl: (id) => this.blockElById.get(id) ?? null,
+			getBlockEl: (id) => this.dom.getBlockEl(id),
 			isSelfOrDescendant: (rootId, id) => this.isSelfOrDescendant(rootId, id),
 			applyDrop: (sourceId: string, drop: OutlinerDndDrop) => {
 				if (!this.outlinerFile) return;
@@ -262,12 +268,7 @@ export class FileOutlinerView extends TextFileView {
 		this.outlinerFile = null;
 		this.blockById.clear();
 		this.parentById.clear();
-		this.blockElById.clear();
-		this.blockRowElById.clear();
-		this.blockContentElById.clear();
-		this.childrenContainerElById.clear();
-		this.childrenElById.clear();
-		this.displayElById.clear();
+		this.dom.clearBlocks();
 		this.display.reset();
 		this.dirtyBlockIds.clear();
 
@@ -422,7 +423,17 @@ export class FileOutlinerView extends TextFileView {
 		const root = this.contentEl.createDiv({ cls: "blp-file-outliner-root" });
 		this.rootEl = root;
 		// Capture-phase click router for MarkdownRenderer output (internal links, embed inline edit).
-		root.addEventListener("click", (evt) => this.onRootClickCapture(evt as MouseEvent), true);
+		const clickHost = {
+			app: this.app,
+			plugin: this.plugin,
+			getDefaultSourcePath: () => this.file?.path ?? "",
+			debugLog: (scope: string, err: unknown) => this.debugLog(scope, err),
+		};
+		root.addEventListener(
+			"click",
+			(evt) => handleOutlinerRootClickCapture(evt as MouseEvent, clickHost),
+			true
+		);
 
 		const header = root.createDiv({ cls: "blp-file-outliner-zoom-header" });
 		header.style.display = "none";
@@ -456,182 +467,28 @@ export class FileOutlinerView extends TextFileView {
 
 		// When focus leaves the editor, we typically exit edit mode (with a small debounce,
 		// since structural ops may transiently reparent the editor host).
-		this.editorView.contentDOM.addEventListener("focusout", () => this.onEditorBlur());
-	}
+	this.editorView.contentDOM.addEventListener("focusout", () => this.onEditorBlur());
+}
 
-	private resolveSourcePathForInternalLink(targetEl: HTMLElement, defaultSourcePath: string): string {
-		if (!defaultSourcePath) return defaultSourcePath;
-
-		const embedEl = targetEl.closest<HTMLElement>(".internal-embed.markdown-embed");
-		if (!embedEl) return defaultSourcePath;
-
-		const raw = (embedEl.getAttribute("src") ?? embedEl.getAttribute("alt") ?? "").trim();
-		if (!raw) return defaultSourcePath;
-
-		const pipeIndex = raw.indexOf("|");
-		const actual = pipeIndex === -1 ? raw : raw.substring(0, pipeIndex);
-		const hashIndex = actual.indexOf("#");
-		const notePath = (hashIndex === -1 ? actual : actual.substring(0, hashIndex)).trim();
-		if (!notePath) return defaultSourcePath;
-
-		try {
-			const file = this.app.metadataCache.getFirstLinkpathDest(notePath, defaultSourcePath);
-			return file?.path ?? defaultSourcePath;
-		} catch (err) {
-			this.debugLog("resolveSourcePathForInternalLink", err);
-			return defaultSourcePath;
-		}
-	}
-
-	private onRootClickCapture(evt: MouseEvent): void {
-		const target = evt.target as HTMLElement | null;
-		if (!target) return;
-		if (evt.defaultPrevented) return;
-
-		// Never intercept clicks inside embed editors / our CM6 editor host.
-		if (target.closest(".markdown-source-view")) return;
-		if (target.closest(".blp-file-outliner-editor")) return;
-
-		const defaultSourcePath = this.file?.path ?? "";
-
-		// 1) Route `.internal-link` navigation (MarkdownRenderer output) through Obsidian's pipeline.
-		const anchor = target.closest("a.internal-link") as HTMLAnchorElement | null;
-		if (anchor) {
-			const href = anchor.getAttribute("data-href") ?? (anchor as any)?.dataset?.href ?? anchor.getAttribute("href") ?? "";
-			if (!href) return;
-
-			evt.preventDefault();
-			evt.stopPropagation();
-
-			const sourcePath = this.resolveSourcePathForInternalLink(anchor, defaultSourcePath);
-			const newLeaf = Boolean(evt.ctrlKey || evt.metaKey);
-			void this.app.workspace.openLinkText(href, sourcePath, newLeaf);
-			return;
-		}
-
-		// 2) Inline-edit embeds inside outliner display (opt-in to InlineEditEngine).
-		const embedEl = target.closest<HTMLElement>(".internal-embed.markdown-embed");
-		if (!embedEl) return;
-		if (!defaultSourcePath) return;
-
-		// Respect interactive controls inside embeds (e.g. buttons, links).
-		if (target.closest("a, button, input, textarea")) return;
-
-		evt.preventDefault();
-		evt.stopPropagation();
-
-		void this.plugin.inlineEditEngine.mountInlineEmbedInOutliner(embedEl, defaultSourcePath);
-	}
-
-	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }): EditorState {
-		const clamp = (n: number) => Math.max(0, Math.min(doc.length, Math.floor(n)));
-		const anchor = clamp(sel.cursorStart);
-		const head = clamp(sel.cursorEnd);
-
-		return EditorState.create({
-			doc,
-			selection: { anchor, head },
-			extensions: [
-				basicSetup,
-				EditorView.lineWrapping,
-				EditorView.theme({
-					"&": {
-						font: "inherit",
-					},
-					".cm-scroller": {
-						font: "inherit",
-						lineHeight: "inherit",
-					},
-				}),
-				Prec.high(
-					keymap.of([
-						{
-							key: "Mod-Enter",
-							run: () => this.onEditorToggleTask(),
-						},
-						{
-							key: "Mod-Shift-Enter",
-							run: () => this.onEditorToggleTaskMarker(),
-						},
-						{
-							key: "ArrowUp",
-							run: (view) => this.onEditorArrowNavigate("up", view),
-						},
-						{
-							key: "ArrowDown",
-							run: (view) => this.onEditorArrowNavigate("down", view),
-						},
-						{
-							key: "Shift-Enter",
-							run: (view) => {
-								const r = view.state.selection.main;
-								const from = Math.min(r.from, r.to);
-								const to = Math.max(r.from, r.to);
-								view.dispatch({
-									changes: { from, to, insert: "\n" },
-									selection: { anchor: from + 1 },
-								});
-								return true;
-							},
-						},
-						{
-							key: "Enter",
-							run: () => this.onEditorEnter(),
-						},
-						{
-							key: "Tab",
-							run: () => this.onEditorTab(false),
-						},
-						{
-							key: "Shift-Tab",
-							run: () => this.onEditorTab(true),
-						},
-						{
-							key: "Backspace",
-							run: () => this.onEditorBackspace(),
-						},
-						{
-							key: "Delete",
-							run: () => this.onEditorDelete(),
-						},
-					])
-				),
-				EditorView.updateListener.of((update) => {
-					if (this.suppressEditorSync) return;
-
-					if (update.docChanged) {
-						this.onEditorDocChanged(update.state.doc.toString());
-						this.maybeTriggerEditorSuggest();
-					}
-
-					// Keep ArrowUp/Down "goal column" stable across real vertical navigation, but reset it
-					// whenever selection changes through other means (mouse click, programmatic dispatch, etc.).
-					if (update.selectionSet && !this.arrowNavDispatching && !this.preserveArrowNavGoalOnce) {
-						this.resetArrowNavGoalColumn();
-					}
-				}),
-				EditorView.domEventHandlers({
-					keydown: (evt) => {
-						if (isPlainTextPasteShortcut(evt)) this.lastPlainPasteShortcutAt = Date.now();
-
-						const key = String((evt as any)?.key ?? "");
-						const isPlainArrow =
-							(key === "ArrowUp" || key === "ArrowDown") &&
-							!Boolean((evt as any)?.shiftKey) &&
-							!Boolean((evt as any)?.ctrlKey) &&
-							!Boolean((evt as any)?.metaKey) &&
-							!Boolean((evt as any)?.altKey);
-						if (!isPlainArrow) this.resetArrowNavGoalColumn();
-
-						return false;
-					},
-					pointerdown: () => {
-						this.resetArrowNavGoalColumn();
-						return false;
-					},
-					paste: (evt) => this.onEditorPaste(evt),
-				}),
-			],
+	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }) {
+		return createOutlinerEditorState(doc, sel, {
+			isSyncSuppressed: () => this.suppressEditorSync,
+			isArrowNavDispatching: () => this.arrowNavDispatching,
+			shouldPreserveArrowNavGoalOnce: () => this.preserveArrowNavGoalOnce,
+			onResetArrowNavGoalColumn: () => this.resetArrowNavGoalColumn(),
+			onPlainTextPasteShortcut: () => {
+				this.lastPlainPasteShortcutAt = Date.now();
+			},
+			onDocChanged: (nextText) => this.onEditorDocChanged(nextText),
+			onMaybeTriggerSuggest: () => this.maybeTriggerEditorSuggest(),
+			onPaste: (evt) => this.onEditorPaste(evt),
+			onToggleTask: () => this.onEditorToggleTask(),
+			onToggleTaskMarker: () => this.onEditorToggleTaskMarker(),
+			onArrowNavigate: (dir, editor) => this.onEditorArrowNavigate(dir, editor),
+			onEnter: () => this.onEditorEnter(),
+			onTab: (shift) => this.onEditorTab(shift),
+			onBackspace: () => this.onEditorBackspace(),
+			onDelete: () => this.onEditorDelete(),
 		});
 	}
 
@@ -676,13 +533,7 @@ export class FileOutlinerView extends TextFileView {
 			});
 
 			// Clear DOM caches but keep the view root/editor.
-			for (const el of this.blockElById.values()) el.remove();
-			this.blockElById.clear();
-			this.blockRowElById.clear();
-			this.blockContentElById.clear();
-			this.childrenContainerElById.clear();
-			this.childrenElById.clear();
-			this.displayElById.clear();
+			this.dom.clearBlocks();
 			this.display.reset();
 		}
 
@@ -860,10 +711,10 @@ export class FileOutlinerView extends TextFileView {
 		else this.collapsedIds.delete(id);
 		this.visibleNavCache = null;
 
-		const el = this.blockElById.get(id);
+		const el = this.dom.getBlockEl(id);
 		if (el) el.classList.toggle("is-blp-outliner-collapsed", collapsed);
 
-		const childrenContainer = this.childrenContainerElById.get(id);
+		const childrenContainer = this.dom.getChildrenContainerEl(id);
 		if (childrenContainer) childrenContainer.style.display = collapsed ? "none" : "";
 
 		// If we just hid the active editor, exit edit mode to keep focus predictable.
@@ -1066,7 +917,7 @@ export class FileOutlinerView extends TextFileView {
 
 	private syncBlockList(container: HTMLElement, blocks: OutlinerBlock[]): void {
 		for (const block of blocks) {
-			const el = this.ensureBlockElement(block.id);
+			const el = this.dom.ensureBlockElement(block.id);
 			// Match Logseq DOM conventions so we can reuse its proven CSS selector strategy.
 			const hasChildren = (block.children?.length ?? 0) > 0;
 			el.setAttribute("haschild", hasChildren ? "true" : "false");
@@ -1075,7 +926,7 @@ export class FileOutlinerView extends TextFileView {
 			const collapsed = hasChildren && this.collapsedIds.has(block.id);
 			if (!hasChildren) this.collapsedIds.delete(block.id);
 			el.classList.toggle("is-blp-outliner-collapsed", collapsed);
-			const childrenContainer = this.childrenContainerElById.get(block.id);
+			const childrenContainer = this.dom.getChildrenContainerEl(block.id);
 			if (childrenContainer) childrenContainer.style.display = collapsed ? "none" : "";
 
 			container.appendChild(el);
@@ -1083,133 +934,17 @@ export class FileOutlinerView extends TextFileView {
 			// Ensure the display is rendered at least once for new blocks.
 			this.display.ensurePlaceholderAndScheduleFirstRender(block.id);
 
-			const children = this.childrenElById.get(block.id);
+			const children = this.dom.getChildrenEl(block.id);
 			if (children) this.syncBlockList(children, block.children ?? []);
 		}
 	}
 
-	private ensureBlockElement(id: string): HTMLElement {
-		const existing = this.blockElById.get(id);
-		if (existing) return existing;
-
-		const blockEl = document.createElement("div");
-		blockEl.className = "ls-block";
-		blockEl.dataset.blpOutlinerId = id;
-
-		const main = document.createElement("div");
-		main.className = "block-main-container items-baseline";
-		blockEl.appendChild(main);
-		this.blockRowElById.set(id, main);
-
-		const controlWrap = document.createElement("div");
-		controlWrap.className = "block-control-wrap items-center";
-		main.appendChild(controlWrap);
-
-		const foldToggle = document.createElement("button");
-		foldToggle.type = "button";
-		foldToggle.className = "blp-outliner-fold-toggle";
-		foldToggle.addEventListener("click", (evt) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.toggleCollapsed(id);
-		});
-		controlWrap.appendChild(foldToggle);
-
-		const bulletContainer = document.createElement("span");
-		bulletContainer.className = "bullet-container";
-		controlWrap.appendChild(bulletContainer);
-
-		const bullet = document.createElement("span");
-		bullet.className = "bullet";
-		bulletContainer.appendChild(bullet);
-
-		const contentWrap = document.createElement("div");
-		contentWrap.className = "block-content-wrapper";
-		main.appendChild(contentWrap);
-
-		const content = document.createElement("div");
-		content.className = "block-content";
-		contentWrap.appendChild(content);
-		this.blockContentElById.set(id, content);
-
-		const display = document.createElement("div");
-		display.className = "blp-file-outliner-display";
-		content.appendChild(display);
-		this.displayElById.set(id, display);
-
-		const onActivate = (evt: MouseEvent) => {
-			// Let normal navigation/controls work (links, buttons, checkboxes, etc).
-			const target = evt.target as HTMLElement | null;
-			if (target?.closest("a, button, input, textarea")) return;
-			// Embedded blocks (InlineEditEngine, native embeds) must remain interactive.
-			if (target?.closest(".internal-embed, .markdown-embed, .markdown-embed-link")) return;
-			const b = this.blockById.get(id);
-			const end = b?.text?.length ?? 0;
-			this.enterEditMode(id, { cursorStart: end, cursorEnd: end, scroll: true });
-		};
-
-		display.addEventListener("click", onActivate);
-		bulletContainer.addEventListener("click", (evt) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			// Suppress click actions immediately after a drag gesture.
-			if (Date.now() - this.dnd.getLastEndAt() < 250) return;
-			if (this.plugin.settings.fileOutlinerZoomEnabled === false) {
-				onActivate(evt);
-				return;
-			}
-			this.zoomInto(id);
-		});
-		bulletContainer.addEventListener("pointerdown", (evt) => this.dnd.onPointerDown(id, evt));
-		bulletContainer.addEventListener("pointermove", (evt) => this.dnd.onPointerMove(evt));
-		bulletContainer.addEventListener("pointerup", (evt) => this.dnd.onPointerUp(evt));
-		bulletContainer.addEventListener("pointercancel", (evt) => this.dnd.onPointerCancel(evt));
-		bulletContainer.addEventListener("contextmenu", (evt) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.openBulletMenu(id, evt);
-		});
-
-		const childrenContainer = document.createElement("div");
-		childrenContainer.className = "block-children-container flex";
-		blockEl.appendChild(childrenContainer);
-		this.childrenContainerElById.set(id, childrenContainer);
-
-		const leftBorder = document.createElement("div");
-		leftBorder.className = "block-children-left-border";
-		childrenContainer.appendChild(leftBorder);
-
-		const children = document.createElement("div");
-		children.className = "block-children w-full";
-		childrenContainer.appendChild(children);
-		this.childrenElById.set(id, children);
-
-		const insertHint = document.createElement("div");
-		insertHint.className = "blp-outliner-insert-hint";
-		insertHint.addEventListener("click", (evt) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.insertAfterBlock(id);
-		});
-
-		const insertIcon = document.createElement("div");
-		insertIcon.className = "blp-outliner-insert-icon";
-		insertIcon.textContent = "+";
-		insertHint.appendChild(insertIcon);
-
-		blockEl.appendChild(insertHint);
-
-		this.blockElById.set(id, blockEl);
-		return blockEl;
-	}
-
 	private pruneDom(): void {
 		// Remove block elements for ids that are no longer in the model.
-		for (const [id, el] of Array.from(this.blockElById.entries())) {
+		for (const [id] of Array.from(this.dom.getBlockElEntries())) {
 			if (this.blockById.has(id)) continue;
 
 			this.display.removeBlock(id);
-			this.blockRowElById.delete(id);
 
 			// If we just deleted the active block, force exit edit mode.
 			if (this.editingId === id) {
@@ -1222,12 +957,7 @@ export class FileOutlinerView extends TextFileView {
 				}
 			}
 
-			el.remove();
-			this.blockElById.delete(id);
-			this.blockContentElById.delete(id);
-			this.childrenContainerElById.delete(id);
-			this.childrenElById.delete(id);
-			this.displayElById.delete(id);
+			this.dom.removeBlock(id);
 			this.collapsedIds.delete(id);
 		}
 	}
@@ -1245,8 +975,8 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		const block = this.blockById.get(id);
-		const host = this.blockContentElById.get(id);
-		const display = this.displayElById.get(id);
+		const host = this.dom.getBlockContentEl(id);
+		const display = this.dom.getDisplayEl(id);
 
 		if (!block || !host || !display) {
 			if (!opts.reuseExisting) this.render({ forceRebuild: true });
@@ -1262,10 +992,10 @@ export class FileOutlinerView extends TextFileView {
 			window.clearTimeout(this.pendingBlurTimer);
 			this.pendingBlurTimer = null;
 		}
-		for (const [prevId, prevEl] of this.blockElById) {
+		for (const [prevId, prevEl] of this.dom.getBlockElEntries()) {
 			if (prevId !== id) prevEl.classList.remove("is-blp-outliner-active");
 		}
-		this.blockElById.get(id)?.classList.add("is-blp-outliner-active");
+		this.dom.getBlockEl(id)?.classList.add("is-blp-outliner-active");
 
 		display.style.display = "none";
 		host.appendChild(this.editorHostEl);
@@ -1290,7 +1020,7 @@ export class FileOutlinerView extends TextFileView {
 	private exitEditMode(id: string): void {
 		const editor = this.editorView;
 		const editorHost = this.editorHostEl;
-		const display = this.displayElById.get(id);
+		const display = this.dom.getDisplayEl(id);
 		const b = this.blockById.get(id);
 		if (!editor || !editorHost || !display) return;
 		if (this.pendingBlurTimer) {
@@ -1309,7 +1039,7 @@ export class FileOutlinerView extends TextFileView {
 
 		this.editingId = null;
 		this.closeEditorSuggests();
-		this.blockElById.get(id)?.classList.remove("is-blp-outliner-active");
+		this.dom.getBlockEl(id)?.classList.remove("is-blp-outliner-active");
 		editorHost.style.display = "none";
 		if (this.rootEl) {
 			this.rootEl.appendChild(editorHost);
