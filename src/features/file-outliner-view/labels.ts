@@ -13,6 +13,8 @@ export type FileOutlinerContextMenuLabels = {
 	convertToNormalBlock: string;
 	copy: string;
 	cut: string;
+	paste: string;
+	pasteAsText: string;
 	delete: string;
 	collapse: string;
 	expand: string;
@@ -31,6 +33,8 @@ const FALLBACK_CONTEXT_MENU: FileOutlinerContextMenuLabels = {
 	convertToNormalBlock: "Convert to normal block",
 	copy: "Copy",
 	cut: "Cut",
+	paste: "Paste",
+	pasteAsText: "Paste as text",
 	delete: "Delete",
 	collapse: "Collapse",
 	expand: "Expand",
@@ -58,9 +62,10 @@ export function getFileOutlinerContextMenuLabels(): FileOutlinerContextMenuLabel
 		convertToNormalBlock: String(raw.convertToNormalBlock ?? FALLBACK_CONTEXT_MENU.convertToNormalBlock),
 		copy: String(raw.copy ?? FALLBACK_CONTEXT_MENU.copy),
 		cut: String(raw.cut ?? FALLBACK_CONTEXT_MENU.cut),
+		paste: String(raw.paste ?? FALLBACK_CONTEXT_MENU.paste),
+		pasteAsText: String(raw.pasteAsText ?? FALLBACK_CONTEXT_MENU.pasteAsText),
 		delete: String(raw.delete ?? FALLBACK_CONTEXT_MENU.delete),
 		collapse: String(raw.collapse ?? FALLBACK_CONTEXT_MENU.collapse),
 		expand: String(raw.expand ?? FALLBACK_CONTEXT_MENU.expand),
 	};
 }
-

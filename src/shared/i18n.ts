@@ -206,6 +206,16 @@ class T {
             name: "Emphasis line (left)",
             desc: "Emphasize the active block's left connector line. When disabled, it stays muted.",
           },
+          editorContextMenu: {
+            enabled: {
+              name: "Editor context menu",
+              desc: "Replace the outliner editor right-click menu with a BLP-owned menu (supports plugin allowlist injection).",
+            },
+            allowedPlugins: {
+              name: "Editor menu plugin allowlist",
+              desc: "One plugin id per line. Only allowlisted plugins may add items to the outliner editor menu. Add `core` to include core items.",
+            },
+          },
           childrenOnSplit: {
             name: "Enter split: children behavior",
             desc: "Choose what happens to children when splitting a block with Enter.",
@@ -250,6 +260,8 @@ class T {
             convertToNormalBlock: "Convert to normal block",
             copy: "Copy",
             cut: "Cut",
+            paste: "Paste",
+            pasteAsText: "Paste as text",
             delete: "Delete",
             collapse: "Collapse",
             expand: "Expand",
@@ -704,6 +716,16 @@ class T {
             name: "启用强调线（左侧）",
             desc: "强调当前块左侧的连接线。关闭后保持为弱化颜色。",
           },
+          editorContextMenu: {
+            enabled: {
+              name: "编辑器右键菜单",
+              desc: "在 Outliner 编辑模式中使用 BLP 的右键菜单（支持按插件 ID 白名单注入）。",
+            },
+            allowedPlugins: {
+              name: "允许注入的插件 ID",
+              desc: "一行一个插件 ID。只有白名单内插件可向 Outliner 编辑菜单添加项。添加 `core` 以包含核心菜单项。",
+            },
+          },
           childrenOnSplit: {
             name: "Enter 拆分：子块处理",
             desc: "使用 Enter 拆分块时，选择子块保留在原块或移动到新块。",
@@ -748,6 +770,8 @@ class T {
             convertToNormalBlock: "转为普通块",
             copy: "复制",
             cut: "剪切",
+            paste: "粘贴",
+            pasteAsText: "以纯文本形式粘贴",
             delete: "删除",
             collapse: "折叠",
             expand: "展开",
@@ -1201,6 +1225,16 @@ class T {
             name: "啟用強調線（左側）",
             desc: "強調目前區塊左側的連接線。關閉後保持為弱化顏色。",
           },
+          editorContextMenu: {
+            enabled: {
+              name: "編輯器右鍵選單",
+              desc: "在 Outliner 編輯模式中使用 BLP 的右鍵選單（支援按外掛 ID 白名單注入）。",
+            },
+            allowedPlugins: {
+              name: "允許注入的外掛 ID",
+              desc: "一行一個外掛 ID。只有白名單內外掛可向 Outliner 編輯選單新增項目。加入 `core` 以包含核心選單項目。",
+            },
+          },
           childrenOnSplit: {
             name: "Enter 拆分：子塊處理",
             desc: "使用 Enter 拆分區塊時，選擇子塊保留在原區塊或移動到新區塊。",
@@ -1245,6 +1279,8 @@ class T {
             convertToNormalBlock: "轉為一般區塊",
             copy: "複製",
             cut: "剪下",
+            paste: "貼上",
+            pasteAsText: "以純文字貼上",
             delete: "刪除",
             collapse: "摺疊",
             expand: "展開",

@@ -9,6 +9,8 @@ describe("file outliner view feature toggles", () => {
 		expect(DEFAULT_SETTINGS.fileOutlinerZoomEnabled).toBe(true);
 		expect(DEFAULT_SETTINGS.fileOutlinerEmphasisLineEnabled).toBe(true);
 		expect(DEFAULT_SETTINGS.fileOutlinerDebugLogging).toBe(false);
+		expect(DEFAULT_SETTINGS.fileOutlinerEditorContextMenuEnabled).toBe(true);
+		expect(DEFAULT_SETTINGS.fileOutlinerEditorContextMenuAllowedPlugins).toEqual([]);
 	});
 
 	test("i18n provides toggle strings for en/zh/zh-TW", () => {
@@ -23,6 +25,13 @@ describe("file outliner view feature toggles", () => {
 				expect(String(ui[key]?.name)).not.toBe("");
 				expect(typeof ui[key]?.desc).toBe("string");
 				expect(String(ui[key]?.desc)).not.toBe("");
+			}
+
+			for (const key of ["enabled", "allowedPlugins"] as const) {
+				expect(typeof ui.editorContextMenu?.[key]?.name).toBe("string");
+				expect(String(ui.editorContextMenu?.[key]?.name)).not.toBe("");
+				expect(typeof ui.editorContextMenu?.[key]?.desc).toBe("string");
+				expect(String(ui.editorContextMenu?.[key]?.desc)).not.toBe("");
 			}
 
 			expect(typeof ui.tasksHelp?.name).toBe("string");
@@ -43,6 +52,8 @@ describe("file outliner view feature toggles", () => {
 				"convertToNormalBlock",
 				"copy",
 				"cut",
+				"paste",
+				"pasteAsText",
 				"delete",
 				"collapse",
 				"expand",

@@ -95,6 +95,8 @@ export interface PluginSettings {
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
 	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
+	fileOutlinerEditorContextMenuEnabled: boolean;
+	fileOutlinerEditorContextMenuAllowedPlugins: string[];
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -139,6 +141,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
 	fileOutlinerBackspaceWithChildren: "merge",
+	fileOutlinerEditorContextMenuEnabled: true,
+	fileOutlinerEditorContextMenuAllowedPlugins: [],
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,

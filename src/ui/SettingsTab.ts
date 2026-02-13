@@ -476,6 +476,34 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(ui.emphasisLine.name)
 			.setDesc(ui.emphasisLine.desc);
 
+		this.addToggleSetting("fileOutlinerEditorContextMenuEnabled", undefined, rootEl)
+			.setName(ui.editorContextMenu.enabled.name)
+			.setDesc(ui.editorContextMenu.enabled.desc);
+
+		new Setting(rootEl)
+			.setName(ui.editorContextMenu.allowedPlugins.name)
+			.setDesc(ui.editorContextMenu.allowedPlugins.desc)
+			.addTextArea((text) => {
+				const parsePluginIds = (value: string): string[] =>
+					Array.from(
+						new Set(
+							value
+								.split(/\r?\n/)
+								.map((l) => l.trim())
+								.filter(Boolean)
+						)
+					);
+
+				text
+					.setPlaceholder("metadata-menu\nhighlightr-plugin\ncore")
+					.setValue((this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins ?? []).join("\n"))
+					.onChange(async (value) => {
+						this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins = parsePluginIds(value);
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.rows = 3;
+			});
+
 		new Setting(rootEl)
 			.setName(ui.childrenOnSplit.name)
 			.setDesc(ui.childrenOnSplit.desc)

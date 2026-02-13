@@ -43,6 +43,7 @@ import {
 } from "./task-marker";
 import { OutlinerDomController } from "./dom-controller";
 import { createOutlinerEditorState } from "./editor-state";
+import { withPluginFilteredMenu } from "./editor-menu-bridge";
 import { handleOutlinerRootClickCapture } from "./root-click-router";
 import {
 	computeVisibleBlockNav,
@@ -473,8 +474,11 @@ export class FileOutlinerView extends TextFileView {
 
 		// When focus leaves the editor, we typically exit edit mode (with a small debounce,
 		// since structural ops may transiently reparent the editor host).
-	this.editorView.contentDOM.addEventListener("focusout", () => this.onEditorBlur());
-}
+		this.editorView.contentDOM.addEventListener("focusout", () => this.onEditorBlur());
+
+		// Context menu bridge for the standalone CM6 editor (S3 minimal bridge).
+		this.editorView.dom.addEventListener("contextmenu", (evt) => this.onEditorContextMenu(evt as MouseEvent));
+	}
 
 	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }) {
 		return createOutlinerEditorState(doc, sel, {
@@ -510,6 +514,211 @@ export class FileOutlinerView extends TextFileView {
 
 		const mgr = (this.app.workspace as any)?.editorSuggest;
 		triggerEditorSuggest(mgr, editor, file);
+	}
+
+	private onEditorContextMenu(evt: MouseEvent): void {
+		if (this.plugin.settings.fileOutlinerEditorContextMenuEnabled === false) return;
+		if (!this.file) return;
+		if (!this.editingId) return;
+		if (!this.editorView) return;
+
+		evt.preventDefault();
+		evt.stopPropagation();
+
+		const menu = new Menu();
+		this.buildEditorContextMenu(menu);
+		menu.showAtMouseEvent(evt);
+	}
+
+	private buildEditorContextMenu(menu: Menu): void {
+		if (!this.file) return;
+		if (!this.editingId) return;
+		if (!this.editorView) return;
+
+		const labels = getFileOutlinerContextMenuLabels();
+
+		const sel = this.editorView.state.selection.main;
+		const from = Math.min(sel.from, sel.to);
+		const to = Math.max(sel.from, sel.to);
+		const selectedText = from === to ? "" : this.editorView.state.sliceDoc(from, to);
+		const hasSelection = selectedText.trim().length > 0;
+
+		menu.addItem((item) => {
+			item.setTitle(labels.cut).setDisabled(!hasSelection).onClick(() => void this.cutEditorSelection());
+		});
+		menu.addItem((item) => {
+			item.setTitle(labels.copy).setDisabled(!hasSelection).onClick(() => void this.copyEditorSelection());
+		});
+		menu.addItem((item) => {
+			item.setTitle(labels.paste).onClick(() => void this.pasteFromClipboard({ plainTextBypass: false }));
+		});
+		menu.addItem((item) => {
+			item
+				.setTitle(labels.pasteAsText)
+				.onClick(() => void this.pasteFromClipboard({ plainTextBypass: true }));
+		});
+
+		menu.addSeparator();
+
+		const caretId = `^${this.editingId}`;
+		const alias = hasSelection ? this.toSingleLineAlias(selectedText) : undefined;
+
+		menu.addItem((item) => {
+			item.setTitle(labels.copyBlockReference).onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, alias, false);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle(labels.copyBlockEmbed).onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, true, alias, false);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle(labels.copyBlockUrl).onClick(() => {
+				Clipboard.copyToClipboard(this.app, this.plugin.settings, this.file!, caretId, false, undefined, true);
+			});
+		});
+
+		this.injectAllowlistedEditorMenuItems(menu);
+	}
+
+	private toSingleLineAlias(input: string): string | undefined {
+		const s = String(input ?? "")
+			.replace(/\r?\n/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
+		if (!s) return undefined;
+		return s.length > 140 ? `${s.slice(0, 140).trim()}...` : s;
+	}
+
+	private async copyEditorSelection(): Promise<void> {
+		if (!this.editorView) return;
+		const r = this.editorView.state.selection.main;
+		const from = Math.min(r.from, r.to);
+		const to = Math.max(r.from, r.to);
+		if (from === to) return;
+		const text = this.editorView.state.sliceDoc(from, to);
+		await navigator.clipboard.writeText(text);
+	}
+
+	private async cutEditorSelection(): Promise<void> {
+		if (!this.editorView) return;
+		const r = this.editorView.state.selection.main;
+		const from = Math.min(r.from, r.to);
+		const to = Math.max(r.from, r.to);
+		if (from === to) return;
+		const text = this.editorView.state.sliceDoc(from, to);
+		await navigator.clipboard.writeText(text);
+		this.editorView.dispatch({ changes: { from, to, insert: "" }, selection: { anchor: from } });
+	}
+
+	private async pasteFromClipboard(opts: { plainTextBypass: boolean }): Promise<void> {
+		if (!this.editorView) return;
+
+		let raw = "";
+		try {
+			raw = await navigator.clipboard.readText();
+		} catch (err) {
+			this.debugLog("editorContextMenu/paste/readText", err);
+			return;
+		}
+		if (!raw) return;
+
+		const hasNl = raw.includes("\n") || raw.includes("\r");
+		const isTask = Boolean(getTaskMarkerFromBlockText(this.editorView.state.doc.toString()));
+
+		// Task blocks are single-line: always split multiline paste.
+		const shouldSplit =
+			hasNl &&
+			(isTask || (!opts.plainTextBypass && this.plugin.settings.fileOutlinerPasteMultiline === "split"));
+
+		if (shouldSplit) {
+			// Mirror `onEditorPaste` split behavior so paste creates proper blocks.
+			const sel = this.getActiveSelection();
+			if (!sel || !this.outlinerFile) return;
+
+			const ctx = this.getEngineContext();
+			const markerLen = "[ ] ".length;
+			const engineSel = isTask
+				? { ...sel, start: Math.max(sel.start, markerLen), end: Math.max(sel.end, markerLen) }
+				: sel;
+
+			const result = pasteSplitLines(this.outlinerFile, engineSel, raw, { now: ctx.now, generateId: ctx.generateId });
+			if (!result.didChange) return;
+
+			if (isTask) {
+				const focusId = result.selection.id;
+				for (const id of Array.from(result.dirtyIds)) {
+					if (id === engineSel.id) continue;
+					const b = this.findBlockInFile(result.file, id);
+					if (!b) continue;
+
+					const prev = String(b.text ?? "");
+					const next = ensureTaskMarkerPrefixInBlockText(prev);
+					if (next === prev) continue;
+
+					b.text = next;
+					if (id === focusId) {
+						const delta = next.length - prev.length;
+						result.selection.start += delta;
+						result.selection.end += delta;
+					}
+				}
+			}
+
+			this.applyEngineResult(result);
+			return;
+		}
+
+		// "Paste as text" and multiline mode: insert raw text directly into the editor.
+		const r = this.editorView.state.selection.main;
+		const from = Math.min(r.from, r.to);
+		const to = Math.max(r.from, r.to);
+		this.editorView.dispatch({
+			changes: { from, to, insert: raw },
+			selection: { anchor: from + raw.length },
+		});
+	}
+
+	private injectAllowlistedEditorMenuItems(menu: Menu): void {
+		if (!this.suggestEditor) return;
+
+		const raw = Array.isArray(this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins)
+			? this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins
+			: [];
+		const allowed = new Set(raw.map((s) => String(s ?? "").trim().toLowerCase()).filter(Boolean));
+		if (allowed.size === 0) return;
+
+		menu.addSeparator();
+
+		const wsAny = this.app.workspace as any;
+		const handlers = wsAny?._?.["editor-menu"];
+
+		withPluginFilteredMenu(
+			menu as any,
+			{ allowedPluginIds: allowed, blockedPluginIds: new Set(["block-link-plus"]) },
+			() => {
+				if (Array.isArray(handlers)) {
+					for (const h of handlers) {
+						const fn = h?.fn;
+						if (typeof fn !== "function") continue;
+						try {
+							// Signature is typically (menu, editor, view). Extra args are ignored.
+							fn(menu, this.suggestEditor!, this);
+						} catch (err) {
+							this.debugLog("editorContextMenu/editor-menu/handler", err);
+						}
+					}
+					return;
+				}
+
+				try {
+					wsAny?.trigger?.("editor-menu", menu, this.suggestEditor!, this);
+				} catch (err) {
+					this.debugLog("editorContextMenu/editor-menu/trigger", err);
+				}
+			}
+		);
 	}
 
 	private closeEditorSuggests(): void {
