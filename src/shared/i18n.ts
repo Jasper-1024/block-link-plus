@@ -174,7 +174,7 @@ class T {
               title: "Routing",
             },
             display: {
-              title: "Display",
+              title: "Display & interactions",
             },
             interactions: {
               title: "Interactions",
@@ -206,10 +206,10 @@ class T {
           },
           frontmatterOverride: {
             name: "Frontmatter override",
-            desc: "Per-file: `blp_outliner: true/false` (legacy alias: `blp_enhanced_list`).",
+            desc: "Per-file: `blp_outliner: true/false`.",
           },
           enableRouting: {
-            name: "Enable outliner routing",
+            name: "Enable File Outliner",
             desc: "When enabled, scoped files open in the outliner view instead of the native Markdown editor.",
           },
           hideSystemTailLines: {
@@ -713,7 +713,7 @@ class T {
               title: "路由",
             },
             display: {
-              title: "显示",
+              title: "显示与交互",
             },
             interactions: {
               title: "交互",
@@ -745,10 +745,10 @@ class T {
           },
           frontmatterOverride: {
             name: "Frontmatter 覆盖",
-            desc: "每文件：`blp_outliner: true/false`（兼容旧名：`blp_enhanced_list`）。",
+            desc: "每文件：`blp_outliner: true/false`。",
           },
           enableRouting: {
-            name: "启用 Outliner 路由",
+            name: "启用 Outliner",
             desc: "启用后，范围内的文件将打开 Outliner 视图，而不是原生 Markdown 编辑器。",
           },
           hideSystemTailLines: {
@@ -1251,7 +1251,7 @@ class T {
               title: "路由",
             },
             display: {
-              title: "顯示",
+              title: "顯示與互動",
             },
             interactions: {
               title: "互動",
@@ -1283,10 +1283,10 @@ class T {
           },
           frontmatterOverride: {
             name: "Frontmatter 覆蓋",
-            desc: "每檔案：`blp_outliner: true/false`（相容舊名：`blp_enhanced_list`）。",
+            desc: "每檔案：`blp_outliner: true/false`。",
           },
           enableRouting: {
-            name: "啟用 Outliner 路由",
+            name: "啟用 Outliner",
             desc: "啟用後，範圍內的檔案會開啟 Outliner 檢視，而不是原生 Markdown 編輯器。",
           },
           hideSystemTailLines: {

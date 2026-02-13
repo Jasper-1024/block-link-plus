@@ -534,6 +534,13 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		const ui = t.settings.fileOutliner;
 		this.addHeading(ui.title, rootEl).setDesc(ui.desc);
 
+		const master = this.addToggleSetting("fileOutlinerViewEnabled", () => this.display(), rootEl)
+			.setName(ui.enableRouting.name)
+			.setDesc(ui.enableRouting.desc);
+		master.settingEl.classList.add("blp-settings-master-toggle");
+
+		if (this.plugin.settings.fileOutlinerViewEnabled === false) return;
+
 		this.addHeading(ui.groups.scope.title, rootEl);
 
 		this.renderStringListEditor(rootEl, {
@@ -566,12 +573,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		new Setting(rootEl).setName(ui.frontmatterOverride.name).setDesc(ui.frontmatterOverride.desc);
 
-		this.addHeading(ui.groups.routing?.title ?? "Routing", rootEl);
-
-		this.addToggleSetting("fileOutlinerViewEnabled", () => this.display(), rootEl)
-			.setName(ui.enableRouting.name)
-			.setDesc(ui.enableRouting.desc);
-
 		this.addHeading(ui.groups.display?.title ?? "Display", rootEl);
 
 		this.addToggleSetting("fileOutlinerHideSystemLine", undefined, rootEl)
@@ -581,8 +582,6 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		this.addToggleSetting("fileOutlinerEmphasisLineEnabled", undefined, rootEl)
 			.setName(ui.emphasisLine.name)
 			.setDesc(ui.emphasisLine.desc);
-
-		this.addHeading(ui.groups.interactions?.title ?? "Interactions", rootEl);
 
 		this.addToggleSetting("fileOutlinerDragAndDropEnabled", undefined, rootEl)
 			.setName(ui.dragAndDrop.name)

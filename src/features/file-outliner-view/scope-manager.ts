@@ -6,12 +6,8 @@ import type BlockLinkPlus from "../../main";
  *
  * - `blp_outliner: true`  => enable (even if not in enabled folders/files)
  * - `blp_outliner: false` => disable (even if in enabled folders/files)
- *
- * Back-compat: `blp_enhanced_list` is treated as an alias so existing vaults don't need to
- * rewrite frontmatter to try v2.
  */
 export const FILE_OUTLINER_FRONTMATTER_KEY = "blp_outliner";
-export const LEGACY_FILE_OUTLINER_FRONTMATTER_KEY = "blp_enhanced_list";
 
 export function normalizeFileOutlinerScopePath(input: string): string {
 	return normalizePath(input.trim()).replace(/^\/+/, "").replace(/\/+$/, "");
@@ -39,10 +35,6 @@ function getFrontmatterStateFromObject(fm: Record<string, unknown> | undefined):
 
 	if (has(FILE_OUTLINER_FRONTMATTER_KEY)) {
 		return parseFrontmatterBool(fm[FILE_OUTLINER_FRONTMATTER_KEY]);
-	}
-
-	if (has(LEGACY_FILE_OUTLINER_FRONTMATTER_KEY)) {
-		return parseFrontmatterBool(fm[LEGACY_FILE_OUTLINER_FRONTMATTER_KEY]);
 	}
 
 	return null;
@@ -245,9 +237,7 @@ export class FileOutlinerScopeManager {
 
 					const fm = cache?.frontmatter as Record<string, unknown> | undefined;
 					const hasRelevantKey = Boolean(
-						fm &&
-							(Object.prototype.hasOwnProperty.call(fm, FILE_OUTLINER_FRONTMATTER_KEY) ||
-								Object.prototype.hasOwnProperty.call(fm, LEGACY_FILE_OUTLINER_FRONTMATTER_KEY))
+						fm && Object.prototype.hasOwnProperty.call(fm, FILE_OUTLINER_FRONTMATTER_KEY)
 					);
 					const prevState = this.frontmatterOptInByPath.get(path);
 					if (!hasRelevantKey && prevState === undefined) return;

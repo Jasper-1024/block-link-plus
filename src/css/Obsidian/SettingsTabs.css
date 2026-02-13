@@ -113,12 +113,17 @@
 
 .blp-settings-list-row.setting-item .setting-item-control {
 	flex: 1;
-	justify-content: flex-end;
+	justify-content: flex-start;
 	gap: 6px;
 }
 
-.blp-settings-list-row.setting-item .setting-item-control input {
+.blp-settings-list-row.setting-item .setting-item-control .search-input-container {
+	flex: 1;
 	min-width: 240px;
+}
+
+.blp-settings-list-row.setting-item .setting-item-control .search-input-container input {
+	width: 100%;
 }
 
 .blp-settings-list-add-row.setting-item {

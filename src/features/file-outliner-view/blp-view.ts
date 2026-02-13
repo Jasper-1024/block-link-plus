@@ -857,7 +857,7 @@ export async function handleBlpView(
 				text:
 					`Error: blp-view source includes non-enabled files:\n` +
 					nonEnabledPaths.map((p) => `- ${p}`).join("\n") +
-					`\n\nEnable them via settings folders/files (vault-relative) or frontmatter \`${"blp_outliner: true"}\` (legacy alias: \`${"blp_enhanced_list: true"}\`).`,
+					`\n\nEnable them via settings folders/files (vault-relative) or frontmatter \`${"blp_outliner: true"}\`.`,
 			});
 			return;
 		}
