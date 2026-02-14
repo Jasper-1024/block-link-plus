@@ -69,7 +69,7 @@ export function analyzeHeadings(
 	if (start_line == end_line) {
 		let head_block: HeadingCache | undefined = fileCache.headings?.find(
 			(heading) => {
-				const { start, end } = heading.position;
+				const { start } = heading.position;
 				return start.line == start_line;
 			}
 		);
@@ -88,7 +88,7 @@ export function analyzeHeadings(
 		let closestBeforeStartDistance = Infinity;
 
 		fileCache.headings?.forEach((heading) => {
-			const { start, end } = heading.position;
+			const { start } = heading.position;
 			// 对于 start.line 在 (0, start_line) 开区间的处理
 			if (start.line < start_line) {
 				// 跳过以 ^ 或 block marker 开头的标题

@@ -1,5 +1,5 @@
-import { App, Editor, MarkdownView, MarkdownFileInfo, Menu, TFile, CachedMetadata, Notice } from 'obsidian';
-import { PluginSettings, HeadingAnalysisResult, MultLineHandle } from '../types';
+import { Editor, MarkdownView, MarkdownFileInfo, Menu, TFile, CachedMetadata, Notice } from 'obsidian';
+import { HeadingAnalysisResult, MultLineHandle } from '../types';
 import { get_is_heading } from '../utils';
 import { analyzeHeadings } from '../features/heading-analysis';
 import * as LinkCreation from '../features/link-creation';

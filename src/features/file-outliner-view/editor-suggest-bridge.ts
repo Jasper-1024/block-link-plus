@@ -1,5 +1,4 @@
 import type {
-	EditorChange,
 	EditorCommandName,
 	EditorPosition,
 	EditorRange,

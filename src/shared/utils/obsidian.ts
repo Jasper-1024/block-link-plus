@@ -1,4 +1,4 @@
-import { App, HeadingCache, resolveSubpath, HeadingSubpathResult, BlockSubpathResult, BlockCache, CachedMetadata } from 'obsidian';
+import { App, resolveSubpath, HeadingSubpathResult, BlockSubpathResult, BlockCache, CachedMetadata } from 'obsidian';
 
 
 /**

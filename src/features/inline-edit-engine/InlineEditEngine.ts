@@ -1,5 +1,5 @@
 import type BlockLinkPlus from "../../main";
-import { StateEffect, Transaction } from "@codemirror/state";
+import { StateEffect } from "@codemirror/state";
 import {
 	MarkdownPostProcessorContext,
 	MarkdownRenderChild,

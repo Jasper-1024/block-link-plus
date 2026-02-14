@@ -1,29 +1,7 @@
-import {
-	App,
-	Editor,
-	MarkdownView,
-	Modal,
-	Notice,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	TFile,
-	HeadingCache,
-	ListItemCache,
-	SectionCache,
-	EditorPosition,
-	MarkdownFileInfo,
-	Menu,
-	CachedMetadata,
-} from "obsidian";
+import type { HeadingCache, SectionCache } from "obsidian";
 
-import {
-	Decoration,
-	MatchDecorator,
-	ViewPlugin,
-	ViewUpdate,
-} from "@codemirror/view";
-import { Extension, RangeSet } from "@codemirror/state";
+import type { Decoration, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import type { RangeSet } from "@codemirror/state";
 
 export type HeadingAnalysisResult = {
 	isValid: boolean; // 是否有效

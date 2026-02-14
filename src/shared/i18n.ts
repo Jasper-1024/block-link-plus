@@ -701,10 +701,10 @@ class T {
           }
         },
 
-        // 文件 Outliner（v2）
+        // Outliner
         fileOutliner: {
-          title: "文件级 Outliner（v2）",
-          desc: "文件级 Outliner 视图（类 Logseq）。协议尾行使用 Dataview inline fields + `^id`，保证即使不安装插件，`[[file#^id]]` 也能跳转。",
+          title: "Outliner",
+          desc: "Outliner 视图（类 Logseq）。协议尾行使用 Dataview inline fields + `^id`，保证即使不安装插件，`[[file#^id]]` 也能跳转。",
           groups: {
             scope: {
               title: "范围",

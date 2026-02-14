@@ -1,4 +1,4 @@
-import type { Editor, ListItemCache, SectionCache, CachedMetadata } from 'obsidian';
+import type { Editor, ListItemCache, SectionCache } from 'obsidian';
 import type { HeadingAnalysisResult } from '../types';
 
 export function generateRandomId(prefix: string, length: number): string {

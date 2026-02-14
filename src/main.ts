@@ -10,8 +10,6 @@ import {
 	BlockLinkPlusViewPlugin
 } from './types';
 
-import { getAPI } from "obsidian-dataview";
-
 // Inline Edit`
 import { getActiveCM } from "basics/codemirror";
 import { FlowEditorManager } from "./features/flow-editor";
@@ -34,11 +32,9 @@ import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleBlpView, notifyFileOutlinerViewsSettingsChanged, registerFileOutlinerView } from "features/file-outliner-view";
 import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-scope";
-import { detectDataviewStatus, isDataviewAvailable } from "./utils/dataview-detector";
+import { isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
 import { decideWhatsNewOnStartup } from "features/whats-new";
-
-const MAX_ALIAS_LENGTH = 100;
 
 // all plugin need extends Plugin
 export default class BlockLinkPlus extends Plugin {

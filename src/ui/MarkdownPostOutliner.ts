@@ -11,18 +11,6 @@ const OUTLINER_SYSTEM_LINE_HIDDEN_MARKER = "data-blp-outliner-system-line-hidden
 const OUTLINER_SYSTEM_LINE_HIDDEN_KIND_TOKEN = "token";
 const OUTLINER_SYSTEM_LINE_HIDDEN_KIND_ELEMENT = "el";
 
-function hidePreviousBr(el: HTMLElement) {
-	let prev: ChildNode | null = el.previousSibling;
-	while (prev && prev.nodeType === Node.TEXT_NODE && !(prev.textContent ?? "").trim()) {
-		prev = prev.previousSibling;
-	}
-
-	if (prev && prev.nodeType === Node.ELEMENT_NODE && (prev as Element).tagName === "BR") {
-		(prev as HTMLElement).style.display = "none";
-		(prev as HTMLElement).setAttribute(OUTLINER_SYSTEM_LINE_HIDDEN_MARKER, OUTLINER_SYSTEM_LINE_HIDDEN_KIND_ELEMENT);
-	}
-}
-
 function hidePreviousBrChain(el: HTMLElement, maxCount: number) {
 	let prev: ChildNode | null = el.previousSibling;
 	let hidden = 0;
