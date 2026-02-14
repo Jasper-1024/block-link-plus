@@ -23,4 +23,4 @@
 ## 5. Verification
 - [x] 5.1 Run `npm test`
 - [x] 5.2 Run `npm run build-with-types`
-- [ ] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; deletion toggle behaves; `blp-view` guardrails behave as expected
+- [x] 5.3 Manual smoke in Obsidian (desktop): toggles take effect; deletion toggle behaves; `blp-view` guardrails behave as expected

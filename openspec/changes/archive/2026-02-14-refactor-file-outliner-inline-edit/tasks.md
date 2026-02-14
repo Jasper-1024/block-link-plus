@@ -15,5 +15,5 @@
 - [x] 3.3 Add CDP screenshot capture helpers and a basic diff/check workflow (Obsidian 9222 vs Logseq 9221)
 
 ## 4. Manual Convergence Loop
-- [ ] 4.1 Iterate with 9222/9221 until the outliner block UX (visual + key behaviors) matches Logseq baseline for: bullets, threading lines, active path, code blocks
-- [ ] 4.2 Final code review + remove dead code paths
+- [x] 4.1 Iterate with 9222/9221 until the outliner block UX (visual + key behaviors) matches Logseq baseline for: bullets, threading lines, active path, code blocks
+- [x] 4.2 Final code review + remove dead code paths

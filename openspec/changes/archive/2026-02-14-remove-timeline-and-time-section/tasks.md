@@ -21,4 +21,4 @@
 ## 5. Verification
 - [x] 5.1 Run `npm test`
 - [x] 5.2 Run `npm run build-with-types`
-- [ ] 5.3 Manual smoke in Obsidian (desktop): no timeline/time section groups; `blp-view` still works
+- [x] 5.3 Manual smoke in Obsidian (desktop): no timeline/time section groups; `blp-view` still works

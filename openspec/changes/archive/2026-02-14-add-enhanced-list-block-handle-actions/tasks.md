@@ -22,4 +22,4 @@
 
 ## 6. Verification
 - [x] 6.1 Run `npm.cmd test -- --runInBand`
-- [ ] 6.2 Manual smoke in Obsidian (desktop)
+- [x] 6.2 Manual smoke in Obsidian (desktop)
