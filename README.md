@@ -1,19 +1,18 @@
 # Block Link Plus
 
-Enhances Obsidian's right-click menu and global command with direct links to blocks and titles, adds support for multi-line blockquotes, and offers extensive customization options for block IDs.
+Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-1.8.1-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ![Demo](user_case.gif)
 
 ## 🚀 Key Features
 
-- **Multi-line Block References** - Innovative `^abc123-abc123` format for precise multi-line references
-- **Enhanced List Blocks** - List-item blocks with hidden system lines (`[date:: ...] ^id`) and a Dataview-backed `blp-view` Query/View
-- **Inline Editing** - Edit embedded blocks directly without file switching
-- **Built-in Outliner/Zoom (Optional)** - Vendored `obsidian-outliner` and `obsidian-zoom` for list editing ops
-- **Smart Aliases** - Content-based link descriptions
+- **Multi-line Block References** - Create precise range blocks with the `^abc123-abc123` format
+- **Outliner (Logseq-like) + `blp-view`** - Treat list items as blocks in scoped files; keep stable `^id` + hidden system metadata; query/render with `blp-view` (Dataview required)
+- **Inline Editing** - Edit embedded blocks/headings directly in Live Preview (when enabled)
+- **Smart Aliases** - Content-based link descriptions when copying links
 
 ## 📦 Installation
 
@@ -28,9 +27,9 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 
 ## 🔧 Quick Start
 
-1. Select text → Right-click → Choose block link type
-2. Use Command Palette: "Copy Block Link" 
-3. For multi-line: Select multiple lines → Create range blocks
+1. Select a block/heading → Right-click → Choose link type (link / embed / URI), or use Command Palette: "Copy Block Link" / "Copy Block as Embed" / "Copy Block as Obsidian URI"
+2. Multi-line: Select multiple lines → (Settings: pick a multi-line handling mode) → create a range block (`^id-id`)
+3. Outliner & `blp-view`: enable scope (Settings: enabled folders/files, or frontmatter `blp_outliner: true`) → use a `blp-view` code block to query/render
 
 ## 📖 Documentation
 
@@ -38,7 +37,7 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 
 - [Installation Guide](https://block-link-plus.jasper1024.com/install/)
 - [Multi-line Blocks](https://block-link-plus.jasper1024.com/usage/multiline/)
-- [Enhanced List Blocks](https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/)
+- [Outliner & blp-view](https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/)
 - [Settings Reference](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ### Language Support
@@ -50,12 +49,20 @@ Enhances Obsidian's right-click menu and global command with direct links to blo
 - [Telegram Channel](https://t.me/+8LPOcMS0p4M3MTUx)
 - [Telegram Chat](https://t.me/+QqmqUG-jSeY2ODNh)
 
-## 🆕 What's New in v1.8.1
+## 🆕 What's New in 2.0
 
-- Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`)
-- Fix: Inline Edit no longer shows the embedded backlinks panel ("Link to current file")
+- Outliner becomes the main workflow (Logseq-like list blocks in scoped files)
+- Unified scope model: enabled folders/files + per-file frontmatter `blp_outliner: true/false`
+- `blp-view` aligns with the Outliner scope model (no more “silent cross-scope” reads)
+- Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.0
+- Outliner becomes the main workflow (Logseq-like list blocks in scoped files)
+- Unified scope model: enabled folders/files + per-file frontmatter `blp_outliner: true/false`
+- `blp-view` aligns with the Outliner scope model
+- Removed legacy Timeline / Time Section features
 
 ### 1.8.1
 - Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`)

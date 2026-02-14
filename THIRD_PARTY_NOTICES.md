@@ -1,23 +1,20 @@
 # Third-Party Notices
 
-This project includes code copied from the following open-source project(s).
+This project contains adapted code and styles from the following open-source projects.
 
-## obsidian-outliner (Viacheslav Slinko) — MIT
+## sync-embeds (MIT)
 
-- Source: `https://github.com/vslinko/obsidian-outliner` (commit `df5656965518fc668d9e2283052d8b60473fa16c`)
-- Upstream version: `4.9.0`
-- Vendored files:
-  - `src/vendor/vslinko/obsidian-outliner/**`
-  - `src/css/vendor-obsidian-outliner.css`
-- License: `third_party/licenses/obsidian-outliner-MIT.txt`
+- Source: `https://github.com/uthvah/sync-embeds`
+- Usage in this repository:
+  - `src/css/Editor/InlineEdit/InlineEditEngine.css` (inline embed editor layout adaptation)
+  - `src/features/inline-edit-engine/**` (inline editing integration design inspired by sync-embeds architecture)
+- License text: `third_party/licenses/sync-embeds-MIT.txt`
 
-## obsidian-zoom (Viacheslav Slinko) — MIT
+## Logseq bullet threading styles (MIT)
 
-- Source: `https://github.com/vslinko/obsidian-zoom` (commit `e5bbe79cbcb8489c8c69fe890a95fcd80707e913`)
-- Upstream version: `1.1.2`
-- Vendored files:
-  - `src/vendor/vslinko/obsidian-zoom/calculateLimitedSelection.ts`
-  - `src/vendor/vslinko/obsidian-zoom/calculateVisibleContentBoundariesViolation.ts`
-  - `src/vendor/vslinko/obsidian-zoom/**`
-  - `src/css/vendor-obsidian-zoom.css`
-- License: `third_party/licenses/obsidian-zoom-MIT.txt`
+- Sources:
+  - `https://github.com/pengx17/logseq-plugin-bullet-threading`
+  - `https://github.com/pengx17/logseq-dev-theme`
+- Usage in this repository:
+  - `src/css/custom-styles.css` (bullet/threading style adaptation for File Outliner v2)
+- License text: `third_party/licenses/logseq-bullet-threading-MIT.txt`
