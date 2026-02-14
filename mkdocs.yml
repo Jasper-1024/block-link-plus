@@ -1,10 +1,10 @@
 site_name: Block Link Plus
-site_description: 'Obsidian 块引用增强插件文档'
-site_author: 'Jasper'
-site_url: 'https://obsidian-block-link-plus.jasper1024.com'
+site_description: "Documentation for Block Link Plus"
+site_author: Jasper
+site_url: "https://block-link-plus.jasper1024.com"
 
-repo_name: 'obsidian-block-link-plus'
-repo_url: 'https://github.com/Jasper-1024/obsidian-block-link-plus'
+repo_name: "obsidian-block-link-plus"
+repo_url: "https://github.com/Jasper-1024/obsidian-block-link-plus"
 
 theme:
   name: material
@@ -23,13 +23,13 @@ theme:
       accent: purple
       toggle:
         icon: material/brightness-7
-        name: 切换到深色模式
+        name: Switch to dark mode
     - scheme: slate
       primary: purple
       accent: purple
       toggle:
         icon: material/brightness-4
-        name: 切换到浅色模式
+        name: Switch to light mode
 
 nav:
   - Home: index.md
@@ -37,12 +37,12 @@ nav:
   - User Guide:
     - Block Links: usage/block-links.md
     - Multi-line Blocks: usage/multiline.md
-    - Enhanced List Blocks: usage/enhanced-list-blocks.md
-    - Flow Editor: usage/flow-editor.md
+    - Outliner: usage/outliner.md
+    - Inline Edit: usage/flow-editor.md
   - Reference:
     - Settings: reference/settings.md
     - Commands: reference/commands.md
-    - YAML Configuration: reference/yaml.md
+    - blp-view YAML: reference/yaml.md
   - Examples:
     - Daily Notes: examples/daily-notes.md
     - Workflows: examples/workflows.md
@@ -51,7 +51,7 @@ nav:
 
 plugins:
   - search:
-      lang: 
+      lang:
         - zh
         - en
   - i18n:
@@ -65,45 +65,45 @@ plugins:
           build: true
           default: true
           nav_translations:
-            "Home": "首页"
-            "Installation": "安装"
-            "User Guide": "使用指南"
-            "Block Links": "块链接"
-            "Multi-line Blocks": "多行块"
-            "Enhanced List Blocks": "增强列表块"
-            "Flow Editor": "流式编辑器"
-            "Reference": "参考手册"
-            "Settings": "设置选项"
-            "Commands": "命令列表"
-            "YAML Configuration": "YAML配置"
-            "Examples": "应用示例"
-            "Daily Notes": "日记应用"
-            "Workflows": "工作流程"
-            "Changelog": "更新日志"
-            "API Reference": "API参考"
+            Home: 首页
+            Installation: 安装
+            User Guide: 使用指南
+            Block Links: 块链接
+            Multi-line Blocks: 多行块
+            Outliner: Outliner
+            Inline Edit: 内联编辑
+            Reference: 参考
+            Settings: 设置
+            Commands: 命令
+            blp-view YAML: blp-view YAML
+            Examples: 示例
+            Daily Notes: 日记示例
+            Workflows: 工作流示例
+            Changelog: 更新日志
+            API Reference: API 参考
         - locale: en
           name: English
           build: true
         - locale: zh-TW
-          name: 繁體中文  
+          name: 繁體中文
           build: true
           nav_translations:
-            "Home": "首頁"
-            "Installation": "安裝"
-            "User Guide": "使用指南"
-            "Block Links": "區塊連結"
-            "Multi-line Blocks": "多行區塊"
-            "Enhanced List Blocks": "增強列表區塊"
-            "Flow Editor": "流式編輯器"
-            "Reference": "參考手冊"
-            "Settings": "設定選項"
-            "Commands": "命令列表"
-            "YAML Configuration": "YAML配置"
-            "Examples": "應用示例"
-            "Daily Notes": "日記應用"
-            "Workflows": "工作流程"
-            "Changelog": "更新日誌"
-            "API Reference": "API參考"
+            Home: 首頁
+            Installation: 安裝
+            User Guide: 使用指南
+            Block Links: 區塊連結
+            Multi-line Blocks: 多行區塊
+            Outliner: Outliner
+            Inline Edit: 內嵌編輯
+            Reference: 參考
+            Settings: 設定
+            Commands: 指令
+            blp-view YAML: blp-view YAML
+            Examples: 範例
+            Daily Notes: 日記範例
+            Workflows: 工作流程範例
+            Changelog: 更新日誌
+            API Reference: API 參考
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -128,4 +128,4 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/Jasper-1024/obsidian-block-link-plus
     - icon: fontawesome/solid/globe
-      link: https://jasper1024.com/
+      link: https://block-link-plus.jasper1024.com/
