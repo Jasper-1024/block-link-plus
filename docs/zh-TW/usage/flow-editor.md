@@ -8,6 +8,8 @@
 - `inlineEditEnabled`（總開關）
 - `inlineEditFile` / `inlineEditHeading` / `inlineEditBlock`
 
+也可以透過命令面板執行 `Toggle Inline Edit`（`mk-flow-editor`）快速切換 `inlineEditEnabled`。
+
 ## 用法
 
 使用原生嵌入語法：
@@ -16,7 +18,7 @@
 ![[筆記]]
 ![[筆記#標題]]
 ![[筆記#^blockId]]
-![[筆記#^startId-endId]]
+![[筆記#^id-id]]
 ```
 
 Reading 模式始終唯讀。

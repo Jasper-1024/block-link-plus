@@ -126,19 +126,18 @@ Multimodal capability expansion ^paper-application
 
 ### Experiment Records
 
-Use list items to record experiment progress (works well with Enhanced List Blocks):
+Use list items to record experiment progress (works well with Outliner):
 
 ```markdown
 ---
-blp_enhanced_list: true
+blp_outliner: true
 ---
 
-# Experiment Log - 2024-01-15
-
-- 09:00 Environment Setup
-- 10:30 Model Training (batch_size=32)
-- 14:00 Result Analysis (accuracy=85%)
-- 16:30 Parameter Tuning (lr=0.001)
+- Experiment Log - 2024-01-15
+  - 09:00 Environment setup
+  - 10:30 Model training (batch_size=32)
+  - 14:00 Result analysis (accuracy=85%)
+  - 16:30 Parameter tuning (lr=0.001)
 ```
 
 ## Team Collaboration

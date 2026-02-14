@@ -4,7 +4,7 @@ Block Link Plus programming interface.
 
 ## Global API
 
-Plugin registers global object at `window.BlockLinkPlus`:
+Plugin registers a global object at `window.BlockLinkPlus` (the plugin instance):
 
 ```javascript
 // Get plugin instance
@@ -13,15 +13,15 @@ const plugin = window.BlockLinkPlus;
 
 ## Available Methods
 
-### Flow Editor Control
+### Inline Edit (compat API)
 ```javascript
-// Open flow editor
+// Compatibility API: current versions no longer "open/close a Flow Editor UI" (usually a no-op)
 plugin.api.openFlowEditor();
 
-// Close flow editor  
+// Same as above
 plugin.api.closeFlowEditor();
 
-// Check if enabled
+// Check if Inline Edit is enabled (setting: inlineEditEnabled)
 const isEnabled = plugin.api.isFlowEnabled();
 ```
 
@@ -39,7 +39,7 @@ await plugin.api.updateSettings({
 
 ### Editor Access
 ```javascript
-// Get current editor instance
+// Get current editor instance (CodeMirror; may be null)
 const editor = plugin.api.getActiveEditor();
 
 // Get path handler

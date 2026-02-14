@@ -8,6 +8,8 @@ Settings → Block Link Plus → Inline Edit:
 - `inlineEditEnabled` (global)
 - `inlineEditFile` / `inlineEditHeading` / `inlineEditBlock`
 
+You can also run `Toggle Inline Edit` (`mk-flow-editor`) from the Command Palette to quickly toggle `inlineEditEnabled`.
+
 ## Usage
 
 Use standard embeds:
@@ -16,7 +18,7 @@ Use standard embeds:
 ![[Note]]
 ![[Note#Heading]]
 ![[Note#^blockId]]
-![[Note#^startId-endId]]
+![[Note#^id-id]]
 ```
 
 Reading mode is always read-only.

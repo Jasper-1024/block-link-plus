@@ -4,7 +4,14 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v1.8.1 (Current)
+## v2.0.0 (Current)
+
+- New: Outliner — a Logseq-like outliner view for scoped files; each list item is a stable referenceable block
+- New: `blp-view` (Query/View) — Dataview-backed query/group/render (supports `embed-list` / `table`; optional `materialize` writeback)
+- Improved: unified enable scope model (settings enabled folders/files + per-file frontmatter `blp_outliner: true/false`)
+- Removed: legacy Timeline / Time section features (pin an old version if you still need them)
+
+## v1.8.1
 
 - Fix: Inline Edit preserves list item children when embedding list-item block references (e.g., `#^123`).
 - Fix: Inline Edit no longer shows the embedded backlinks panel ("Link to current file").
@@ -111,17 +118,6 @@ Version history and new features for Block Link Plus.
   - Nearest heading title
 - Improved command and menu text for better clarity
 - Fixed consistency between command palette and right-click menu functionality
-
-## Roadmap
-
-### Upcoming Features
-- More timeline filtering options
-- Enhanced multi-line block format support
-- Improved internationalization support
-
-### Known Issues
-- Multi-line block handling in some complex nested structures
-- Performance optimization in large documents
 
 ## Contributing
 

@@ -128,7 +128,7 @@ render:
 `blp-view` 使用 Dataview 作为索引来源，读取 Outliner 启用范围内的列表块，并按 YAML 配置进行筛选/分组/排序与渲染。
 
 更多用法与配置项请参考文档站点：
-https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/
+https://block-link-plus.jasper1024.com/usage/outliner/
 
 ## 更新日志
 

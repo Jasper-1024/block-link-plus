@@ -126,19 +126,18 @@ Transformer架构的改进 ^paper-innovation
 
 ### 实验记录
 
-使用 list item 记录实验过程（可搭配 Enhanced List Blocks）：
+使用 list item 记录实验过程（可搭配 Outliner）：
 
 ```markdown
 ---
-blp_enhanced_list: true
+blp_outliner: true
 ---
 
-# 实验记录 - 2024-01-15
-
-- 09:00 环境准备
-- 10:30 模型训练（batch_size=32）
-- 14:00 结果分析（accuracy=85%）
-- 16:30 参数调优（lr=0.001）
+- 实验记录 - 2024-01-15
+  - 09:00 环境准备
+  - 10:30 模型训练（batch_size=32）
+  - 14:00 结果分析（accuracy=85%）
+  - 16:30 参数调优（lr=0.001）
 ```
 
 ## 团队协作

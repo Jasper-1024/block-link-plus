@@ -37,7 +37,7 @@ Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: 
 
 - [Installation Guide](https://block-link-plus.jasper1024.com/install/)
 - [Multi-line Blocks](https://block-link-plus.jasper1024.com/usage/multiline/)
-- [Outliner & blp-view](https://block-link-plus.jasper1024.com/usage/enhanced-list-blocks/)
+- [Outliner & blp-view](https://block-link-plus.jasper1024.com/usage/outliner/)
 - [Settings Reference](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ### Language Support

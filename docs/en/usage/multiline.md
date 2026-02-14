@@ -44,18 +44,20 @@ Second line content ^abc123
 ```
 
 ### 2. Add New Heading  
-Create new heading above selected content with special identifier.
+Wrap the selection with a pair of special headings (`## ˅id` ... `## ^id`).
 
 **Generated format**:
 ```
-## ?abc123
+## ˅abc123
 First line content
 Second line content
+
+## ^abc123
 ```
 
 **Reference syntax**:
 ```
-![[filename#?abc123]]
+![[filename#˅abc123]]
 ```
 
 ### 3. Add Multiple Blocks

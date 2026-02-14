@@ -4,7 +4,7 @@ Block Link Plus 提供的编程接口。
 
 ## 全局API
 
-插件在 `window.BlockLinkPlus` 注册全局对象：
+插件在 `window.BlockLinkPlus` 注册全局对象（插件实例）：
 
 ```javascript
 // 获取插件实例
@@ -13,15 +13,15 @@ const plugin = window.BlockLinkPlus;
 
 ## 可用方法
 
-### 流式编辑器控制
+### Inline Edit（兼容 API）
 ```javascript
-// 打开流式编辑器
+// 兼容旧版 API：当前版本中不再“打开/关闭 Flow Editor UI”，通常为 no-op
 plugin.api.openFlowEditor();
 
-// 关闭流式编辑器  
+// 同上
 plugin.api.closeFlowEditor();
 
-// 检查是否启用
+// 检查是否启用 Inline Edit（对应设置 inlineEditEnabled）
 const isEnabled = plugin.api.isFlowEnabled();
 ```
 
@@ -39,7 +39,7 @@ await plugin.api.updateSettings({
 
 ### 编辑器访问
 ```javascript
-// 获取当前编辑器实例
+// 获取当前编辑器实例（CodeMirror；可能为空）
 const editor = plugin.api.getActiveEditor();
 
 // 获取路径操作器
@@ -57,7 +57,7 @@ interface PluginSettings {
     enable_prefix: boolean;
     id_prefix: string;
     id_length: number;
-    // ... 其他设置项
+    // ... 其他设置项（详见文档：参考 → 设置）
 }
 ```
 

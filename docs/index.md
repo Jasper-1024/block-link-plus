@@ -1,19 +1,21 @@
 # Block Link Plus
 
-增强 Obsidian 块引用功能的插件，支持多行块引用、Enhanced List Blocks（`blp-view`）和内联编辑。
+增强 Obsidian 的块引用体验：一键复制块链接/嵌入/URI、创建多行范围块（`^id-id`，如 `^abc123-abc123`）、在启用范围内使用 Outliner（类 Logseq）与 `blp-view`（Query/View），并支持嵌入块的内联编辑。
 
 ## 核心功能
 
-- **多行块引用** - 创新的 `^abc123-abc123` 范围标识符，实现多行引用
-- **Enhanced List Blocks** - 以 list item 为最小 block，自动生成隐藏系统行（`[date:: ...] ^id`），并提供 `blp-view` 查询/视图
-- **内联编辑** - 直接编辑嵌入块内容，无需跳转原文件
-- **智能别名** - 块链接显示内容摘要而非随机ID
+- **块链接/嵌入/URI** - 右键或命令面板一键复制：`[[file#^id]]` / `![[file#^id]]` / `obsidian://open?...`
+- **多行范围块** - `^abc123-abc123` 范围标识符，精确引用/嵌入多行选区
+- **Outliner + blp-view** - 在启用文件内把 list item 当作 block；自动维护协议尾行（Dataview inline fields + `^id`）；用 `blp-view` 查询/分组/渲染
+- **内联编辑** - 在 Live Preview 直接编辑嵌入内容，无需跳转源文件（需开启设置）
+- **智能别名** - 复制常规块链接时可生成内容摘要/父标题等别名
 
 ## 快速开始
 
 1. 在社区插件中搜索 "Block Link Plus"
 2. 启用插件
 3. 选中文本右键 → "复制块链接"
+4. 若要使用 Outliner：设置 → Block Link Plus → Outliner → 配置启用范围（建议在专用文件夹内启用；或在文件 frontmatter 写 `blp_outliner: true`）
 
 ## 链接类型
 

@@ -1,19 +1,21 @@
 # Block Link Plus
 
-Obsidian block link enhancement plugin designed to improve note reference efficiency.
+Improve Obsidian block references: copy block links/embeds/URIs, create multi-line range blocks (`^id-id`), use Outliner (Logseq-like) + `blp-view` (Query/View) in scoped files, and edit embeds inline in Live Preview.
 
 ## Core Features
 
-- **Multi-line Block References** - Innovative `^abc123-abc123` range identifier for multi-line references
-- **Enhanced List Blocks** - Treat list items as the smallest block unit, auto-insert hidden system lines (`[date:: ...] ^id`), and provide `blp-view` Query/View
-- **Inline Editing** - Edit embedded block content directly without jumping to original file
-- **Smart Aliases** - Display block content summary instead of random IDs
+- **Block links / embeds / URIs** - Copy `[[file#^id]]` / `![[file#^id]]` / `obsidian://open?...` via context menu or Command Palette
+- **Multi-line range blocks** - Create precise range blocks with `^abc123-abc123` and embed via `![[file#^abc123-abc123]]`
+- **Outliner + blp-view** - Treat list items as blocks in scoped files; maintain a system tail line (Dataview inline fields + `^id`); query/group/render with `blp-view` (Dataview required)
+- **Inline Edit** - Edit embedded content directly in Live Preview (when enabled)
+- **Smart aliases** - Generate content-based aliases when copying block links
 
 ## Quick Start
 
 1. Search "Block Link Plus" in Community Plugins
 2. Enable the plugin
 3. Right-click selected text → "Copy Block Link"
+4. To use Outliner: Settings → Block Link Plus → Outliner → configure enable scope (recommended: a dedicated list-first folder; or set `blp_outliner: true` in file frontmatter)
 
 ## Link Types
 

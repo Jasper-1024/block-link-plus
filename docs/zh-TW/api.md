@@ -4,7 +4,7 @@ Block Link Plus 提供的程式設計介面。
 
 ## 全域 API
 
-外掛在 `window.BlockLinkPlus` 註冊全域物件：
+外掛在 `window.BlockLinkPlus` 註冊全域物件（外掛執行個體）：
 
 ```javascript
 // 取得外掛執行個體
@@ -13,15 +13,15 @@ const plugin = window.BlockLinkPlus;
 
 ## 可用方法
 
-### 流式編輯器控制
+### 內嵌編輯（相容 API）
 ```javascript
-// 開啟流式編輯器
+// 相容舊版 API：目前版本中不再「開啟/關閉 Flow Editor UI」，通常為 no-op
 plugin.api.openFlowEditor();
 
-// 關閉流式編輯器  
+// 同上
 plugin.api.closeFlowEditor();
 
-// 檢查是否啟用
+// 檢查是否啟用（對應設定 inlineEditEnabled）
 const isEnabled = plugin.api.isFlowEnabled();
 ```
 
@@ -39,7 +39,7 @@ await plugin.api.updateSettings({
 
 ### 編輯器存取
 ```javascript
-// 取得目前編輯器執行個體
+// 取得目前編輯器執行個體（CodeMirror；可能為 null）
 const editor = plugin.api.getActiveEditor();
 
 // 取得路徑操作器
@@ -57,7 +57,7 @@ interface PluginSettings {
     enable_prefix: boolean;
     id_prefix: string;
     id_length: number;
-    // ... 其他設定項
+    // ... 其他設定項（詳見文件：參考 → 設定）
 }
 ```
 

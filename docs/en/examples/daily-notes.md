@@ -1,60 +1,57 @@
 # Daily Notes
 
-Optimize daily note workflow with Block Link Plus.
+Use Block Link Plus to improve your daily note workflow.
 
-## Basic Settings
+## Basic setup
 
-### Enhanced List Blocks Configuration
-```
-Enable scope: add folders/files in settings, or set blp_enhanced_list: true in file frontmatter
-Dataview: required (for blp-view Query/View)
-```
+### Outliner
 
-### Multi-line Block Configuration
 ```
-Multi-line Processing: Add New Heading
-Alias Type: First 20 Characters
-Enable Prefix: Yes
-ID Prefix: diary
+Enable scope: add the daily-notes folder/file in settings, or set `blp_outliner: true` in the file frontmatter
+Dataview: required (for `blp-view`)
 ```
 
-## Daily Note Template
+### Multi-line blocks (optional)
+
+```
+Multi-line processing: Add new heading
+Alias type: First 20 characters
+Enable prefix: Yes
+ID prefix: diary
+```
+
+## Daily note template (list-first)
 
 ```markdown
 ---
-blp_enhanced_list: true
+blp_outliner: true
 ---
 
-# 2024-01-15
-
-## Morning Planning
-- [ ] Review yesterday's summary
-- [ ] Plan today's priorities
-
-## Log
-- 09:00 Morning Meeting [[Project A]] #project/A
-- 14:30 Client Communication [[Project A]] #client/key
-  - Client feedback summary...
-
-## 18:00 Daily Review
-Today's achievements:
-Today's issues:
-Tomorrow's priorities:
+- 2024-01-15
+  - Morning planning
+    - [ ] Review yesterday
+    - [ ] Plan today
+  - Log
+    - 09:00 Standup [[Project A]] #project/A
+    - 14:30 Client call [[Project A]] #client/key
+      - Notes...
+  - Daily review
+    - Done:
+    - Issues:
+    - Next:
 ```
 
-## Aggregate with blp-view (instead of Timeline)
+## Aggregate with blp-view
 
-Create a View in monthly or project summaries:
+Create a view in a monthly or project summary:
 
 ````markdown
-# Project A - January Summary
-
-## Key Timeline
+# Project A - January summary
 
 ```blp-view
 source:
   folders:
-    - "Daily Notes/2024-01"
+    - "Daily/2024-01"
 filters:
   date:
     within_days: 30
@@ -71,33 +68,34 @@ render:
 ```
 ````
 
-## Quick Operations
+## Quick operations
 
-### Create Important Content Blocks
-1. Select important paragraph
+### Create a reusable block
+1. Select a paragraph
 2. Right-click → "Copy Block Link"
-3. Reference in project notes
+3. Reference it elsewhere
 
-### Cross-date References
+### Cross-date reference
+
 ```markdown
-Yesterday's important decision: ![[2024-01-14#^diary-abc123]]
+Yesterday's key decision: ![[2024-01-14#^diary-abc123]]
 ```
 
-## Advanced Tips
+## Advanced tips
 
-### Tag System
+### Tags
 ```markdown
-- 09:00 Project Meeting #project/A #meeting/important
-- 14:30 Client Communication #client/key #status/followup
+- 09:00 Standup #project/A #meeting/important
+- 14:30 Client call #client/key #status/followup
 ```
 
-### Link Network
+### Link graph
 ```markdown
-- 09:00 [[Project A]] Progress Sync
-- Discussed [[Technical Solution]] with [[John]]
+- 09:00 [[Project A]] progress sync
+- Discussed [[Technical solution]] with [[Alice]]
 ```
 
-### Multi-dimensional Query/View (Example)
+### Multi-dimensional Query/View (example)
 
 ````markdown
 ```blp-view
@@ -109,3 +107,4 @@ render:
   type: table
 ```
 ````
+
