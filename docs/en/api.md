@@ -85,11 +85,17 @@ if (window.BlockLinkPlus) {
 }
 ```
 
-## TODO
+## API Surface (current)
 
-- Detailed type definitions
-- More operation methods
-- Event listening mechanism
-- Complete development examples
+The public API is intentionally small and lives under `plugin.api` (source of truth: `src/main.ts`):
+
+- `openFlowEditor()` / `closeFlowEditor()` - compatibility API; since v2.0 there is no Flow Editor UI, so these are usually no-ops
+- `getSettings()` - get current settings object (see Reference → Settings)
+- `updateSettings(partial)` - merge and persist settings (`partial` is a subset of `PluginSettings`)
+- `getActiveEditor()` - get the active CodeMirror EditorView (may be `undefined`)
+- `isFlowEnabled()` - whether Inline Edit is enabled (setting: `inlineEditEnabled`)
+- `getEnactor()` - internal enactor (path-opening utilities; may change)
+
+If you need more integration points, please open a GitHub issue and avoid relying on undocumented internals.
 
 More API information at [GitHub Issues](https://github.com/Jasper-1024/obsidian-block-link-plus/issues).

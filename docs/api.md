@@ -85,11 +85,17 @@ if (window.BlockLinkPlus) {
 }
 ```
 
-## TODO
+## API 范围（当前版本）
 
-- 详细的类型定义
-- 更多操作方法
-- 事件监听机制
-- 完整的开发示例
+目前对外公开的 API 仅包含 `plugin.api` 下的这些方法（以代码 `src/main.ts` 为准）：
+
+- `openFlowEditor()` / `closeFlowEditor()`：兼容旧接口；2.0 起不再提供 Flow Editor UI，通常为 no-op
+- `getSettings()`：获取当前设置对象（结构见「参考 → 设置」）
+- `updateSettings(partial)`：合并并持久化设置（`partial` 为 `PluginSettings` 的子集）
+- `getActiveEditor()`：获取当前激活的 CodeMirror EditorView（可能为 `undefined`）
+- `isFlowEnabled()`：返回是否启用 Inline Edit（对应设置 `inlineEditEnabled`）
+- `getEnactor()`：返回内部 enactor（用于路径打开等能力；接口可能变化）
+
+如需更多集成点，请到 GitHub Issues 提需求；尽量避免依赖未文档化的内部实现细节。
 
 更多API信息请关注 [GitHub Issues](https://github.com/Jasper-1024/obsidian-block-link-plus/issues)。
