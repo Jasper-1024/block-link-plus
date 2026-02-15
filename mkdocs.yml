@@ -60,27 +60,6 @@ plugins:
       reconfigure_material: true
       reconfigure_search: true
       languages:
-        - locale: zh
-          name: 简体中文
-          build: true
-          default: true
-          nav_translations:
-            Home: 首页
-            Installation: 安装
-            User Guide: 使用指南
-            Block Links: 块链接
-            Multi-line Blocks: 多行块
-            Outliner: Outliner
-            Inline Edit: 内联编辑
-            Reference: 参考
-            Settings: 设置
-            Commands: 命令
-            blp-view YAML: blp-view YAML
-            Examples: 示例
-            Daily Notes: 日记示例
-            Workflows: 工作流示例
-            Changelog: 更新日志
-            API Reference: API 参考
         - locale: en
           name: English
           build: true
@@ -104,6 +83,30 @@ plugins:
             Workflows: 工作流程範例
             Changelog: 更新日誌
             API Reference: API 參考
+        # NOTE: mkdocs-static-i18n currently generates a single root `404.html` using
+        # the last language in this list. Keep zh (default) last so the 404 page
+        # navigation stays in Simplified Chinese.
+        - locale: zh
+          name: 简体中文
+          build: true
+          default: true
+          nav_translations:
+            Home: 首页
+            Installation: 安装
+            User Guide: 使用指南
+            Block Links: 块链接
+            Multi-line Blocks: 多行块
+            Outliner: Outliner
+            Inline Edit: 内联编辑
+            Reference: 参考
+            Settings: 设置
+            Commands: 命令
+            blp-view YAML: blp-view YAML
+            Examples: 示例
+            Daily Notes: 日记示例
+            Workflows: 工作流示例
+            Changelog: 更新日志
+            API Reference: API 参考
 
 markdown_extensions:
   - pymdownx.highlight:
