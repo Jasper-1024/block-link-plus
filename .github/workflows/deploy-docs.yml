@@ -5,6 +5,7 @@ on:
     branches: [master, main, feature-multline-block]
     paths:
       - 'docs/**'
+      - '.github/workflows/deploy-docs.yml'
       - 'mkdocs.yml'
       - 'CNAME'
   workflow_dispatch:
@@ -26,4 +27,4 @@ jobs:
       - run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - run: mkdocs gh-deploy --force
+      - run: mkdocs gh-deploy --force --cname block-link-plus.jasper1024.com
