@@ -90,6 +90,8 @@ export class FileOutlinerView extends TextFileView {
 	private editorHostEl: HTMLElement | null = null;
 	private editorView: EditorView | null = null;
 	private suggestEditor: OutlinerSuggestEditor | null = null;
+	private bridgedActiveEditor: any | null = null;
+	private bridgedActiveEditorPrev: any | null = null;
 	private suppressEditorSync = false;
 	private editingId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
@@ -168,6 +170,8 @@ export class FileOutlinerView extends TextFileView {
 		this.contentEl.addClass("blp-file-outliner-view");
 		this.syncFeatureToggles();
 		this.registerDomEvent(this.contentEl, "scroll", () => this.display.scheduleVisibleBlockRefresh());
+		// Keep the editor-command bridge scoped to the active leaf.
+		this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateActiveEditorBridge()));
 	}
 
 	public toggleActiveTaskStatus(): boolean {
@@ -221,6 +225,7 @@ export class FileOutlinerView extends TextFileView {
 	 */
 	public onFileOutlinerSettingsChanged(): void {
 		this.syncFeatureToggles();
+		this.updateActiveEditorBridge();
 
 		// If a toggle is turned off mid-session, leave the view in a sane state.
 		this.dnd.onSettingsChanged();
@@ -273,6 +278,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	clear(): void {
+		this.uninstallActiveEditorBridge();
 		this.outlinerFile = null;
 		this.blockById.clear();
 		this.parentById.clear();
@@ -301,6 +307,79 @@ export class FileOutlinerView extends TextFileView {
 		this.dnd.clear();
 
 		this.contentEl.empty();
+	}
+
+	private isEditorCommandBridgeActive(): boolean {
+		if (this.plugin.settings.fileOutlinerEditorCommandBridgeEnabled === false) return false;
+		if (!this.editingId) return false;
+		if (!this.suggestEditor) return false;
+		if (!this.editorHostEl || this.editorHostEl.style.display === "none") return false;
+		try {
+			if (this.leaf !== this.app.workspace.activeLeaf) return false;
+		} catch (err) {
+			this.debugLog("activeEditorBridge/activeLeaf", err);
+		}
+		return true;
+	}
+
+	private installActiveEditorBridge(): void {
+		if (!this.suggestEditor) return;
+
+		const wsAny = this.app.workspace as any;
+		if (this.bridgedActiveEditor) {
+			// Best-effort: keep it installed if someone overwrote it.
+			try {
+				if (wsAny.activeEditor !== this.bridgedActiveEditor) wsAny.activeEditor = this.bridgedActiveEditor;
+			} catch (err) {
+				this.debugLog("activeEditorBridge/reinstall", err);
+			}
+			return;
+		}
+
+		let prev: any = null;
+		try {
+			prev = wsAny.activeEditor ?? null;
+		} catch {
+			prev = null;
+		}
+
+		const bridge = {
+			__blpFileOutlinerBridge: true,
+			editor: this.suggestEditor,
+			getMode: () => "source",
+			file: this.file ?? null,
+			view: this,
+		};
+
+		this.bridgedActiveEditorPrev = prev;
+		this.bridgedActiveEditor = bridge;
+
+		try {
+			wsAny.activeEditor = bridge;
+		} catch (err) {
+			this.debugLog("activeEditorBridge/install", err);
+		}
+	}
+
+	private uninstallActiveEditorBridge(): void {
+		const wsAny = this.app.workspace as any;
+		if (!this.bridgedActiveEditor) return;
+
+		try {
+			if (wsAny.activeEditor === this.bridgedActiveEditor) {
+				wsAny.activeEditor = this.bridgedActiveEditorPrev ?? null;
+			}
+		} catch (err) {
+			this.debugLog("activeEditorBridge/uninstall", err);
+		} finally {
+			this.bridgedActiveEditor = null;
+			this.bridgedActiveEditorPrev = null;
+		}
+	}
+
+	private updateActiveEditorBridge(): void {
+		if (this.isEditorCommandBridgeActive()) this.installActiveEditorBridge();
+		else this.uninstallActiveEditorBridge();
 	}
 
 	setEphemeralState(state: any): void {
@@ -1240,6 +1319,7 @@ export class FileOutlinerView extends TextFileView {
 			// If we just deleted the active block, force exit edit mode.
 			if (this.editingId === id) {
 				this.editingId = null;
+				this.updateActiveEditorBridge();
 				this.tryOrLog("pruneDom/removeEditorHost", () => this.editorHostEl?.remove());
 
 				if (this.editorHostEl && this.rootEl) {
@@ -1302,6 +1382,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editorView.focus();
+		this.updateActiveEditorBridge();
 
 		if (opts.scroll) {
 			this.editorHostEl.scrollIntoView({ block: "nearest" });
@@ -1329,6 +1410,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editingId = null;
+		this.updateActiveEditorBridge();
 		this.closeEditorSuggests();
 		this.dom.getBlockEl(id)?.classList.remove("is-blp-outliner-active");
 		editorHost.style.display = "none";

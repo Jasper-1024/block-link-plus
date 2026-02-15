@@ -81,6 +81,11 @@ Block Link Plus 的設定頁提供 Tabs 分組與跨 Tab 搜尋：
 - **fileOutlinerEditorContextMenuEnabled** - 在 Outliner 編輯模式中使用 BLP 的右鍵選單
 - **fileOutlinerEditorContextMenuAllowedPlugins** - 允許向該選單注入項目的外掛 ID 白名單（新增 `core` 以包含核心選單項）
 
+### 編輯器快捷鍵/命令（進階）
+
+- **fileOutlinerEditorCommandBridgeEnabled** - Outliner 編輯區塊時啟用編輯器命令橋接（讓 Ctrl+B 等 core 快捷鍵、白名單外掛的編輯器命令生效）
+- **fileOutlinerEditorCommandAllowedPlugins** - 允許在 Outliner 中執行編輯器命令的外掛 ID 白名單（加入 `core` 以包含 core 編輯器命令）
+
 ### 除錯
 
 - **fileOutlinerDebugLogging** - 將 Outliner 內部錯誤輸出到 DevTools console
@@ -123,6 +128,10 @@ Block Link Plus 的設定頁提供 Tabs 分組與跨 Tab 搜尋：
   "fileOutlinerBackspaceWithChildren": "merge",
   "fileOutlinerEditorContextMenuEnabled": true,
   "fileOutlinerEditorContextMenuAllowedPlugins": [],
+  "fileOutlinerEditorCommandBridgeEnabled": true,
+  "fileOutlinerEditorCommandAllowedPlugins": [
+    "core"
+  ],
 
   "blpViewAllowMaterialize": true,
   "blpViewMaxSourceFiles": 0,

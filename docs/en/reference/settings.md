@@ -81,6 +81,11 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
 - **fileOutlinerEditorContextMenuEnabled** - Use BLP's editor context menu inside Outliner edit mode
 - **fileOutlinerEditorContextMenuAllowedPlugins** - Plugin ID allowlist that can inject items (add `core` to include core menu items)
 
+### Editor shortcuts/commands (advanced)
+
+- **fileOutlinerEditorCommandBridgeEnabled** - Enable editor command bridge in Outliner edit mode (core shortcuts like Ctrl+B, plus allowlisted plugin editor commands)
+- **fileOutlinerEditorCommandAllowedPlugins** - Plugin ID allowlist that can run editor commands in Outliner (add `core` to include core editor commands)
+
 ### Debug
 
 - **fileOutlinerDebugLogging** - Log Outliner internal errors to DevTools console
@@ -123,6 +128,10 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
   "fileOutlinerBackspaceWithChildren": "merge",
   "fileOutlinerEditorContextMenuEnabled": true,
   "fileOutlinerEditorContextMenuAllowedPlugins": [],
+  "fileOutlinerEditorCommandBridgeEnabled": true,
+  "fileOutlinerEditorCommandAllowedPlugins": [
+    "core"
+  ],
 
   "blpViewAllowMaterialize": true,
   "blpViewMaxSourceFiles": 0,

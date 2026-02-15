@@ -240,6 +240,23 @@ class T {
               placeholder: "metadata-menu",
             },
           },
+          editorCommands: {
+            enabled: {
+              name: "Editor command bridge (shortcuts)",
+              desc: "Enable core editor shortcuts (Ctrl+B, etc.) and allowlisted plugin editor commands while editing blocks in Outliner. Note: CM6-injection plugins are not supported.",
+            },
+            allowedPlugins: {
+              name: "Editor command plugin allowlist",
+              desc: "One plugin id per row. Only allowlisted plugins may run editor commands in Outliner. Add `core` to include core editor commands.",
+              addButton: "Add allowlisted plugin",
+              placeholder: "highlightr-plugin",
+            },
+            copyFromMenuAllowlist: {
+              name: "Sync allowlists",
+              desc: "Copy the editor menu allowlist into the editor command allowlist. Tip: include `core` if you want core formatting shortcuts in Outliner.",
+              buttonText: "Copy from editor menu allowlist",
+            },
+          },
           listEditor: {
             moveUp: "Move up",
             moveDown: "Move down",
@@ -779,6 +796,23 @@ class T {
               placeholder: "metadata-menu",
             },
           },
+          editorCommands: {
+            enabled: {
+              name: "编辑器命令桥接（快捷键）",
+              desc: "在 Outliner 编辑块时启用 core 编辑器快捷键（Ctrl+B 等）和白名单插件的编辑器命令。注意：依赖 CM6 注入的插件不支持。",
+            },
+            allowedPlugins: {
+              name: "编辑器命令插件白名单",
+              desc: "每项一个插件 ID。只有白名单内插件可以在 Outliner 中执行编辑器命令。添加 `core` 以包含 core 编辑器命令。",
+              addButton: "添加插件",
+              placeholder: "highlightr-plugin",
+            },
+            copyFromMenuAllowlist: {
+              name: "同步白名单",
+              desc: "将“编辑器菜单白名单”复制到“编辑器命令白名单”。提示：想要 Ctrl+B 等格式化快捷键，请确保包含 `core`。",
+              buttonText: "从编辑器菜单白名单复制",
+            },
+          },
           listEditor: {
             moveUp: "上移",
             moveDown: "下移",
@@ -1315,6 +1349,23 @@ class T {
               desc: "每項一個外掛 ID。只有白名單內外掛可向 Outliner 編輯選單新增項目。加入 `core` 以包含核心選單項目。",
               addButton: "新增外掛",
               placeholder: "metadata-menu",
+            },
+          },
+          editorCommands: {
+            enabled: {
+              name: "編輯器命令橋接（快捷鍵）",
+              desc: "在 Outliner 編輯區塊時啟用 core 編輯器快捷鍵（Ctrl+B 等）和白名單外掛的編輯器命令。注意：依賴 CM6 注入的外掛不支援。",
+            },
+            allowedPlugins: {
+              name: "編輯器命令外掛白名單",
+              desc: "每項一個外掛 ID。只有白名單內外掛可以在 Outliner 中執行編輯器命令。加入 `core` 以包含 core 編輯器命令。",
+              addButton: "新增外掛",
+              placeholder: "highlightr-plugin",
+            },
+            copyFromMenuAllowlist: {
+              name: "同步白名單",
+              desc: "將「編輯器選單白名單」複製到「編輯器命令白名單」。提示：想要 Ctrl+B 等格式化快捷鍵，請確保包含 `core`。",
+              buttonText: "從編輯器選單白名單複製",
             },
           },
           listEditor: {

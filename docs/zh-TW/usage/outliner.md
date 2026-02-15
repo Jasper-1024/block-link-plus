@@ -85,3 +85,15 @@ Outliner 會為每個列表塊維護一條尾行，用 Dataview inline fields + 
 - Outliner：切換任務狀態（`Mod+Enter`）
 - Outliner：切換任務標記（`Mod+Shift+Enter`）
 
+### 編輯器快捷鍵 / 外掛命令（進階）
+
+Outliner 的區塊編輯器採用「最小橋接」模式（獨立的 CM6 EditorView）：
+
+- 依賴 **MarkdownView/CM6 注入**的外掛不支援。
+- 透過 Obsidian 命令/快捷鍵（editorCallback / editorCheckCallback）工作的外掛，可透過「編輯器命令橋接」best-effort 生效。
+
+設定（設定 → Outliner）：
+
+- `fileOutlinerEditorCommandBridgeEnabled` - 是否啟用橋接
+- `fileOutlinerEditorCommandAllowedPlugins` - 嚴格白名單（保留 `core` 以啟用 Ctrl+B 等核心格式化快捷鍵）
+

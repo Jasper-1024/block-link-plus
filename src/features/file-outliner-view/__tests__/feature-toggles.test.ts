@@ -11,6 +11,8 @@ describe("file outliner view feature toggles", () => {
 		expect(DEFAULT_SETTINGS.fileOutlinerDebugLogging).toBe(false);
 		expect(DEFAULT_SETTINGS.fileOutlinerEditorContextMenuEnabled).toBe(true);
 		expect(DEFAULT_SETTINGS.fileOutlinerEditorContextMenuAllowedPlugins).toEqual([]);
+		expect(DEFAULT_SETTINGS.fileOutlinerEditorCommandBridgeEnabled).toBe(true);
+		expect(DEFAULT_SETTINGS.fileOutlinerEditorCommandAllowedPlugins).toEqual(["core"]);
 	});
 
 	test("i18n provides toggle strings for en/zh/zh-TW", () => {
@@ -32,6 +34,13 @@ describe("file outliner view feature toggles", () => {
 				expect(String(ui.editorContextMenu?.[key]?.name)).not.toBe("");
 				expect(typeof ui.editorContextMenu?.[key]?.desc).toBe("string");
 				expect(String(ui.editorContextMenu?.[key]?.desc)).not.toBe("");
+			}
+
+			for (const key of ["enabled", "allowedPlugins", "copyFromMenuAllowlist"] as const) {
+				expect(typeof ui.editorCommands?.[key]?.name).toBe("string");
+				expect(String(ui.editorCommands?.[key]?.name)).not.toBe("");
+				expect(typeof ui.editorCommands?.[key]?.desc).toBe("string");
+				expect(String(ui.editorCommands?.[key]?.desc)).not.toBe("");
 			}
 
 			expect(typeof ui.tasksHelp?.name).toBe("string");

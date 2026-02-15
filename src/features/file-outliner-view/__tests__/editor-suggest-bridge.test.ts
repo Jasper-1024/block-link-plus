@@ -39,4 +39,25 @@ describe("editor-suggest-bridge", () => {
 
 		cm.destroy();
 	});
+
+	it("supports toggleMarkdownFormatting for common wrappers (bold)", () => {
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const cm = new EditorView({
+			state: EditorState.create({ doc: "hello", selection: { anchor: 0, head: 5 } }),
+			parent,
+		});
+
+		const editor = new OutlinerSuggestEditor(cm);
+		editor.toggleMarkdownFormatting("bold");
+		expect(cm.state.doc.toString()).toBe("**hello**");
+
+		// Unwrap when selection is directly surrounded by tokens.
+		cm.dispatch({ selection: { anchor: 2, head: 7 } });
+		editor.toggleMarkdownFormatting("bold");
+		expect(cm.state.doc.toString()).toBe("hello");
+
+		cm.destroy();
+	});
 });

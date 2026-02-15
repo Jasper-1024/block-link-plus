@@ -665,6 +665,44 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			disabled: () => this.plugin.settings.fileOutlinerEditorContextMenuEnabled === false,
 		});
 
+		this.addToggleSetting("fileOutlinerEditorCommandBridgeEnabled", () => this.display(), rootEl)
+			.setName(ui.editorCommands.enabled.name)
+			.setDesc(ui.editorCommands.enabled.desc);
+
+		this.renderStringListEditor(rootEl, {
+			name: ui.editorCommands.allowedPlugins.name,
+			desc: ui.editorCommands.allowedPlugins.desc,
+			addButtonText: ui.editorCommands.allowedPlugins.addButton ?? "Add allowlisted plugin",
+			placeholder: ui.editorCommands.allowedPlugins.placeholder ?? "highlightr-plugin",
+			getValue: () => this.plugin.settings.fileOutlinerEditorCommandAllowedPlugins ?? ["core"],
+			setValue: async (next) => {
+				this.plugin.settings.fileOutlinerEditorCommandAllowedPlugins = next;
+				await this.plugin.saveSettings();
+			},
+			normalizeItem: normalizePluginId,
+			attachSuggest: (inputEl) => void new InstalledPluginIdSuggest(this.app, inputEl),
+			disabled: () => this.plugin.settings.fileOutlinerEditorCommandBridgeEnabled === false,
+		});
+
+		new Setting(rootEl)
+			.setName(ui.editorCommands.copyFromMenuAllowlist.name)
+			.setDesc(ui.editorCommands.copyFromMenuAllowlist.desc)
+			.addButton((btn) => {
+				btn.setButtonText(ui.editorCommands.copyFromMenuAllowlist.buttonText ?? "Copy from editor menu allowlist")
+					.setCta()
+					.setDisabled(this.plugin.settings.fileOutlinerEditorCommandBridgeEnabled === false)
+					.onClick(async () => {
+						const raw = Array.isArray(this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins)
+							? this.plugin.settings.fileOutlinerEditorContextMenuAllowedPlugins
+							: [];
+						this.plugin.settings.fileOutlinerEditorCommandAllowedPlugins = dedupeKeepOrder(
+							raw.map(normalizePluginId).filter(Boolean)
+						);
+						await this.plugin.saveSettings();
+						this.display();
+					});
+			});
+
 		this.addHeading(ui.groups.debug?.title ?? "Debug", rootEl);
 
 		this.addToggleSetting("fileOutlinerDebugLogging", undefined, rootEl)

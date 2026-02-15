@@ -95,6 +95,18 @@ Outliner 提供一些与“块树”相关的编辑行为开关（设置 → `Ou
 - 粘贴多行文本：拆分成多个块 / 保留为单块多行（`fileOutlinerPasteMultiline`）
 - 行首 Backspace 且有子块：与上一块合并 / 优先 outdent（`fileOutlinerBackspaceWithChildren`）
 
+## 编辑器快捷键/插件命令（高级）
+
+Outliner 的块编辑器采用“最小桥接”模式（独立的 CM6 EditorView）。因此：
+
+- 依赖 **MarkdownView/CM6 注入**来修改编辑行为的插件，通常不会在 Outliner 里生效（我们也不打算兼容这一类）。
+- 通过 **Obsidian 命令/快捷键（editorCallback / editorCheckCallback）**工作的插件，可以通过“编辑器命令桥接”在 Outliner 中 best-effort 生效。
+
+相关设置（设置 → Outliner）：
+
+- `fileOutlinerEditorCommandBridgeEnabled` - 是否启用桥接
+- `fileOutlinerEditorCommandAllowedPlugins` - 严格白名单（想要 Ctrl+B 等 core 格式化快捷键，请保留 `core`）
+
 ## blp-view（Query/View）
 
 `blp-view` 是一个 Markdown 代码块（需要 Dataview 插件）：

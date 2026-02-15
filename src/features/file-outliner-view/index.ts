@@ -4,6 +4,7 @@ import { FileOutlinerView } from "./view";
 import { registerFileOutlinerRouting } from "./routing";
 import { registerFileOutlinerMarkdownPaneMenu } from "./markdown-pane-menu";
 import { registerFileOutlinerCommands } from "./commands";
+import { registerFileOutlinerEditorCommandBridge } from "./editor-command-bridge";
 
 export { FILE_OUTLINER_VIEW_TYPE, FileOutlinerView };
 export * from "./protocol";
@@ -29,4 +30,5 @@ export function registerFileOutlinerView(plugin: BlockLinkPlus): void {
 	registerFileOutlinerRouting(plugin);
 	registerFileOutlinerMarkdownPaneMenu(plugin);
 	registerFileOutlinerCommands(plugin);
+	registerFileOutlinerEditorCommandBridge(plugin);
 }

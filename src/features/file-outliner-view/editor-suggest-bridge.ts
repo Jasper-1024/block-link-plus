@@ -138,6 +138,81 @@ export class OutlinerSuggestEditor extends Editor {
 		return this.cm.state.sliceDoc(Math.min(r.from, r.to), Math.max(r.from, r.to));
 	}
 
+	/**
+	 * Minimal implementation used by core editor commands like `editor:toggle-bold`.
+	 * Best-effort: supports common inline wrappers only.
+	 */
+	toggleMarkdownFormatting(style: any): void {
+		const kind = String(style ?? "").toLowerCase();
+		const token =
+			kind === "bold"
+				? "**"
+				: kind === "italic"
+					? "*"
+					: kind === "strikethrough"
+						? "~~"
+						: kind === "highlight"
+							? "=="
+							: kind === "code"
+								? "`"
+								: null;
+
+		if (!token) return;
+
+		const r = this.cm.state.selection.main;
+		const from = Math.min(r.from, r.to);
+		const to = Math.max(r.from, r.to);
+		const doc = this.cm.state.doc;
+		const docText = doc.toString();
+
+		const tokenLen = token.length;
+
+		const hasTokenBefore = from >= tokenLen && docText.slice(from - tokenLen, from) === token;
+		const hasTokenAfter = to + tokenLen <= doc.length && docText.slice(to, to + tokenLen) === token;
+
+		// Empty selection: toggle `token|token` at cursor (mainly for symmetry after insert).
+		if (from === to) {
+			const hasCursorBefore = from >= tokenLen && docText.slice(from - tokenLen, from) === token;
+			const hasCursorAfter = from + tokenLen <= doc.length && docText.slice(from, from + tokenLen) === token;
+
+			if (hasCursorBefore && hasCursorAfter) {
+				this.cm.dispatch({
+					changes: [
+						{ from, to: from + tokenLen, insert: "" },
+						{ from: from - tokenLen, to: from, insert: "" },
+					],
+					selection: { anchor: from - tokenLen },
+				});
+				return;
+			}
+
+			this.cm.dispatch({
+				changes: { from, to, insert: token + token },
+				selection: { anchor: from + tokenLen },
+			});
+			return;
+		}
+
+		// Non-empty selection: unwrap when selection is directly surrounded by tokens.
+		if (hasTokenBefore && hasTokenAfter) {
+			this.cm.dispatch({
+				changes: [
+					{ from: to, to: to + tokenLen, insert: "" },
+					{ from: from - tokenLen, to: from, insert: "" },
+				],
+				selection: { anchor: from - tokenLen, head: to - tokenLen },
+			});
+			return;
+		}
+
+		// Default: wrap selection.
+		const selected = docText.slice(from, to);
+		this.cm.dispatch({
+			changes: { from, to, insert: token + selected + token },
+			selection: { anchor: from + tokenLen, head: to + tokenLen },
+		});
+	}
+
 	getRange(from: EditorPosition, to: EditorPosition): string {
 		const doc = this.cm.state.doc;
 		const a = posToOffset(doc, from);

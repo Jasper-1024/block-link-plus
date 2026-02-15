@@ -85,3 +85,15 @@ Related commands (see Reference → Commands):
 - Outliner: Toggle task status (`Mod+Enter`)
 - Outliner: Toggle task marker (`Mod+Shift+Enter`)
 
+### Editor shortcuts / plugin commands (advanced)
+
+Outliner uses a standalone CM6 editor in "minimal bridge" mode:
+
+- Plugins that rely on **MarkdownView/CM6 injection** are not supported.
+- Command/editorCallback based plugins can work best-effort via the editor command bridge.
+
+Settings (Settings → Outliner):
+
+- `fileOutlinerEditorCommandBridgeEnabled` - enable/disable the bridge
+- `fileOutlinerEditorCommandAllowedPlugins` - strict allowlist (keep `core` for core formatting shortcuts like Ctrl+B)
+

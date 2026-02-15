@@ -75,6 +75,8 @@ export interface PluginSettings {
 	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
 	fileOutlinerEditorContextMenuEnabled: boolean;
 	fileOutlinerEditorContextMenuAllowedPlugins: string[];
+	fileOutlinerEditorCommandBridgeEnabled: boolean;
+	fileOutlinerEditorCommandAllowedPlugins: string[];
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: boolean;
@@ -121,6 +123,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerBackspaceWithChildren: "merge",
 	fileOutlinerEditorContextMenuEnabled: true,
 	fileOutlinerEditorContextMenuAllowedPlugins: [],
+	fileOutlinerEditorCommandBridgeEnabled: true,
+	fileOutlinerEditorCommandAllowedPlugins: ["core"],
 
 	// blp-view (Query/View) guardrails
 	blpViewAllowMaterialize: true,
