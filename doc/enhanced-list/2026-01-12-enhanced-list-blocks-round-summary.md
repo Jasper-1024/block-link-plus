@@ -1,5 +1,7 @@
 # 2026-01-12：Enhanced List Blocks 本轮对话重点与决策纪要
 
+> 状态（2026-02 / v2.0.0）：本文为历史纪要。2.0 已移除 vendored vslinko outliner/zoom，并以 Outliner（`src/features/file-outliner-view/`）+ `blp-view` 为主线；涉及 Enhanced List / 内置 vslinko 的部分请勿再按“当前实现”理解。
+
 > 目的：把本轮对话中已经确认的“原则/决策/已完成事项/遗留问题”记录下来，便于后续继续迭代与回归验证。
 
 ## 已确认的核心决策

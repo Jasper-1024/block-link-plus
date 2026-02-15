@@ -1,5 +1,7 @@
 # Logseq/Roam Block Experience Target (BLP, list-item only)
 
+> Status (2026-02 / v2.0.0): Historical notes. The Enhanced List + vendored vslinko implementation referenced here was removed; current Outliner + `blp-view` live under `src/features/file-outliner-view/`.
+
 目标：在 Obsidian 中以“本地化、低侵入”的方式复现 80%~90% 的 Logseq/Roam block-first 体验；块单元坚持只做 **list item**（不把普通段落当块）。
 
 本文是备忘与评估，不是实现计划。

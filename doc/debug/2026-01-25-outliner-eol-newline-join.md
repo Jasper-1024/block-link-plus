@@ -1,5 +1,7 @@
 # Outliner Drag/Move: EOL Newline Consumed (Line Join)
 
+> Status (2026-02 / v2.0.0): This note is historical. The vendored `vslinko/obsidian-outliner` integration was removed in v2.0.0 (BLP now ships its own Outliner view).
+
 ## Problem
 
 When reordering list blocks (drag-and-drop / move) in Obsidian Live Preview, a sibling line could lose its line break:

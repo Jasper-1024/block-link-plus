@@ -1,5 +1,7 @@
 # Memo：Enhanced List Blocks（BLP × Dataview）已确定内容
 
+> 状态（2026-02 / v2.0.0）：本文为历史 memo（Enhanced List / vendored vslinko / timeline 等思路已迭代）。2.0 主线为 Outliner + `blp-view`，启用 key 以 `blp_outliner` 与设置范围为准；不要再按本文的 `blp_enhanced_list` / vendored vslinko 方案实现新功能。
+
 ## 目标
 
 - 把 Obsidian 的 list item 作为“最小 block 单元”，补齐 Roam/Logseq 式的 block-first：可引用（ID）→ 可索引（字段）→ 可聚合/筛选/查询（View）。

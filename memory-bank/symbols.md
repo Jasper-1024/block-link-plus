@@ -1,6 +1,8 @@
 # 🔣 Symbol Reference Guide
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
 
+> Status (2026-02 / v2.0.0): This guide includes symbols for historical modules (Timeline / Time Section) that were removed in v2.0.0. Keep for archive/reference; for current features, prioritize Outliner + `blp-view` + Inline Edit.
+
 ## 📁 File & Directory Symbols
 
 ### Core Directories

@@ -1,6 +1,8 @@
 # MkDocs Multi-language Documentation Context
 *Created: 2025-07-12 | Status: PARTIALLY COMPLETE*
 
+> Status (2026-02 / v2.0.0): Public docs have been updated for the current mainline (Outliner + `blp-view` + Inline Edit + Block Links). Timeline / Time Section are removed in v2.0.0; older notes here are historical.
+
 ## Current Task
 Creating comprehensive multi-language documentation for Obsidian Block Link Plus plugin using MkDocs + GitHub Pages.
 
@@ -8,7 +10,7 @@ Creating comprehensive multi-language documentation for Obsidian Block Link Plus
 - **Plugin**: Block Link Plus for Obsidian
 - **Main Innovation**: ^abc123-abc123 multi-line block references
 - **Architecture**: TypeScript + React + CodeMirror 6
-- **Key Features**: Timeline aggregation, Flow editor, Time sections, Smart aliases
+- **Key Features**: Outliner (Logseq-like) + `blp-view`, multi-line ranges, inline edit, smart aliases
 
 ## Documentation Progress
 1. ✅ Code analysis completed

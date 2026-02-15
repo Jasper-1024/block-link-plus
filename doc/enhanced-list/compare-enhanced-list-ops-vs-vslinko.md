@@ -1,8 +1,10 @@
 # Enhanced List Blocks Ops：与 vslinko 插件的“效果差异”对比（历史记录）
 
+> 状态（2026-02 / v2.0.0）：BLP 已移除 vendored 的 vslinko outliner/zoom 集成；当前主线 Outliner 实现在 `src/features/file-outliner-view/`。本文仅用于回溯历史决策，不再代表当前实现。
+
 > 目的：记录**曾经**的 “BLP 自研 Enhanced List Blocks Ops” 与参考插件（`obsidian-zoom` / `obsidian-outliner`）的差异，并说明为什么最终切换到“直接复用/内置插件”的路线。
 
-## TL;DR（当前原则 / 结论）
+## TL;DR（历史原则 / 结论，已废弃）
 
 - Enhanced List Blocks 的“第三部分：Ops”（Zoom/Move/Indent/Outdent/Drag&Drop/垂直缩进线…）**不再由 BLP 自研实现**。
 - 这些交互能力由 BLP 内置（vendored）的 vslinko 插件提供：

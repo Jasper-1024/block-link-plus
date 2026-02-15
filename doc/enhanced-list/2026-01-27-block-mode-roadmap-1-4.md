@@ -1,5 +1,7 @@
 # Enhanced List Block Mode Roadmap (1-4)
 
+> Status (2026-02 / v2.0.0): Historical roadmap. The "Enhanced List + vendored vslinko" approach was removed; current Outliner lives under `src/features/file-outliner-view/`.
+
 目标：在 **Enhanced List scope 内**把 Obsidian 的 list item 编辑体验尽量推进到 Logseq/Roam 的 “block-first 流畅感” 8~9 成。
 
 本文只描述路线图与实现落点；具体实现以 OpenSpec change 为准。

@@ -2,6 +2,8 @@
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-26*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
+> Status (2026-02 / v2.0.0): This memory-bank doc contains historical notes from the 1.x era (Timeline / Time Section / vendored vslinko). Those capabilities were removed in v2.0.0. For current behavior/architecture, prefer `openspec/specs/*` and the source under `src/features/file-outliner-view` (Outliner + `blp-view`) and `src/features/inline-edit-engine` (Inline Edit).
+
 ## 🛠️ Technology Stack
 
 ### 🖥️ Frontend

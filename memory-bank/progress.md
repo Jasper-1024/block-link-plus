@@ -2,6 +2,8 @@
 *v1.0 | Created: 2023-11-15 | Updated: 2024-12-28*
 *Π: 🏗️DEVELOPMENT | Ω: ⚙️EXECUTE*
 
+> Status (2026-02 / v2.0.0): This progress tracker predates the 2.0 release work. Timeline / Time Section were removed in v2.0.0; treat related items below as historical.
+
 ## 📈 Project Status
 Completion: 80% (新增 multiline block 重构任务)
 

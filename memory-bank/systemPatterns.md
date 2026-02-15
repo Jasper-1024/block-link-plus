@@ -2,6 +2,8 @@
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-25*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
+> Status (2026-02 / v2.0.0): Parts of this document describe removed 1.x-era capabilities (Timeline / Time Section / vendored vslinko). Treat those sections as historical reference only. For current behavior, prefer `openspec/specs/*` and the code under `src/features/file-outliner-view`.
+
 ## 🏛️ Architecture Overview
 
 ### 系统架构

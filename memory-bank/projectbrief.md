@@ -2,6 +2,8 @@
 *v1.0 | Created: 2024-12-19 | Updated: 2024-12-20*
 *Π: DEVELOPMENT | Ω: EXECUTE*
 
+> Status (2026-02 / v2.0.0): This project brief is historical. Timeline / Time Section were removed in v2.0.0; the current mainline is Outliner + `blp-view` + Inline Edit + Block Links. Treat the `blp-timeline` sections below as archive/reference only.
+
 ## 🏆 Overview
 Block Link Plus 是一个功能强大的 Obsidian 插件，专注于增强块级链接和内容聚合功能。当前正在开发 `blp-timeline` 功能，这是一个**章节级时间线聚合器**，能够从多个文件中提取符合条件的时间章节，并以嵌入链接的形式动态生成时间线视图。
 
