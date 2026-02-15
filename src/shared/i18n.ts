@@ -162,10 +162,10 @@ class T {
           }
         },
 
-        // File Outliner (v2)
+        // Outliner
         fileOutliner: {
-          title: "File Outliner (v2)",
-          desc: "File-level outliner view (Logseq-like). Tail lines use Dataview inline fields + `^id` so `[[file#^id]]` works without the plugin.",
+          title: "Outliner",
+          desc: "Outliner view (Logseq-like) for scoped files. Tail lines use Dataview inline fields + `^id` so `[[file#^id]]` works even without the plugin.",
           groups: {
             scope: {
               title: "Scope",
@@ -209,7 +209,7 @@ class T {
             desc: "Per-file: `blp_outliner: true/false`.",
           },
           enableRouting: {
-            name: "Enable File Outliner",
+            name: "Enable Outliner",
             desc: "When enabled, scoped files open in the outliner view instead of the native Markdown editor.",
           },
           hideSystemTailLines: {
@@ -1239,10 +1239,10 @@ class T {
           }
         },
 
-        // 檔案 Outliner（v2）
+        // Outliner
         fileOutliner: {
-          title: "檔案級 Outliner（v2）",
-          desc: "檔案級 Outliner 檢視（類 Logseq）。協議尾行使用 Dataview inline fields + `^id`，確保即使不安裝插件，`[[file#^id]]` 也能跳轉。",
+          title: "Outliner",
+          desc: "Outliner 檢視（類 Logseq）。協議尾行使用 Dataview inline fields + `^id`，確保即使不安裝插件，`[[file#^id]]` 也能跳轉。",
           groups: {
             scope: {
               title: "範圍",
