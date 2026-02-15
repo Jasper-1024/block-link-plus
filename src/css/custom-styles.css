@@ -385,6 +385,16 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	display: flex;
 }
 
+.blp-file-outliner-view .blp-file-outliner-blocks.is-blp-outliner-empty > .blp-outliner-empty-insert-hint {
+	display: flex;
+	opacity: 1;
+	height: var(--blp-outliner-control-height);
+}
+
+.blp-file-outliner-view .blp-file-outliner-blocks.is-blp-outliner-empty > .blp-outliner-empty-insert-hint::after {
+	content: none;
+}
+
 .blp-file-outliner-view .ls-block > .block-main-container:hover ~ .blp-outliner-insert-hint,
 .blp-file-outliner-view .blp-outliner-insert-hint:hover {
 	opacity: 1;

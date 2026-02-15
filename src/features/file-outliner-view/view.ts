@@ -11,6 +11,7 @@ import {
 	backspaceAtStart,
 	deleteBlock,
 	indentBlock,
+	insertAtRootEnd,
 	insertAfter,
 	mergeWithNext,
 	moveBlockSubtree,
@@ -449,6 +450,22 @@ export class FileOutlinerView extends TextFileView {
 		const blocks = root.createDiv({ cls: "blp-file-outliner-blocks" });
 		this.topLevelBlocksEl = blocks;
 
+		// Empty-file affordance: allow creating the first block without requiring the user to switch
+		// to source mode and type a list item manually.
+		const emptyInsertHint = document.createElement("div");
+		emptyInsertHint.className = "blp-outliner-empty-insert-hint blp-outliner-insert-hint";
+		emptyInsertHint.title = "Add block";
+		emptyInsertHint.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.insertFirstBlock();
+		});
+		const emptyInsertIcon = document.createElement("div");
+		emptyInsertIcon.className = "blp-outliner-insert-icon";
+		emptyInsertIcon.textContent = "+";
+		emptyInsertHint.appendChild(emptyInsertIcon);
+		blocks.appendChild(emptyInsertHint);
+
 		const host = document.createElement("div");
 		host.className = "blp-file-outliner-editor";
 		host.style.display = "none";
@@ -753,7 +770,9 @@ export class FileOutlinerView extends TextFileView {
 			this.display.reset();
 		}
 
-		this.syncBlockList(root, this.getRenderBlocks(file));
+		const renderBlocks = this.getRenderBlocks(file);
+		root.classList.toggle("is-blp-outliner-empty", renderBlocks.length === 0);
+		this.syncBlockList(root, renderBlocks);
 		this.pruneDom();
 
 		// 2) Restore focus/selection.
@@ -989,6 +1008,12 @@ export class FileOutlinerView extends TextFileView {
 		if (!this.outlinerFile) return;
 		const ctx = this.getEngineContext();
 		this.applyEngineResult(insertAfter(this.outlinerFile, id, ctx));
+	}
+
+	private insertFirstBlock(): void {
+		if (!this.outlinerFile) return;
+		const ctx = this.getEngineContext();
+		this.applyEngineResult(insertAtRootEnd(this.outlinerFile, ctx));
 	}
 
 	private toggleTaskStatusForBlock(id: string): void {

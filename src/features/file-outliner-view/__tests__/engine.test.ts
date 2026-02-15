@@ -2,6 +2,7 @@ import {
 	backspaceAtStart,
 	deleteBlock,
 	indentBlock,
+	insertAtRootEnd,
 	insertAfter,
 	moveBlockSubtree,
 	mergeWithNext,
@@ -320,6 +321,40 @@ describe("file-outliner-view/engine", () => {
 		expect(out.didChange).toBe(true);
 		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["b", "x", "c"]);
 		expect(out.file.blocks[0]?.children[1]?.depth).toBe(1);
+	});
+
+	test("insertAtRootEnd inserts the first block into an empty file and focuses it", () => {
+		const input = fileOf([]);
+
+		const now = "2026-02-03T00:00:00";
+		const out = insertAtRootEnd(input, { now, generateId: () => "x" });
+
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual({ id: "x", start: 0, end: 0 });
+		expect(Array.from(out.dirtyIds)).toEqual(["x"]);
+
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["x"]);
+		expect(out.file.blocks[0]?.text).toBe("");
+		expect(out.file.blocks[0]?.system.date).toBe(now);
+		expect(out.file.blocks[0]?.system.updated).toBe(now);
+		expect(out.file.blocks[0]?.depth).toBe(0);
+
+		// Input is not mutated.
+		expect(input.blocks).toEqual([]);
+	});
+
+	test("insertAtRootEnd appends after existing root blocks", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "a", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "b", depth: 0, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const out = insertAtRootEnd(input, { now: "2026-02-03T00:00:00", generateId: () => "x" });
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "b", "x"]);
+
+		// Input is not mutated.
+		expect(input.blocks.map((b) => b.id)).toEqual(["a", "b"]);
 	});
 
 	test("deleteBlock removes a subtree and focuses next/prev/parent", () => {

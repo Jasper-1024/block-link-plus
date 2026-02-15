@@ -138,6 +138,41 @@ export function insertAfter(
 	};
 }
 
+export function insertAtRootEnd(
+	file: ParsedOutlinerFile,
+	ctx: Pick<OutlinerEngineContext, "now" | "generateId">
+): OutlinerEngineResult {
+	const next = cloneFile(file);
+	const dirtyIds = new Set<string>();
+
+	const existingIds = new Set<string>();
+	collectIds(next.blocks, existingIds);
+
+	const newId = ensureUniqueGeneratedId(ctx, existingIds);
+	existingIds.add(newId);
+
+	const newBlock: OutlinerBlock = {
+		id: newId,
+		depth: 0, // rebuilt below
+		text: "",
+		children: [],
+		system: { date: ctx.now, updated: ctx.now, extra: {} },
+		_systemHasBlpMarker: true,
+	};
+
+	next.blocks.push(newBlock);
+	dirtyIds.add(newId);
+
+	rebuildDepths(next.blocks, 0);
+
+	return {
+		file: next,
+		selection: { id: newId, start: 0, end: 0 },
+		dirtyIds,
+		didChange: true,
+	};
+}
+
 export function splitAtSelection(
 	file: ParsedOutlinerFile,
 	sel: OutlinerSelection,
