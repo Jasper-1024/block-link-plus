@@ -4,7 +4,12 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.0 (当前版本)
+## v2.0.1 (当前版本)
+
+- 改进：Outliner 编辑模式支持 core 编辑器快捷键（如 Ctrl+B），并可通过严格白名单启用插件编辑器命令
+- 新增：Outliner 设置新增「编辑器命令桥接」与命令白名单，并可一键从右键菜单白名单复制
+
+## v2.0.0
 
 - 新增：Outliner —— 对启用范围内的文件提供类 Logseq 的大纲视图；每个列表项都是一个可稳定引用的 block
 - 新增：`blp-view`（Query/View）—— 基于 Dataview 的查询/分组/渲染（支持 `embed-list` / `table`；可选 `materialize` 写回）

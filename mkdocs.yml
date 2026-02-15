@@ -130,5 +130,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Jasper-1024/obsidian-block-link-plus
+    - icon: fontawesome/brands/telegram
+      link: https://t.me/blocklinkplus
     - icon: fontawesome/solid/globe
       link: https://block-link-plus.jasper1024.com/

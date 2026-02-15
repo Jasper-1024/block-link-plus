@@ -17,6 +17,11 @@
 3. 选中文本右键 → "复制块链接"
 4. 若要使用 Outliner：设置 → Block Link Plus → Outliner → 配置启用范围（建议在专用文件夹内启用；或在文件 frontmatter 写 `blp_outliner: true`）
 
+## 社区
+
+- Telegram Channel：https://t.me/blocklinkplus
+- Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
+
 ## 链接类型
 
 - `[[文件#^abc123]]` - 常规块链接

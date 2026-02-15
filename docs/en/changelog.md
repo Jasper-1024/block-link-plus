@@ -4,7 +4,12 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.0 (Current)
+## v2.0.1 (Current)
+
+- Improved: Outliner edit mode supports core editor shortcuts (Ctrl+B, etc.) and allowlisted plugin editor commands (strict allowlist)
+- New: Outliner settings for the editor command bridge + command allowlist, with a one-click copy action from the editor menu allowlist
+
+## v2.0.0
 
 - New: Outliner — a Logseq-like outliner view for scoped files; each list item is a stable referenceable block
 - New: `blp-view` (Query/View) — Dataview-backed query/group/render (supports `embed-list` / `table`; optional `materialize` writeback)

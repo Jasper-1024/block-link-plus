@@ -130,7 +130,16 @@ render:
 更多用法与配置项请参考文档站点：
 https://block-link-plus.jasper1024.com/usage/outliner/
 
+## 社区
+
+- Telegram Channel：https://t.me/blocklinkplus
+- Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
+
 ## 更新日志
+
+### 2.0.1
+- Outliner：编辑器命令桥接（让 Ctrl+B 等 core 快捷键生效）+ 严格插件白名单
+- 新增设置：`fileOutlinerEditorCommandBridgeEnabled`、`fileOutlinerEditorCommandAllowedPlugins`（想要 core 快捷键请保留 `core`）
 
 ### 2.0.0
 - Outliner（仿 Logseq）成为主线编辑体验

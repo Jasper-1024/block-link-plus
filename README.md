@@ -2,7 +2,7 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ![Demo](user_case.gif)
@@ -46,17 +46,22 @@ Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: 
 - [繁體中文](https://block-link-plus.jasper1024.com/zh-TW/)
 
 ### Community
-- [Telegram Channel](https://t.me/+8LPOcMS0p4M3MTUx)
+- [Telegram Channel](https://t.me/blocklinkplus)
 - [Telegram Chat](https://t.me/+QqmqUG-jSeY2ODNh)
 
 ## 🆕 What's New in 2.0
 
 - Outliner becomes the main workflow (Logseq-like list blocks in scoped files)
+- Outliner edit mode supports core editor shortcuts (Ctrl+B, etc.) via an editor command bridge (strict allowlist)
 - Unified scope model: enabled folders/files + per-file frontmatter `blp_outliner: true/false`
 - `blp-view` aligns with the Outliner scope model (no more “silent cross-scope” reads)
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.1
+- Outliner: editor command bridge (core shortcuts like Ctrl+B) + strict plugin allowlist
+- New settings: `fileOutlinerEditorCommandBridgeEnabled`, `fileOutlinerEditorCommandAllowedPlugins` (keep `core` for core shortcuts)
 
 ### 2.0.0
 - Outliner becomes the main workflow (Logseq-like list blocks in scoped files)

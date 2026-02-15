@@ -17,6 +17,11 @@
 3. 選取文字右鍵 →「複製塊連結」
 4. 若要使用 Outliner：設定 → Block Link Plus → Outliner → 配置啟用範圍（建議僅在專用資料夾啟用；或在檔案 frontmatter 寫 `blp_outliner: true`）
 
+## 社群
+
+- Telegram Channel：https://t.me/blocklinkplus
+- Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
+
 ## 連結類型
 
 - `[[檔案#^abc123]]` - 常規塊連結

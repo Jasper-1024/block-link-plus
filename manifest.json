@@ -1,7 +1,7 @@
 {
 	"id": "block-link-plus",
 	"name": "Block Link Plus",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Logseq-like outliner for scoped files, block link commands, blp-view query rendering, and inline edit for embeds.",
 	"author": "Jasper",

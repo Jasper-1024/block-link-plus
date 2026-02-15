@@ -23,6 +23,24 @@ const WHATS_NEW_V2: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_1: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: editor command bridge enabled (core shortcuts like Ctrl+B now work in Outliner edit mode).",
+		"Outliner: strict plugin allowlist for editor commands (enable specific shortcut plugins safely).",
+		"Settings: one-click copy from the editor menu allowlist to the editor command allowlist.",
+	],
+	zh: [
+		"Outliner：编辑器命令桥接（Outliner 编辑时 core 快捷键如 Ctrl+B 可用）。",
+		"Outliner：编辑器命令严格白名单（可安全启用部分快捷键插件）。",
+		"设置：支持从编辑器右键菜单白名单一键复制到编辑器命令白名单。",
+	],
+	"zh-TW": [
+		"Outliner：編輯器命令橋接（Outliner 編輯時 core 快捷鍵如 Ctrl+B 可用）。",
+		"Outliner：編輯器命令嚴格白名單（可安全啟用部分快捷鍵外掛）。",
+		"設定：支援從編輯器右鍵選單白名單一鍵複製到編輯器命令白名單。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -78,6 +96,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.1") {
+			return WHATS_NEW_V2_0_1[i18n.lang] ?? WHATS_NEW_V2_0_1.en;
 		}
 
 		if (this.currentVersion === "2.0.0" || this.currentVersion.startsWith("2.0.")) {

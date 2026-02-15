@@ -17,6 +17,11 @@ Improve Obsidian block references: copy block links/embeds/URIs, create multi-li
 3. Right-click selected text → "Copy Block Link"
 4. To use Outliner: Settings → Block Link Plus → Outliner → configure enable scope (recommended: a dedicated list-first folder; or set `blp_outliner: true` in file frontmatter)
 
+## Community
+
+- Telegram Channel: https://t.me/blocklinkplus
+- Telegram Chat: https://t.me/+QqmqUG-jSeY2ODNh
+
 ## Link Types
 
 - `[[file#^abc123]]` - Regular block reference
