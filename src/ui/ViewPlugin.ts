@@ -4,7 +4,7 @@ import {
 	ViewPlugin,
 } from "@codemirror/view";
 import { BlockLinkPlusViewPlugin } from "../types";
-import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
+import { BLP_BLOCK_MARKER_CLASS, BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 
 export function createViewPlugin(
 	rule: string = BLP_BLOCK_MARKER_RULE
@@ -12,7 +12,7 @@ export function createViewPlugin(
 	let decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
 		decoration: () => {
-			return Decoration.mark({ class: "small-font" });
+			return Decoration.mark({ class: BLP_BLOCK_MARKER_CLASS });
 		}
 	});
 	return ViewPlugin.define(

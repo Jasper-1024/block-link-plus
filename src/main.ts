@@ -20,11 +20,13 @@ import { Enactor } from "basics/enactor/enactor";
 import "css/DefaultVibe.css";
 import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
+import "css/Obsidian/BlockMarker.css";
 import "css/Obsidian/SettingsTabs.css";
 import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
 import { createViewPlugin } from 'ui/ViewPlugin';
+import { blockMarkerMarkdownPostProcessor } from "ui/BlockMarkerPostProcessor";
 import { fileOutlinerMarkdownPostProcessor } from "ui/MarkdownPostOutliner";
 import { WhatsNewModal } from "ui/WhatsNewModal";
 import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
@@ -147,6 +149,7 @@ export default class BlockLinkPlus extends Plugin {
 		});
 
 		// for reading mode
+		this.registerMarkdownPostProcessor((el) => blockMarkerMarkdownPostProcessor(el));
 		this.registerMarkdownPostProcessor((el, ctx) => fileOutlinerMarkdownPostProcessor(el, ctx, this));
 
 		// for live preview

@@ -1,0 +1,11 @@
+/* BLP inline block marker tokens (Live Preview).
+ *
+ * Marker headings like `## ˅abc123` are BLP-only and should not visually compete
+ * with regular heading text. Keep the styling scoped to the CM6 editor.
+ */
+
+.markdown-source-view.mod-cm6 .blp-block-marker {
+	font-size: 0.8em;
+	opacity: 0.8;
+	vertical-align: top;
+}
