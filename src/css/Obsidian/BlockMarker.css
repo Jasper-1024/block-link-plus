@@ -5,7 +5,11 @@
  */
 
 .markdown-source-view.mod-cm6 .blp-block-marker {
-	font-size: 0.8em;
-	opacity: 0.8;
-	vertical-align: top;
+	/* Match Obsidian's .cm-blockid look even inside headings. */
+	font-size: calc(var(--font-text-size, 16px) * 0.8);
+	line-height: 1.5;
+	font-weight: 400;
+	color: var(--text-muted);
+	opacity: 1;
+	vertical-align: text-top;
 }
