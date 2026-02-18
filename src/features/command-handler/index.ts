@@ -133,7 +133,7 @@ function handleMultiLineBlock(
             plugin.settings.mult_line_handle == MultLineHandle.heading
                 ? _gen_insert_blocklink_multline_heading
                 : _gen_insert_blocklink_multline_block;
-        const link = linkMethod.call(
+        const link = linkMethod(
             plugin,
             fileCache,
             editor,
