@@ -345,6 +345,210 @@ function enhanceEl<T extends HTMLElement>(el: T): T {
   return el;
 }
 
+// Settings UI stubs (Setting + PluginSettingTab)
+export class PluginSettingTab {
+  app: App;
+  plugin: any;
+  containerEl: HTMLElement;
+
+  constructor(app: App, plugin: any) {
+    this.app = app;
+    this.plugin = plugin;
+    this.containerEl = enhanceEl(document.createElement("div"));
+  }
+
+  display(): void {}
+  hide(): void {}
+}
+
+type ToggleComponent = {
+  setValue: (value: boolean) => ToggleComponent;
+  onChange: (cb: (value: boolean) => void) => ToggleComponent;
+};
+
+type DropdownComponent = {
+  addOption: (value: string, display: string) => DropdownComponent;
+  setValue: (value: string) => DropdownComponent;
+  onChange: (cb: (value: string) => void) => DropdownComponent;
+};
+
+type SliderComponent = {
+  setLimits: (min: number, max: number, step: number) => SliderComponent;
+  setValue: (value: number) => SliderComponent;
+  setDynamicTooltip: () => SliderComponent;
+  onChange: (cb: (value: number) => void) => SliderComponent;
+};
+
+type TextComponent = {
+  setPlaceholder: (value: string) => TextComponent;
+  setValue: (value: string) => TextComponent;
+  setDisabled: (disabled: boolean) => TextComponent;
+  onChange: (cb: (value: string) => void) => TextComponent;
+};
+
+type ButtonComponent = {
+  setButtonText: (value: string) => ButtonComponent;
+  setCta: () => ButtonComponent;
+  setDisabled: (disabled: boolean) => ButtonComponent;
+  onClick: (cb: () => void) => ButtonComponent;
+};
+
+type ExtraButtonComponent = {
+  setIcon: (icon: string) => ExtraButtonComponent;
+  setTooltip: (text: string) => ExtraButtonComponent;
+  setDisabled: (disabled: boolean) => ExtraButtonComponent;
+  onClick: (cb: () => void) => ExtraButtonComponent;
+};
+
+export class Setting {
+  settingEl: HTMLElement;
+  nameEl: HTMLElement;
+  descEl: HTMLElement;
+  controlEl: HTMLElement;
+
+  constructor(containerEl: HTMLElement) {
+    this.settingEl = enhanceEl(document.createElement("div"));
+    this.settingEl.classList.add("setting-item");
+
+    const infoEl = enhanceEl(document.createElement("div"));
+    infoEl.classList.add("setting-item-info");
+
+    this.nameEl = enhanceEl(document.createElement("div"));
+    this.nameEl.classList.add("setting-item-name");
+
+    this.descEl = enhanceEl(document.createElement("div"));
+    this.descEl.classList.add("setting-item-description");
+
+    infoEl.appendChild(this.nameEl);
+    infoEl.appendChild(this.descEl);
+
+    this.controlEl = enhanceEl(document.createElement("div"));
+    this.controlEl.classList.add("setting-item-control");
+
+    this.settingEl.appendChild(infoEl);
+    this.settingEl.appendChild(this.controlEl);
+
+    containerEl.appendChild(this.settingEl);
+  }
+
+  setName(name: string): this {
+    this.nameEl.textContent = String(name ?? "");
+    return this;
+  }
+
+  setDesc(desc: string): this {
+    this.descEl.textContent = String(desc ?? "");
+    return this;
+  }
+
+  setHeading(): this {
+    this.settingEl.classList.add("setting-item-heading");
+    return this;
+  }
+
+  setClass(cls: string): this {
+    if (cls) this.settingEl.classList.add(cls);
+    return this;
+  }
+
+  addToggle(cb: (toggle: ToggleComponent) => void): this {
+    const toggle: any = {
+      setValue: () => toggle,
+      onChange: () => toggle,
+    };
+    cb(toggle as ToggleComponent);
+    return this;
+  }
+
+  addDropdown(cb: (dropdown: DropdownComponent) => void): this {
+    const dropdown: any = {
+      addOption: () => dropdown,
+      setValue: () => dropdown,
+      onChange: () => dropdown,
+    };
+    cb(dropdown as DropdownComponent);
+    return this;
+  }
+
+  addSlider(cb: (slider: SliderComponent) => void): this {
+    const slider: any = {
+      setLimits: () => slider,
+      setValue: () => slider,
+      setDynamicTooltip: () => slider,
+      onChange: () => slider,
+    };
+    cb(slider as SliderComponent);
+    return this;
+  }
+
+  addText(cb: (text: TextComponent) => void): this {
+    const text: any = {
+      setPlaceholder: () => text,
+      setValue: () => text,
+      setDisabled: () => text,
+      onChange: () => text,
+    };
+    cb(text as TextComponent);
+    return this;
+  }
+
+  addSearch(cb: (search: TextComponent) => void): this {
+    return this.addText(cb);
+  }
+
+  addButton(cb: (button: ButtonComponent) => void): this {
+    const button: any = {
+      setButtonText: () => button,
+      setCta: () => button,
+      setDisabled: () => button,
+      onClick: () => button,
+    };
+    cb(button as ButtonComponent);
+    return this;
+  }
+
+  addExtraButton(cb: (button: ExtraButtonComponent) => void): this {
+    const button: any = {
+      setIcon: () => button,
+      setTooltip: () => button,
+      setDisabled: () => button,
+      onClick: () => button,
+    };
+    cb(button as ExtraButtonComponent);
+    return this;
+  }
+}
+
+export class AbstractInputSuggest<T> {
+  app: App;
+  inputEl: HTMLInputElement;
+
+  constructor(app: App, inputEl: HTMLInputElement) {
+    this.app = app;
+    this.inputEl = inputEl;
+  }
+
+  // Stubs (Obsidian will call these; tests typically won't).
+  getSuggestions(_query: string): T[] {
+    return [];
+  }
+  renderSuggestion(_value: T, _el: HTMLElement): void {}
+  selectSuggestion(_value: T): void {}
+}
+
+export class TFolder extends TFile {
+  children: Array<TFile | TFolder> = [];
+
+  constructor(path?: string) {
+    super(path);
+  }
+}
+
+export const prepareFuzzySearch = (query: string) => {
+  const q = String(query ?? "").toLowerCase();
+  return (text: string) => String(text ?? "").toLowerCase().includes(q);
+};
+
 export class Modal {
   app: App;
   titleEl: HTMLElement;

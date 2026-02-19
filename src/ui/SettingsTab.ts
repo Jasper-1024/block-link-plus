@@ -524,10 +524,22 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 
 		// Inline edit
 		this.addHeading(t.settings.inlineEdit.title, rootEl).setDesc(t.settings.inlineEdit.desc);
-		this.addToggleSetting("inlineEditEnabled", undefined, rootEl).setName(t.settings.inlineEdit.enable.name).setDesc(t.settings.inlineEdit.enable.desc);
-		this.addToggleSetting("inlineEditFile", undefined, rootEl).setName(t.settings.inlineEdit.file.name).setDesc(t.settings.inlineEdit.file.desc);
-		this.addToggleSetting("inlineEditHeading", undefined, rootEl).setName(t.settings.inlineEdit.heading.name).setDesc(t.settings.inlineEdit.heading.desc);
-		this.addToggleSetting("inlineEditBlock", undefined, rootEl).setName(t.settings.inlineEdit.block.name).setDesc(t.settings.inlineEdit.block.desc);
+		const inlineEditMaster = this.addToggleSetting("inlineEditEnabled", () => this.display(), rootEl)
+			.setName(t.settings.inlineEdit.enable.name)
+			.setDesc(t.settings.inlineEdit.enable.desc);
+		inlineEditMaster.settingEl.classList.add("blp-settings-master-toggle");
+
+		if (this.plugin.settings.inlineEditEnabled) {
+			this.addToggleSetting("inlineEditFile", undefined, rootEl)
+				.setName(t.settings.inlineEdit.file.name)
+				.setDesc(t.settings.inlineEdit.file.desc);
+			this.addToggleSetting("inlineEditHeading", undefined, rootEl)
+				.setName(t.settings.inlineEdit.heading.name)
+				.setDesc(t.settings.inlineEdit.heading.desc);
+			this.addToggleSetting("inlineEditBlock", undefined, rootEl)
+				.setName(t.settings.inlineEdit.block.name)
+				.setDesc(t.settings.inlineEdit.block.desc);
+		}
 	}
 
 	private renderFileOutlinerTab(rootEl: HTMLElement) {
