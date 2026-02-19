@@ -203,6 +203,56 @@ describe("link-creation/gen_insert_blocklink_multiline_block", () => {
 		);
 	});
 
+	test("reuses an existing inline range marker without modifying the document", () => {
+		const spy = jest.spyOn(Utils, "generateRandomId");
+		spy.mockClear();
+
+		const original = ["aaaa ^abc123", "bbbb", "cccc ^abc123-abc123"].join("\n");
+		const editor = new TestEditor(original, { line: 0, ch: 0 }, { line: 2, ch: 0 });
+
+		const fileCache: any = { sections: [] };
+		const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, DEFAULT_SETTINGS);
+
+		expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
+		expect(editor.getValue()).toBe(original);
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	test("reuses an existing standalone range marker without modifying the document", () => {
+		const spy = jest.spyOn(Utils, "generateRandomId");
+		spy.mockClear();
+
+		const original = [
+			"start ^abc123",
+			"> quote1",
+			"> quote2",
+			"> quote3",
+			"^abc123-abc123",
+			"",
+			"next paragraph",
+		].join("\n");
+		const editor = new TestEditor(original, { line: 0, ch: 0 }, { line: 2, ch: 0 });
+
+		const fileCache: any = {
+			sections: [
+				{
+					type: "paragraph",
+					position: { start: { line: 0, col: 0 }, end: { line: 0, col: 5 } },
+				},
+				{
+					type: "blockquote",
+					position: { start: { line: 1, col: 0 }, end: { line: 3, col: 8 } },
+				},
+			],
+		};
+
+		const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, DEFAULT_SETTINGS);
+
+		expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
+		expect(editor.getValue()).toBe(original);
+		expect(spy).not.toHaveBeenCalled();
+	});
+
 	test("fails without modifying the document when the start line already has a block ID", () => {
 		jest.spyOn(Utils, "generateRandomId").mockReturnValue("abc123");
 

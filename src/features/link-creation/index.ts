@@ -311,12 +311,7 @@ export function gen_insert_blocklink_multiline_block(
 		}
 	}
 	
-	// Generate unique ID (6 character alphanumeric)
-	let id: string;
 	const fullText = editor.getValue();
-	do {
-		id = generateRandomId("", 6); // Always 6 chars for multiline blocks, no prefix
-	} while (fullText.includes(`^${id}`)); // Ensure uniqueness across entire document
 
 	const pickListItemForLine = (line: number) => {
 		const listItems = fileCache.listItems;
@@ -341,14 +336,44 @@ export function gen_insert_blocklink_multiline_block(
 	const endInsertLine = endListItem ? endListItem.end : endLine;
 
 	const startInsertText = editor.getLine(startInsertLine);
+	const endInsertText = editor.getLine(endInsertLine);
+
+	const endSection = (fileCache.sections || []).find((section) => {
+		return section.position.start.line <= endInsertLine && section.position.end.line >= endInsertLine;
+	});
+
+	// If the range marker already exists (e.g. user clicks copy again), reuse it.
+	// This makes the multiline block behave like normal block IDs: copy link/embed multiple times without errors.
+	const existingStartId = startInsertText.match(/\s*\^([a-zA-Z0-9]+)\s*$/)?.[1];
+	if (existingStartId) {
+		const existingEndMarker = `^${existingStartId}-${existingStartId}`;
+		const endMarkerRegex = new RegExp(`\\s*\\^${existingStartId}-${existingStartId}\\s*$`);
+		const lines = fullText.split("\n");
+		const endSectionEndLine = endSection?.position?.end?.line;
+		const scanEndLine = Math.min(
+			lines.length - 1,
+			(typeof endSectionEndLine === "number" ? endSectionEndLine : endInsertLine) + 10
+		);
+		for (let line = endInsertLine; line <= scanEndLine; line++) {
+			if (endMarkerRegex.test(lines[line] ?? "")) {
+				return { ok: true, link: existingEndMarker };
+			}
+		}
+	}
+
 	if (lineEndsWithBlockId(startInsertText)) {
 		return { ok: false, message: "Start line already has a block ID" };
 	}
 
-	const endInsertText = editor.getLine(endInsertLine);
 	if (lineEndsWithBlockId(endInsertText)) {
 		return { ok: false, message: "End line already has a block ID" };
 	}
+
+	// Generate unique ID (6 character alphanumeric)
+	let id: string;
+	do {
+		id = generateRandomId("", 6); // Always 6 chars for multiline blocks, no prefix
+	} while (fullText.includes(`^${id}`)); // Ensure uniqueness across entire document
 	
 	// Get the start insertion line content
 	const firstLine = startInsertText;
@@ -361,10 +386,6 @@ export function gen_insert_blocklink_multiline_block(
 		// Add marker to end of existing content
 		newFirstLine = `${firstLine} ^${id}`;
 	}
-
-	const endSection = (fileCache.sections || []).find((section) => {
-		return section.position.start.line <= endInsertLine && section.position.end.line >= endInsertLine;
-	});
 
 	const endMarker = `^${id}-${id}`;
 	const endMarkerInlineSafe =
