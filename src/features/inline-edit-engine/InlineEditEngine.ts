@@ -40,7 +40,7 @@ type LivePreviewObserverEntry = {
 };
 
 type ParsedInlineEmbed = {
-	kind: "block" | "heading" | "range";
+	kind: "block" | "heading" | "range" | "file";
 	file: TFile;
 	subpath: string;
 	visibleRange: [number, number];
@@ -1221,6 +1221,34 @@ export class InlineEditEngine {
 		};
 	}
 
+	private parseFileEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
+		const embedLink = this.getInternalEmbedLink(embedEl);
+		if (!embedLink) return null;
+
+		const pipeIndex = embedLink.indexOf("|");
+		const actualLink = pipeIndex === -1 ? embedLink : embedLink.substring(0, pipeIndex);
+
+		const hashIndex = actualLink.indexOf("#");
+		if (hashIndex !== -1) return null;
+
+		let notePath = actualLink.trim();
+		if (!notePath) {
+			notePath = ctx.sourcePath;
+		}
+
+		const file = this.plugin.app.metadataCache.getFirstLinkpathDest(notePath, ctx.sourcePath);
+		if (!file) return null;
+
+		const maxLine = Number.MAX_SAFE_INTEGER;
+		return {
+			kind: "file",
+			file,
+			subpath: "",
+			visibleRange: [1, maxLine],
+			editableRange: [1, maxLine],
+		};
+	}
+
 	private parseInlineEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
 		if (!this.plugin.settings.inlineEditEnabled) return null;
 
@@ -1238,7 +1266,13 @@ export class InlineEditEngine {
 		}
 
 		if (this.plugin.settings.inlineEditHeading) {
-			return this.parseHeadingEmbed(embedEl, ctx);
+			const parsedHeading = this.parseHeadingEmbed(embedEl, ctx);
+			if (parsedHeading) return parsedHeading;
+		}
+
+		if (this.plugin.settings.inlineEditFile) {
+			const parsedFile = this.parseFileEmbed(embedEl, ctx);
+			if (parsedFile) return parsedFile;
 		}
 
 		return null;
