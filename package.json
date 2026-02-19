@@ -1,6 +1,6 @@
 {
 	"name": "block-link-plus",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"description": "Outliner, block link tooling, blp-view query, and inline edit for Obsidian.",
 	"main": "main.js",
 	"scripts": {
