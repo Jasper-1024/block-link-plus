@@ -124,7 +124,10 @@ export function gen_insert_blocklink_multline_heading(
 	const cursor = editor.getCursor("from"); // getCursor
 	// const lineLength = editor.getLine(cursor.line).length;
 	editor.setCursor(cursor.line, cursor.ch);
-	editor.replaceRange(`${heading} ${BLP_BLOCK_MARKER}${id}\n\n`, {
+	// Prefix a single space so Live Preview does not treat this internal marker heading
+	// like a real heading (HyperMD header styling + fold indicator). Reading mode still
+	// parses it as a heading (up to 3 leading spaces are allowed by Markdown).
+	editor.replaceRange(` ${heading} ${BLP_BLOCK_MARKER}${id}\n\n`, {
 		line: cursor.line,
 		ch: 0,
 	});

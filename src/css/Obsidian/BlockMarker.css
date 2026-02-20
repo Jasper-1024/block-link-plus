@@ -1,11 +1,14 @@
 /* BLP inline block marker tokens (Live Preview).
  *
- * Marker headings like `## ˅abc123` are BLP-only and should not visually compete
- * with regular heading text. Keep the styling scoped to the CM6 editor.
+ * We decorate BLP's internal marker ids with Obsidian's native `.cm-blockid` class
+ * (see `src/ui/ViewPlugin.ts`) so they render identically to `^blockid` tokens,
+ * including inside headings.
+ *
+ * `.blp-block-marker` is kept for internal targeting/tests; it's only styled as a
+ * fallback when `.cm-blockid` isn't present.
  */
 
-.markdown-source-view.mod-cm6 .blp-block-marker {
-	/* Match Obsidian's .cm-blockid look even inside headings. */
+.markdown-source-view.mod-cm6 .blp-block-marker:not(.cm-blockid) {
 	font-size: calc(var(--font-text-size, 16px) * 0.8);
 	line-height: 1.5;
 	font-weight: 400;
@@ -13,3 +16,4 @@
 	opacity: 1;
 	vertical-align: text-top;
 }
+

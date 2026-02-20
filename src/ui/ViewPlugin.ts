@@ -1,20 +1,18 @@
-import {
-	Decoration,
-	MatchDecorator,
-	ViewPlugin,
-} from "@codemirror/view";
+import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
+
 import { BlockLinkPlusViewPlugin } from "../types";
 import { BLP_BLOCK_MARKER_CLASS, BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 
-export function createViewPlugin(
-	rule: string = BLP_BLOCK_MARKER_RULE
-): BlockLinkPlusViewPlugin {
-	let decorator = new MatchDecorator({
+const OBSIDIAN_BLOCKID_CLASS = "cm-blockid";
+
+export function createViewPlugin(rule: string = BLP_BLOCK_MARKER_RULE): BlockLinkPlusViewPlugin {
+	const decorator = new MatchDecorator({
 		regexp: new RegExp(rule, "g"),
-		decoration: () => {
-			return Decoration.mark({ class: BLP_BLOCK_MARKER_CLASS });
-		}
+		// Reuse Obsidian's native block-id class so marker tokens render the same as `^id`.
+		decoration: () =>
+			Decoration.mark({ class: `${OBSIDIAN_BLOCKID_CLASS} ${BLP_BLOCK_MARKER_CLASS}` }),
 	});
+
 	return ViewPlugin.define(
 		(view) => ({
 			decorations: decorator.createDeco(view),

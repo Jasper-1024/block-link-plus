@@ -23,6 +23,7 @@ describe("ui/ViewPlugin: block marker styling", () => {
 			const markerEl = view.dom.querySelector(`.${BLP_BLOCK_MARKER_CLASS}`);
 			expect(markerEl).toBeTruthy();
 			expect(markerEl?.textContent).toContain(`${BLP_BLOCK_MARKER}pre-abc123`);
+			expect(markerEl?.classList.contains("cm-blockid")).toBe(true);
 		} finally {
 			view.destroy();
 			parent.remove();

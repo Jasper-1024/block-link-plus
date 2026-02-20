@@ -12,8 +12,10 @@ import { generateRandomId } from "../../../utils";
 import {
 	gen_insert_blocklink_multiline_block,
 	gen_insert_blocklink_multline_block,
+	gen_insert_blocklink_multline_heading,
 	gen_insert_blocklink_singleline,
 } from "../index";
+import { BLP_BLOCK_MARKER } from "shared/block-marker";
 
 const mockGenerateRandomId = generateRandomId as unknown as jest.MockedFunction<
 	typeof generateRandomId
@@ -151,6 +153,34 @@ describe("link-creation", () => {
 			expect(editor.getLine(0)).toBe("- item1");
 			expect(editor.getLine(1)).toBe("  cont ^l11111");
 			expect(editor.getLine(2)).toBe("- item2 ^l22222");
+		});
+	});
+
+	describe("multiline heading markers", () => {
+		test("inserts a Live Preview-safe internal marker heading (leading space)", () => {
+			const editor = new MockEditor(["line 1", "line 2", "tail"].join("\n"));
+			editor.setSelection({ line: 0, ch: 0 }, { line: 1, ch: 0 });
+
+			const block = section("paragraph", 0, 1, editor.getLine(1).length);
+			mockGenerateRandomId.mockReturnValueOnce("abc123");
+
+			const link = gen_insert_blocklink_multline_heading(
+				block,
+				editor as any,
+				baseSettings,
+				2
+			);
+
+			expect(link).toBe(`${BLP_BLOCK_MARKER}abc123`);
+			expect(editor.getLines()).toEqual([
+				` ## ${BLP_BLOCK_MARKER}abc123`,
+				"",
+				"line 1",
+				"line 2",
+				"",
+				" ## ^abc123",
+				"tail",
+			]);
 		});
 	});
 
