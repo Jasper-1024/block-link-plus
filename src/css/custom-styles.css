@@ -454,6 +454,16 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	display: none !important;
 }
 
+/* Inline embed editor (InlineEditEngine) inside the outliner view.
+ *
+ * Obsidian applies readable-line-width centering via `--file-line-width`, which makes embedded
+ * editors appear shifted right with a large blank area on the left. In the outliner, we want
+ * the inline editor to align with the embed container.
+ */
+.blp-file-outliner-view .blp-inline-edit-root .markdown-source-view.is-readable-line-width {
+	--file-line-width: 100% !important;
+}
+
 /* --- CodeMirror selection (match Obsidian's Live Preview colors) --- */
 
 /* Obsidian scopes these rules under `.markdown-source-view.mod-cm6`; our file-level view isn't,

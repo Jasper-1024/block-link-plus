@@ -29,6 +29,18 @@ const LIVE_PREVIEW_RANGE_ACTIVE_CLASS = "blp-live-preview-range-active";
 const READING_RANGE_HOST_CLASS = "blp-reading-range-host";
 const LIVE_PREVIEW_RANGE_HOST_CLASS = "blp-live-preview-range-host";
 
+export function syncRangeEmbedWrapperPadding(embedEl: HTMLElement, wrapper: HTMLElement): void {
+	try {
+		const nativePreview = embedEl.querySelector<HTMLElement>(".markdown-embed-content .markdown-preview-view");
+		if (!nativePreview) return;
+		const cs = getComputedStyle(nativePreview);
+		wrapper.style.paddingLeft = cs.paddingLeft;
+		wrapper.style.paddingRight = cs.paddingRight;
+	} catch {
+		// ignore
+	}
+}
+
 type LivePreviewObserverEntry = {
 	view: MarkdownView;
 	rootEl: HTMLElement;
@@ -2170,6 +2182,7 @@ class LivePreviewRangeEmbedChild extends MarkdownRenderChild {
 		const wrapper = document.createElement("div");
 		wrapper.className = "markdown-preview-view markdown-rendered";
 		wrapper.style.display = "none";
+		syncRangeEmbedWrapperPadding(this.embedEl, wrapper);
 
 		const sizer = document.createElement("div");
 		sizer.className = "markdown-preview-sizer markdown-preview-section";
@@ -2552,6 +2565,7 @@ class ReadingRangeEmbedChild extends MarkdownRenderChild {
 		const wrapper = document.createElement("div");
 		wrapper.className = "markdown-preview-view markdown-rendered";
 		wrapper.style.display = "none";
+		syncRangeEmbedWrapperPadding(this.embedEl, wrapper);
 
 		const sizer = document.createElement("div");
 		sizer.className = "markdown-preview-sizer markdown-preview-section";
