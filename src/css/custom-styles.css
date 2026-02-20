@@ -284,6 +284,14 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	border-radius: 6px;
 }
 
+/* Outliner display embeds should feel compact (closer to inline-edit) rather than full-page preview.
+ * Override Obsidian's embed/spacing tokens only inside the outliner display surface.
+ */
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed {
+	--embed-padding: 0px;
+	--p-spacing: 0px;
+}
+
 .blp-file-outliner-view .blp-outliner-task-row {
 	display: flex;
 	gap: 6px;

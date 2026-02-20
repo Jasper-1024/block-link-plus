@@ -30,6 +30,19 @@ const READING_RANGE_HOST_CLASS = "blp-reading-range-host";
 const LIVE_PREVIEW_RANGE_HOST_CLASS = "blp-live-preview-range-host";
 
 export function syncRangeEmbedWrapperPadding(embedEl: HTMLElement, wrapper: HTMLElement): void {
+	// Reading-range wrappers are created outside `.markdown-embed-content`, so they don't naturally
+	// pick up Obsidian's embed preview padding rule.
+	//
+	// Prefer the same token Obsidian uses so theme/layout changes propagate. In some test/DOM
+	// environments (notably JSDOM), `var(...)` may be rejected as an invalid inline style value;
+	// fall back to copying computed padding from the native embed preview.
+	try {
+		wrapper.style.padding = "var(--embed-padding, 0px)";
+		if (wrapper.style.padding) return;
+	} catch {
+		// ignore
+	}
+
 	try {
 		const nativePreview = embedEl.querySelector<HTMLElement>(".markdown-embed-content .markdown-preview-view");
 		if (!nativePreview) return;

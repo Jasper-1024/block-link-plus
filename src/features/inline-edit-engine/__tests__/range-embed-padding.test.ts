@@ -1,7 +1,7 @@
 import { syncRangeEmbedWrapperPadding } from "../InlineEditEngine";
 
 describe("syncRangeEmbedWrapperPadding", () => {
-	test("copies native embed preview padding onto the range wrapper", () => {
+	test("copies native embed preview padding onto the range wrapper (fallback for JSDOM)", () => {
 		const embedEl = document.createElement("div");
 		embedEl.innerHTML = `
 			<div class="markdown-embed-content">
