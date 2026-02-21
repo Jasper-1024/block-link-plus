@@ -289,7 +289,62 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
  */
 .blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed {
 	--embed-padding: 0px;
-	--p-spacing: 0px;
+	white-space: normal;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view {
+	/* Match the inline editor's content inset. */
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+/* Restore native-ish spacing inside embeds only (outliner display resets margins globally). */
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view
+	> :is(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre, .callout) {
+	margin: revert;
+}
+
+/* `margin: revert` restores UA default (1em) margins, which makes paragraph->list spacing feel much looser
+ * than the inline editor (line-based). Tighten just that boundary without changing other block spacing.
+ */
+@supports selector(p:has(+ ul)) {
+	.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed:not(.blp-inline-edit-active)
+		.markdown-preview-view
+		> p:has(+ ul),
+	.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed:not(.blp-inline-edit-active)
+		.markdown-preview-view
+		> p:has(+ ol) {
+		margin-bottom: 0;
+	}
+}
+
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed:not(.blp-inline-edit-active)
+	.markdown-preview-view
+	> p
+	+ ul,
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed:not(.blp-inline-edit-active)
+	.markdown-preview-view
+	> p
+	+ ol {
+	margin-top: 0;
+}
+
+/* Make embed preview list indentation closer to the inline editor. */
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view > ul,
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view > ol {
+	/* Keep just enough room for the list marker (otherwise it can be clipped on the left). */
+	padding-left: 1em;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view li {
+	margin-left: 0;
+}
+
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view ul ul,
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view ul ol,
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view ol ul,
+.blp-file-outliner-view .blp-file-outliner-display .internal-embed.markdown-embed .markdown-preview-view ol ol {
+	padding-left: var(--list-indent);
 }
 
 .blp-file-outliner-view .blp-outliner-task-row {

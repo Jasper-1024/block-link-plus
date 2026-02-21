@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.1 (Current)
+## v2.0.2 (Current)
+
+- Fix: Outliner display-mode embed preview (`![[...]]`) now renders closer to the inline editor (spacing/indent; avoid clipped list markers)
+
+## v2.0.1
 
 - Improved: Outliner edit mode supports core editor shortcuts (Ctrl+B, etc.) and allowlisted plugin editor commands (strict allowlist)
 - New: Outliner settings for the editor command bridge + command allowlist, with a one-click copy action from the editor menu allowlist
