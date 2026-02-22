@@ -150,15 +150,19 @@ node scripts\obsidian-cdp.js screenshot ".tmp\shot.png"
 - Outliner 预览态：`C:\Users\stati\Git\blp\block-link-plus\.tmp\A-code-outliner-preview.png`
 - Outliner inline edit：`C:\Users\stati\Git\blp\block-link-plus\.tmp\A-code-outliner-inline-edit.png`
 - Native preview：`C:\Users\stati\Git\blp\block-link-plus\.tmp\A-code-native-preview.png`
-## 当前工作区改动（未 commit / 未 push）
-- CSS（方案 A）：
-  - `C:\Users\stati\Git\blp\block-link-plus\src\css\custom-styles.css`
-- 版本号：
-  - `C:\Users\stati\Git\blp\block-link-plus\manifest.json`（2.0.5 -> 2.0.6）
-  - `C:\Users\stati\Git\blp\block-link-plus\package.json`（2.0.5 -> 2.0.6）
-  - `C:\Users\stati\Git\blp\block-link-plus\versions.json`（新增 2.0.6 映射）
-- 构建脚本（Windows rename EPERM 修复）：
-  - `C:\Users\stati\Git\blp\block-link-plus\esbuild.config.mjs`
+## 最终改动（已合入 master）
+- CSS（embed preview 修复）：
+  - `src/css/custom-styles.css`
+- 版本号（以远程已发布 `2.0.1` 为基准 +1）：
+  - `manifest.json`（2.0.1 -> 2.0.2）
+  - `package.json`（2.0.1 -> 2.0.2）
+  - `versions.json`（新增 2.0.2 映射）
+- 更新日志：
+  - `docs/changelog.md` / `docs/en/changelog.md` / `docs/zh-TW/changelog.md`
+- What's New：
+  - `src/ui/WhatsNewModal.ts`（增加 2.0.2 的简短条目，避免 2.0.x 走通用 v2 大版本说明）
+
+> 备注：本文中 “构建脚本 rename EPERM” 相关内容属于历史排查记录，本次修复/发布未修改 `esbuild.config.mjs`。
 
 ## 仍需补齐的关键信息（针对 sample.md）
 - 必须在你真实文件 `C:\Users\stati\Git\temp\temp\3\sample.md` 打开 outliner 后，用 9222/CDP：

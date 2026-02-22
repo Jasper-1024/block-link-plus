@@ -41,6 +41,14 @@ const WHATS_NEW_V2_0_1: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_2: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: display-mode embed preview (`![[...]]`) now renders closer to the inline editor (spacing/indent; avoid clipped list markers).",
+	],
+	zh: ["Outliner：展示态嵌入预览（`![[...]]`）渲染更接近内联编辑（行距/缩进；避免列表 marker 被裁切）。"],
+	"zh-TW": ["Outliner：顯示態內嵌預覽（`![[...]]`）渲染更接近內嵌編輯（行距/縮排；避免清單 marker 被裁切）。"],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -96,6 +104,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.2") {
+			return WHATS_NEW_V2_0_2[i18n.lang] ?? WHATS_NEW_V2_0_2.en;
 		}
 
 		if (this.currentVersion === "2.0.1") {
