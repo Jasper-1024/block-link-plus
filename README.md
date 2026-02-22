@@ -5,7 +5,19 @@ Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: 
 [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
-![Demo](user_case.gif)
+## demo
+
+### base
+
+https://github.com/user-attachments/assets/5a0f0a32-42a3-4c23-8b38-17542c5ec072
+
+### inline edit
+
+https://github.com/user-attachments/assets/d34b9be4-9a1b-4d00-9a87-1b70463dc8d7
+
+### outliner
+
+https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 
 ## 🚀 Key Features
 
