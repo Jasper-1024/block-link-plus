@@ -1,8 +1,58 @@
 # Block Link Plus
 
+[![Version](https://img.shields.io/badge/version-2.0.2-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
 
 从 2.0 开始，插件的主线变成了 Outliner（仿 Logseq）+ `blp-view`（查询/视图）：在指定文件范围内把列表项当作 block 来维护，并提供可查询/可渲染的视图。
+
+## 🚀 核心特性
+
+- **多行块引用** - 使用 `^abc123-abc123` 的范围块格式精确引用多行内容
+- **Outliner（仿 Logseq）+ `blp-view`** - 在启用范围内把列表项当作 block；维护稳定 `^id` + 隐藏系统元数据；并用 `blp-view` 查询/渲染（依赖 Dataview）
+- **内联编辑** - 在 Live Preview 下直接编辑嵌入的块/标题（启用后）
+- **智能别名** - 复制链接时可基于内容生成描述
+
+## demo
+
+### base
+
+https://github.com/user-attachments/assets/5a0f0a32-42a3-4c23-8b38-17542c5ec072
+
+### inline edit
+
+https://github.com/user-attachments/assets/d34b9be4-9a1b-4d00-9a87-1b70463dc8d7
+
+### outliner
+
+https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
+
+## 📦 安装
+
+### 社区插件（推荐）
+1. 打开 Obsidian 设置 → 社区插件
+2. 搜索 "Block Link Plus" → 安装 → 启用
+
+### 手动安装
+1. 下载最新 [release](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+2. 解压到 `.obsidian/plugins/block-link-plus/`
+3. 重启 Obsidian 并启用
+
+## 🔧 快速开始
+
+1. 选中一个块/标题 → 右键 → 选择链接类型（link / embed / URI），或使用命令面板："Copy Block Link" / "Copy Block as Embed" / "Copy Block as Obsidian URI"
+2. 多行：选中多行文本 →（设置中选择多行处理模式）→ 创建一个范围块（`^id-id`）
+3. Outliner & `blp-view`：启用范围（设置里配置启用文件夹/文件，或 frontmatter `blp_outliner: true`）→ 使用 `blp-view` 代码块进行查询/渲染
+
+## 📖 文档
+
+**完整文档站点：** https://block-link-plus.jasper1024.com/
+
+- [安装指南](https://block-link-plus.jasper1024.com/install/)
+- [多行块](https://block-link-plus.jasper1024.com/usage/multiline/)
+- [Outliner 与 blp-view](https://block-link-plus.jasper1024.com/usage/outliner/)
+- [设置参考](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ## 使用
 
@@ -136,6 +186,9 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.2
+- 修复：Outliner 展示态（未点击/纯预览）的 `![[...]]` 嵌入渲染更接近内联编辑（行距/缩进；避免列表 marker 被裁切）
 
 ### 2.0.1
 - Outliner：编辑器命令桥接（让 Ctrl+B 等 core 快捷键生效）+ 严格插件白名单
