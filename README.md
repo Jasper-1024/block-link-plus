@@ -5,6 +5,13 @@ Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: 
 [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
+## 🚀 Key Features
+
+- **Multi-line Block References** - Create precise range blocks with the `^abc123-abc123` format
+- **Outliner (Logseq-like) + `blp-view`** - Treat list items as blocks in scoped files; keep stable `^id` + hidden system metadata; query/render with `blp-view` (Dataview required)
+- **Inline Editing** - Edit embedded blocks/headings directly in Live Preview (when enabled)
+- **Smart Aliases** - Content-based link descriptions when copying links
+
 ## demo
 
 ### base
@@ -18,13 +25,6 @@ https://github.com/user-attachments/assets/d34b9be4-9a1b-4d00-9a87-1b70463dc8d7
 ### outliner
 
 https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
-
-## 🚀 Key Features
-
-- **Multi-line Block References** - Create precise range blocks with the `^abc123-abc123` format
-- **Outliner (Logseq-like) + `blp-view`** - Treat list items as blocks in scoped files; keep stable `^id` + hidden system metadata; query/render with `blp-view` (Dataview required)
-- **Inline Editing** - Edit embedded blocks/headings directly in Live Preview (when enabled)
-- **Smart Aliases** - Content-based link descriptions when copying links
 
 ## 📦 Installation
 
