@@ -49,6 +49,12 @@ const WHATS_NEW_V2_0_2: Record<ObsidianLanguage, string[]> = {
 	"zh-TW": ["Outliner：顯示態內嵌預覽（`![[...]]`）渲染更接近內嵌編輯（行距/縮排；避免清單 marker 被裁切）。"],
 };
 
+const WHATS_NEW_V2_0_3: Record<ObsidianLanguage, string[]> = {
+	en: ["Outliner: multi-line blocks no longer render with extra blank lines (strict line breaks)."],
+	zh: ["Outliner：单个 block 内多行文本渲染不再出现额外空行（strict line breaks）。"],
+	"zh-TW": ["Outliner：單一 block 內多行文字渲染不再出現額外空行（strict line breaks）。"],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -104,6 +110,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.3") {
+			return WHATS_NEW_V2_0_3[i18n.lang] ?? WHATS_NEW_V2_0_3.en;
 		}
 
 		if (this.currentVersion === "2.0.2") {

@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.2 (Current)
+## v2.0.3 (Current)
+
+- Fix: Outliner multi-line blocks no longer render with extra blank lines (strict line breaks)
+
+## v2.0.2
 
 - Fix: Outliner display-mode embed preview (`![[...]]`) now renders closer to the inline editor (spacing/indent; avoid clipped list markers)
 

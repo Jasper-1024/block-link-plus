@@ -374,6 +374,15 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	white-space: pre-wrap; /* Logseq keeps manual newlines visible inside a block */
 }
 
+/* When Obsidian's renderer emits `<br>\n` (e.g. strict line breaks), `pre-wrap` would render
+ * both the `<br>` and the `\n` as line breaks, producing double blank lines.
+ */
+@supports selector(p:has(br)) {
+	.blp-file-outliner-view .blp-file-outliner-display p:has(br) {
+		white-space: normal;
+	}
+}
+
 .blp-file-outliner-view .blp-file-outliner-display ul,
 .blp-file-outliner-view .blp-file-outliner-display ol,
 .blp-file-outliner-view .blp-file-outliner-display blockquote,
