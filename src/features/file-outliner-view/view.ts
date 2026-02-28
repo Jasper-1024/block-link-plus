@@ -540,6 +540,7 @@ export class FileOutlinerView extends TextFileView {
 			(evt) => handleOutlinerRootClickCapture(evt as MouseEvent, clickHost),
 			true
 		);
+		root.addEventListener("contextmenu", (evt) => this.onOutlinerRootContextMenuCapture(evt as MouseEvent), true);
 
 		// Capture-phase pointer handlers for block-range selection during mouse drag.
 		root.addEventListener("pointerdown", (evt) => this.onOutlinerRootPointerDownCapture(evt as PointerEvent), true);
@@ -706,6 +707,35 @@ export class FileOutlinerView extends TextFileView {
 		if (evt.pointerId !== drag.pointerId) return;
 
 		this.blockRangeDrag = null;
+	}
+
+	private onOutlinerRootContextMenuCapture(evt: MouseEvent): void {
+		if (evt.defaultPrevented) return;
+		if (this.blockRangeSelectedIds.size === 0) return;
+		if (!this.outlinerFile) return;
+		if (!this.file) return;
+
+		const target = evt.target as HTMLElement | null;
+		if (!target) return;
+
+		// Never intercept context menus inside embed editors / our CM6 editor host.
+		if (target.closest(".markdown-source-view")) return;
+		if (target.closest(".blp-file-outliner-editor")) return;
+
+		// Let the existing bullet handler own the bullet context menu to avoid double-open.
+		if (target.closest(".bullet-container")) return;
+
+		const blockEl = target.closest<HTMLElement>(".ls-block");
+		if (!blockEl) return;
+		if (!this.contentEl.contains(blockEl)) return;
+		if (!blockEl.classList.contains("is-blp-outliner-range-selected")) return;
+
+		const id = blockEl.dataset.blpOutlinerId;
+		if (!id) return;
+
+		evt.preventDefault();
+		evt.stopPropagation();
+		this.openBulletMenu(id, evt);
 	}
 
 	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }) {
