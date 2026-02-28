@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.3 (Current)
+## v2.0.4 (Current)
+
+- Improved: Outliner drag-select across blocks now selects a block range (whole-block highlight)
+
+## v2.0.3
 
 - Fix: Outliner multi-line blocks no longer render with extra blank lines (strict line breaks)
 

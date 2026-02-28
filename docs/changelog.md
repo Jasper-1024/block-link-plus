@@ -4,7 +4,11 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.3 (当前版本)
+## v2.0.4 (当前版本)
+
+- 改进：Outliner 左键拖选跨越多个 block 时会进入“整块范围选择”（高亮连续 block）
+
+## v2.0.3
 
 - 修复：Outliner 单个 block 内多行文本渲染不再出现额外空行（strict line breaks）
 

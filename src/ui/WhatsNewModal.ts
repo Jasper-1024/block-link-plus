@@ -55,6 +55,12 @@ const WHATS_NEW_V2_0_3: Record<ObsidianLanguage, string[]> = {
 	"zh-TW": ["Outliner：單一 block 內多行文字渲染不再出現額外空行（strict line breaks）。"],
 };
 
+const WHATS_NEW_V2_0_4: Record<ObsidianLanguage, string[]> = {
+	en: ["Outliner: drag-select across blocks now selects a block range (whole-block highlight)."],
+	zh: ["Outliner：左键拖选跨越多个 block 时会进入整块范围选择（高亮连续 block）。"],
+	"zh-TW": ["Outliner：左鍵拖選跨越多個 block 時會進入整塊範圍選取（高亮連續 block）。"],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -110,6 +116,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.4") {
+			return WHATS_NEW_V2_0_4[i18n.lang] ?? WHATS_NEW_V2_0_4.en;
 		}
 
 		if (this.currentVersion === "2.0.3") {

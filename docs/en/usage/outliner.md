@@ -72,6 +72,7 @@ In Outliner view, most interactions revolve around the bullet:
   - Convert to task / convert to normal block
   - Copy / Cut / Paste / Paste as text / Delete (subtree-granular)
   - Collapse / Expand
+- Mouse drag selection (editing): select text within a block; dragging across blocks switches to block-range selection (highlight only)
 
 ### Tasks
 
