@@ -73,6 +73,7 @@ In Outliner view, most interactions revolve around the bullet:
   - Copy / Cut / Paste / Paste as text / Delete (subtree-granular)
   - Collapse / Expand
 - Mouse drag selection (editing): select text within a block; dragging across blocks switches to block-range selection (highlight only)
+- With block-range selection active: right-click any selected block to open the bullet menu (no handle aiming)
 
 ### Tasks
 

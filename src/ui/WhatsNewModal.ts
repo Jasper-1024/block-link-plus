@@ -61,6 +61,12 @@ const WHATS_NEW_V2_0_4: Record<ObsidianLanguage, string[]> = {
 	"zh-TW": ["Outliner：左鍵拖選跨越多個 block 時會進入整塊範圍選取（高亮連續 block）。"],
 };
 
+const WHATS_NEW_V2_0_5: Record<ObsidianLanguage, string[]> = {
+	en: ["Outliner: block-range selection now supports right-click on selected blocks to open the bullet menu."],
+	zh: ["Outliner：整块范围选择后，右键选中 block 也能打开圆点菜单。"],
+	"zh-TW": ["Outliner：整塊範圍選取後，右鍵選中 block 也能開啟圓點選單。"],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -116,6 +122,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.5") {
+			return WHATS_NEW_V2_0_5[i18n.lang] ?? WHATS_NEW_V2_0_5.en;
 		}
 
 		if (this.currentVersion === "2.0.4") {

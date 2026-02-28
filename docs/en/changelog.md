@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.4 (Current)
+## v2.0.5 (Current)
+
+- Fix: Outliner block-range selection now supports right-click on selected blocks to open the bullet menu (no handle aiming)
+
+## v2.0.4
 
 - Improved: Outliner drag-select across blocks now selects a block range (whole-block highlight)
 
