@@ -658,3 +658,11 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: var(--blp-outliner-active-bg);
 }
+
+/* --- Block range selection --- */
+
+.blp-file-outliner-view .ls-block.is-blp-outliner-range-selected .blp-file-outliner-display,
+.blp-file-outliner-view .ls-block.is-blp-outliner-range-selected .blp-file-outliner-editor {
+	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
+	background: hsla(var(--interactive-accent-hsl), 0.12);
+}

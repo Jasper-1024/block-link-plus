@@ -61,6 +61,18 @@ type PendingFocus = {
 	cursorEnd: number;
 };
 
+type BlockRangeSelection = {
+	anchorId: string;
+	focusId: string;
+};
+
+type BlockRangeDrag = {
+	pointerId: number;
+	anchorId: string;
+	active: boolean;
+	lastFocusId: string | null;
+};
+
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
 }
@@ -108,6 +120,10 @@ export class FileOutlinerView extends TextFileView {
 	private arrowNavGoalCh: number | null = null;
 	private arrowNavDispatching = false;
 	private preserveArrowNavGoalOnce = false;
+
+	private blockRangeSelection: BlockRangeSelection | null = null;
+	private blockRangeDrag: BlockRangeDrag | null = null;
+	private readonly blockRangeSelectedIds = new Set<string>();
 
 	private readonly dnd: OutlinerDndController;
 
@@ -287,6 +303,9 @@ export class FileOutlinerView extends TextFileView {
 		this.dirtyBlockIds.clear();
 
 		this.editingId = null;
+		this.blockRangeSelection = null;
+		this.blockRangeDrag = null;
+		this.blockRangeSelectedIds.clear();
 		this.pendingFocus = null;
 		this.pendingScrollToId = null;
 		if (this.pendingBlurTimer) {
@@ -522,6 +541,12 @@ export class FileOutlinerView extends TextFileView {
 			true
 		);
 
+		// Capture-phase pointer handlers for block-range selection during mouse drag.
+		root.addEventListener("pointerdown", (evt) => this.onOutlinerRootPointerDownCapture(evt as PointerEvent), true);
+		root.addEventListener("pointermove", (evt) => this.onOutlinerRootPointerMoveCapture(evt as PointerEvent), true);
+		root.addEventListener("pointerup", (evt) => this.onOutlinerRootPointerUpCapture(evt as PointerEvent), true);
+		root.addEventListener("pointercancel", (evt) => this.onOutlinerRootPointerUpCapture(evt as PointerEvent), true);
+
 		const header = root.createDiv({ cls: "blp-file-outliner-zoom-header" });
 		header.style.display = "none";
 		this.zoomHeaderEl = header;
@@ -574,6 +599,113 @@ export class FileOutlinerView extends TextFileView {
 
 		// Context menu bridge for the standalone CM6 editor (S3 minimal bridge).
 		this.editorView.dom.addEventListener("contextmenu", (evt) => this.onEditorContextMenu(evt as MouseEvent));
+	}
+
+	private clearBlockRangeSelection(): void {
+		const cls = "is-blp-outliner-range-selected";
+
+		for (const id of Array.from(this.blockRangeSelectedIds)) {
+			this.dom.getBlockEl(id)?.classList.remove(cls);
+		}
+
+		this.blockRangeSelectedIds.clear();
+		this.blockRangeSelection = null;
+	}
+
+	private setBlockRangeSelection(anchorId: string, focusId: string): void {
+		if (!anchorId || !focusId) {
+			this.clearBlockRangeSelection();
+			return;
+		}
+
+		const nav = this.getVisibleBlockNav();
+		const anchorIndex = nav.indexById.get(anchorId);
+		const focusIndex = nav.indexById.get(focusId);
+		if (anchorIndex === undefined || focusIndex === undefined) {
+			this.clearBlockRangeSelection();
+			return;
+		}
+
+		const start = Math.min(anchorIndex, focusIndex);
+		const end = Math.max(anchorIndex, focusIndex);
+		const nextIds = nav.order.slice(start, end + 1);
+		const cls = "is-blp-outliner-range-selected";
+		const next = new Set(nextIds);
+
+		for (const id of Array.from(this.blockRangeSelectedIds)) {
+			if (next.has(id)) continue;
+			this.dom.getBlockEl(id)?.classList.remove(cls);
+			this.blockRangeSelectedIds.delete(id);
+		}
+		for (const id of nextIds) {
+			if (this.blockRangeSelectedIds.has(id)) continue;
+			this.dom.getBlockEl(id)?.classList.add(cls);
+			this.blockRangeSelectedIds.add(id);
+		}
+
+		this.blockRangeSelection = { anchorId, focusId };
+	}
+
+	private getBlockIdAtClientPoint(x: number, y: number): string | null {
+		const hit = document.elementFromPoint(x, y) as HTMLElement | null;
+		if (!hit) return null;
+
+		const blockEl = (hit.closest?.(".ls-block") ?? null) as HTMLElement | null;
+		if (!blockEl) return null;
+		if (!this.contentEl.contains(blockEl)) return null;
+
+		return blockEl.dataset.blpOutlinerId ?? null;
+	}
+
+	private onOutlinerRootPointerDownCapture(evt: PointerEvent): void {
+		if (evt.button !== 0) return;
+
+		this.blockRangeDrag = null;
+		if (this.blockRangeSelection) this.clearBlockRangeSelection();
+
+		const anchorId = this.editingId;
+		if (!anchorId) return;
+
+		const target = evt.target as HTMLElement | null;
+		if (!target) return;
+		if (!target.closest(".blp-file-outliner-editor")) return;
+
+		this.blockRangeDrag = {
+			pointerId: evt.pointerId,
+			anchorId,
+			active: false,
+			lastFocusId: anchorId,
+		};
+	}
+
+	private onOutlinerRootPointerMoveCapture(evt: PointerEvent): void {
+		const drag = this.blockRangeDrag;
+		if (!drag) return;
+		if (evt.pointerId !== drag.pointerId) return;
+		if ((evt.buttons & 1) === 0) return;
+
+		const focusId = this.getBlockIdAtClientPoint(evt.clientX, evt.clientY);
+		if (!focusId) return;
+		if (focusId === drag.lastFocusId) return;
+		drag.lastFocusId = focusId;
+
+		if (!drag.active) {
+			if (focusId === drag.anchorId) return;
+
+			drag.active = true;
+			if (this.editingId === drag.anchorId) this.exitEditMode(drag.anchorId);
+		}
+
+		if (!drag.active) return;
+		this.setBlockRangeSelection(drag.anchorId, focusId);
+	}
+
+	private onOutlinerRootPointerUpCapture(evt: PointerEvent): void {
+		const drag = this.blockRangeDrag;
+		if (!drag) return;
+		if (evt.pointerId !== drag.pointerId) return;
+
+		this.blockRangeDrag = null;
 	}
 
 	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }) {
@@ -837,6 +969,7 @@ export class FileOutlinerView extends TextFileView {
 
 		// 1) Sync block DOM structure to the current file model.
 		if (opts?.forceRebuild) {
+			this.clearBlockRangeSelection();
 			// Keep the editor host alive when we drop/recreate block DOM nodes.
 			this.tryOrLog("render/forceRebuild/keepEditorHost", () => {
 				if (this.editorHostEl && this.rootEl) {
@@ -1038,6 +1171,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private toggleCollapsed(id: string): void {
+		this.clearBlockRangeSelection();
 		this.setCollapsed(id, !this.collapsedIds.has(id));
 	}
 
@@ -1046,6 +1180,7 @@ export class FileOutlinerView extends TextFileView {
 		if (current === id) return;
 		if (!this.blockById.has(id)) return;
 
+		this.clearBlockRangeSelection();
 		if (this.editingId) this.exitEditMode(this.editingId);
 
 		// Zoom stack is a path (root -> ... -> id), not a navigation history.
@@ -1069,6 +1204,7 @@ export class FileOutlinerView extends TextFileView {
 	private zoomOut(): void {
 		if (this.zoomStack.length === 0) return;
 
+		this.clearBlockRangeSelection();
 		if (this.editingId) this.exitEditMode(this.editingId);
 
 		const popped = this.zoomStack.pop();
@@ -1338,6 +1474,7 @@ export class FileOutlinerView extends TextFileView {
 		opts: { cursorStart: number; cursorEnd: number; scroll: boolean; reuseExisting?: boolean }
 	): void {
 		this.ensureRoot();
+		this.clearBlockRangeSelection();
 		if (!this.editorHostEl || !this.editorView) return;
 		if (!this.outlinerFile) return;
 
