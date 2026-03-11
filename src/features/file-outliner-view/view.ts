@@ -2,6 +2,7 @@ import { Component, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
 import { DateTime } from "luxon";
 
 import { EditorSelection } from "@codemirror/state";
+import { undo, redo } from "@codemirror/commands";
 import { EditorView } from "@codemirror/view";
 
 import type BlockLinkPlus from "../../main";
@@ -19,6 +20,7 @@ import {
 	pasteSplitLines,
 	splitAtSelection,
 	type OutlinerEngineContext,
+	type OutlinerEngineResult,
 	type OutlinerSelection,
 } from "./engine";
 import {
@@ -45,6 +47,7 @@ import {
 import { OutlinerDomController } from "./dom-controller";
 import { createOutlinerEditorState } from "./editor-state";
 import { withPluginFilteredMenu } from "./editor-menu-bridge";
+import { isRedoShortcut, isUndoShortcut } from "./editor-shortcuts";
 import { handleOutlinerRootClickCapture } from "./root-click-router";
 import {
 	computeVisibleBlockNav,
@@ -72,6 +75,39 @@ type BlockRangeDrag = {
 	active: boolean;
 	lastFocusId: string | null;
 };
+
+type StructuralHistoryEntry = {
+	beforeFile: ParsedOutlinerFile;
+	beforeSelection: OutlinerSelection;
+	afterFile: ParsedOutlinerFile;
+	afterSelection: OutlinerSelection;
+};
+
+function cloneOutlinerSelection(sel: OutlinerSelection): OutlinerSelection {
+	return { id: sel.id, start: sel.start, end: sel.end };
+}
+
+function cloneOutlinerBlock(block: OutlinerBlock): OutlinerBlock {
+	return {
+		id: block.id,
+		depth: block.depth,
+		text: block.text,
+		children: (block.children ?? []).map(cloneOutlinerBlock),
+		system: {
+			date: block.system.date,
+			updated: block.system.updated,
+			extra: { ...(block.system.extra ?? {}) },
+		},
+		_systemHasBlpMarker: block._systemHasBlpMarker,
+	};
+}
+
+function cloneParsedOutlinerFile(file: ParsedOutlinerFile): ParsedOutlinerFile {
+	return {
+		frontmatter: file.frontmatter,
+		blocks: (file.blocks ?? []).map(cloneOutlinerBlock),
+	};
+}
 
 function formatSystemDate(dt: DateTime): string {
 	return dt.toFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -106,9 +142,14 @@ export class FileOutlinerView extends TextFileView {
 	private bridgedActiveEditorPrev: any | null = null;
 	private suppressEditorSync = false;
 	private editingId: string | null = null;
+	private pendingStructuralExitCommitBypassId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
 	private pendingBlurTimer: number | null = null;
+
+	private structuralUndoStack: StructuralHistoryEntry[] = [];
+	private structuralRedoStack: StructuralHistoryEntry[] = [];
+	private readonly structuralHistoryLimit = 100;
 
 	private lastPlainPasteShortcutAt = 0;
 
@@ -177,9 +218,12 @@ export class FileOutlinerView extends TextFileView {
 					this.visibleNavCache = null;
 				}
 
-				this.applyEngineResult(moveBlockSubtree(this.outlinerFile, sourceId, drop.targetId, drop.where), {
-					focus: false,
-				});
+				const handled = this.applyStructuralEngineResult(
+					moveBlockSubtree(this.outlinerFile, sourceId, drop.targetId, drop.where),
+					{ id: sourceId, start: 0, end: 0 },
+					{ focus: false }
+				);
+				if (handled) this.focusOutlinerRoot();
 			},
 			debugLog: (scope, err) => this.debugLog(scope, err),
 		});
@@ -308,6 +352,8 @@ export class FileOutlinerView extends TextFileView {
 		this.blockRangeSelectedIds.clear();
 		this.pendingFocus = null;
 		this.pendingScrollToId = null;
+		this.structuralUndoStack = [];
+		this.structuralRedoStack = [];
 		if (this.pendingBlurTimer) {
 			window.clearTimeout(this.pendingBlurTimer);
 			this.pendingBlurTimer = null;
@@ -527,6 +573,7 @@ export class FileOutlinerView extends TextFileView {
 		this.contentEl.empty();
 
 		const root = this.contentEl.createDiv({ cls: "blp-file-outliner-root" });
+		root.tabIndex = -1;
 		this.rootEl = root;
 		// Capture-phase click router for MarkdownRenderer output (internal links, embed inline edit).
 		const clickHost = {
@@ -540,6 +587,7 @@ export class FileOutlinerView extends TextFileView {
 			(evt) => handleOutlinerRootClickCapture(evt as MouseEvent, clickHost),
 			true
 		);
+		root.addEventListener("keydown", (evt) => this.onOutlinerRootKeyDownCapture(evt as KeyboardEvent), true);
 		root.addEventListener("contextmenu", (evt) => this.onOutlinerRootContextMenuCapture(evt as MouseEvent), true);
 
 		// Capture-phase pointer handlers for block-range selection during mouse drag.
@@ -645,6 +693,31 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.blockRangeSelection = { anchorId, focusId };
+		this.focusOutlinerRoot();
+	}
+
+	private onOutlinerRootKeyDownCapture(evt: KeyboardEvent): void {
+		if (!this.editingId) {
+			if (isUndoShortcut(evt) && this.tryUndoStructuralHistory()) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				return;
+			}
+			if (isRedoShortcut(evt) && this.tryRedoStructuralHistory()) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				return;
+			}
+		}
+
+		if (String((evt as any)?.key ?? "") !== "Escape") return;
+		if (this.editingId) return;
+		if (!this.blockRangeSelection) return;
+
+		evt.preventDefault();
+		evt.stopPropagation();
+		this.clearBlockRangeSelection();
+		this.focusOutlinerRoot();
 	}
 
 	private getBlockIdAtClientPoint(x: number, y: number): string | null {
@@ -753,8 +826,11 @@ export class FileOutlinerView extends TextFileView {
 			onToggleTask: () => this.onEditorToggleTask(),
 			onToggleTaskMarker: () => this.onEditorToggleTaskMarker(),
 			onArrowNavigate: (dir, editor) => this.onEditorArrowNavigate(dir, editor),
+			onUndo: (editor) => this.onEditorUndo(editor),
+			onRedo: (editor) => this.onEditorRedo(editor),
 			onEnter: () => this.onEditorEnter(),
 			onSoftEnter: (editor) => this.onEditorSoftEnter(editor),
+			onEscape: () => this.onEditorEscape(),
 			onTab: (shift) => this.onEditorTab(shift),
 			onBackspace: () => this.onEditorBackspace(),
 			onDelete: () => this.onEditorDelete(),
@@ -924,7 +1000,7 @@ export class FileOutlinerView extends TextFileView {
 				}
 			}
 
-			this.applyEngineResult(result);
+			this.applyStructuralEngineResult(result, sel);
 			return;
 		}
 
@@ -979,12 +1055,27 @@ export class FileOutlinerView extends TextFileView {
 		);
 	}
 
-	private closeEditorSuggests(): void {
+	private getOpenEditorSuggests(): any[] {
 		const mgr = (this.app.workspace as any)?.editorSuggest;
 		const suggests: any[] = Array.isArray(mgr?.suggests) ? mgr.suggests : [];
-		for (const s of suggests) {
-			if (!s?.isOpen) continue;
+		return suggests.filter((s) => Boolean(s?.isOpen));
+	}
+
+	private closeEditorSuggests(): void {
+		for (const s of this.getOpenEditorSuggests()) {
 			this.tryOrLog("closeEditorSuggests/close", () => s.close?.());
+		}
+	}
+
+	private focusOutlinerRoot(): void {
+		const root = this.rootEl;
+		if (!root) return;
+		try {
+			if (document.activeElement !== root) {
+				(root as HTMLElement).focus({ preventScroll: true } as FocusOptions);
+			}
+		} catch (err) {
+			this.debugLog("focusOutlinerRoot", err);
 		}
 	}
 
@@ -1567,8 +1658,14 @@ export class FileOutlinerView extends TextFileView {
 			this.pendingBlurTimer = null;
 		}
 
-		// Commit latest editor value.
-		if (b) {
+		const bypassStructuralCommit = this.pendingStructuralExitCommitBypassId === id;
+		if (bypassStructuralCommit) {
+			this.pendingStructuralExitCommitBypassId = null;
+		}
+
+		// Commit latest editor value unless a structural edit already produced
+		// the authoritative block text and we are only switching focus.
+		if (b && !bypassStructuralCommit) {
 			const nextText = editor.state.doc.toString();
 			if (b.text !== nextText) {
 				b.text = nextText;
@@ -1622,6 +1719,81 @@ export class FileOutlinerView extends TextFileView {
 		};
 	}
 
+	private pushStructuralHistoryEntry(entry: StructuralHistoryEntry): void {
+		this.structuralUndoStack.push(entry);
+		if (this.structuralUndoStack.length > this.structuralHistoryLimit) {
+			this.structuralUndoStack.splice(0, this.structuralUndoStack.length - this.structuralHistoryLimit);
+		}
+		this.structuralRedoStack = [];
+	}
+
+	private applyStructuralEngineResult(
+		result: OutlinerEngineResult,
+		beforeSelection: OutlinerSelection,
+		opts?: { focus?: boolean }
+	): boolean {
+		if (!this.outlinerFile || !result.didChange) return false;
+
+		const beforeFile = cloneParsedOutlinerFile(this.outlinerFile);
+		const beforeSelectionSnapshot = cloneOutlinerSelection(beforeSelection);
+		const afterFile = cloneParsedOutlinerFile(result.file);
+		const afterSelection = cloneOutlinerSelection(result.selection);
+
+		this.applyEngineResult(result, opts);
+		this.pushStructuralHistoryEntry({
+			beforeFile,
+			beforeSelection: beforeSelectionSnapshot,
+			afterFile,
+			afterSelection,
+		});
+		return true;
+	}
+
+	private restoreStructuralHistorySnapshot(file: ParsedOutlinerFile, selection: OutlinerSelection): void {
+		this.ensureRoot();
+		this.clearBlockRangeSelection();
+		this.closeEditorSuggests();
+
+		const editingIdBeforeApply = this.editingId;
+		const nextFile = cloneParsedOutlinerFile(file);
+		const nextSelection = cloneOutlinerSelection(selection);
+		this.outlinerFile = nextFile;
+		this.visibleNavCache = null;
+		this.rebuildIndex();
+
+		this.pendingStructuralExitCommitBypassId =
+			editingIdBeforeApply &&
+			nextSelection.id !== editingIdBeforeApply &&
+			this.blockById.has(editingIdBeforeApply)
+				? editingIdBeforeApply
+				: null;
+
+		this.pendingFocus = {
+			id: nextSelection.id,
+			cursorStart: nextSelection.start,
+			cursorEnd: nextSelection.end,
+		};
+		this.pendingScrollToId = nextSelection.id;
+		this.render();
+		this.markDirtyAndRequestSave();
+	}
+
+	private tryUndoStructuralHistory(): boolean {
+		const entry = this.structuralUndoStack.pop();
+		if (!entry) return false;
+		this.structuralRedoStack.push(entry);
+		this.restoreStructuralHistorySnapshot(entry.beforeFile, entry.beforeSelection);
+		return true;
+	}
+
+	private tryRedoStructuralHistory(): boolean {
+		const entry = this.structuralRedoStack.pop();
+		if (!entry) return false;
+		this.structuralUndoStack.push(entry);
+		this.restoreStructuralHistorySnapshot(entry.afterFile, entry.afterSelection);
+		return true;
+	}
+
 	private applyEngineResult(
 		result: {
 			didChange: boolean;
@@ -1635,9 +1807,17 @@ export class FileOutlinerView extends TextFileView {
 
 		this.ensureRoot();
 
+		const editingIdBeforeApply = this.editingId;
 		this.outlinerFile = result.file;
 		this.visibleNavCache = null;
 		this.rebuildIndex();
+
+		this.pendingStructuralExitCommitBypassId =
+			editingIdBeforeApply &&
+			result.selection.id !== editingIdBeforeApply &&
+			this.blockById.has(editingIdBeforeApply)
+				? editingIdBeforeApply
+				: null;
 
 		for (const id of Array.from(result.dirtyIds)) {
 			this.dirtyBlockIds.add(id);
@@ -1811,6 +1991,30 @@ export class FileOutlinerView extends TextFileView {
 		return true;
 	}
 
+	private onEditorEscape(): boolean {
+		if (this.getOpenEditorSuggests().length > 0) {
+			this.closeEditorSuggests();
+			return true;
+		}
+
+		const id = this.editingId;
+		if (!id) return false;
+
+		this.exitEditMode(id);
+		this.focusOutlinerRoot();
+		return true;
+	}
+
+	private onEditorUndo(editor: EditorView): boolean {
+		if ((undo as any)(editor as any)) return true;
+		return this.tryUndoStructuralHistory();
+	}
+
+	private onEditorRedo(editor: EditorView): boolean {
+		if ((redo as any)(editor as any)) return true;
+		return this.tryRedoStructuralHistory();
+	}
+
 	private findBlockInFile(file: ParsedOutlinerFile, id: string): OutlinerBlock | null {
 		const walk = (list: OutlinerBlock[]): OutlinerBlock | null => {
 			for (const b of list) {
@@ -1836,8 +2040,7 @@ export class FileOutlinerView extends TextFileView {
 		const activeText = String(active?.text ?? "");
 		const isTask = Boolean(getTaskMarkerFromBlockText(activeText));
 		if (!isTask) {
-			this.applyEngineResult(splitAtSelection(this.outlinerFile, sel, ctx));
-			return true;
+			return this.applyStructuralEngineResult(splitAtSelection(this.outlinerFile, sel, ctx), sel);
 		}
 
 		// Keep the marker prefix intact: never split "inside" `[ ] ` / `[x] `.
@@ -1860,8 +2063,7 @@ export class FileOutlinerView extends TextFileView {
 		result.selection.start = markerLen;
 		result.selection.end = markerLen;
 
-		this.applyEngineResult(result);
-		return true;
+		return this.applyStructuralEngineResult(result, sel);
 	}
 
 	private onEditorTab(shift: boolean): boolean {
@@ -1870,8 +2072,10 @@ export class FileOutlinerView extends TextFileView {
 		const sel = this.getActiveSelection();
 		if (!sel) return false;
 
-		this.applyEngineResult(shift ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel));
-		return true;
+		return this.applyStructuralEngineResult(
+			shift ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel),
+			sel
+		);
 	}
 
 	private onEditorBackspace(): boolean {
@@ -1882,8 +2086,10 @@ export class FileOutlinerView extends TextFileView {
 		if (sel.start !== 0 || sel.end !== 0) return false;
 
 		const ctx = this.getEngineContext();
-		this.applyEngineResult(backspaceAtStart(this.outlinerFile, sel, { backspaceWithChildren: ctx.backspaceWithChildren }));
-		return true;
+		return this.applyStructuralEngineResult(
+			backspaceAtStart(this.outlinerFile, sel, { backspaceWithChildren: ctx.backspaceWithChildren }),
+			sel
+		);
 	}
 
 	private onEditorDelete(): boolean {
@@ -1896,8 +2102,7 @@ export class FileOutlinerView extends TextFileView {
 		const valueLen = this.editorView.state.doc.length;
 		if (sel.start !== valueLen || sel.end !== valueLen) return false;
 
-		this.applyEngineResult(mergeWithNext(this.outlinerFile, sel));
-		return true;
+		return this.applyStructuralEngineResult(mergeWithNext(this.outlinerFile, sel), sel);
 	}
 
 	private consumePlainTextPasteBypass(): boolean {
@@ -2023,8 +2228,7 @@ export class FileOutlinerView extends TextFileView {
 			}
 		}
 
-		this.applyEngineResult(result);
-		return true;
+		return this.applyStructuralEngineResult(result, sel);
 	}
 
 	private scrollToBlockId(id: string): void {

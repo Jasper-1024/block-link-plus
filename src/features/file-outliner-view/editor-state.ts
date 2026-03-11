@@ -20,8 +20,11 @@ export type OutlinerEditorStateHost = {
 	onToggleTask: () => boolean;
 	onToggleTaskMarker: () => boolean;
 	onArrowNavigate: (dir: ArrowNavDirection, editor: EditorView) => boolean;
+	onUndo: (editor: EditorView) => boolean;
+	onRedo: (editor: EditorView) => boolean;
 	onEnter: () => boolean;
 	onSoftEnter: (editor: EditorView) => boolean;
+	onEscape: () => boolean;
 	onTab: (shift: boolean) => boolean;
 	onBackspace: () => boolean;
 	onDelete: () => boolean;
@@ -70,12 +73,28 @@ export function createOutlinerEditorState(
 						run: (view) => host.onArrowNavigate("down", view),
 					},
 					{
+						key: "Mod-z",
+						run: (view) => host.onUndo(view),
+					},
+					{
+						key: "Mod-y",
+						run: (view) => host.onRedo(view),
+					},
+					{
+						key: "Mod-Shift-z",
+						run: (view) => host.onRedo(view),
+					},
+					{
 						key: "Shift-Enter",
 						run: (view) => host.onSoftEnter(view),
 					},
 					{
 						key: "Enter",
 						run: () => host.onEnter(),
+					},
+					{
+						key: "Escape",
+						run: () => host.onEscape(),
 					},
 					{
 						key: "Tab",

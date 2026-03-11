@@ -8,6 +8,7 @@ import {
 	mergeWithNext,
 	mergeWithPrevious,
 	outdentBlock,
+	pasteSplitLines,
 	splitAtSelection,
 	type OutlinerEngineContext,
 } from "../engine";
@@ -243,6 +244,25 @@ describe("file-outliner-view/engine", () => {
 		expect(out.file.blocks[0]?.text).toBe("ab");
 		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["c"]);
 		expect(out.selection).toEqual({ id: "a", start: 1, end: 1 });
+	});
+
+	test("pasteSplitLines keeps the first pasted line in the current block and appends tail to the last block", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "alpha", children: [], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "b", depth: 0, text: "beta", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const out = pasteSplitLines(input, { id: "a", start: 5, end: 5 }, "P1\nP2", {
+			now: "2026-03-10T00:00:00",
+			generateId: () => "n1",
+		});
+
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual({ id: "n1", start: 2, end: 2 });
+		expect(Array.from(out.dirtyIds).sort()).toEqual(["a", "n1"]);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "n1", "b"]);
+		expect(out.file.blocks[0]?.text).toBe("alphaP1");
+		expect(out.file.blocks[1]?.text).toBe("P2");
 	});
 
 	test("backspaceAtStart prefers outdent when block has children and setting is outdent", () => {

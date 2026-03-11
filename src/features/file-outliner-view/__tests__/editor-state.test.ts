@@ -29,8 +29,11 @@ describe("file-outliner-view/editor-state", () => {
 				onToggleTask: () => true,
 				onToggleTaskMarker: () => true,
 				onArrowNavigate: () => true,
+				onUndo: () => true,
+				onRedo: () => true,
 				onEnter: () => true,
 				onSoftEnter: () => true,
+				onEscape: () => true,
 				onTab: () => true,
 				onBackspace: () => true,
 				onDelete: () => true,
@@ -69,8 +72,11 @@ describe("file-outliner-view/editor-state", () => {
 				onToggleTask: () => true,
 				onToggleTaskMarker: () => true,
 				onArrowNavigate: () => true,
+				onUndo: () => true,
+				onRedo: () => true,
 				onEnter: () => true,
 				onSoftEnter: () => true,
+				onEscape: () => true,
 				onTab: () => true,
 				onBackspace: () => true,
 				onDelete: () => true,
@@ -86,6 +92,129 @@ describe("file-outliner-view/editor-state", () => {
 
 		expect(calls.bypass).toBe(1);
 		expect(calls.reset).toBe(1);
+
+		view.destroy();
+	});
+
+	test("keydown Mod+Z routes to host onUndo", () => {
+		const calls = { undo: 0 };
+
+		const state = createOutlinerEditorState(
+			"x",
+			{ cursorStart: 0, cursorEnd: 0 },
+			{
+				isSyncSuppressed: () => false,
+				isArrowNavDispatching: () => false,
+				shouldPreserveArrowNavGoalOnce: () => false,
+				onResetArrowNavGoalColumn: () => undefined,
+				onPlainTextPasteShortcut: () => undefined,
+				onDocChanged: () => undefined,
+				onMaybeTriggerSuggest: () => undefined,
+				onPaste: () => false,
+				onToggleTask: () => true,
+				onToggleTaskMarker: () => true,
+				onArrowNavigate: () => true,
+				onUndo: () => {
+					calls.undo += 1;
+					return true;
+				},
+				onRedo: () => true,
+				onEnter: () => true,
+				onSoftEnter: () => true,
+				onEscape: () => true,
+				onTab: () => true,
+				onBackspace: () => true,
+				onDelete: () => true,
+			}
+		);
+
+		const parent = document.createElement("div");
+		const view = new EditorView({ state, parent });
+
+		view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+		expect(calls.undo).toBe(1);
+
+		view.destroy();
+	});
+
+	test("keydown Mod+Y routes to host onRedo", () => {
+		const calls = { redo: 0 };
+
+		const state = createOutlinerEditorState(
+			"x",
+			{ cursorStart: 0, cursorEnd: 0 },
+			{
+				isSyncSuppressed: () => false,
+				isArrowNavDispatching: () => false,
+				shouldPreserveArrowNavGoalOnce: () => false,
+				onResetArrowNavGoalColumn: () => undefined,
+				onPlainTextPasteShortcut: () => undefined,
+				onDocChanged: () => undefined,
+				onMaybeTriggerSuggest: () => undefined,
+				onPaste: () => false,
+				onToggleTask: () => true,
+				onToggleTaskMarker: () => true,
+				onArrowNavigate: () => true,
+				onUndo: () => true,
+				onRedo: () => {
+					calls.redo += 1;
+					return true;
+				},
+				onEnter: () => true,
+				onSoftEnter: () => true,
+				onEscape: () => true,
+				onTab: () => true,
+				onBackspace: () => true,
+				onDelete: () => true,
+			}
+		);
+
+		const parent = document.createElement("div");
+		const view = new EditorView({ state, parent });
+
+		view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "y", ctrlKey: true, bubbles: true, cancelable: true }));
+		expect(calls.redo).toBe(1);
+
+		view.destroy();
+	});
+
+	test("keydown Escape routes to host onEscape", () => {
+		const calls = { escape: 0 };
+
+		const state = createOutlinerEditorState(
+			"x",
+			{ cursorStart: 0, cursorEnd: 0 },
+			{
+				isSyncSuppressed: () => false,
+				isArrowNavDispatching: () => false,
+				shouldPreserveArrowNavGoalOnce: () => false,
+				onResetArrowNavGoalColumn: () => undefined,
+				onPlainTextPasteShortcut: () => undefined,
+				onDocChanged: () => undefined,
+				onMaybeTriggerSuggest: () => undefined,
+				onPaste: () => false,
+				onToggleTask: () => true,
+				onToggleTaskMarker: () => true,
+				onArrowNavigate: () => true,
+				onUndo: () => true,
+				onRedo: () => true,
+				onEnter: () => true,
+				onSoftEnter: () => true,
+				onEscape: () => {
+					calls.escape += 1;
+					return true;
+				},
+				onTab: () => true,
+				onBackspace: () => true,
+				onDelete: () => true,
+			}
+		);
+
+		const parent = document.createElement("div");
+		const view = new EditorView({ state, parent });
+
+		view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+		expect(calls.escape).toBe(1);
 
 		view.destroy();
 	});

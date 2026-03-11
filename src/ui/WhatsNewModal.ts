@@ -67,6 +67,21 @@ const WHATS_NEW_V2_0_5: Record<ObsidianLanguage, string[]> = {
 	"zh-TW": ["Outliner：整塊範圍選取後，右鍵選中 block 也能開啟圓點選單。"],
 };
 
+const WHATS_NEW_V2_0_6: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: V1 structural undo/redo now covers split, multiline paste, indent/outdent, merge, and drag/drop.",
+		"Outliner: Escape now exits block edit mode and clears block-range selection.",
+	],
+	zh: [
+		"Outliner：V1 结构撤销/重做现已覆盖 split、多行粘贴、缩进/反缩进、merge 和 drag/drop。",
+		"Outliner：Escape 现在会退出当前 block 编辑，并清空 block-range selection。",
+	],
+	"zh-TW": [
+		"Outliner：V1 結構撤銷/重做現已涵蓋 split、多行貼上、縮排/反縮排、merge 與 drag/drop。",
+		"Outliner：Escape 現在會退出目前 block 編輯，並清空 block-range selection。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -122,6 +137,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.6") {
+			return WHATS_NEW_V2_0_6[i18n.lang] ?? WHATS_NEW_V2_0_6.en;
 		}
 
 		if (this.currentVersion === "2.0.5") {
