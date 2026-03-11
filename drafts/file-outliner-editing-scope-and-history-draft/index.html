@@ -1,0 +1,2351 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Block Link Plus">
+      
+      
+        <meta name="author" content="Jasper">
+      
+      
+        <link rel="canonical" href="https://block-link-plus.jasper1024.com/drafts/file-outliner-editing-scope-and-history-draft/">
+      
+      
+      
+      
+        
+          <link rel="alternate" href="/en/" hreflang="en">
+        
+          <link rel="alternate" href="/zh-TW/" hreflang="zh-TW">
+        
+          <link rel="alternate" href="./" hreflang="zh">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>File Outliner 编辑作用域与历史模型草案 - Block Link Plus</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#file-outliner" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="Block Link Plus" class="md-header__button md-logo" aria-label="Block Link Plus" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Block Link Plus
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              File Outliner 编辑作用域与历史模型草案
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="选择当前语言">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/en/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="/zh-TW/" hreflang="zh-TW" class="md-select__link">
+              繁體中文
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="zh" class="md-select__link">
+              简体中文
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Jasper-1024/obsidian-block-link-plus" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    obsidian-block-link-plus
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../install/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  安装
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../usage/block-links/" class="md-tabs__link">
+          
+  
+  
+  使用指南
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/settings/" class="md-tabs__link">
+          
+  
+  
+  参考
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/daily-notes/" class="md-tabs__link">
+          
+  
+  
+  示例
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  更新日志
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API 参考
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Block Link Plus" class="md-nav__button md-logo" aria-label="Block Link Plus" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Block Link Plus
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Jasper-1024/obsidian-block-link-plus" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    obsidian-block-link-plus
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安装
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    使用指南
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    使用指南
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/block-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    块链接
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/multiline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    多行块
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/outliner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outliner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/flow-editor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    内联编辑
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    参考
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    参考
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设置
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    命令
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    blp-view YAML
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    示例
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    示例
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/daily-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    日记示例
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    工作流示例
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    更新日志
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API 参考
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么要写这份草案
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        核心观察
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        设计原则
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已确认的当前缺口
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="已确认的当前缺口">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1）结构性编辑没有进入用户可见的撤销历史
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2）多 block 选区已经存在，但键盘剪贴板操作不会跟随它
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3ctrlcmda-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3）Ctrl/Cmd+A 仍然只停留在单 block 文本范围
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        很可能还存在的其他缺口
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="很可能还存在的其他缺口">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. 键盘扩选在跨 block 场景下并不完整
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. 多 block 选区缺少成体系的键盘语义
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. 选区提升规则还没有被明确定义
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. 鼠标选择与键盘选择是两套系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实用矩阵（先覆盖 80% 高频场景）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        对当前实现的简短评价
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="对当前实现的简短评价">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        现在做得比较好的部分
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        现在比较脆弱的部分
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从代码结构看，这确实是一簇同源问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么这件事值得先抽象再实现
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-9222" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        创建 change 前的 9222 验证清单
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="创建 change 前的 9222 验证清单">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已经完成的高频验证
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本轮刻意不继续扩展的边角项
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        现在可以放心进入下一步的原因
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考方向
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        建议的设计方向
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="建议的设计方向">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-outliner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1）先定义清晰的 Outliner 作用域梯子
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-undoredo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2）把 undo/redo 视为同一套作用域模型的一部分
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3）按“操作家族”设计，而不是按单个快捷键打补丁
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        对各家族的建议语义
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="对各家族的建议语义">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        导航
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        选择
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        剪贴板
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        结构编辑
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        格式化 / Editor Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        历史
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V1 可审版（供评审）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="V1 可审版（供评审）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一句话目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么是这一版
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v1_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V1 范围（只做这些）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v1_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V1 明确非目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        我建议的最小实现思路
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么这个方案不算过度设计
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v1_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V1 验收矩阵
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        风险与回退策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        当前执行顺序决定
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v2-v3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        与 V2 / V3 的关系
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        建议的版本规划
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="建议的版本规划">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v1_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V1：最小闭环，先只解决结构编辑历史
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V2：补高频键盘语义，但仍然只做高价值项
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V3：再讨论更完整的作用域提升与统一模型
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v2-v3-tbd-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        留给 V2 / V3 的 TBD Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        我建议下一份文档怎么写
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="file-outliner">File Outliner 编辑作用域与历史模型草案</h1>
+<blockquote>
+<p>状态：工作草案。</p>
+<ul>
+<li>这份文档只用于 <code>docs/</code> 下的设计讨论。</li>
+<li>它本身不是 OpenSpec change；当前对应的 change 已创建：<code>update-file-outliner-view-structural-history-v1</code>。</li>
+<li>目标是把 <code>undo/redo</code> 放到一个更大的 Outliner 编辑一致性问题里讨论。</li>
+</ul>
+</blockquote>
+<h2 id="_1">为什么要写这份草案</h2>
+<p>最近对 <code>Ctrl+Z</code> 的调查说明，File Outliner 现在同时像三种东西：</p>
+<ol>
+<li>一个普通的单实例 CodeMirror 文本编辑器；</li>
+<li>一个以 block 为核心的 outliner；</li>
+<li>一个带树结构与视图状态的界面。</li>
+</ol>
+<p>这三层内部实现本身都合理，但用户感知到的只有<strong>一个编辑器</strong>。
+当常用操作跨越“单个 block 内部”和“多个 block 之间”时，行为就开始不一致。</p>
+<p><code>undo/redo</code> 是目前最明显的例子，但它绝不是唯一的问题。
+剪贴板、选择、导航、快捷键的作用域提升，其实都暴露了同一个底层问题。</p>
+<h2 id="_2">核心观察</h2>
+<p>Outliner 目前实际上存在多个编辑作用域：</p>
+<ul>
+<li><strong>文本作用域</strong>：光标或文本选区位于单个 block 的编辑器内部；</li>
+<li><strong>Block 作用域</strong>：一个完整 block 作为内容单元；</li>
+<li><strong>Block Range 作用域</strong>：多个可见 block 以整块方式被选中；</li>
+<li><strong>视图作用域</strong>：Outliner 的 zoom / collapse / focus 等状态。</li>
+</ul>
+<p>现在这些作用域之间，并没有共享一套统一的行为模型。
+有些交互只在文本作用域成立，有些只在 block 作用域成立，还有些只能靠鼠标或右键菜单成立。</p>
+<h2 id="_3">设计原则</h2>
+<p>最重要的一条原则应该是：</p>
+<p><strong>Outliner 必须对用户暴露一套统一的编辑模型，即使内部实现使用了不同机制。</strong></p>
+<p>这意味着至少要做到：</p>
+<ul>
+<li>只有一套用户可感知的历史模型；</li>
+<li>只有一套明确的选择模型；</li>
+<li>只有一套明确的作用域提升规则；</li>
+<li>只有一套一致的剪贴板语义；</li>
+<li>只有一套一致的“什么算一次原子编辑”定义。</li>
+</ul>
+<h2 id="_4">已确认的当前缺口</h2>
+<h3 id="1">1）结构性编辑没有进入用户可见的撤销历史</h3>
+<p>这是已经确认的问题。
+单个 block 内部的普通文本输入，只要仍然停留在 CodeMirror 自带历史里，就还能撤销。
+但一旦进入结构性操作，用户可见的撤销链就断了。</p>
+<p>当前已确认会触发该问题的操作包括：</p>
+<ul>
+<li><code>Enter</code> 创建新 block；</li>
+<li>多行粘贴生成多个 block；</li>
+<li>其他会重建 Outliner 状态的树结构编辑。</li>
+</ul>
+<h3 id="2-block">2）多 block 选区已经存在，但键盘剪贴板操作不会跟随它</h3>
+<p>运行时调查已经确认，block-range selection 这个状态本身是存在的，而且界面也会反映出来；
+但：</p>
+<ul>
+<li><code>Ctrl/Cmd+C</code> 不会复制当前选中的 block range；</li>
+<li><code>Ctrl/Cmd+X</code> 不会剪切当前选中的 block range。</li>
+</ul>
+<p>所以当前的多 block 选区，更像是一个“鼠标/右键菜单能力”，而不是一个真正的一等键盘编辑状态。</p>
+<h3 id="3ctrlcmda-block">3）<code>Ctrl/Cmd+A</code> 仍然只停留在单 block 文本范围</h3>
+<p>运行时调查同样确认：<code>Ctrl/Cmd+A</code> 目前只会选中当前 block 编辑器里的文本。
+它不会继续提升为：</p>
+<ul>
+<li>当前 block 的整体选中；</li>
+<li>或当前可见 Outliner 范围的整体选中。</li>
+</ul>
+<p>这也是一个很典型的作用域断层。</p>
+<h2 id="_5">很可能还存在的其他缺口</h2>
+<p>下面这些问题并不是都做了完整自动化验证，但从代码结构和现有行为模式看，概率很高。</p>
+<h3 id="a-block">A. 键盘扩选在跨 block 场景下并不完整</h3>
+<p>普通 <code>ArrowUp</code> / <code>ArrowDown</code> 已经实现了跨 block 导航。
+但同一家族的“扩选版导航”目前并没有表现出同样明确的跨 block 语义，例如：</p>
+<ul>
+<li><code>Shift+ArrowUp</code></li>
+<li><code>Shift+ArrowDown</code></li>
+<li>其他带“扩展选择”语义的边界导航</li>
+</ul>
+<p>这说明“光标移动”和“扩展选择”目前还不是同一个统一模型。</p>
+<h3 id="b-block">B. 多 block 选区缺少成体系的键盘语义</h3>
+<p>从当前实现看，block-range selection 很可能还缺少下列键盘语义定义：</p>
+<ul>
+<li>copy</li>
+<li>cut</li>
+<li>delete</li>
+<li>backspace</li>
+<li>paste</li>
+<li>escape 清除或降级选区</li>
+</ul>
+<p>结果就是：用户可以创建一个多 block 选区，但无法把它当成普通“当前活动选区”来操作。</p>
+<h3 id="c">C. 选区提升规则还没有被明确定义</h3>
+<p>Outliner 当前并没有一条正式的“作用域提升梯子”，例如：</p>
+<ul>
+<li>先是单个 block 内部的文本选区；</li>
+<li>再提升为当前 block 整体；</li>
+<li>再提升为多个 block；</li>
+<li>再提升为当前可见 Outliner 范围。</li>
+</ul>
+<p>没有这条梯子，很多常见快捷键都会变得难以推理，也难以形成稳定直觉。</p>
+<h3 id="d">D. 鼠标选择与键盘选择是两套系统</h3>
+<p>鼠标拖拽已经可以产生 block-range selection。
+但键盘驱动的选择，目前并没有明显进入同一套状态模型。
+这往往会导致两套逻辑长期并行、越补越碎。</p>
+<h2 id="80">实用矩阵（先覆盖 80% 高频场景）</h2>
+<p>这张矩阵有意不追求穷尽。
+它只覆盖最常见、最能代表真实使用场景的一组编辑操作。</p>
+<p>这张矩阵的依据包括：</p>
+<ul>
+<li>通过 <code>9222</code> 对运行中的 Obsidian 做实时调试；</li>
+<li>当前 File Outliner 代码实现；</li>
+<li>官方 Obsidian 编辑快捷键的常见用户预期；</li>
+<li>Workflowy 一类 outliner 工具的常见用户预期。</li>
+</ul>
+<p>支持程度说明：</p>
+<ul>
+<li><strong>良好</strong>：主要作用域下可用，而且语义比较连贯；</li>
+<li><strong>部分支持</strong>：在某个作用域可用，但一跨作用域就断；</li>
+<li><strong>缺失</strong>：常见预期当前没有成立；</li>
+<li><strong>需要设计</strong>：表面上有行为，但语义还不够明确或不够稳。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>常见用户预期</th>
+<th>当前 BLP 状态</th>
+<th>说明</th>
+<th>更好的方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArrowUp</code> / <code>ArrowDown</code></td>
+<td>先在 block 内移动光标，到边界后再跨 block 移动</td>
+<td><strong>良好</strong></td>
+<td><code>9222</code> 已确认两个方向都能跨 block：<code>ArrowDown</code> 可从普通块尾部进入下一块，<code>ArrowUp</code> 可从下一块起点回到上一块。</td>
+<td>继续保留，并把它作为导航家族的基线。</td>
+</tr>
+<tr>
+<td><code>Shift+ArrowUp</code> / <code>Shift+ArrowDown</code></td>
+<td>按与普通导航一致的心智模型扩展选择</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：两个方向在 block 边界都不会跨到相邻 block，也不会提升成 block-range selection。它们仍停留在单 block 文本作用域。</td>
+<td>让扩选导航沿用普通导航的边界规则，必要时显式提升为 block-range。</td>
+</tr>
+<tr>
+<td><code>Enter</code></td>
+<td>在当前位置拆分当前 block，并创建新的 sibling block</td>
+<td><strong>部分支持</strong></td>
+<td>结构行为本身成立，但 <code>Ctrl+Z</code> 不会撤回这次 split。</td>
+<td>保留 split 语义，但让它成为一条原子 Outliner history entry。</td>
+</tr>
+<tr>
+<td><code>Shift+Enter</code></td>
+<td>普通 block 内换行；task block 保持单行任务语义</td>
+<td><strong>良好</strong></td>
+<td><code>9222</code> 已确认：普通 block 会插入换行；task block 会走结构 split，而不是生成块内换行。</td>
+<td>保持这种 block-type-aware 规则，但把历史语义补齐。</td>
+</tr>
+<tr>
+<td><code>Tab</code> / <code>Shift+Tab</code></td>
+<td>调整当前 block 层级</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：<code>Tab</code> 缩进、<code>Shift+Tab</code> 反缩进都成立；但两者之后 <code>Ctrl+Z</code> 都不会恢复原层级。</td>
+<td>作为原子 block-scope 历史操作统一管理。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+A</code></td>
+<td>选中“当前作用域”的全部内容，并有清晰提升规则</td>
+<td><strong>部分支持</strong></td>
+<td>当前只会选中活动 block 内的文本，连按两次也不会提升到 block 或可见 Outliner 范围。</td>
+<td>明确定义它是一段式还是多段式提升。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+C</code></td>
+<td>文本选区复制文本；block-range selection 复制选中的 block</td>
+<td><strong>部分支持</strong></td>
+<td>文本复制成立；多 block 选区下的键盘复制不会跟随 block-range 状态。</td>
+<td>建立统一剪贴板模型：文本选区复制文本，block-range 复制序列化 block。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+X</code></td>
+<td>文本选区剪切文本；block-range selection 剪切选中的 block</td>
+<td><strong>部分支持</strong></td>
+<td>文本剪切成立；多 block 选区下的键盘剪切不会执行对应 block-range 动作。</td>
+<td>与 copy 完全对称，再在同一作用域内执行 delete。</td>
+</tr>
+<tr>
+<td><code>Delete</code> / <code>Backspace</code>（文本边界）</td>
+<td>在 block 边界执行 merge prev / merge next</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：<code>Backspace</code> 在块首会 merge prev，<code>Delete</code> 在块尾会 merge next；但两者都不会被 <code>Ctrl+Z</code> 撤回。</td>
+<td>把边界 merge 明确归类为结构编辑，并接入统一历史。</td>
+</tr>
+<tr>
+<td><code>Delete</code> / <code>Backspace</code>（block-range）</td>
+<td>对当前 block-range selection 执行删除或结构性删改</td>
+<td><strong>缺失</strong></td>
+<td><code>9222</code> 已确认：在 block-range selection 下按 <code>Delete</code> / <code>Backspace</code> 没有明确动作，选区和内容都不变。</td>
+<td>明确定义 block-range 下的删除语义，并决定是否纳入结构历史。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+V</code></td>
+<td>文本作用域下粘贴文本；需要时把多行粘贴提升为多个 block</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：普通 block / task block 的多行粘贴都会进入结构编辑；但它仍未进入统一撤销链。另一个独立 bug 也已定位：结构编辑后若焦点切到新 block，旧 editor 的 stale text 会回写覆盖新结构结果。</td>
+<td>先用最小补丁修复 stale commit 覆盖，再把 split-paste 作为原子结构编辑接入统一历史。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+Shift+V</code></td>
+<td>强制按纯文本方式粘贴到当前文本作用域</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：普通 block 会留在单 block 文本范围内；但 task block 仍会拆成结构编辑，因为它要保持单行任务语义。</td>
+<td>把这条“task block 例外”写成显式规则，而不是隐含行为。</td>
+</tr>
+<tr>
+<td><code>Home</code> / <code>End</code></td>
+<td>在当前文本作用域内移动到行首/行尾，不跨 block 提升作用域</td>
+<td><strong>良好</strong></td>
+<td><code>9222</code> 已确认：在多行 block 内，它们仍保持在当前 block 文本范围，不会误触发跨 block 行为。</td>
+<td>继续保持文本局部语义，不要把它们并入结构导航。</td>
+</tr>
+<tr>
+<td><code>Escape</code></td>
+<td>降级或清空当前选择状态</td>
+<td><strong>部分支持</strong></td>
+<td>已独立小修：<code>9222</code> 已确认，编辑态按 <code>Escape</code> 会退出当前 block 编辑并把焦点落回 outliner root；block-range selection 下按 <code>Escape</code> 会清空当前整段选区。</td>
+<td>暂不把它继续扩成更大的“作用域降级梯子”；先保持这条最小、直接的退出/清空语义。</td>
+</tr>
+<tr>
+<td><code>block-range 右键菜单</code></td>
+<td>对当前整段范围提供 range-aware 菜单语义</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：range 状态下右键可以打开菜单，但菜单仍以“被点击的那个 block”为锚点；甚至点“删除”时，也只删除该 block。</td>
+<td>如果 V1 不做 range-aware 菜单，也至少要把这件事写成明确限制。</td>
+</tr>
+<tr>
+<td><code>drag/drop</code></td>
+<td>移动当前 block 或 subtree，并可由撤销恢复</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：reorder sibling 与 append child 都成立；但拖拽后直接按 <code>Ctrl+Z</code>，顺序不会恢复。</td>
+<td>把 drag/drop move 纳入与 split / merge / indent 同一条结构历史链。</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd+Z</code> / redo</td>
+<td>撤销/重做最近一次用户可见编辑，不关心它是文本还是结构</td>
+<td><strong>部分支持</strong></td>
+<td><code>9222</code> 已确认：单块文本 <code>Ctrl+Z</code> 正常；在当前 Windows 探针里，<code>Ctrl+Y</code> 可以重做单块文本，但 <code>Ctrl+Shift+Z</code> 没有恢复；所有结构编辑都没有进入统一历史。</td>
+<td>引入单一 Outliner-level history model，并明确平台相关的 redo 入口。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_6">对当前实现的简短评价</h2>
+<h3 id="_7">现在做得比较好的部分</h3>
+<ul>
+<li>Outliner 已经把“文本编辑”和“树结构编辑”做了明确分层；</li>
+<li>普通跨 block 箭头导航不是依赖默认行为，而是经过专门设计；</li>
+<li>多行粘贴已经有 Outliner-aware 语义，不是假装自己只是一个普通文本框；</li>
+<li>block-range selection 已经作为真实视图状态存在，这是很重要的基础；</li>
+<li>鼠标路径上，从 block-range 回到文本作用域或 zoom 作用域其实已经比较顺：单击 display 会进入编辑并清空 range，单击 bullet 也会在 zoom 前清空 range。</li>
+</ul>
+<h3 id="_8">现在比较脆弱的部分</h3>
+<ul>
+<li>键盘路由在嵌入式编辑器内部很强，但在 Outliner 根级别较弱；</li>
+<li>文本选区与 block-range selection 是两套系统，缺少明确的提升规则；</li>
+<li>block-range 动作目前更容易通过鼠标或右键菜单触达，而不是键盘；</li>
+<li>右键菜单虽然能在 range 状态下弹出，但菜单动作仍按“单块”执行，和可见的 range 状态并不一致；</li>
+<li>剪贴板语义被拆成了“文本编辑器行为”和“block 菜单行为”；</li>
+<li>历史模型被拆成了“CodeMirror 本地历史”和“Outliner 结构编辑”。</li>
+</ul>
+<h3 id="_9">从代码结构看，这确实是一簇同源问题</h3>
+<ul>
+<li><code>src/features/file-outliner-view/editor-state.ts</code> 已经把 <code>ArrowUp/Down</code>、<code>Enter</code>、<code>Tab</code>、<code>Backspace</code>、<code>Delete</code> 等键位统一收进嵌入式 CM 路由，这其实提供了一条很好的统一入口；</li>
+<li><code>src/features/file-outliner-view/view.ts</code> 里的结构编辑最终大多都会落到 <code>applyEngineResult()</code>，这解释了为什么 <code>split</code>、<code>merge</code>、<code>indent/outdent</code>、<code>drag/drop</code> 会一起暴露历史断层；</li>
+<li><code>src/features/file-outliner-view/editor-suggest-bridge.ts</code> 里的 <code>undo()</code> / <code>redo()</code> 目前还是空实现，这说明现在并不存在一条 bridge-level 的统一历史兜底；</li>
+<li>另一方面，<code>enterEditMode()</code>、<code>zoomInto()</code>、<code>toggleCollapsed()</code> 这些现有入口已经会清理 block-range，说明“状态切换骨架”其实已经在了；</li>
+<li>所以这件事不需要走“先重写架构”的路线，也不需要先发明一个更大的模式协调器；V1 更合理的做法是：先把结构编辑接入一条统一历史链，再决定哪些快捷键要继续统一提升。</li>
+</ul>
+<h3 id="_10">为什么这件事值得先抽象再实现</h3>
+<p>当前实现并不是“错的”。
+实际上，它已经包含不少很用心的局部设计。
+问题在于，这些能力是按单个问题逐步补进来的。</p>
+<p>所以接下来的重点不应该是“继续补几个快捷键”，
+而应该是“先定义一套作用域模型，再让快捷键从这套模型里自然继承语义”。</p>
+<h2 id="change-9222">创建 change 前的 9222 验证清单</h2>
+<p>这一轮已经把和本议题最相关、覆盖 80% 高频使用场景的 <code>9222</code> 验证跑完。
+下面这些结论现在可以直接作为后续 change 讨论的事实基线。</p>
+<h3 id="_11">已经完成的高频验证</h3>
+<ul>
+<li><code>ArrowUp</code> / <code>ArrowDown</code> 跨 block 成立；<code>Shift+ArrowUp</code> / <code>Shift+ArrowDown</code> 都不会跨 block，也不会提升成 block-range；</li>
+<li>普通 block：<code>Enter</code> split、<code>Shift+Enter</code> 换行；task block：<code>Enter</code> split、<code>Shift+Enter</code> 也走 split；</li>
+<li><code>Tab</code> / <code>Shift+Tab</code>、<code>Backspace</code> merge prev、<code>Delete</code> merge next、<code>drag/drop</code> move 都已通过 <code>9222</code> 验证；</li>
+<li><code>Ctrl/Cmd+Z</code> 对单块文本成立；当前 Windows 探针里 <code>Ctrl+Y</code> 可以重做文本，<code>Ctrl+Shift+Z</code> 不会恢复；</li>
+<li>所有已验证结构编辑：<code>Enter</code>、多行 <code>Ctrl/Cmd+V</code>、<code>Tab</code>、<code>Shift+Tab</code>、<code>Backspace</code> merge、<code>Delete</code> merge、<code>drag/drop</code> move，目前都没有进入统一撤销链；</li>
+<li>block-range selection 已是真实状态，但键盘上的 <code>Ctrl/Cmd+C</code> / <code>X</code>、<code>Delete</code> / <code>Backspace</code>、<code>Paste</code> 仍不会承接它；<code>Escape</code> 现在已经可以清空当前 range；</li>
+<li>但 block-range 并不是“出不来”：单击某个 block display 可以直接回到文本编辑，单击 bullet 也能清掉 range 并进入 zoom；</li>
+<li>block-range 上右键目前仍以“被点击的单个 block”为锚点打开 bullet menu；进一步验证表明，点菜单里的“删除”也只会删除该 block，而不是整段 range；</li>
+<li><code>Ctrl/Cmd+A</code> 连按两次仍只停留在当前 block 文本范围；<code>Home</code> / <code>End</code> 则保持在文本局部语义，不会跨 block；</li>
+<li>普通 block 下 <code>Ctrl/Cmd+Shift+V</code> 保持单 block 文本作用域；task block 下仍会 split；</li>
+<li>多行 paste 的“首行丢失”现象已经定位：不是 engine 分裂错误，而是结构编辑后 <code>exitEditMode()</code> 会把旧 editor 的 stale text 回写覆盖新结果；同类覆盖也会影响中间位置 <code>Enter</code> split；</li>
+<li><code>Escape</code> 已独立先行修复：编辑态会退出当前 block 编辑，block-range selection 下会清空当前选区；但它暂时还不承担更大的“多级作用域降级”职责。</li>
+</ul>
+<h3 id="_12">本轮刻意不继续扩展的边角项</h3>
+<p>下面这些不是做不到，而是它们已经超出这份“80% 高频场景矩阵”的边界：</p>
+<ul>
+<li>Mac 侧的 redo 绑定（例如 <code>Cmd+Shift+Z</code>）不适合在当前 Windows 调试环境下代替验证；</li>
+<li><code>Home</code> / <code>End</code> / <code>PageUp</code> / <code>PageDown</code> 这类非核心边界键，这轮先不纳入主矩阵；</li>
+<li>右键菜单里每个具体菜单项在 block-range 场景下的执行语义，这轮只抽查了代表性的 <code>删除</code>，没有逐项点完全部菜单项；</li>
+<li>更深层的 zoom / collapse / drag/drop 组合场景，这轮只保留了最常见的 subtree move 基线验证。</li>
+</ul>
+<h3 id="_13">现在可以放心进入下一步的原因</h3>
+<p>因为这轮已经不再是“猜哪里有 bug”，而是看到了非常稳定的一条模式：</p>
+<ul>
+<li>文本编辑主要走 CodeMirror 本地历史；</li>
+<li>结构编辑主要走 <code>applyEngineResult()</code> 并脱离历史；</li>
+<li>block-range selection 是真实状态，但还没有被键盘语义正式承认。</li>
+</ul>
+<p>这三条已经足够支撑下一轮 change 讨论，而且不会把范围无限做大。</p>
+<p>所以这里的原则应该是：</p>
+<p><strong>先围绕“结构编辑接入统一历史链”定义最小闭环，再决定哪些快捷键要继续统一提升。</strong></p>
+<h2 id="_14">参考方向</h2>
+<p>下面这些参考不是产品必须严格对齐的目标，
+但它们适合用来校准用户对常见编辑器 / outliner 行为的预期：</p>
+<ul>
+<li>Obsidian editing shortcuts: <a href="https://help.obsidian.md/editing-shortcuts">https://help.obsidian.md/editing-shortcuts</a></li>
+<li>Obsidian hotkeys: <a href="https://help.obsidian.md/hotkeys">https://help.obsidian.md/hotkeys</a></li>
+<li>Workflowy keyboard shortcuts: <a href="https://workflowy.com/learn/keyboard-shortcuts">https://workflowy.com/learn/keyboard-shortcuts</a></li>
+</ul>
+<h2 id="_15">建议的设计方向</h2>
+<h3 id="1-outliner">1）先定义清晰的 Outliner 作用域梯子</h3>
+<p>建议的概念梯子：</p>
+<ol>
+<li><strong>文本作用域</strong>：单个 block 内部的光标或文本选区；</li>
+<li><strong>Block 作用域</strong>：一个完整 block 作为内容单元；</li>
+<li><strong>Block Range 作用域</strong>：多个 block 按可见顺序形成的范围；</li>
+<li><strong>可见 Outliner 作用域</strong>：当前 zoom / collapse 上下文下的全部可见 block。</li>
+</ol>
+<p>这条梯子并不意味着每个命令都必须支持每一层。
+它的意义是：每一个命令家族，都必须明确回答“它在哪一层工作、如何提升、如何降级”。</p>
+<h3 id="2-undoredo">2）把 <code>undo/redo</code> 视为同一套作用域模型的一部分</h3>
+<p>长期方向当然仍然是：用户感知上只有一套 history。
+但对 V1 来说，不必一上来就把底层完全做成单一 history 引擎。</p>
+<p>更现实也更稳的路线是：</p>
+<ul>
+<li>文本历史继续主要由 CodeMirror 承担；</li>
+<li>结构历史由 Outliner 层显式记录；</li>
+<li><code>Mod-Z</code> / <code>Mod-Y</code> 通过一层很薄的 history 路由，先保留 CodeMirror 原生文本 undo/redo；只有当前文本 history 不可消费时，才回退到结构 history。</li>
+</ul>
+<p>这里更关键的原则不是“底层必须完全统一”，而是：</p>
+<ul>
+<li>历史记录应该按用户感知到的编辑作用域来定义；</li>
+<li>而不是按底层恰好使用了哪个 API 来定义。</li>
+</ul>
+<p>也就是说，真正决定历史语义的应该是“用户以为自己编辑了什么”，
+而不是“底层先改了 CodeMirror 还是先改了树结构”。</p>
+<h3 id="3">3）按“操作家族”设计，而不是按单个快捷键打补丁</h3>
+<p>不要把 <code>Ctrl+Z</code>、<code>Ctrl+C</code>、<code>Shift+ArrowDown</code> 一个个孤立地修。
+更好的做法是把常用行为分成几个家族：</p>
+<ul>
+<li><strong>导航</strong></li>
+<li><strong>选择</strong></li>
+<li><strong>剪贴板</strong></li>
+<li><strong>结构编辑</strong></li>
+<li><strong>格式化 / editor commands</strong></li>
+<li><strong>历史</strong></li>
+</ul>
+<p>然后让每个家族都回答同一个问题：</p>
+<blockquote>
+<p>在文本作用域、Block 作用域、Block Range 作用域、可见 Outliner 作用域下，这个家族分别怎么工作？</p>
+</blockquote>
+<h2 id="_16">对各家族的建议语义</h2>
+<h3 id="_17">导航</h3>
+<ul>
+<li>普通箭头导航继续保持“先光标、后跨 block”；</li>
+<li>一旦到达 block 边界，下一次导航允许跨 block；</li>
+<li>扩选版导航应沿用同一套边界逻辑，而不是形成另一套规则。</li>
+</ul>
+<h3 id="_18">选择</h3>
+<p>建议的长期规则：</p>
+<ul>
+<li>第一层是文本选区；</li>
+<li>再进一步可以提升成当前 block；</li>
+<li>再进一步可以进入 block-range selection；</li>
+<li><code>Esc</code> 应该负责清晰地降级或清空当前选择状态。</li>
+</ul>
+<h3 id="_19">剪贴板</h3>
+<p>建议统一为：</p>
+<ul>
+<li>文本选区复制纯文本；</li>
+<li>block-range selection 复制序列化后的 Outliner blocks；</li>
+<li>cut 与 copy 保持完全对称；</li>
+<li>paste 需要显式区分文本作用域和 block-range 作用域下的目标语义。</li>
+</ul>
+<h3 id="_20">结构编辑</h3>
+<p>结构编辑应该对用户表现为原子操作，例如：</p>
+<ul>
+<li>split block；</li>
+<li>merge blocks；</li>
+<li>indent / outdent；</li>
+<li>多行粘贴生成多个 block；</li>
+<li>drag/drop 移动 subtree。</li>
+</ul>
+<h3 id="editor-commands">格式化 / Editor Commands</h3>
+<p>通过 editor-command bridge 进入的格式化命令，
+应当稳定地工作在文本作用域。
+如果 V1 不支持 block-range 作用域，那也应当作为明确的非目标，而不是灰色地带。</p>
+<h3 id="_21">历史</h3>
+<p>历史必须同时覆盖文本编辑与结构编辑。
+用户不应该需要知道：</p>
+<ul>
+<li>这次编辑是不是只发生在 CodeMirror 内部；</li>
+<li>还是 Outliner 另外做了一次树结构重建。</li>
+</ul>
+<h2 id="v1">V1 可审版（供评审）</h2>
+<p>这一节只服务一个目的：</p>
+<p><strong>把下一轮 change 压缩成一个可以直接审、可以直接否决、也可以直接放行的最小闭环。</strong></p>
+<h3 id="_22">一句话目标</h3>
+<p>让 File Outliner 中最常见的结构编辑，第一次具备用户可感知的一致撤销 / 重做体验。</p>
+<h3 id="_23">为什么是这一版</h3>
+<p>因为从 <code>9222</code> 验证结果看，当前最大断层不是“某个快捷键不够完整”，
+而是：</p>
+<ul>
+<li>文本编辑可以撤销；</li>
+<li>结构编辑大多不能撤销；</li>
+<li>用户不会把这两类编辑当成两套系统。</li>
+</ul>
+<p>所以 V1 不追求把所有作用域模型一次做完，
+只先补上这条最痛、最高频、最符合直觉的能力链。</p>
+<h3 id="v1_1">V1 范围（只做这些）</h3>
+<p>纳入 V1 的结构编辑只有这 6 类：</p>
+<ol>
+<li><code>Enter</code> split block；</li>
+<li>多行 <code>Ctrl/Cmd+V</code> 生成多个 block；</li>
+<li><code>Tab</code> / <code>Shift+Tab</code>；</li>
+<li>块首 <code>Backspace</code> merge prev；</li>
+<li>块尾 <code>Delete</code> merge next；</li>
+<li><code>drag/drop</code> move subtree / reorder。</li>
+</ol>
+<p>V1 的验收目标只有一个：</p>
+<ul>
+<li>这些操作之后，<code>Ctrl/Cmd+Z</code> 可以撤回；</li>
+<li>撤回之后，<code>Ctrl/Cmd+Y</code> 可以重做；</li>
+<li>不破坏现有文本编辑 <code>undo/redo</code>；</li>
+<li>不改变现有鼠标进入编辑、zoom、range 清理这些已成立行为。</li>
+</ul>
+<h3 id="v1_2">V1 明确非目标</h3>
+<p>下面这些都先不做，避免范围膨胀：</p>
+<ul>
+<li>不统一 <code>block-range</code> 的键盘 <code>copy/cut/delete/paste</code>；</li>
+<li>不定义 <code>Ctrl/Cmd+A</code> 的一段式 / 多段式提升；</li>
+<li>不让 <code>Shift+ArrowUp/Down</code> 进入跨 block 扩选；</li>
+<li>不把右键菜单改成完整的 range-aware menu；</li>
+<li>不把 collapse / zoom / 视图状态纳入完整 history；</li>
+<li>不解决所有平台的 redo 差异；V1 先以 Windows 下的 <code>Ctrl+Y</code> 为主验收入口；</li>
+<li>不把多行 paste / <code>Enter</code> split 的正确性修复混进结构 history change；这类恢复预期行为的 bug 先独立处理。</li>
+</ul>
+<h3 id="_24">我建议的最小实现思路</h3>
+<p>原则：<strong>只加一层很薄的结构 history 路由，不重写现有编辑架构。</strong></p>
+<p>建议做法：</p>
+<ol>
+<li><strong>文本历史继续交给 CodeMirror</strong></li>
+<li>普通输入、删除、文本格式化，仍然主要走 CM 本地 history；</li>
+<li>
+<p>V1 不尝试把文本 transaction 全部收编到 Outliner history。</p>
+</li>
+<li>
+<p><strong>结构编辑统一进入一个 view-level helper</strong></p>
+</li>
+<li>把 split / merge / indent / outdent / drag-drop / multiline paste 这些结构操作，统一通过一个薄封装提交；</li>
+<li>
+<p>这个 helper 负责记录 <code>before</code> / <code>after</code> 快照，再调用现有的 <code>applyEngineResult()</code>。</p>
+</li>
+<li>
+<p><strong>V1 直接存快照，不做 diff journal</strong></p>
+</li>
+<li>为了简单和稳，V1 建议直接保存结构编辑前后的 <code>ParsedOutlinerFile</code> 快照，以及对应 selection / focus 信息；</li>
+<li>
+<p>不做增量补丁、不做操作日志回放、不做事务合并器。</p>
+</li>
+<li>
+<p><strong><code>Mod-Z</code> / <code>Mod-Y</code> 只增加一层很薄的回退路由</strong></p>
+</li>
+<li>编辑态先让 CodeMirror 自己消费文本 <code>undo/redo</code>；</li>
+<li>只有当当前编辑器没有可用的文本 history 时，才回退到结构 history；</li>
+<li>非编辑态（例如 drag/drop 之后）再由 outliner root 承接结构 <code>undo/redo</code>；</li>
+<li>
+<p>这样做不完美，但已经足够覆盖最常见场景：用户刚 split / paste / tab / merge / drag 完就按撤销。</p>
+</li>
+<li>
+<p><strong>恢复时只保证内容、焦点、选区稳定</strong></p>
+</li>
+<li>V1 不追求恢复所有临时 UI 细节；</li>
+<li>只保证 block 树、焦点 block、光标 / 选区位置、必要滚动定位是稳定的。</li>
+</ol>
+<h3 id="_25">为什么这个方案不算过度设计</h3>
+<ul>
+<li>它不要求先发明一个新的总 history engine；</li>
+<li>它不要求先统一所有作用域；</li>
+<li>它不要求先决定 <code>Ctrl/Cmd+A</code>、<code>Shift+Arrow</code>、range 菜单这些更大的设计题；</li>
+<li>它只是在现有结构编辑已经共享的入口上，补一条缺失的历史链。</li>
+</ul>
+<p>换句话说，V1 修的是“断层”，不是“重构世界”。</p>
+<h3 id="v1_3">V1 验收矩阵</h3>
+<p>建议只用下面这组场景验收：</p>
+<ul>
+<li>普通 block：<code>Enter</code> 后可 undo / redo；</li>
+<li>普通 block：多行 <code>Ctrl/Cmd+V</code> 后可 undo / redo；</li>
+<li>普通 block：<code>Tab</code> / <code>Shift+Tab</code> 后可 undo / redo；</li>
+<li>普通 block：块首 <code>Backspace</code> merge 后可 undo / redo；</li>
+<li>普通 block：块尾 <code>Delete</code> merge 后可 undo / redo；</li>
+<li>普通 block：<code>drag/drop</code> move 后可 undo / redo；</li>
+<li>task block：至少覆盖 <code>Enter</code> 和多行 paste 两项 undo / redo；</li>
+<li>对照项：普通文本输入的 <code>undo/redo</code> 不退化；</li>
+<li>对照项：<code>ArrowUp/Down</code>、鼠标进编辑、range -&gt; click display、range -&gt; bullet zoom 不退化。</li>
+</ul>
+<p>当前这一版实现已经通过 <code>9222</code> 做过一轮高频回归：</p>
+<ul>
+<li><code>Enter</code> split、多行 paste split、<code>Tab</code> / <code>Shift+Tab</code>、块首 <code>Backspace</code>、块尾 <code>Delete</code>、drag/drop move 都已经验证可 undo / redo；</li>
+<li>普通文本输入的 <code>Ctrl+Z</code> 仍优先走 CodeMirror 文本 history，没有被结构 history 抢走；</li>
+<li>Windows 下 <code>Ctrl+Y</code> 作为主要 redo 验收入口已经通过；</li>
+<li><code>Ctrl+Shift+Z</code> 在合成事件探针里不稳定，因此这轮仍不把它作为 Windows 主验收口径。</li>
+</ul>
+<h3 id="_26">风险与回退策略</h3>
+<p>V1 需要重点盯住的风险只有这几类：</p>
+<ul>
+<li><strong>历史串线</strong>：结构 undo 抢走了本应属于文本 undo 的场景；</li>
+<li><strong>焦点漂移</strong>：undo/redo 后编辑器焦点丢失或落到错误 block；</li>
+<li><strong>保存时机抖动</strong>：undo/redo 导致额外保存或 dirty 标记异常；</li>
+<li><strong>快照引用污染</strong>：历史项保存的是可变对象，回放时状态被后续编辑污染。</li>
+</ul>
+<p>对应策略也保持最小化：</p>
+<ul>
+<li>结构 history 只记录明确的结构操作；</li>
+<li>快照必须是深拷贝，不复用可变引用；</li>
+<li>如果某一类结构操作回放不稳定，可以单独从 V1 暂时移出，而不是拖垮整版；</li>
+<li>实现时优先保证 undo 正确，再补 redo。</li>
+</ul>
+<h3 id="_27">当前执行顺序决定</h3>
+<p>在正式进入 V1 结构 history 实现前，先处理一个独立 bug：</p>
+<ul>
+<li><strong>多行 <code>Ctrl/Cmd+V</code> 粘贴首行丢失 / <code>Enter</code> split 结果被旧编辑器回写覆盖</strong>。</li>
+</ul>
+<p>这样安排的原因很简单：</p>
+<ul>
+<li><code>9222</code> 已确认：<code>pasteSplitLines()</code> / <code>splitAtSelection()</code> 的 engine 结果本身是对的；</li>
+<li>真正根因在 view 层：结构编辑后若焦点切到新 block，<code>exitEditMode()</code> 会把旧 editor 的 stale text 无条件回写到新结构结果；</li>
+<li>这本身就是当前真实存在、影响日常使用的 bug；</li>
+<li>它属于恢复预期行为的问题，可以不先建 OpenSpec change 直接修；</li>
+<li>如果不先修它，后面的 V1 history 验收会被 paste / split 本身的错误结果污染。</li>
+</ul>
+<p>所以当前建议顺序明确为：</p>
+<ol>
+<li>先修这类“结构编辑后 stale commit 覆盖结果”的独立 bug；</li>
+<li>再实现 V1 的结构编辑 <code>undo/redo</code>；</li>
+<li><code>Esc</code> 不再绑进 V1 history change；它已经作为独立小修先行处理。</li>
+</ol>
+<h3 id="v2-v3">与 V2 / V3 的关系</h3>
+<p>V1 做完之后，文档里其他计划仍然保留，但都只作为后续路线：</p>
+<ul>
+<li><code>block-range</code> 键盘语义进 V2；</li>
+<li><code>Ctrl/Cmd+A</code> / <code>Shift+Arrow</code> 的作用域提升进 V2 或 V3；</li>
+<li>range-aware 菜单是否值得做，继续放在 TBD design。</li>
+</ul>
+<h2 id="_28">建议的版本规划</h2>
+<p>这里按 28 原则来排，不追求一次把模型做完，
+而是先把最常用、最痛、最容易形成稳定直觉的那部分闭环做好。</p>
+<h3 id="v1_4">V1：最小闭环，先只解决结构编辑历史</h3>
+<p>V1 的具体目标、非目标、实现思路、验收矩阵和风险控制，以上一节 <strong>《V1 可审版（供评审）》</strong> 为准。</p>
+<p>这里不再重复展开，只保留一句话概括：</p>
+<p><strong>先把最常见的结构编辑接入统一撤销 / 重做链，其余设计题全部后移。</strong></p>
+<h3 id="v2">V2：补高频键盘语义，但仍然只做高价值项</h3>
+<p>V2 再处理那些同样常用、但不如 undo/history 迫切的问题：</p>
+<ol>
+<li>block-range selection 下的键盘 <code>copy/cut/delete</code>；</li>
+<li><code>Esc</code> 的统一清理 / 降级语义；</li>
+<li><code>Ctrl/Cmd+A</code> 的明确规则（至少先定一段式还是多段式）；</li>
+<li>block-range 与文本编辑态之间的键盘承接规则。</li>
+</ol>
+<p>V2 的目标不是“全统一”，而是让用户在多 block 选区上，
+至少能做最基本、最常见的键盘编辑动作。</p>
+<h3 id="v3">V3：再讨论更完整的作用域提升与统一模型</h3>
+<p>V3 再进入那些更容易扩大设计面的议题：</p>
+<ol>
+<li><code>Shift+ArrowUp/Down</code> 是否应进入 block-range selection；</li>
+<li><code>Ctrl/Cmd+A</code> 是否采用多段式提升；</li>
+<li>range-aware 右键菜单是否值得做；</li>
+<li>键盘选择和鼠标选择如何完全对齐；</li>
+<li>collapse / zoom / 视图状态是否要进入 history。</li>
+</ol>
+<p>这些问题都是真问题，
+但它们更适合作为 <code>TBD design</code>，而不是压进 V1。 </p>
+<h2 id="v2-v3-tbd-design">留给 V2 / V3 的 TBD Design</h2>
+<p>下面这些问题仍然要写下来，但它们不应该阻塞 V1：</p>
+<ul>
+<li><code>Ctrl/Cmd+A</code> 应该是一段式还是多段式？</li>
+<li>block-range selection 下的 <code>paste</code> 应该替换、插入，还是必须要求光标目标？</li>
+<li>collapse / zoom 状态是否要进入 undo history，还是只做 best-effort 恢复？</li>
+<li>多 block 操作默认应该基于 visible order、tree order，还是 subtree 语义？</li>
+<li>输入法（IME / 中文组合输入）的 history grouping 规则是什么？</li>
+<li>range-aware 右键菜单到底值不值得做，还是明确保持单块语义即可？</li>
+</ul>
+<h2 id="_29">我建议下一份文档怎么写</h2>
+<p>下一份更正式的文档，不要再试图把所有问题一次写完。
+更好的写法是：</p>
+<ul>
+<li><strong>正文只写 V1</strong>：结构编辑 history 的目标、非目标、实现边界、验收矩阵；</li>
+<li><strong>附录列出 V2 / V3</strong>：只写方向和 TBD 问题，不写过深实现；</li>
+<li><strong>把多行 paste 首行疑似丢失单独拆成 bug</strong>，不要混进 history change；</li>
+<li><strong>明确平台差异</strong>：Windows 以 <code>Ctrl+Y</code> 为主要 redo 验收入口，<code>Ctrl+Shift+Z</code> 暂不作为 V1 主验收。</li>
+</ul>
+<p>等这份 V1 文档成熟后，再把它抽成 OpenSpec change，会更稳，也更不容易返工。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Jasper-1024/obsidian-block-link-plus" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://t.me/blocklinkplus" target="_blank" rel="noopener" title="t.me" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M256 8a248 248 0 1 0 0 496 248 248 0 1 0 0-496m115 168.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7.2-.7.3-3.1-1.2-4.4s-3.6-.8-5.1-.5c-2.2.5-37.1 23.5-104.6 69.1-9.9 6.8-18.9 10.1-26.9 9.9-8.9-.2-25.9-5-38.6-9.1-15.5-5-27.9-7.7-26.8-16.3.6-4.5 6.7-9 18.4-13.7 72.3-31.5 120.5-52.3 144.6-62.3 68.9-28.6 83.2-33.6 92.5-33.8 2.1 0 6.6.5 9.6 2.9 2 1.7 3.2 4.1 3.5 6.7.5 3.2.6 6.5.4 9.8z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://block-link-plus.jasper1024.com/" target="_blank" rel="noopener" title="block-link-plus.jasper1024.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M351.9 280H161c2.9 64.5 17.2 123.9 37.5 167.4 11.4 24.5 23.7 41.8 35.1 52.4 11.2 10.5 18.9 12.2 22.9 12.2s11.7-1.7 22.9-12.2c11.4-10.6 23.7-28 35.1-52.4 20.3-43.5 34.6-102.9 37.5-167.4zm-191-48h190.9c-2.8-64.5-17.1-123.9-37.4-167.4-11.4-24.4-23.7-41.8-35.1-52.4C268.1 1.7 260.4 0 256.4 0s-11.7 1.7-22.9 12.2c-11.4 10.6-23.7 28-35.1 52.4-20.3 43.5-34.6 102.9-37.5 167.4m-48 0c3.5-85.6 25.6-165.1 57.9-217.3C78.7 47.3 10.9 131.2 1.5 232zM1.5 280c9.4 100.8 77.2 184.7 169.3 217.3-32.3-52.2-54.4-131.7-57.9-217.3zm398.4 0c-3.5 85.6-25.6 165.1-57.9 217.3 92.1-32.7 159.9-116.5 169.3-217.3zm111.4-48C501.9 131.2 434.1 47.3 342 14.7c32.3 52.2 54.4 131.7 57.9 217.3z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
