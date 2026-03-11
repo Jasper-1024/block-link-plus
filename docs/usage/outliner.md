@@ -89,6 +89,11 @@ Outliner 会为每个列表块维护一条尾行，用 Dataview inline fields + 
 
 快捷键可在 Obsidian 设置 → 快捷键 中自定义。
 
+### 常用编辑行为
+
+- 撤销 / 重做：单个 block 内的普通文本编辑优先使用编辑器自身历史；split、多行粘贴、缩进 / 反缩进、merge、drag/drop 等结构操作可用 `Ctrl/Cmd+Z` 撤销，并用 Windows 常见的 `Ctrl+Y` 或 `Cmd/Ctrl+Shift+Z` 重做
+- `Esc`：若 suggest 已打开，会先关闭 suggest；否则退出当前 block 编辑；若当前是整块范围选择，则清空该选择
+
 ### 编辑行为选项
 
 Outliner 提供一些与“块树”相关的编辑行为开关（设置 → `Outliner`）：

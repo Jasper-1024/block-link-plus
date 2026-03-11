@@ -87,6 +87,11 @@ Related commands (see Reference → Commands):
 - Outliner: Toggle task status (`Mod+Enter`)
 - Outliner: Toggle task marker (`Mod+Shift+Enter`)
 
+### Common editing behavior
+
+- Undo / redo: regular text edits inside one block continue to use the editor's native history first; structural actions such as split, multiline paste, indent / outdent, merge, and drag/drop can be undone with `Ctrl/Cmd+Z`, and redone with the common Windows shortcut `Ctrl+Y` or `Cmd/Ctrl+Shift+Z`
+- `Esc`: closes an open suggest first; otherwise exits the current block edit, or clears the current block-range selection
+
 ### Editor shortcuts / plugin commands (advanced)
 
 Outliner uses a standalone CM6 editor in "minimal bridge" mode:

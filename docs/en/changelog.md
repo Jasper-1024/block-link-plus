@@ -4,7 +4,12 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.5 (Current)
+## v2.0.6 (Current)
+
+- Improved: Outliner V1 structural undo/redo now covers split, multiline paste, indent/outdent, merge, and drag/drop
+- Improved: `Esc` now closes suggests first; otherwise it exits block edit mode or clears the current block-range selection
+
+## v2.0.5
 
 - Fix: Outliner block-range selection now supports right-click on selected blocks to open the bullet menu (no handle aiming)
 
