@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.6 (Current)
+## v2.0.7 (Current)
+
+- New: Journal Feed view (anchor-only) for a continuous Daily Notes feed (Logseq-like Journals)
+
+## v2.0.6
 
 - Improved: Outliner V1 structural undo/redo now covers split, multiline paste, indent/outdent, merge, and drag/drop
 - Improved: `Esc` now closes suggests first; otherwise it exits block edit mode or clears the current block-range selection

@@ -2,13 +2,14 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.5-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.7-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ## 🚀 Key Features
 
 - **Multi-line Block References** - Create precise range blocks with the `^abc123-abc123` format
 - **Outliner (Logseq-like) + `blp-view`** - Treat list items as blocks in scoped files; keep stable `^id` + hidden system metadata; query/render with `blp-view` (Dataview required)
+- **Journal Feed (Logseq-like Journals)** - Open a marked anchor note to view/edit multiple Daily Notes in one continuous feed (uses core Daily Notes settings)
 - **Inline Editing** - Edit embedded blocks/headings directly in Live Preview (when enabled)
 - **Smart Aliases** - Content-based link descriptions when copying links
 
@@ -42,6 +43,7 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 1. Select a block/heading → Right-click → Choose link type (link / embed / URI), or use Command Palette: "Copy Block Link" / "Copy Block as Embed" / "Copy Block as Obsidian URI"
 2. Multi-line: Select multiple lines → (Settings: pick a multi-line handling mode) → create a range block (`^id-id`)
 3. Outliner & `blp-view`: enable scope (Settings: enabled folders/files, or frontmatter `blp_outliner: true`) → use a `blp-view` code block to query/render
+4. Journal Feed: create an anchor note with frontmatter `blp_journal_view: true` → open it to enter the continuous daily-notes feed view
 
 ## 📖 Documentation
 
@@ -50,6 +52,7 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - [Installation Guide](https://block-link-plus.jasper1024.com/install/)
 - [Multi-line Blocks](https://block-link-plus.jasper1024.com/usage/multiline/)
 - [Outliner & blp-view](https://block-link-plus.jasper1024.com/usage/outliner/)
+- [Journal Feed](https://block-link-plus.jasper1024.com/usage/journal-feed/)
 - [Settings Reference](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ### Language Support
@@ -70,6 +73,13 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.7
+- New: Journal Feed view (anchor-only) for a continuous Daily Notes feed (Logseq-like Journals)
+
+### 2.0.6
+- Improved: Outliner V1 structural undo/redo now covers split, multiline paste, indent/outdent, merge, and drag/drop
+- Improved: `Esc` now closes suggests first; otherwise it exits block edit mode or clears the current block-range selection
 
 ### 2.0.5
 - Fix: Outliner block-range selection now supports right-click on selected blocks to open the bullet menu (no handle aiming)

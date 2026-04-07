@@ -1,6 +1,6 @@
 # Block Link Plus
 
-[![Version](https://img.shields.io/badge/version-2.0.5-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.7-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
@@ -11,6 +11,7 @@
 
 - **多行块引用** - 使用 `^abc123-abc123` 的范围块格式精确引用多行内容
 - **Outliner（仿 Logseq）+ `blp-view`** - 在启用范围内把列表项当作 block；维护稳定 `^id` + 隐藏系统元数据；并用 `blp-view` 查询/渲染（依赖 Dataview）
+- **Journal Feed（日记连续流）** - 标记一个锚点文件（frontmatter `blp_journal_view: true`），打开后以连续流方式查看/编辑多天 Daily Notes（跟随 Obsidian core Daily Notes 设置）
 - **内联编辑** - 在 Live Preview 下直接编辑嵌入的块/标题（启用后）
 - **智能别名** - 复制链接时可基于内容生成描述
 
@@ -44,6 +45,7 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 1. 选中一个块/标题 → 右键 → 选择链接类型（link / embed / URI），或使用命令面板："Copy Block Link" / "Copy Block as Embed" / "Copy Block as Obsidian URI"
 2. 多行：选中多行文本 →（设置中选择多行处理模式）→ 创建一个范围块（`^id-id`）
 3. Outliner & `blp-view`：启用范围（设置里配置启用文件夹/文件，或 frontmatter `blp_outliner: true`）→ 使用 `blp-view` 代码块进行查询/渲染
+4. Journal Feed：创建一个锚点文件并写入 frontmatter `blp_journal_view: true` → 打开该文件进入连续日记流视图
 
 ## 📖 文档
 
@@ -52,6 +54,7 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - [安装指南](https://block-link-plus.jasper1024.com/install/)
 - [多行块](https://block-link-plus.jasper1024.com/usage/multiline/)
 - [Outliner 与 blp-view](https://block-link-plus.jasper1024.com/usage/outliner/)
+- [Journal Feed（日记连续流）](https://block-link-plus.jasper1024.com/usage/journal-feed/)
 - [设置参考](https://block-link-plus.jasper1024.com/reference/settings/)
 
 ## 使用
@@ -186,6 +189,13 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.7
+- 新增：Journal Feed（日记连续流）视图（仅锚点文件触发），以连续流方式查看/编辑多天 Daily Notes（类似 Logseq Journals）
+
+### 2.0.6
+- 改进：Outliner 的 V1 结构撤销/重做现已覆盖 split、多行粘贴、缩进/反缩进、merge 和 drag/drop
+- 改进：`Esc` 现在会优先关闭 suggest；否则退出当前 block 编辑，或清空当前整块范围选择
 
 ### 2.0.5
 - 修复：Outliner 整块范围选择后，右键选中 block 也能打开圆点菜单（无需对准圆点）

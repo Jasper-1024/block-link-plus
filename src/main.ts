@@ -22,6 +22,7 @@ import "css/Editor/InlineEdit/InlineEditEngine.css";
 import "css/Obsidian/Mods.css";
 import "css/Obsidian/BlockMarker.css";
 import "css/Obsidian/SettingsTabs.css";
+import "css/JournalFeedView.css";
 import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
@@ -33,6 +34,7 @@ import { BLP_BLOCK_MARKER_RULE } from "shared/block-marker";
 import * as CommandHandler from 'features/command-handler';
 import * as EditorMenu from 'ui/EditorMenu';
 import { handleBlpView, notifyFileOutlinerViewsSettingsChanged, registerFileOutlinerView } from "features/file-outliner-view";
+import { registerJournalFeedView } from "features/journal-feed-view";
 import { getFileOutlinerScopeManager } from "features/file-outliner-view/enable-scope";
 import { isDataviewAvailable } from "./utils/dataview-detector";
 import { DebugUtils } from "./utils/debug";
@@ -103,6 +105,8 @@ export default class BlockLinkPlus extends Plugin {
 
 		// File-level outliner view (v2).
 		registerFileOutlinerView(this);
+		// Journal feed view (anchor-only). Must register after file-outliner routing.
+		registerJournalFeedView(this);
 
 		await this.maybeShowWhatsNew();
 

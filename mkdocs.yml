@@ -38,6 +38,7 @@ nav:
     - Block Links: usage/block-links.md
     - Multi-line Blocks: usage/multiline.md
     - Outliner: usage/outliner.md
+    - Journal Feed: usage/journal-feed.md
     - Inline Edit: usage/flow-editor.md
   - Reference:
     - Settings: reference/settings.md

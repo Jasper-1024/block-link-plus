@@ -96,6 +96,10 @@ export class TFile {
 export class Vault {
   private files: Map<string, string> = new Map();
 
+  async cachedRead(file: TFile): Promise<string> {
+    return this.read(file);
+  }
+
   async read(file: TFile): Promise<string> {
     const content = this.files.get(file.path);
     if (content === undefined) {
@@ -138,6 +142,17 @@ export class MetadataCache {
 }
 
 // App 类模拟
+export function parseYaml(yaml: string): any {
+  try {
+    // Keep this mock lightweight but compatible with Obsidian's API.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const jsYaml = require("js-yaml");
+    return jsYaml.load(String(yaml ?? ""));
+  } catch {
+    return null;
+  }
+}
+
 export class App {
   vault: Vault;
   metadataCache: MetadataCache;

@@ -4,7 +4,11 @@ Block Link Plus 的版本更新歷史和新功能介紹。
 
 ## 未發佈
 
-## v2.0.6 (目前版本)
+## v2.0.7 (目前版本)
+
+- 新增：Journal Feed（日記連續流）視圖（僅錨點檔觸發），以連續流方式查看/編輯多天 Daily Notes（類似 Logseq Journals）
+
+## v2.0.6
 
 - 改進：Outliner 的 V1 結構撤銷/重做現已涵蓋 split、多行貼上、縮排/反縮排、merge 與 drag/drop
 - 改進：`Esc` 現在會優先關閉 suggest；否則退出目前 block 編輯，或清空目前的整塊範圍選取
