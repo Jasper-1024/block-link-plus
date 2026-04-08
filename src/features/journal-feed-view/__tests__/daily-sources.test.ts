@@ -89,6 +89,42 @@ describe("journal-feed-view daily sources", () => {
 		]);
 	});
 
+	test("resolveDailySources scans daily notes in arbitrary subfolders when format is basename-only", () => {
+		const vault = new Vault() as any;
+		vault._addFile("Review/Daily/2026/2/2026-2-22.md", "# 22");
+		vault._addFile("Review/Daily/2026/2/2026-2-23.md", "# 23");
+		vault._addFile("Review/Daily/other.md", "# ignore");
+
+		const format = "YYYY-M-D";
+		const inst: any = {
+			getFolder: () => ({ path: "Review/Daily" }),
+			getFormat: () => format,
+			iterateDailyNotes: (cb: any) => {
+				// Simulate the upstream iterator only finding some files (e.g. top-level only).
+				cb(makeFile("Review/Daily/2026-2-23.md"), 123);
+			},
+		};
+
+		const app: any = {
+			vault,
+			internalPlugins: {
+				getPluginById: () => ({ enabled: true, instance: inst }),
+			},
+		};
+
+		const resolved = resolveDailySources(app);
+		expect(resolved.ok).toBe(true);
+		if (!resolved.ok) return;
+
+		const ts23 = moment("2026-2-23", format, true).startOf("day").valueOf();
+		const ts22 = moment("2026-2-22", format, true).startOf("day").valueOf();
+
+		const byPath = new Map(resolved.sources.map((s) => [s.file.path, s.ts] as const));
+		expect(byPath.get("Review/Daily/2026/2/2026-2-23.md")).toBe(ts23);
+		expect(byPath.get("Review/Daily/2026/2/2026-2-22.md")).toBe(ts22);
+		expect(byPath.has("Review/Daily/2026-2-23.md")).toBe(true);
+	});
+
 	test("chooseStartIndex prefers exact match then first <= today", () => {
 		const s0 = { file: makeFile("d0.md"), ts: 3000 };
 		const s1 = { file: makeFile("d1.md"), ts: 2000 };

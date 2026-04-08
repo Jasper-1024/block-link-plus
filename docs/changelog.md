@@ -4,7 +4,11 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.8 (当前版本)
+## v2.0.9 (当前版本)
+
+- 改进：Journal Feed 现在会根据 Daily Notes 的 folder + format 设置，在该目录下递归扫描日记文件（支持任意子文件夹组织）
+
+## v2.0.8
 
 - 修复：Journal Feed 现在支持 Daily Notes 日期格式包含子文件夹（例如 `YYYY/M/YYYY-M-D`），可正确发现日记文件
 

@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.8 (Current)
+## v2.0.9 (Current)
+
+- Improved: Journal Feed now always discovers Daily Notes by recursively scanning the Daily Notes folder, using the configured date format (supports arbitrary subfolders)
+
+## v2.0.8
 
 - Fix: Journal Feed now discovers Daily Notes stored in subfolders (e.g. format `YYYY/M/YYYY-M-D`)
 

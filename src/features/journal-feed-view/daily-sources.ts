@@ -16,6 +16,7 @@ function scanDailyNotesByFolderAndFormat(
 
 	const normalizedFolder = normalizeFolderPath(opts.folderPath);
 	const out: DailySource[] = [];
+	const basenameFormat = String(opts.format ?? "").split(/[\\/]/).pop() || String(opts.format ?? "");
 
 	let files: any[] = [];
 	try {
@@ -35,7 +36,13 @@ function scanDailyNotesByFolderAndFormat(
 		if (!rel.toLowerCase().endsWith(".md")) continue;
 		const relNoExt = rel.slice(0, -3);
 
-		const parsed = moment(relNoExt, opts.format, true);
+		const basenameNoExt = String((f as any).basename ?? "")
+			.trim();
+
+		let parsed = moment(relNoExt, opts.format, true);
+		if (!parsed.isValid()) {
+			parsed = moment(basenameNoExt, basenameFormat, true);
+		}
 		if (!parsed.isValid()) continue;
 		const ts = parsed.startOf("day").valueOf();
 		if (!Number.isFinite(ts)) continue;
@@ -96,17 +103,14 @@ export function resolveDailySources(
 		// ignore
 	}
 
-	const shouldScanVault = sources.length === 0 || format.includes("/") || format.includes("\\");
-	if (shouldScanVault) {
-		const scanned = scanDailyNotesByFolderAndFormat(app, { folderPath, format });
-		if (scanned.length > 0) {
-			const existing = new Set<string>(sources.map((s) => normalizePath(s.file.path)));
-			for (const s of scanned) {
-				const p = normalizePath(s.file.path);
-				if (existing.has(p)) continue;
-				existing.add(p);
-				sources.push(s);
-			}
+	const scanned = scanDailyNotesByFolderAndFormat(app, { folderPath, format });
+	if (scanned.length > 0) {
+		const existing = new Set<string>(sources.map((s) => normalizePath(s.file.path)));
+		for (const s of scanned) {
+			const p = normalizePath(s.file.path);
+			if (existing.has(p)) continue;
+			existing.add(p);
+			sources.push(s);
 		}
 	}
 
