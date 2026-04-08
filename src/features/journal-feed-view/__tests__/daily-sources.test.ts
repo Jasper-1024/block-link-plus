@@ -1,4 +1,5 @@
-import { TFile } from "obsidian";
+import { TFile, Vault } from "obsidian";
+import moment from "moment";
 
 import { chooseStartIndex, resolveDailySources } from "../daily-sources";
 
@@ -49,6 +50,42 @@ describe("journal-feed-view daily sources", () => {
 		expect(resolved.sources.map((s) => [s.file.path, s.ts])).toEqual([
 			["Daily/2026-04-07.md", 3000],
 			["Daily/2026-04-06.md", 2000],
+		]);
+	});
+
+	test("resolveDailySources scans nested daily notes when format includes subfolders", () => {
+		const vault = new Vault() as any;
+		vault._addFile("Review/Daily/2026/2/2026-2-22.md", "# 22");
+		vault._addFile("Review/Daily/2026/2/2026-2-23.md", "# 23");
+		vault._addFile("Review/Other/2026/2/2026-2-24.md", "# ignore");
+		vault._addFile("Review/Daily/2026/2/not-a-day.md", "# ignore");
+
+		const format = "YYYY/M/YYYY-M-D";
+		const inst: any = {
+			getFolder: () => ({ path: "Review/Daily" }),
+			getFormat: () => format,
+			iterateDailyNotes: () => {
+				// Simulate upstream iterator missing nested-format notes.
+			},
+		};
+
+		const app: any = {
+			vault,
+			internalPlugins: {
+				getPluginById: () => ({ enabled: true, instance: inst }),
+			},
+		};
+
+		const resolved = resolveDailySources(app);
+		expect(resolved.ok).toBe(true);
+		if (!resolved.ok) return;
+
+		const ts23 = moment("2026/2/2026-2-23", format, true).startOf("day").valueOf();
+		const ts22 = moment("2026/2/2026-2-22", format, true).startOf("day").valueOf();
+
+		expect(resolved.sources.map((s) => [s.file.path, s.ts])).toEqual([
+			["Review/Daily/2026/2/2026-2-23.md", ts23],
+			["Review/Daily/2026/2/2026-2-22.md", ts22],
 		]);
 	});
 

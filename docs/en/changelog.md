@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.7 (Current)
+## v2.0.8 (Current)
+
+- Fix: Journal Feed now discovers Daily Notes stored in subfolders (e.g. format `YYYY/M/YYYY-M-D`)
+
+## v2.0.7
 
 - New: Journal Feed view (anchor-only) for a continuous Daily Notes feed (Logseq-like Journals)
 

@@ -1,7 +1,50 @@
-import { TFile } from "obsidian";
+import { normalizePath, TFile } from "obsidian";
 import moment from "moment";
 
 export type DailySource = { file: TFile; ts: number };
+
+function normalizeFolderPath(input: unknown): string {
+	return normalizePath(String(input ?? "").trim()).replace(/^\/+/, "").replace(/\/+$/, "");
+}
+
+function scanDailyNotesByFolderAndFormat(
+	app: any,
+	opts: { folderPath: string; format: string }
+): DailySource[] {
+	const vault = app?.vault;
+	if (!vault?.getFiles) return [];
+
+	const normalizedFolder = normalizeFolderPath(opts.folderPath);
+	const out: DailySource[] = [];
+
+	let files: any[] = [];
+	try {
+		files = vault.getFiles?.() ?? [];
+	} catch {
+		return [];
+	}
+
+	for (const f of files) {
+		if (!(f instanceof TFile)) continue;
+		if (f.extension?.toLowerCase() !== "md") continue;
+
+		const filePath = normalizePath(String(f.path ?? ""));
+		if (normalizedFolder && !filePath.startsWith(normalizedFolder + "/")) continue;
+
+		const rel = normalizedFolder ? filePath.slice(normalizedFolder.length + 1) : filePath;
+		if (!rel.toLowerCase().endsWith(".md")) continue;
+		const relNoExt = rel.slice(0, -3);
+
+		const parsed = moment(relNoExt, opts.format, true);
+		if (!parsed.isValid()) continue;
+		const ts = parsed.startOf("day").valueOf();
+		if (!Number.isFinite(ts)) continue;
+
+		out.push({ file: f, ts });
+	}
+
+	return out;
+}
 
 function getDailyNotesInternal(app: any): { enabled: boolean; instance: any | null } {
 	try {
@@ -53,6 +96,20 @@ export function resolveDailySources(
 		// ignore
 	}
 
+	const shouldScanVault = sources.length === 0 || format.includes("/") || format.includes("\\");
+	if (shouldScanVault) {
+		const scanned = scanDailyNotesByFolderAndFormat(app, { folderPath, format });
+		if (scanned.length > 0) {
+			const existing = new Set<string>(sources.map((s) => normalizePath(s.file.path)));
+			for (const s of scanned) {
+				const p = normalizePath(s.file.path);
+				if (existing.has(p)) continue;
+				existing.add(p);
+				sources.push(s);
+			}
+		}
+	}
+
 	sources.sort((a, b) => b.ts - a.ts);
 
 	return { ok: true, folderPath, format, sources };
@@ -67,4 +124,3 @@ export function chooseStartIndex(sources: DailySource[], opts?: { todayTs?: numb
 	if (idxLeToday >= 0) return idxLeToday;
 	return 0;
 }
-
