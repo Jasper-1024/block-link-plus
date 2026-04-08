@@ -4,7 +4,11 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.9 (Current)
+## v2.0.10 (Current)
+
+- Fix: Journal Feed now hides Outliner system tail lines in the embedded editors (same as Outliner)
+
+## v2.0.9
 
 - Improved: Journal Feed now always discovers Daily Notes by recursively scanning the Daily Notes folder, using the configured date format (supports arbitrary subfolders)
 

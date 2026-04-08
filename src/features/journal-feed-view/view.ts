@@ -1,11 +1,13 @@
 import { TextFileView, TFile, WorkspaceLeaf } from "obsidian";
 import moment from "moment";
+import { StateEffect } from "@codemirror/state";
 
 import type BlockLinkPlus from "../../main";
 import { EmbedLeafManager, type ManagedEmbedLeaf } from "../inline-edit-engine/EmbedLeafManager";
 import { getJournalFeedConfigFromText, type JournalFeedConfig } from "./anchor";
 import { JOURNAL_FEED_VIEW_TYPE } from "./constants";
 import { chooseStartIndex, resolveDailySources, type DailySource } from "./daily-sources";
+import { contentRange, editableRange, editBlockExtensions, hideLine } from "shared/utils/codemirror/selectiveEditor";
 
 type DaySection = {
 	file: TFile;
@@ -377,6 +379,9 @@ export class JournalFeedView extends TextFileView {
 
 			this.embeds.reparent(section.editorHostEl, embed.view.containerEl);
 			section.embed = embed;
+
+			this.ensureJournalFeedEditorExtensions(embed);
+			this.ensureJournalFeedSystemLineHidden(embed);
 		})();
 
 		try {
@@ -403,6 +408,47 @@ export class JournalFeedView extends TextFileView {
 		// Race guard: if we mounted while already out of view, ensure we still unload.
 		if (!section.isIntersecting && !opts.focus) {
 			this.scheduleSectionUnload(section);
+		}
+	}
+
+	private ensureJournalFeedEditorExtensions(embed: ManagedEmbedLeaf): void {
+		const cm = (embed as any)?.view?.editor?.cm;
+		if (!cm?.state || typeof cm.dispatch !== "function") return;
+
+		let hasHideLine = false;
+		try {
+			hasHideLine = cm.state.field(hideLine, false) !== undefined;
+		} catch {
+			hasHideLine = false;
+		}
+
+		if (hasHideLine) return;
+
+		try {
+			// Detached MarkdownView leaves can miss global editor extensions (workspace pipeline).
+			// Ensure selective-editor extensions exist so we can hide outliner system tail lines.
+			cm.dispatch({ filter: false, effects: StateEffect.appendConfig.of(editBlockExtensions()) });
+		} catch {
+			// ignore
+		}
+	}
+
+	private ensureJournalFeedSystemLineHidden(embed: ManagedEmbedLeaf): void {
+		// Respect the global "hide system line" toggle.
+		if (this.plugin.settings.fileOutlinerHideSystemLine === false) return;
+
+		const cm = (embed as any)?.view?.editor?.cm;
+		if (!cm?.state || typeof cm.dispatch !== "function") return;
+
+		// Set the visible/editable range to the full document so `hideLine` can hide system tail lines
+		// without hiding any user content.
+		try {
+			const lines = cm.state.doc.lines;
+			cm.dispatch({
+				annotations: [contentRange.of([1, lines]), editableRange.of([1, lines])],
+			});
+		} catch {
+			// ignore
 		}
 	}
 

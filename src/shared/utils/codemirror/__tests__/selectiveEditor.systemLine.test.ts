@@ -82,4 +82,44 @@ describe("selectiveEditor: hide outliner v2 system tail lines", () => {
 			parent.remove();
 		}
 	});
+
+	test("keeps full-document ranges in sync when adding new lines", () => {
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const doc = [
+			"- child",
+			"  [date:: 2026-02-06T00:00:00] [updated:: 2026-02-06T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^child",
+			"- other",
+			"",
+		].join("\n");
+
+		const view = new EditorView({
+			parent,
+			state: EditorState.create({
+				doc,
+				extensions: editBlockExtensions(),
+			}),
+		});
+
+		try {
+			view.dispatch({
+				annotations: [contentRange.of([1, view.state.doc.lines]), editableRange.of([1, view.state.doc.lines])],
+			});
+
+			view.dispatch({
+				changes: { from: view.state.doc.length, insert: "new line\n" },
+			});
+
+			const text = view.dom.textContent ?? "";
+			expect(text).toContain("child");
+			expect(text).toContain("other");
+			expect(text).toContain("new line");
+			expect(text).not.toContain("blp_sys");
+			expect(text).not.toContain("^child");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
 });

@@ -4,7 +4,11 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.9 (当前版本)
+## v2.0.10 (当前版本)
+
+- 修复：Journal Feed 现在会在嵌入编辑器里隐藏 Outliner 的系统尾行（与 Outliner 视图一致）
+
+## v2.0.9
 
 - 改进：Journal Feed 现在会根据 Daily Notes 的 folder + format 设置，在该目录下递归扫描日记文件（支持任意子文件夹组织）
 

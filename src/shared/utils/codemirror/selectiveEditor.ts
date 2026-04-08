@@ -207,7 +207,8 @@ export const smartDelete = EditorState.transactionFilter.of(
           tr.startState,
           betterFacet
         );
-        if (tr.changes.touchesRange(0, posRange.from-1)) {
+        const safeFromBefore = Math.max(0, posRange.from - 1);
+        if (tr.changes.touchesRange(0, safeFromBefore)) {
           const minFrom = Math.max(posRange.from, initialSelections[0].from);
           const minTo = Math.min(posRange.to, initialSelections[0].to);
           return [{
@@ -261,7 +262,8 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
             tr.startState,
             selectiveLines
           );
-          if (tr.changes.touchesRange(0, posRange.from - 1)) {
+          const safeFromBefore = Math.max(0, posRange.from - 1);
+          if (tr.changes.touchesRange(0, safeFromBefore)) {
             const newAnnotations = [];
             if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
               newAnnotations.push(editableRange.of([
@@ -281,7 +283,7 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
               annotations: newAnnotations,
             });
             
-          } else if (tr.changes.touchesRange(posRange.from - 1, posRange.to)) {
+          } else if (tr.changes.touchesRange(safeFromBefore, posRange.to)) {
             const newAnnotations = [];
             if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
               newAnnotations.push(editableRange.of([

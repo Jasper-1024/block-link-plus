@@ -2,7 +2,7 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.9-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.10-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ## 🚀 Key Features
@@ -73,6 +73,9 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.10
+- Fix: Journal Feed now hides Outliner system tail lines in the embedded editors (same as Outliner)
 
 ### 2.0.9
 - Improved: Journal Feed now always discovers Daily Notes by recursively scanning the Daily Notes folder, using the configured date format (supports arbitrary subfolders)
