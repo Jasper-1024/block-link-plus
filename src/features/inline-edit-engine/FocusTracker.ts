@@ -1,16 +1,16 @@
-import type { ManagedEmbedLeaf } from "./EmbedLeafManager";
+export class FocusTracker<T = any> {
+	private focused: T | null = null;
 
-export class FocusTracker {
-	private focused: ManagedEmbedLeaf | null = null;
-
-	getFocused(): ManagedEmbedLeaf | null {
-		if (this.focused && !this.focused.containerEl.isConnected) {
+	getFocused(): T | null {
+		const focused: any = this.focused as any;
+		if (focused?.containerEl && !focused.containerEl.isConnected) {
 			this.focused = null;
+			return null;
 		}
 		return this.focused;
 	}
 
-	setFocused(embed: ManagedEmbedLeaf | null): void {
+	setFocused(embed: T | null): void {
 		this.focused = embed;
 	}
 

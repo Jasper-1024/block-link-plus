@@ -4,20 +4,23 @@ import { StateEffect } from "@codemirror/state";
 
 import type BlockLinkPlus from "../../main";
 import { EmbedLeafManager, type ManagedEmbedLeaf } from "../inline-edit-engine/EmbedLeafManager";
+import { isFileOutlinerEnabledFile } from "../file-outliner-view/enable-scope";
 import { getJournalFeedConfigFromText, type JournalFeedConfig } from "./anchor";
 import { JOURNAL_FEED_VIEW_TYPE } from "./constants";
 import { chooseStartIndex, resolveDailySources, type DailySource } from "./daily-sources";
 import { contentRange, editableRange, editBlockExtensions, hideLine } from "shared/utils/codemirror/selectiveEditor";
+import { OutlinerEmbedLeafManager, type ManagedOutlinerEmbedLeaf } from "./OutlinerEmbedLeafManager";
 
 type DaySection = {
 	file: TFile;
 	ts: number;
 	isIntersecting: boolean;
+	renderMode: "markdown" | "outliner";
 	sectionEl: HTMLElement;
 	headerEl: HTMLElement;
 	editorHostEl: HTMLElement;
 	placeholderEl: HTMLElement;
-	embed: ManagedEmbedLeaf | null;
+	embed: ManagedEmbedLeaf | ManagedOutlinerEmbedLeaf | null;
 	mountPromise: Promise<void> | null;
 	unloadTimer: number | null;
 	lastHeight: number;
@@ -46,6 +49,7 @@ export class JournalFeedView extends TextFileView {
 	private loadMoreEl: HTMLElement | null = null;
 
 	private readonly embeds: EmbedLeafManager;
+	private readonly outlinerEmbeds: OutlinerEmbedLeafManager;
 	private sections: DaySection[] = [];
 	private sectionByHost = new WeakMap<HTMLElement, DaySection>();
 	private lifecycleVersion = 0;
@@ -58,6 +62,7 @@ export class JournalFeedView extends TextFileView {
 		super(leaf);
 		this.plugin = plugin;
 		this.embeds = new EmbedLeafManager(plugin);
+		this.outlinerEmbeds = new OutlinerEmbedLeafManager(plugin);
 		this.contentEl.addClass("blp-journal-feed-view");
 		this.installFocusBridge();
 	}
@@ -258,6 +263,9 @@ export class JournalFeedView extends TextFileView {
 			throw new Error("JournalFeedView: feedEl missing");
 		}
 
+		const wantsOutliner =
+			this.plugin.settings.fileOutlinerViewEnabled !== false && isFileOutlinerEnabledFile(this.plugin, src.file);
+
 		const sectionEl = this.feedEl.createDiv("blp-journal-feed-day");
 		const headerEl = sectionEl.createDiv("blp-journal-feed-day-header");
 
@@ -284,6 +292,7 @@ export class JournalFeedView extends TextFileView {
 			file: src.file,
 			ts: src.ts,
 			isIntersecting: false,
+			renderMode: wantsOutliner ? "outliner" : "markdown",
 			sectionEl,
 			headerEl,
 			editorHostEl,
@@ -320,7 +329,8 @@ export class JournalFeedView extends TextFileView {
 		if (section.embed) {
 			const embed = section.embed;
 			if (shouldBridge) this.bridgeFocus(embed);
-			if (opts.focus) embed.view.editor?.focus();
+			if (opts.focus && section.renderMode === "markdown") (embed as ManagedEmbedLeaf).view.editor?.focus();
+			if (opts.focus && section.renderMode === "outliner") this.focusOutlinerEmbed(embed as ManagedOutlinerEmbedLeaf);
 			return;
 		}
 
@@ -334,7 +344,8 @@ export class JournalFeedView extends TextFileView {
 			const embed = section.embed;
 			if (embed) {
 				if (shouldBridge) this.bridgeFocus(embed);
-				if (opts.focus) (embed as ManagedEmbedLeaf).view.editor?.focus();
+				if (opts.focus && section.renderMode === "markdown") (embed as ManagedEmbedLeaf).view.editor?.focus();
+				if (opts.focus && section.renderMode === "outliner") this.focusOutlinerEmbed(embed as ManagedOutlinerEmbedLeaf);
 			}
 
 			return;
@@ -353,13 +364,21 @@ export class JournalFeedView extends TextFileView {
 		section.editorHostEl.empty();
 
 		section.mountPromise = (async () => {
-			let embed: ManagedEmbedLeaf;
+			let embed: ManagedEmbedLeaf | ManagedOutlinerEmbedLeaf;
 			try {
-				embed = await this.embeds.createEmbedLeaf({
-					containerEl: section.editorHostEl,
-					file: section.file,
-					sourcePath: this.file?.path ?? section.file.path,
-				});
+				if (section.renderMode === "outliner") {
+					embed = await this.outlinerEmbeds.createEmbedLeaf({
+						containerEl: section.editorHostEl,
+						file: section.file,
+						sourcePath: this.file?.path ?? section.file.path,
+					});
+				} else {
+					embed = await this.embeds.createEmbedLeaf({
+						containerEl: section.editorHostEl,
+						file: section.file,
+						sourcePath: this.file?.path ?? section.file.path,
+					});
+				}
 			} catch {
 				section.editorHostEl.empty();
 				section.placeholderEl = section.editorHostEl.createDiv("blp-journal-feed-placeholder");
@@ -377,11 +396,22 @@ export class JournalFeedView extends TextFileView {
 				return;
 			}
 
-			this.embeds.reparent(section.editorHostEl, embed.view.containerEl);
-			section.embed = embed;
+			if (section.renderMode === "outliner") {
+				this.outlinerEmbeds.reparent(section.editorHostEl, (embed as ManagedOutlinerEmbedLeaf).view.containerEl);
+				section.embed = embed;
 
-			this.ensureJournalFeedEditorExtensions(embed);
-			this.ensureJournalFeedSystemLineHidden(embed);
+				try {
+					(embed as any).view?.notifyHostMounted?.();
+				} catch {
+					// ignore
+				}
+			} else {
+				this.embeds.reparent(section.editorHostEl, (embed as ManagedEmbedLeaf).view.containerEl);
+				section.embed = embed;
+
+				this.ensureJournalFeedEditorExtensions(embed as ManagedEmbedLeaf);
+				this.ensureJournalFeedSystemLineHidden(embed as ManagedEmbedLeaf);
+			}
 		})();
 
 		try {
@@ -399,7 +429,11 @@ export class JournalFeedView extends TextFileView {
 
 		if (opts.focus) {
 			try {
-				(embed as ManagedEmbedLeaf).view.editor?.focus();
+				if (section.renderMode === "markdown") {
+					(embed as ManagedEmbedLeaf).view.editor?.focus();
+				} else {
+					this.focusOutlinerEmbed(embed as ManagedOutlinerEmbedLeaf);
+				}
 			} catch {
 				// ignore
 			}
@@ -452,6 +486,15 @@ export class JournalFeedView extends TextFileView {
 		}
 	}
 
+	private focusOutlinerEmbed(embed: ManagedOutlinerEmbedLeaf): void {
+		try {
+			const root = embed.view?.containerEl?.querySelector?.(".blp-file-outliner-root") as HTMLElement | null;
+			root?.focus?.({ preventScroll: true } as FocusOptions);
+		} catch {
+			// ignore
+		}
+	}
+
 	private scheduleSectionUnload(section: DaySection): void {
 		if (section.unloadTimer !== null) return;
 		section.unloadTimer = window.setTimeout(() => {
@@ -475,7 +518,7 @@ export class JournalFeedView extends TextFileView {
 
 		// Best effort: flush edits before disposing the leaf.
 		try {
-			await embed.view.save();
+			await (embed as any).view.save();
 		} catch {
 			// ignore
 		}
@@ -491,7 +534,11 @@ export class JournalFeedView extends TextFileView {
 		}
 
 		try {
-			this.embeds.detach(embed);
+			if (section.renderMode === "outliner") {
+				this.outlinerEmbeds.detach(embed as ManagedOutlinerEmbedLeaf);
+			} else {
+				this.embeds.detach(embed as ManagedEmbedLeaf);
+			}
 		} catch {
 			// ignore
 		} finally {
@@ -533,7 +580,11 @@ export class JournalFeedView extends TextFileView {
 
 			if (section.embed) {
 				try {
-					this.embeds.detach(section.embed);
+					if (section.renderMode === "outliner") {
+						this.outlinerEmbeds.detach(section.embed as ManagedOutlinerEmbedLeaf);
+					} else {
+						this.embeds.detach(section.embed as ManagedEmbedLeaf);
+					}
 				} catch {
 					// ignore
 				}
@@ -546,6 +597,7 @@ export class JournalFeedView extends TextFileView {
 		this.sections = [];
 		this.sectionByHost = new WeakMap<HTMLElement, DaySection>();
 		this.embeds.cleanup();
+		this.outlinerEmbeds.cleanup();
 
 		if (this.rebuildTimer !== null) {
 			try {
@@ -557,7 +609,7 @@ export class JournalFeedView extends TextFileView {
 		}
 	}
 
-	private bridgeFocus(embed: ManagedEmbedLeaf): void {
+	private bridgeFocus(embed: ManagedEmbedLeaf | ManagedOutlinerEmbedLeaf): void {
 		try {
 			this.plugin.inlineEditEngine?.focus?.setFocused?.(embed);
 		} catch {

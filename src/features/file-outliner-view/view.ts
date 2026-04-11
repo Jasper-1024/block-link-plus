@@ -232,6 +232,52 @@ export class FileOutlinerView extends TextFileView {
 		this.registerDomEvent(this.contentEl, "scroll", () => this.display.scheduleVisibleBlockRefresh());
 		// Keep the editor-command bridge scoped to the active leaf.
 		this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateActiveEditorBridge()));
+		// Detached/embedded leaves (e.g. Journal Feed) never become `workspace.activeLeaf`,
+		// so we also update the bridge based on focus.
+		this.registerDomEvent(this.contentEl, "focusin", () => this.updateActiveEditorBridge());
+		this.registerDomEvent(this.contentEl, "focusout", (event: FocusEvent) => {
+			const next = event.relatedTarget;
+			if (next instanceof HTMLElement && this.contentEl.contains(next)) {
+				// Focus moved within this view; keep bridge state.
+				return;
+			}
+			// Let focus settle before re-evaluating bridge state.
+			window.setTimeout(() => this.updateActiveEditorBridge(), 0);
+		});
+	}
+
+	/**
+	 * Embedded/detached leaves (e.g. Journal Feed) can construct this view while its DOM is not yet
+	 * connected to the document, which makes initial `getBoundingClientRect()` checks report 0 and
+	 * prevents the lazy display renderer from running. Call this after the view is reparented into
+	 * a real container to kick the visibility-driven renderer.
+	 */
+	public notifyHostMounted(): void {
+		const schedule = () => {
+			try {
+				this.display.scheduleVisibleBlockRefresh();
+			} catch (err) {
+				this.debugLog("notifyHostMounted", err);
+			}
+		};
+
+		// 1) Immediate: best effort for already-laid-out containers.
+		schedule();
+
+		// 2) Next frame: cover cases where layout isn't ready yet after reparent.
+		try {
+			window.requestAnimationFrame(() => schedule());
+		} catch {
+			// ignore
+		}
+	}
+
+	/**
+	 * Compatibility surface for Obsidian editor commands and BLP's own command routing.
+	 * When editing, expose the Suggest Editor adapter as a view-level `editor`.
+	 */
+	public get editor(): OutlinerSuggestEditor | undefined {
+		return this.suggestEditor ?? undefined;
 	}
 
 	public toggleActiveTaskStatus(): boolean {
@@ -379,12 +425,22 @@ export class FileOutlinerView extends TextFileView {
 		if (!this.editingId) return false;
 		if (!this.suggestEditor) return false;
 		if (!this.editorHostEl || this.editorHostEl.style.display === "none") return false;
-		try {
-			if (this.leaf !== this.app.workspace.activeLeaf) return false;
-		} catch (err) {
-			this.debugLog("activeEditorBridge/activeLeaf", err);
-		}
+		if (!this.isLeafActiveOrFocused()) return false;
 		return true;
+	}
+
+	private isLeafActiveOrFocused(): boolean {
+		try {
+			if (this.leaf === this.app.workspace.activeLeaf) return true;
+		} catch (err) {
+			this.debugLog("isLeafActiveOrFocused/activeLeaf", err);
+		}
+
+		try {
+			return this.contentEl.matches(":focus-within");
+		} catch {
+			return false;
+		}
 	}
 
 	private installActiveEditorBridge(): void {
@@ -632,13 +688,8 @@ export class FileOutlinerView extends TextFileView {
 		this.suggestEditor = new OutlinerSuggestEditor(this.editorView, {
 			logicalHasFocus: () => {
 				if (!this.editingId) return false;
-				try {
-					if (this.leaf !== this.app.workspace.activeLeaf) return false;
-				} catch (err) {
-					this.debugLog("suggest/logicalHasFocus/activeLeaf", err);
-				}
 				if (!this.editorHostEl || this.editorHostEl.style.display === "none") return false;
-				return true;
+				return this.isLeafActiveOrFocused();
 			},
 		});
 
