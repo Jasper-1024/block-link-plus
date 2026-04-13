@@ -33,6 +33,13 @@
 	display: none !important;
 }
 
+/* TaskNotes injects whole-note widgets directly into the embedded editor's
+   `.cm-sizer`; they are outside BLP's line-hiding decorations. */
+.blp-inline-edit-root .cm-sizer > .tasknotes-task-card-note-widget,
+.blp-inline-edit-root .cm-sizer > .tasknotes-relationships-widget {
+	display: none !important;
+}
+
 .blp-inline-edit-root .markdown-source-view,
 .blp-inline-edit-root .cm-editor,
 .blp-inline-edit-root .cm-scroller {
