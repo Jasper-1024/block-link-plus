@@ -82,6 +82,21 @@ const WHATS_NEW_V2_0_6: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_13: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: fixed focus/scroll stability when editing blocks and clicking tabs or working near the bottom of a long outline.",
+		"Outliner: `Tab` / `Shift+Tab` now preserve visible block order whenever possible instead of moving blocks to the target parent's tail.",
+	],
+	zh: [
+		"Outliner：修复了编辑 block 时点击选项卡、以及长大纲底部区域的焦点/滚动稳定性问题。",
+		"Outliner：`Tab` / `Shift+Tab` 现在会尽量保持可见 block 顺序，不再默认把 block 移到目标父节点尾部。",
+	],
+	"zh-TW": [
+		"Outliner：修正了編輯 block 時點擊分頁、以及長大綱底部區域的焦點/捲動穩定性問題。",
+		"Outliner：`Tab` / `Shift+Tab` 現在會盡量保持可見 block 順序，不再預設把 block 移到目標父節點尾端。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -137,6 +152,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.13") {
+			return WHATS_NEW_V2_0_13[i18n.lang] ?? WHATS_NEW_V2_0_13.en;
 		}
 
 		if (this.currentVersion === "2.0.6") {

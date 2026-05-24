@@ -79,6 +79,90 @@ function collectIds(list: OutlinerBlock[], out: Set<string>): void {
 	}
 }
 
+function cloneBlockShallow(b: OutlinerBlock): OutlinerBlock {
+	return {
+		id: b.id,
+		depth: b.depth,
+		text: b.text,
+		children: [],
+		system: {
+			date: b.system.date,
+			updated: b.system.updated,
+			extra: { ...(b.system.extra ?? {}) },
+		},
+		_systemHasBlpMarker: b._systemHasBlpMarker,
+	};
+}
+
+function linearizeBlocks(list: OutlinerBlock[], out: OutlinerBlock[] = []): OutlinerBlock[] {
+	for (const b of list) {
+		out.push(cloneBlockShallow(b));
+		linearizeBlocks(b.children, out);
+	}
+	return out;
+}
+
+function rebuildTreeFromLinear(linear: OutlinerBlock[]): OutlinerBlock[] {
+	const roots: OutlinerBlock[] = [];
+	const stack: OutlinerBlock[] = [];
+
+	for (const block of linear) {
+		block.children = [];
+		while (stack.length > block.depth) stack.pop();
+
+		if (block.depth <= 0) {
+			block.depth = 0;
+			roots.push(block);
+		} else {
+			const parent = stack[block.depth - 1];
+			if (!parent) throw new Error(`Invalid linear outliner depth sequence at block ${block.id}`);
+			parent.children.push(block);
+		}
+
+		stack[block.depth] = block;
+		stack.length = block.depth + 1;
+	}
+
+	return roots;
+}
+
+function findLinearIndexById(linear: OutlinerBlock[], id: string): number {
+	return linear.findIndex((b) => b.id === id);
+}
+
+function findLinearParentId(linear: OutlinerBlock[], index: number): string | null {
+	const depth = Math.max(0, Math.floor(linear[index]?.depth ?? 0));
+	if (depth <= 0) return null;
+
+	for (let i = index - 1; i >= 0; i--) {
+		if ((linear[i]?.depth ?? -1) === depth - 1) return linear[i]?.id ?? null;
+	}
+
+	return null;
+}
+
+function findLinearDescendantEnd(linear: OutlinerBlock[], index: number): number {
+	const depth = Math.max(0, Math.floor(linear[index]?.depth ?? 0));
+	let end = index + 1;
+	while (end < linear.length && (linear[end]?.depth ?? -1) > depth) end += 1;
+	return end;
+}
+
+function isValidLinearDepthSequence(linear: OutlinerBlock[]): boolean {
+	for (let i = 0; i < linear.length; i++) {
+		const depth = Math.max(0, Math.floor(linear[i]?.depth ?? 0));
+		if (i === 0) {
+			if (depth !== 0) return false;
+			continue;
+		}
+
+		const prevDepth = Math.max(0, Math.floor(linear[i - 1]?.depth ?? 0));
+		if (depth > prevDepth + 1) return false;
+	}
+
+	return true;
+}
+
 function ensureUniqueGeneratedId(ctx: Pick<OutlinerEngineContext, "generateId">, existing: Set<string>): string {
 	for (let i = 0; i < 100; i++) {
 		const id = ctx.generateId();
@@ -251,6 +335,44 @@ export function indentBlock(
 	return { file: next, selection: sel, dirtyIds, didChange: true };
 }
 
+export function indentBlockPreservingOrder(
+	file: ParsedOutlinerFile,
+	sel: OutlinerSelection
+): OutlinerEngineResult {
+	const linear = linearizeBlocks(file.blocks ?? []);
+	const dirtyIds = new Set<string>();
+
+	const index = findLinearIndexById(linear, sel.id);
+	if (index <= 0) return { file, selection: sel, dirtyIds, didChange: false };
+
+	const current = linear[index];
+	if (!current) return { file, selection: sel, dirtyIds, didChange: false };
+
+	const previous = linear[index - 1];
+	if (!previous) return { file, selection: sel, dirtyIds, didChange: false };
+	if ((previous.depth ?? 0) < (current.depth ?? 0)) {
+		return { file, selection: sel, dirtyIds, didChange: false };
+	}
+
+	const oldParentId = findLinearParentId(linear, index);
+	current.depth = Math.max(0, (current.depth ?? 0) + 1);
+	if (!isValidLinearDepthSequence(linear)) {
+		return { file, selection: sel, dirtyIds: new Set(), didChange: false };
+	}
+
+	const newParentId = findLinearParentId(linear, index);
+	dirtyIds.add(current.id);
+	if (oldParentId) dirtyIds.add(oldParentId);
+	if (newParentId) dirtyIds.add(newParentId);
+
+	return {
+		file: { frontmatter: file.frontmatter, blocks: rebuildTreeFromLinear(linear) },
+		selection: sel,
+		dirtyIds,
+		didChange: true,
+	};
+}
+
 export function outdentBlock(
 	file: ParsedOutlinerFile,
 	sel: OutlinerSelection
@@ -273,6 +395,49 @@ export function outdentBlock(
 	rebuildDepths(next.blocks, 0);
 
 	return { file: next, selection: sel, dirtyIds, didChange: true };
+}
+
+export function outdentBlockPreservingOrder(
+	file: ParsedOutlinerFile,
+	sel: OutlinerSelection
+): OutlinerEngineResult {
+	const linear = linearizeBlocks(file.blocks ?? []);
+	const dirtyIds = new Set<string>();
+
+	const index = findLinearIndexById(linear, sel.id);
+	if (index < 0) return { file, selection: sel, dirtyIds, didChange: false };
+
+	const current = linear[index];
+	if (!current) return { file, selection: sel, dirtyIds, didChange: false };
+	if ((current.depth ?? 0) <= 0) return { file, selection: sel, dirtyIds, didChange: false };
+
+	const oldParentId = findLinearParentId(linear, index);
+	const descendantEnd = findLinearDescendantEnd(linear, index);
+
+	current.depth = Math.max(0, (current.depth ?? 0) - 1);
+	dirtyIds.add(current.id);
+
+	for (let i = index + 1; i < descendantEnd; i++) {
+		const descendant = linear[i];
+		if (!descendant) continue;
+		descendant.depth = Math.max(0, (descendant.depth ?? 0) - 1);
+		dirtyIds.add(descendant.id);
+	}
+
+	if (!isValidLinearDepthSequence(linear)) {
+		return { file, selection: sel, dirtyIds: new Set(), didChange: false };
+	}
+
+	const newParentId = findLinearParentId(linear, index);
+	if (oldParentId) dirtyIds.add(oldParentId);
+	if (newParentId) dirtyIds.add(newParentId);
+
+	return {
+		file: { frontmatter: file.frontmatter, blocks: rebuildTreeFromLinear(linear) },
+		selection: sel,
+		dirtyIds,
+		didChange: true,
+	};
 }
 
 export function moveBlockSubtree(

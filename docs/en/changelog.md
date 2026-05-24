@@ -4,7 +4,21 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.10 (Current)
+## v2.0.13 (Current)
+
+- Fix: Outliner block editing now keeps focus/scroll stable when clicking tabs or working near the bottom of a long outline.
+- Fix: Outliner `Tab` / `Shift+Tab` now preserve visible block order whenever possible instead of moving the block to the target parent's tail.
+
+## v2.0.12
+
+- Fix: hide TaskNotes widgets inside inline embeds to avoid extra UI noise in embedded editors.
+
+## v2.0.11
+
+- Improved: Journal Feed now mounts outliner-enabled daily notes as embedded Outliner views for a consistent editing experience.
+- Fix: the embedded Outliner editor command bridge now follows real editor focus, so suggests and editor commands stay reliable inside Journal Feed embeds.
+
+## v2.0.10
 
 - Fix: Journal Feed now hides Outliner system tail lines in the embedded editors (same as Outliner)
 

@@ -4,7 +4,21 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.10 (当前版本)
+## v2.0.13 (当前版本)
+
+- 修复：Outliner 编辑 block 时，点击选项卡或在长大纲底部工作时的焦点/滚动更稳定，不再容易丢失编辑焦点或把最后内容卡在屏幕底边
+- 修复：Outliner 中 `Tab` / `Shift+Tab` 调整单个 block 层级时，会尽量保持上下可见顺序不变；不再默认把 block 移到目标父节点尾部
+
+## v2.0.12
+
+- 修复：内联嵌入编辑中会隐藏 TaskNotes 小组件，避免嵌入内容出现额外干扰 UI
+
+## v2.0.11
+
+- 改进：Journal Feed 里的 outliner-enabled 日记文件现在会以内嵌 Outliner 视图挂载，获得与独立 Outliner 一致的编辑体验
+- 修复：Journal Feed 内嵌 Outliner 编辑器的命令桥接会根据真实焦点更新，`[[`、`/` 等 suggest 与编辑命令在嵌入场景里更稳定
+
+## v2.0.10
 
 - 修复：Journal Feed 现在会在嵌入编辑器里隐藏 Outliner 的系统尾行（与 Outliner 视图一致）
 

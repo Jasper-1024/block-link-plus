@@ -90,6 +90,7 @@ Outliner 會為每個列表塊維護一條尾行，用 Dataview inline fields + 
 ### 常用編輯行為
 
 - 撤銷 / 重做：單一 block 內的普通文字編輯，會優先使用編輯器自身歷史；split、多行貼上、縮排 / 反縮排、merge、drag/drop 等結構操作可用 `Ctrl/Cmd+Z` 撤銷，並用 Windows 常見的 `Ctrl+Y` 或 `Cmd/Ctrl+Shift+Z` 重做
+- `Tab` / `Shift+Tab`：預設會盡量只調整目前 block 的層級，並保持上下可見順序不變；只有為了維持合法層級關係，才會最小化地連帶修正後續層級
 - `Esc`：若 suggest 已開啟，會先關閉 suggest；否則退出目前 block 編輯；若目前是整塊範圍選取，則清空該選取
 
 ### 編輯器快捷鍵 / 外掛命令（進階）

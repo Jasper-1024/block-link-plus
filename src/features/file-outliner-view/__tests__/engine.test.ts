@@ -2,12 +2,14 @@ import {
 	backspaceAtStart,
 	deleteBlock,
 	indentBlock,
+	indentBlockPreservingOrder,
 	insertAtRootEnd,
 	insertAfter,
 	moveBlockSubtree,
 	mergeWithNext,
 	mergeWithPrevious,
 	outdentBlock,
+	outdentBlockPreservingOrder,
 	pasteSplitLines,
 	splitAtSelection,
 	type OutlinerEngineContext,
@@ -123,6 +125,87 @@ describe("file-outliner-view/engine", () => {
 		expect(outdented.didChange).toBe(true);
 		expect(outdented.file.blocks.map((b) => b.id)).toEqual(["a", "b", "c"]);
 		expect(outdented.file.blocks[1]?.depth).toBe(0);
+	});
+
+	test("indentBlockPreservingOrder keeps visible order and only deepens the current block", () => {
+		const input = fileOf([
+			{ id: "a", depth: 0, text: "A", children: [{ id: "b", depth: 1, text: "B", children: [], system: { date: "d", updated: "u", extra: {} } }], system: { date: "d", updated: "u", extra: {} } },
+			{ id: "c", depth: 0, text: "C", children: [{ id: "d", depth: 1, text: "D", children: [], system: { date: "d", updated: "u", extra: {} } }], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const sel = { id: "c", start: 0, end: 0 };
+		const out = indentBlockPreservingOrder(input, sel);
+
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual(sel);
+		expect(Array.from(out.dirtyIds).sort()).toEqual(["a", "c"]);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a"]);
+		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["b", "c", "d"]);
+		expect(out.file.blocks[0]?.children[0]?.depth).toBe(1);
+		expect(out.file.blocks[0]?.children[1]?.depth).toBe(1);
+		expect(out.file.blocks[0]?.children[2]?.depth).toBe(1);
+	});
+
+	test("outdentBlockPreservingOrder keeps visible order and minimally repairs descendants", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "A",
+				children: [
+					{ id: "b", depth: 1, text: "B", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{
+						id: "c",
+						depth: 1,
+						text: "C",
+						children: [{ id: "d", depth: 2, text: "D", children: [], system: { date: "d", updated: "u", extra: {} } }],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const sel = { id: "c", start: 0, end: 0 };
+		const out = outdentBlockPreservingOrder(input, sel);
+
+		expect(out.didChange).toBe(true);
+		expect(out.selection).toEqual(sel);
+		expect(Array.from(out.dirtyIds).sort()).toEqual(["a", "c", "d"]);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "c"]);
+		expect(out.file.blocks[0]?.children.map((b) => b.id)).toEqual(["b"]);
+		expect(out.file.blocks[1]?.depth).toBe(0);
+		expect(out.file.blocks[1]?.children.map((b) => b.id)).toEqual(["d"]);
+		expect(out.file.blocks[1]?.children[0]?.depth).toBe(1);
+	});
+
+	test("outdentBlockPreservingOrder keeps descendant hierarchy when only the edited block needs promotion", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "A",
+				children: [
+					{
+						id: "b",
+						depth: 1,
+						text: "B",
+						children: [{ id: "c", depth: 2, text: "C", children: [], system: { date: "d", updated: "u", extra: {} } }],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const sel = { id: "b", start: 0, end: 0 };
+		const out = outdentBlockPreservingOrder(input, sel);
+
+		expect(out.didChange).toBe(true);
+		expect(out.file.blocks.map((b) => b.id)).toEqual(["a", "b"]);
+		expect(out.file.blocks[1]?.depth).toBe(0);
+		expect(out.file.blocks[1]?.children.map((b) => b.id)).toEqual(["c"]);
+		expect(out.file.blocks[1]?.children[0]?.depth).toBe(1);
 	});
 
 	test("moveBlockSubtree reorders siblings (after)", () => {

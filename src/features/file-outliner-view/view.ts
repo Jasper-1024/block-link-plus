@@ -12,11 +12,13 @@ import {
 	backspaceAtStart,
 	deleteBlock,
 	indentBlock,
+	indentBlockPreservingOrder,
 	insertAtRootEnd,
 	insertAfter,
 	mergeWithNext,
 	moveBlockSubtree,
 	outdentBlock,
+	outdentBlockPreservingOrder,
 	pasteSplitLines,
 	splitAtSelection,
 	type OutlinerEngineContext,
@@ -2206,7 +2208,9 @@ export class FileOutlinerView extends TextFileView {
 		if (!sel) return false;
 
 		return this.applyStructuralEngineResult(
-			shift ? outdentBlock(this.outlinerFile, sel) : indentBlock(this.outlinerFile, sel),
+			shift
+				? outdentBlockPreservingOrder(this.outlinerFile, sel)
+				: indentBlockPreservingOrder(this.outlinerFile, sel),
 			sel
 		);
 	}

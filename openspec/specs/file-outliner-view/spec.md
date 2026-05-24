@@ -52,8 +52,8 @@ If a block starts with `- [ ]` or `- [x]`, the bracket text MUST be treated as p
 Within the Outliner View, block editing MUST follow a Logseq-like baseline:
 - `Enter` splits the current block at the cursor into a new sibling block.
 - `Shift+Enter` inserts a newline within the current block content.
-- `Tab` indents the current block under the previous sibling.
-- `Shift+Tab` outdents the current block.
+- `Tab` increases the current block depth by one while preserving visible block order whenever possible.
+- `Shift+Tab` decreases the current block depth by one while preserving visible block order whenever possible.
 - `Backspace` at the start of a block merges with the previous block (default), with a user setting to prefer outdent when the block has children.
 - `Delete` at the end of a block merges with the next block.
 
@@ -65,6 +65,12 @@ Task blocks additionally MUST enforce a single-line invariant:
 - **GIVEN** the active block is a task block `[ ] hello`
 - **WHEN** the user presses `Shift+Enter`
 - **THEN** the task block remains single-line (no `\n` is inserted into the task text)
+
+#### Scenario: Tab preserves visible order for a single-level indent
+- **GIVEN** the visible Outliner depth pattern is `1,2,1,2`
+- **WHEN** the user focuses the third visible block and presses `Tab`
+- **THEN** the visible block order remains unchanged
+- **AND** the depth pattern becomes `1,2,2,2`
 
 ### Requirement: Outliner editor provides a bridgeable context menu
 While editing a block in the Outliner View, the plugin MUST replace the default editor context menu with a plugin-owned context menu.
