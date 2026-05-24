@@ -4,7 +4,12 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.14 (Current)
+## v2.0.15 (Current)
+
+- Fix: Outliner structural edits (`Enter`, `Tab`, `Shift+Tab`) now preserve viewport position instead of jumping back to the top of the file.
+- Fix: Outliner focus restoration after structural edits now keeps long-outline editing stable near the bottom of the note.
+
+## v2.0.14
 
 - Fix: embedded Outliner cards in Journal Feed no longer show a nested inner leaf header, so the editor content aligns with the outer day header on narrow/mobile layouts.
 - Fix: embedded Outliner cards in Journal Feed no longer keep the standalone Outliner bottom spacer, making long notes easier to position inside the feed.

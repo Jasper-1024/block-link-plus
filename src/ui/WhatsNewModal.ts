@@ -97,6 +97,21 @@ const WHATS_NEW_V2_0_13: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_15: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: structural edits (`Enter`, `Tab`, `Shift+Tab`) now preserve viewport position instead of jumping back to the top of the file.",
+		"Outliner: focus restoration after structural edits is now stable near the bottom of long outlines.",
+	],
+	zh: [
+		"Outliner：结构编辑（`Enter`、`Tab`、`Shift+Tab`）现在会保持当前视口位置，不再跳回文件开头。",
+		"Outliner：结构编辑后的焦点恢复更稳定，长大纲底部编辑时不再突然回顶。",
+	],
+	"zh-TW": [
+		"Outliner：結構編輯（`Enter`、`Tab`、`Shift+Tab`）現在會保持目前視口位置，不再跳回檔案開頭。",
+		"Outliner：結構編輯後的焦點恢復更穩定，長大綱底部編輯時不再突然跳回頂端。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -152,6 +167,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.15") {
+			return WHATS_NEW_V2_0_15[i18n.lang] ?? WHATS_NEW_V2_0_15.en;
 		}
 
 		if (this.currentVersion === "2.0.13") {

@@ -67,6 +67,12 @@ type PendingFocus = {
 	scroll: boolean;
 };
 
+type PendingViewportRestore = {
+	scrollTop: number;
+	scrollLeft: number;
+	focusId: string;
+};
+
 type BlockRangeSelection = {
 	anchorId: string;
 	focusId: string;
@@ -148,6 +154,7 @@ export class FileOutlinerView extends TextFileView {
 	private pendingStructuralExitCommitBypassId: string | null = null;
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
+	private pendingViewportRestore: PendingViewportRestore | null = null;
 	private pendingBlurTimer: number | null = null;
 	private pendingEditorFocusRestore = false;
 	private pendingEditorFocusTimer: number | null = null;
@@ -419,6 +426,7 @@ export class FileOutlinerView extends TextFileView {
 		this.blockRangeSelectedIds.clear();
 		this.pendingFocus = null;
 		this.pendingScrollToId = null;
+		this.pendingViewportRestore = null;
 		this.structuralUndoStack = [];
 		this.structuralRedoStack = [];
 		this.clearPendingEditorFocusRestore();
@@ -572,8 +580,50 @@ export class FileOutlinerView extends TextFileView {
 		if (!this.isEditorRefocusTarget(active)) return;
 
 		this.pendingEditorFocusRestore = false;
-		editor.focus();
+		this.focusEditorWithoutContainerScroll();
 		this.updateActiveEditorBridge();
+	}
+
+	private captureViewportRestore(focusId: string): void {
+		this.pendingViewportRestore = {
+			scrollTop: this.contentEl.scrollTop,
+			scrollLeft: this.contentEl.scrollLeft,
+			focusId,
+		};
+	}
+
+	private clearPendingViewportRestore(): void {
+		this.pendingViewportRestore = null;
+	}
+
+	private focusEditorWithoutContainerScroll(): void {
+		const editor = this.editorView;
+		if (!editor) return;
+		const prevTop = this.contentEl.scrollTop;
+		const prevLeft = this.contentEl.scrollLeft;
+		editor.focus();
+		if (this.contentEl.scrollTop !== prevTop) this.contentEl.scrollTop = prevTop;
+		if (this.contentEl.scrollLeft !== prevLeft) this.contentEl.scrollLeft = prevLeft;
+	}
+
+	private restoreViewportAfterStructuralFocus(): void {
+		const pending = this.pendingViewportRestore;
+		if (!pending) return;
+		this.pendingViewportRestore = null;
+
+		this.contentEl.scrollTop = pending.scrollTop;
+		this.contentEl.scrollLeft = pending.scrollLeft;
+
+		const row = this.dom.getBlockEl(pending.focusId);
+		if (!row) return;
+
+		const hostRect = this.contentEl.getBoundingClientRect();
+		const rowRect = row.getBoundingClientRect();
+		if (rowRect.top < hostRect.top) {
+			this.contentEl.scrollTop += rowRect.top - hostRect.top;
+		} else if (rowRect.bottom > hostRect.bottom) {
+			this.contentEl.scrollTop += rowRect.bottom - hostRect.bottom;
+		}
 	}
 
 	setEphemeralState(state: any): void {
@@ -1241,6 +1291,10 @@ export class FileOutlinerView extends TextFileView {
 			this.enterEditMode(this.editingId, { cursorStart: 0, cursorEnd: 0, scroll: false, reuseExisting: true });
 		}
 
+		if (this.pendingViewportRestore) {
+			this.restoreViewportAfterStructuralFocus();
+		}
+
 		// 3) Handle deep-link scroll.
 		if (this.pendingScrollToId) {
 			this.scrollToBlockId(this.pendingScrollToId);
@@ -1764,7 +1818,7 @@ export class FileOutlinerView extends TextFileView {
 			}
 		}
 
-		this.editorView.focus();
+		this.focusEditorWithoutContainerScroll();
 		this.updateActiveEditorBridge();
 
 		if (opts.scroll) {
@@ -1900,6 +1954,7 @@ export class FileOutlinerView extends TextFileView {
 			cursorEnd: nextSelection.end,
 			scroll: false,
 		};
+		this.captureViewportRestore(nextSelection.id);
 		this.pendingScrollToId = null;
 		this.render();
 		this.markDirtyAndRequestSave();
@@ -1958,9 +2013,12 @@ export class FileOutlinerView extends TextFileView {
 				cursorEnd: result.selection.end,
 				scroll: opts?.scroll === true,
 			};
+			if (opts?.scroll === true) this.clearPendingViewportRestore();
+			else this.captureViewportRestore(result.selection.id);
 			this.pendingScrollToId = null;
 		} else {
 			this.pendingFocus = null;
+			this.clearPendingViewportRestore();
 			this.pendingScrollToId = result.selection.id;
 		}
 

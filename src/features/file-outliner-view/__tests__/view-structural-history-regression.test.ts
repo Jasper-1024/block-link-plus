@@ -11,6 +11,8 @@ describe("file-outliner-view structural edit regression", () => {
 			pendingFocus: null,
 			pendingScrollToId: null,
 			pendingStructuralExitCommitBypassId: null,
+			captureViewportRestore: jest.fn(),
+			clearPendingViewportRestore: jest.fn(),
 			ensureRoot: jest.fn(),
 			rebuildIndex() {
 				this.blockById = new Map([
@@ -172,6 +174,7 @@ describe("file-outliner-view structural edit regression", () => {
 			editorHostEl,
 			rootEl,
 			contentEl,
+			focusEditorWithoutContainerScroll: jest.fn(),
 			leaf: activeLeaf,
 			app: { workspace: { activeLeaf } },
 			updateActiveEditorBridge: jest.fn(),
@@ -182,7 +185,8 @@ describe("file-outliner-view structural edit regression", () => {
 		(FileOutlinerView.prototype as any).restoreEditorFocusIfNeeded.call(fake);
 
 		expect(fake.pendingEditorFocusRestore).toBe(false);
-		expect(focus).toHaveBeenCalledTimes(1);
+		expect(fake.focusEditorWithoutContainerScroll).toHaveBeenCalledTimes(1);
+		expect(focus).toHaveBeenCalledTimes(0);
 		expect(fake.updateActiveEditorBridge).toHaveBeenCalledTimes(1);
 	});
 
@@ -236,6 +240,7 @@ describe("file-outliner-view structural edit regression", () => {
 			pendingStructuralExitCommitBypassId: null,
 			pendingFocus: null,
 			pendingScrollToId: "stale",
+			captureViewportRestore: jest.fn(),
 			render: jest.fn(),
 			markDirtyAndRequestSave: jest.fn(),
 		} as any;
@@ -247,6 +252,7 @@ describe("file-outliner-view structural edit regression", () => {
 		);
 
 		expect(fake.pendingFocus).toEqual({ id: "a1", cursorStart: 3, cursorEnd: 3, scroll: false });
+		expect(fake.captureViewportRestore).toHaveBeenCalledWith("a1");
 		expect(fake.pendingScrollToId).toBeNull();
 	});
 
@@ -371,6 +377,8 @@ describe("file-outliner-view structural edit regression", () => {
 			pendingFocus: null,
 			pendingScrollToId: "stale",
 			pendingStructuralExitCommitBypassId: null,
+			clearPendingViewportRestore: jest.fn(),
+			captureViewportRestore: jest.fn(),
 			ensureRoot: jest.fn(),
 			rebuildIndex() {
 				this.blockById = new Map([["n1", { id: "n1", text: "P2" }]]);
@@ -396,6 +404,49 @@ describe("file-outliner-view structural edit regression", () => {
 		);
 
 		expect(fake.pendingFocus).toEqual({ id: "n1", cursorStart: 1, cursorEnd: 1, scroll: true });
+		expect(fake.clearPendingViewportRestore).toHaveBeenCalledTimes(1);
+		expect(fake.captureViewportRestore).not.toHaveBeenCalled();
 		expect(fake.pendingScrollToId).toBeNull();
+	});
+
+	test("applyEngineResult captures viewport restore for structural focus-preserving edits", () => {
+		const fake = {
+			editingId: "a1",
+			outlinerFile: null,
+			visibleNavCache: { cached: true },
+			blockById: new Map<string, any>(),
+			dirtyBlockIds: new Set<string>(),
+			pendingFocus: null,
+			pendingScrollToId: null,
+			pendingStructuralExitCommitBypassId: null,
+			clearPendingViewportRestore: jest.fn(),
+			captureViewportRestore: jest.fn(),
+			ensureRoot: jest.fn(),
+			rebuildIndex() {
+				this.blockById = new Map([["n1", { id: "n1", text: "P2" }]]);
+			},
+			render: jest.fn(),
+			display: {
+				renderBlockPlaceholder: jest.fn(),
+				markNeedsRender: jest.fn(),
+				scheduleDisplayRenderDrain: jest.fn(),
+			},
+			markDirtyAndRequestSave: jest.fn(),
+		} as any;
+
+		(FileOutlinerView.prototype as any).applyEngineResult.call(
+			fake,
+			{
+				didChange: true,
+				file: { frontmatter: null, blocks: [] },
+				selection: { id: "n1", start: 1, end: 1 },
+				dirtyIds: new Set<string>(),
+			},
+			undefined
+		);
+
+		expect(fake.pendingFocus).toEqual({ id: "n1", cursorStart: 1, cursorEnd: 1, scroll: false });
+		expect(fake.captureViewportRestore).toHaveBeenCalledWith("n1");
+		expect(fake.clearPendingViewportRestore).not.toHaveBeenCalled();
 	});
 });
