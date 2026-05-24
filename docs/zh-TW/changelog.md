@@ -6,6 +6,9 @@ Block Link Plus 的版本更新歷史和新功能介紹。
 
 ## v2.0.13 (目前版本)
 
+- 修正：手機等窄螢幕下，Journal Feed 內嵌 Outliner 不再顯示額外的內層標題列；卡片中的編輯內容會和外層日記標題對齊
+- 修正：Journal Feed 內嵌 Outliner 不再保留獨立 Outliner 視圖的底部留白，長內容在卡片裡更容易停在合適位置
+- 修正：Journal Feed 內嵌 Outliner 的左側邊界／圓點欄位更緊湊，行動端不再出現明顯過寬的左側留白
 - 修正：Outliner 編輯 block 時，點擊分頁或在長大綱底部工作時的焦點/捲動更穩定，不再容易遺失編輯焦點或讓最後內容卡在畫面底邊
 - 修正：Outliner 中 `Tab` / `Shift+Tab` 調整單一 block 層級時，會盡量保持上下可見順序不變；不再預設把 block 移到目標父節點尾端
 

@@ -28,6 +28,7 @@
   const pluginId = "block-link-plus";
   const tmpFolder = "_blp_tmp";
   const anchorPath = `${tmpFolder}/journal-feed-anchor.md`;
+  const getPlugin = () => app?.plugins?.plugins?.[pluginId];
 
   const dailyPlugin = app?.internalPlugins?.getPluginById?.("daily-notes");
   assert(dailyPlugin?.enabled === true, "Daily Notes internal plugin is disabled.");
@@ -58,7 +59,7 @@
   await app.plugins.enablePlugin(pluginId);
   await wait(250);
 
-  const plugin = app?.plugins?.plugins?.[pluginId];
+  const plugin = getPlugin();
   assert(plugin, `plugin not found after reload: ${pluginId}`);
   const viewReady = await waitFor(
     () => app.viewRegistry.getViewCreatorByType?.("blp-journal-feed-view") ? true : null,
@@ -66,10 +67,12 @@
   );
   assert(viewReady, "journal feed view was not registered after plugin reload.");
   const engineReady = await waitFor(
-    () => plugin.inlineEditEngine?.isLoaded?.() ? true : null,
+    () => getPlugin()?.inlineEditEngine?.isLoaded?.() ? true : null,
     { timeoutMs: 15000, stepMs: 50 }
   );
   assert(engineReady, "inlineEditEngine did not finish loading after plugin reload.");
+  const livePlugin = getPlugin();
+  assert(livePlugin, `plugin missing after engine load: ${pluginId}`);
 
   const upsert = async (path, content) => {
     let f = app.vault.getAbstractFileByPath(path);
@@ -78,17 +81,28 @@
     return f;
   };
 
+  const ensureFolderChain = async (folderPath) => {
+    const normalized = String(folderPath || "").replace(/^\/+|\/+$/g, "");
+    if (!normalized) return;
+    const parts = normalized.split("/").filter(Boolean);
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      if (app.vault.getAbstractFileByPath(current)) continue;
+      try {
+        await app.vault.createFolder(current);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   try {
-    try {
-      if (!app.vault.getAbstractFileByPath(tmpFolder)) await app.vault.createFolder(tmpFolder);
-    } catch {
-      // ignore
-    }
-    try {
-      if (baseFolder && !app.vault.getAbstractFileByPath(baseFolder)) await app.vault.createFolder(baseFolder);
-    } catch {
-      // ignore
-    }
+    await ensureFolderChain(tmpFolder);
+    await ensureFolderChain(baseFolder);
+    await ensureFolderChain(day0Path.split("/").slice(0, -1).join("/"));
+    await ensureFolderChain(day1Path.split("/").slice(0, -1).join("/"));
+    await ensureFolderChain(day2Path.split("/").slice(0, -1).join("/"));
 
     const marker0 = `blp-journal-feed-smoke-day0-${Date.now()}`;
     const marker1 = `blp-journal-feed-smoke-day1-${Date.now()}`;
@@ -170,7 +184,7 @@
     // Focus first day (mount + bridge).
     await view.mountSectionEditor(sections[0], { focus: true, bridge: true });
     await wait(50);
-    const focused0 = plugin.inlineEditEngine?.focus?.getFocused?.();
+    const focused0 = livePlugin.inlineEditEngine?.focus?.getFocused?.();
     assert(focused0, "inlineEditEngine.focus.getFocused() is null after mount (day0).");
     assert(focused0.file?.path === sections[0].file.path, `focused embed is not day0: ${focused0.file?.path} vs ${sections[0].file.path}`);
     assert(focused0.view?.editor, "focused embed has no editor (day0).");
@@ -194,7 +208,7 @@
       }
       await wait(50);
 
-      const focusedNow = plugin.inlineEditEngine?.focus?.getFocused?.();
+      const focusedNow = livePlugin.inlineEditEngine?.focus?.getFocused?.();
       const activeType = app.workspace.activeLeaf?.view?.getViewType?.() ?? null;
       const focusedFile = focusedNow?.file?.path ?? null;
       const viewFile = focusedNow?.view?.file?.path ?? null;
@@ -210,7 +224,7 @@
     // Focus second day and retry.
     await view.mountSectionEditor(sections[1], { focus: true, bridge: true });
     await wait(50);
-    const focused1 = plugin.inlineEditEngine?.focus?.getFocused?.();
+    const focused1 = livePlugin.inlineEditEngine?.focus?.getFocused?.();
     assert(focused1, "inlineEditEngine.focus.getFocused() is null after mount (day1).");
     assert(focused1.file?.path === sections[1].file.path, `focused embed is not day1: ${focused1.file?.path} vs ${sections[1].file.path}`);
     assert(focused1.view?.editor, "focused embed has no editor (day1).");
@@ -233,7 +247,7 @@
       }
       await wait(50);
 
-      const focusedNow = plugin.inlineEditEngine?.focus?.getFocused?.();
+      const focusedNow = livePlugin.inlineEditEngine?.focus?.getFocused?.();
       const activeType = app.workspace.activeLeaf?.view?.getViewType?.() ?? null;
       const focusedFile = focusedNow?.file?.path ?? null;
       const viewFile = focusedNow?.view?.file?.path ?? null;

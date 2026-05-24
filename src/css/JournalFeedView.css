@@ -63,6 +63,25 @@
 	min-height: 160px;
 }
 
+.blp-journal-feed-day-editor > .workspace-leaf-content {
+	display: block;
+	height: auto;
+	min-height: 0;
+	overflow: visible;
+	background: transparent;
+}
+
+.blp-journal-feed-day-editor > .workspace-leaf-content > .view-header {
+	display: none;
+}
+
+.blp-journal-feed-day-editor > .workspace-leaf-content > .view-content {
+	height: auto;
+	min-height: 0;
+	padding: 0;
+	overflow: visible;
+}
+
 .blp-journal-feed-placeholder {
 	color: var(--text-muted);
 	font-size: 12px;
@@ -82,4 +101,3 @@
 	text-align: center;
 	padding: 14px 0;
 }
-

@@ -266,6 +266,8 @@ export class JournalFeedView extends TextFileView {
 		const wantsOutliner =
 			this.plugin.settings.fileOutlinerViewEnabled !== false && isFileOutlinerEnabledFile(this.plugin, src.file);
 
+		const renderMode = wantsOutliner ? "outliner" : "markdown";
+
 		const sectionEl = this.feedEl.createDiv("blp-journal-feed-day");
 		const headerEl = sectionEl.createDiv("blp-journal-feed-day-header");
 
@@ -284,6 +286,7 @@ export class JournalFeedView extends TextFileView {
 		const editorHostEl = sectionEl.createDiv("blp-journal-feed-day-editor");
 		editorHostEl.dataset.blpJournalEditor = "1";
 		editorHostEl.dataset.path = src.file.path;
+		editorHostEl.dataset.blpJournalRenderMode = renderMode;
 
 		const placeholderEl = editorHostEl.createDiv("blp-journal-feed-placeholder");
 		placeholderEl.setText("Scroll to load…");
@@ -292,7 +295,7 @@ export class JournalFeedView extends TextFileView {
 			file: src.file,
 			ts: src.ts,
 			isIntersecting: false,
-			renderMode: wantsOutliner ? "outliner" : "markdown",
+			renderMode,
 			sectionEl,
 			headerEl,
 			editorHostEl,
