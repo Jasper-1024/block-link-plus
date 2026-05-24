@@ -62,6 +62,7 @@ type PendingFocus = {
 	id: string;
 	cursorStart: number;
 	cursorEnd: number;
+	scroll: boolean;
 };
 
 type BlockRangeSelection = {
@@ -146,6 +147,8 @@ export class FileOutlinerView extends TextFileView {
 	private pendingFocus: PendingFocus | null = null;
 	private pendingScrollToId: string | null = null;
 	private pendingBlurTimer: number | null = null;
+	private pendingEditorFocusRestore = false;
+	private pendingEditorFocusTimer: number | null = null;
 
 	private structuralUndoStack: StructuralHistoryEntry[] = [];
 	private structuralRedoStack: StructuralHistoryEntry[] = [];
@@ -231,10 +234,23 @@ export class FileOutlinerView extends TextFileView {
 		this.syncFeatureToggles();
 		this.registerDomEvent(this.contentEl, "scroll", () => this.display.scheduleVisibleBlockRefresh());
 		// Keep the editor-command bridge scoped to the active leaf.
-		this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateActiveEditorBridge()));
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => {
+				this.updateActiveEditorBridge();
+				this.queueEditorFocusRestore();
+			})
+		);
 		// Detached/embedded leaves (e.g. Journal Feed) never become `workspace.activeLeaf`,
 		// so we also update the bridge based on focus.
-		this.registerDomEvent(this.contentEl, "focusin", () => this.updateActiveEditorBridge());
+		this.registerDomEvent(this.contentEl, "focusin", (event: FocusEvent) => {
+			this.updateActiveEditorBridge();
+			const target = event.target;
+			if (target instanceof HTMLElement && this.editorHostEl?.contains(target)) {
+				this.clearPendingEditorFocusRestore();
+				return;
+			}
+			this.queueEditorFocusRestore();
+		});
 		this.registerDomEvent(this.contentEl, "focusout", (event: FocusEvent) => {
 			const next = event.relatedTarget;
 			if (next instanceof HTMLElement && this.contentEl.contains(next)) {
@@ -242,7 +258,10 @@ export class FileOutlinerView extends TextFileView {
 				return;
 			}
 			// Let focus settle before re-evaluating bridge state.
-			window.setTimeout(() => this.updateActiveEditorBridge(), 0);
+			window.setTimeout(() => {
+				this.updateActiveEditorBridge();
+				this.queueEditorFocusRestore();
+			}, 0);
 		});
 	}
 
@@ -400,6 +419,7 @@ export class FileOutlinerView extends TextFileView {
 		this.pendingScrollToId = null;
 		this.structuralUndoStack = [];
 		this.structuralRedoStack = [];
+		this.clearPendingEditorFocusRestore();
 		if (this.pendingBlurTimer) {
 			window.clearTimeout(this.pendingBlurTimer);
 			this.pendingBlurTimer = null;
@@ -501,6 +521,57 @@ export class FileOutlinerView extends TextFileView {
 	private updateActiveEditorBridge(): void {
 		if (this.isEditorCommandBridgeActive()) this.installActiveEditorBridge();
 		else this.uninstallActiveEditorBridge();
+	}
+
+	private clearPendingEditorFocusRestore(): void {
+		if (this.pendingEditorFocusTimer) {
+			window.clearTimeout(this.pendingEditorFocusTimer);
+			this.pendingEditorFocusTimer = null;
+		}
+		this.pendingEditorFocusRestore = false;
+	}
+
+	private isEditorRefocusTarget(active: HTMLElement | null): boolean {
+		if (!active) return true;
+		if (active === document.body) return true;
+		if (active === this.rootEl) return true;
+		if (active === this.contentEl) return true;
+		return false;
+	}
+
+	private queueEditorFocusRestore(): void {
+		if (!this.pendingEditorFocusRestore) return;
+		if (this.pendingEditorFocusTimer) {
+			window.clearTimeout(this.pendingEditorFocusTimer);
+		}
+		this.pendingEditorFocusTimer = window.setTimeout(() => {
+			this.pendingEditorFocusTimer = null;
+			this.restoreEditorFocusIfNeeded();
+		}, 0);
+	}
+
+	private restoreEditorFocusIfNeeded(): void {
+		if (!this.pendingEditorFocusRestore) return;
+
+		const editor = this.editorView;
+		const editorHost = this.editorHostEl;
+		if (!this.editingId || !editor || !editorHost || editorHost.style.display === "none") {
+			this.clearPendingEditorFocusRestore();
+			return;
+		}
+
+		if (this.leaf !== this.app.workspace.activeLeaf) return;
+
+		const active = document.activeElement as HTMLElement | null;
+		if (active && editorHost.contains(active)) {
+			this.clearPendingEditorFocusRestore();
+			return;
+		}
+		if (!this.isEditorRefocusTarget(active)) return;
+
+		this.pendingEditorFocusRestore = false;
+		editor.focus();
+		this.updateActiveEditorBridge();
 	}
 
 	setEphemeralState(state: any): void {
@@ -1161,9 +1232,9 @@ export class FileOutlinerView extends TextFileView {
 
 		// 2) Restore focus/selection.
 		if (this.pendingFocus) {
-			const { id, cursorStart, cursorEnd } = this.pendingFocus;
+			const { id, cursorStart, cursorEnd, scroll } = this.pendingFocus;
 			this.pendingFocus = null;
-			this.enterEditMode(id, { cursorStart, cursorEnd, scroll: true });
+			this.enterEditMode(id, { cursorStart, cursorEnd, scroll });
 		} else if (this.editingId) {
 			this.enterEditMode(this.editingId, { cursorStart: 0, cursorEnd: 0, scroll: false, reuseExisting: true });
 		}
@@ -1272,7 +1343,7 @@ export class FileOutlinerView extends TextFileView {
 				this.visibleNavCache = null;
 				if (focusId && this.blockById.has(focusId)) {
 					const end = String(this.blockById.get(focusId)?.text ?? "").length;
-					this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+					this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
 					this.pendingScrollToId = focusId;
 				}
 				this.render({ forceRebuild: true });
@@ -1300,7 +1371,7 @@ export class FileOutlinerView extends TextFileView {
 							const focusId = this.getZoomRootId();
 							if (focusId && this.blockById.has(focusId)) {
 								const end = String(this.blockById.get(focusId)?.text ?? "").length;
-								this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+								this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
 								this.pendingScrollToId = focusId;
 							}
 							this.render({ forceRebuild: true });
@@ -1369,7 +1440,7 @@ export class FileOutlinerView extends TextFileView {
 		this.zoomStack = nextStack;
 		this.visibleNavCache = null;
 		const end = String(this.blockById.get(id)?.text ?? "").length;
-		this.pendingFocus = { id, cursorStart: end, cursorEnd: end };
+		this.pendingFocus = { id, cursorStart: end, cursorEnd: end, scroll: false };
 		this.render({ forceRebuild: true });
 	}
 
@@ -1384,7 +1455,7 @@ export class FileOutlinerView extends TextFileView {
 		const focusId = this.getZoomRootId() ?? popped ?? null;
 		if (focusId) {
 			const end = String(this.blockById.get(focusId)?.text ?? "").length;
-			this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end };
+			this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
 			this.pendingScrollToId = focusId;
 		}
 
@@ -1668,6 +1739,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editingId = id;
+		this.clearPendingEditorFocusRestore();
 		if (this.pendingBlurTimer) {
 			window.clearTimeout(this.pendingBlurTimer);
 			this.pendingBlurTimer = null;
@@ -1725,6 +1797,7 @@ export class FileOutlinerView extends TextFileView {
 		}
 
 		this.editingId = null;
+		this.clearPendingEditorFocusRestore();
 		this.updateActiveEditorBridge();
 		this.closeEditorSuggests();
 		this.dom.getBlockEl(id)?.classList.remove("is-blp-outliner-active");
@@ -1823,8 +1896,9 @@ export class FileOutlinerView extends TextFileView {
 			id: nextSelection.id,
 			cursorStart: nextSelection.start,
 			cursorEnd: nextSelection.end,
+			scroll: false,
 		};
-		this.pendingScrollToId = nextSelection.id;
+		this.pendingScrollToId = null;
 		this.render();
 		this.markDirtyAndRequestSave();
 	}
@@ -1852,7 +1926,7 @@ export class FileOutlinerView extends TextFileView {
 			selection: OutlinerSelection;
 			dirtyIds: Set<string>;
 		},
-		opts?: { focus?: boolean }
+		opts?: { focus?: boolean; scroll?: boolean }
 	): void {
 		if (!result.didChange) return;
 
@@ -1880,7 +1954,9 @@ export class FileOutlinerView extends TextFileView {
 				id: result.selection.id,
 				cursorStart: result.selection.start,
 				cursorEnd: result.selection.end,
+				scroll: opts?.scroll === true,
 			};
+			this.pendingScrollToId = null;
 		} else {
 			this.pendingFocus = null;
 			this.pendingScrollToId = result.selection.id;
@@ -1918,16 +1994,22 @@ export class FileOutlinerView extends TextFileView {
 		const editorHost = this.editorHostEl;
 		if (!id || !editor || !editorHost) return;
 
-		// Blur can happen transiently when we reorder/move DOM nodes during a structural edit.
-		// Defer the decision: if focus immediately returns to our editor host, keep edit mode.
+		// Blur can happen from DOM reparenting, pane chrome clicks, or tab switches. Preserve the
+		// current editing block and only restore focus when this leaf becomes active again.
+		this.pendingEditorFocusRestore = true;
 		if (this.pendingBlurTimer) window.clearTimeout(this.pendingBlurTimer);
 		this.pendingBlurTimer = window.setTimeout(() => {
 			this.pendingBlurTimer = null;
 			if (this.editingId !== id) return;
 			const active = document.activeElement as HTMLElement | null;
-			if (active && editorHost.contains(active)) return;
-			if (active && this.contentEl.contains(active)) return;
-			this.exitEditMode(id);
+			if (active && editorHost.contains(active)) {
+				this.clearPendingEditorFocusRestore();
+				return;
+			}
+			this.updateActiveEditorBridge();
+			if (this.leaf !== this.app.workspace.activeLeaf) return;
+			if (!this.isEditorRefocusTarget(active)) return;
+			this.queueEditorFocusRestore();
 		}, 32);
 	}
 

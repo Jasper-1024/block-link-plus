@@ -666,3 +666,9 @@ body.blp-outliner-dragging .blp-file-outliner-view .bullet-container,
 	box-shadow: inset var(--blp-outliner-active-inset-width) 0 0 var(--ls-block-bullet-active-color);
 	background: hsla(var(--interactive-accent-hsl), 0.12);
 }
+
+.view-content.blp-file-outliner-view::after {
+	content: "";
+	display: block;
+	height: min(42vh, 320px);
+}

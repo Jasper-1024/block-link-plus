@@ -38,9 +38,9 @@ describe("file-outliner-view structural edit regression", () => {
 			undefined
 		);
 
-			expect(fake.pendingStructuralExitCommitBypassId).toBe("a1");
-			expect(fake.pendingFocus).toEqual({ id: "n1", cursorStart: 2, cursorEnd: 2 });
-			expect(Array.from(fake.dirtyBlockIds).sort()).toEqual(["a1", "n1"]);
+		expect(fake.pendingStructuralExitCommitBypassId).toBe("a1");
+		expect(fake.pendingFocus).toEqual({ id: "n1", cursorStart: 2, cursorEnd: 2, scroll: false });
+		expect(Array.from(fake.dirtyBlockIds).sort()).toEqual(["a1", "n1"]);
 	});
 
 	test("exitEditMode does not overwrite structural result with stale editor text when bypass is set", () => {
@@ -64,6 +64,7 @@ describe("file-outliner-view structural edit regression", () => {
 			editingId: "a1",
 			pendingBlurTimer: null,
 			pendingStructuralExitCommitBypassId: "a1",
+			clearPendingEditorFocusRestore: jest.fn(),
 			updateActiveEditorBridge: jest.fn(),
 			closeEditorSuggests: jest.fn(),
 			display: { renderBlockDisplay: jest.fn() },
@@ -114,6 +115,139 @@ describe("file-outliner-view structural edit regression", () => {
 		expect(fake.closeEditorSuggests).not.toHaveBeenCalled();
 		expect(fake.exitEditMode).toHaveBeenCalledWith("a1");
 		expect(fake.focusOutlinerRoot).toHaveBeenCalledTimes(1);
+	});
+
+	test("onEditorBlur preserves edit mode when focus stays within the outliner root", () => {
+		jest.useFakeTimers();
+		const rootEl = document.createElement("div");
+		const contentEl = document.createElement("div");
+		contentEl.appendChild(rootEl);
+		Object.defineProperty(document, "activeElement", {
+			configurable: true,
+			get: () => rootEl,
+		});
+
+		const fake = {
+			editingId: "a1",
+			editorView: {},
+			editorHostEl: document.createElement("div"),
+			contentEl,
+			rootEl,
+			pendingBlurTimer: null,
+			pendingEditorFocusRestore: false,
+			leaf: { id: "leaf-a" },
+			app: { workspace: { activeLeaf: { id: "leaf-a" } } },
+			updateActiveEditorBridge: jest.fn(),
+			queueEditorFocusRestore: jest.fn(),
+			isEditorRefocusTarget: (FileOutlinerView.prototype as any).isEditorRefocusTarget,
+		} as any;
+
+		(FileOutlinerView.prototype as any).onEditorBlur.call(fake);
+		jest.runAllTimers();
+
+		expect(fake.pendingEditorFocusRestore).toBe(true);
+		expect(fake.editingId).toBe("a1");
+		expect(fake.updateActiveEditorBridge).toHaveBeenCalledTimes(1);
+		expect(fake.queueEditorFocusRestore).toHaveBeenCalledTimes(0);
+		jest.useRealTimers();
+	});
+
+	test("restoreEditorFocusIfNeeded focuses editor when the active leaf regains root focus", () => {
+		const rootEl = document.createElement("div");
+		const contentEl = document.createElement("div");
+		contentEl.appendChild(rootEl);
+		const editorHostEl = document.createElement("div");
+		contentEl.appendChild(editorHostEl);
+		const activeLeaf = { id: "leaf-a" };
+		const focus = jest.fn();
+		Object.defineProperty(document, "activeElement", {
+			configurable: true,
+			get: () => rootEl,
+		});
+
+		const fake = {
+			pendingEditorFocusRestore: true,
+			editingId: "a1",
+			editorView: { focus },
+			editorHostEl,
+			rootEl,
+			contentEl,
+			leaf: activeLeaf,
+			app: { workspace: { activeLeaf } },
+			updateActiveEditorBridge: jest.fn(),
+			clearPendingEditorFocusRestore: jest.fn(),
+			isEditorRefocusTarget: (FileOutlinerView.prototype as any).isEditorRefocusTarget,
+		} as any;
+
+		(FileOutlinerView.prototype as any).restoreEditorFocusIfNeeded.call(fake);
+
+		expect(fake.pendingEditorFocusRestore).toBe(false);
+		expect(focus).toHaveBeenCalledTimes(1);
+		expect(fake.updateActiveEditorBridge).toHaveBeenCalledTimes(1);
+	});
+
+	test("onEditorBlur queues focus restore when active element falls back to body", () => {
+		jest.useFakeTimers();
+		const contentEl = document.createElement("div");
+		const editorHostEl = document.createElement("div");
+		contentEl.appendChild(editorHostEl);
+		Object.defineProperty(document, "activeElement", {
+			configurable: true,
+			get: () => document.body,
+		});
+
+		const activeLeaf = { id: "leaf-a" };
+		const fake = {
+			editingId: "a1",
+			editorView: {},
+			editorHostEl,
+			contentEl,
+			rootEl: document.createElement("div"),
+			pendingBlurTimer: null,
+			pendingEditorFocusRestore: false,
+			leaf: activeLeaf,
+			app: { workspace: { activeLeaf } },
+			updateActiveEditorBridge: jest.fn(),
+			queueEditorFocusRestore: jest.fn(),
+			isEditorRefocusTarget: (FileOutlinerView.prototype as any).isEditorRefocusTarget,
+		} as any;
+
+		(FileOutlinerView.prototype as any).onEditorBlur.call(fake);
+		jest.runAllTimers();
+
+		expect(fake.pendingEditorFocusRestore).toBe(true);
+		expect(fake.updateActiveEditorBridge).toHaveBeenCalledTimes(1);
+		expect(fake.queueEditorFocusRestore).toHaveBeenCalledTimes(1);
+		jest.useRealTimers();
+	});
+
+	test("restoreStructuralHistorySnapshot keeps focus but skips deep-link center scroll", () => {
+		const fake = {
+			ensureRoot: jest.fn(),
+			clearBlockRangeSelection: jest.fn(),
+			closeEditorSuggests: jest.fn(),
+			editingId: null,
+			outlinerFile: null,
+			visibleNavCache: null,
+			blockById: new Map<string, any>(),
+			rebuildIndex() {
+				this.blockById = new Map([["a1", { id: "a1", text: "alpha" }]]);
+			},
+			pendingStructuralExitCommitBypassId: null,
+			pendingFocus: null,
+			pendingScrollToId: "stale",
+			render: jest.fn(),
+			markDirtyAndRequestSave: jest.fn(),
+		} as any;
+
+		(FileOutlinerView.prototype as any).restoreStructuralHistorySnapshot.call(
+			fake,
+			{ frontmatter: null, blocks: [] },
+			{ id: "a1", start: 3, end: 3 }
+		);
+
+		expect(fake.pendingFocus).toEqual({ id: "a1", cursorStart: 3, cursorEnd: 3, scroll: false });
+		expect(fake.pendingScrollToId).toBeNull();
 	});
 
 	test("applyStructuralEngineResult records a structural history entry and clears redo", () => {
@@ -225,5 +359,43 @@ describe("file-outliner-view structural edit regression", () => {
 		expect(evt.stopPropagation).toHaveBeenCalledTimes(1);
 		expect(fake.clearBlockRangeSelection).toHaveBeenCalledTimes(1);
 		expect(fake.focusOutlinerRoot).toHaveBeenCalledTimes(1);
+	});
+
+	test("applyEngineResult can request scroll only for navigation focus", () => {
+		const fake = {
+			editingId: "a1",
+			outlinerFile: null,
+			visibleNavCache: { cached: true },
+			blockById: new Map<string, any>(),
+			dirtyBlockIds: new Set<string>(),
+			pendingFocus: null,
+			pendingScrollToId: "stale",
+			pendingStructuralExitCommitBypassId: null,
+			ensureRoot: jest.fn(),
+			rebuildIndex() {
+				this.blockById = new Map([["n1", { id: "n1", text: "P2" }]]);
+			},
+			render: jest.fn(),
+			display: {
+				renderBlockPlaceholder: jest.fn(),
+				markNeedsRender: jest.fn(),
+				scheduleDisplayRenderDrain: jest.fn(),
+			},
+			markDirtyAndRequestSave: jest.fn(),
+		} as any;
+
+		(FileOutlinerView.prototype as any).applyEngineResult.call(
+			fake,
+			{
+				didChange: true,
+				file: { frontmatter: null, blocks: [] },
+				selection: { id: "n1", start: 1, end: 1 },
+				dirtyIds: new Set<string>(),
+			},
+			{ scroll: true }
+		);
+
+		expect(fake.pendingFocus).toEqual({ id: "n1", cursorStart: 1, cursorEnd: 1, scroll: true });
+		expect(fake.pendingScrollToId).toBeNull();
 	});
 });
