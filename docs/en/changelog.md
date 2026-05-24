@@ -4,11 +4,14 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.13 (Current)
+## v2.0.14 (Current)
 
 - Fix: embedded Outliner cards in Journal Feed no longer show a nested inner leaf header, so the editor content aligns with the outer day header on narrow/mobile layouts.
 - Fix: embedded Outliner cards in Journal Feed no longer keep the standalone Outliner bottom spacer, making long notes easier to position inside the feed.
 - Fix: embedded Outliner cards in Journal Feed now use a tighter left gutter/bullet column, removing the oversized left boundary on phones.
+
+## v2.0.13
+
 - Fix: Outliner block editing now keeps focus/scroll stable when clicking tabs or working near the bottom of a long outline.
 - Fix: Outliner `Tab` / `Shift+Tab` now preserve visible block order whenever possible instead of moving the block to the target parent's tail.
 

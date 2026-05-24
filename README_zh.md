@@ -1,6 +1,6 @@
 # Block Link Plus
 
-[![Version](https://img.shields.io/badge/version-2.0.13-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.14-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
@@ -189,6 +189,22 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.14
+- 修复：手机等窄屏下，Journal Feed 内嵌 Outliner 不再显示额外的内层标题栏；卡片中的编辑内容会和外层日记标题对齐
+- 修复：Journal Feed 内嵌 Outliner 不再保留独立 Outliner 视图的底部留白，长内容在卡片里更容易停在合适位置
+- 修复：Journal Feed 内嵌 Outliner 的左侧边界／圆点栏位更紧凑，移动端不再出现明显过宽的左侧留白
+
+### 2.0.13
+- 修复：Outliner 编辑 block 时，点击标签页或在长大纲底部工作时的焦点/滚动更稳定，不再容易丢失编辑焦点或让最后内容卡在画面底边
+- 修复：Outliner 中 `Tab` / `Shift+Tab` 调整单个 block 层级时，会尽量保持上下可见顺序不变；不再默认把 block 移到目标父节点尾端
+
+### 2.0.12
+- 修复：内嵌编辑中会隐藏 TaskNotes 小组件，避免嵌入内容出现额外干扰 UI
+
+### 2.0.11
+- 改进：Journal Feed 内的 outliner-enabled 日记文件现在会挂载为内嵌 Outliner 视图，获得与独立 Outliner 一致的编辑体验
+- 修复：Journal Feed 内嵌 Outliner 编辑器的命令桥接会根据真实焦点更新，`[[`、`/` 等 suggest 与编辑命令在嵌入场景里更稳定
 
 ### 2.0.10
 - 修复：Journal Feed 现在会在嵌入编辑器里隐藏 Outliner 的系统尾行（与 Outliner 视图一致）

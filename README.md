@@ -2,7 +2,7 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.13-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.14-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ## 🚀 Key Features
@@ -73,6 +73,22 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.14
+- Fix: embedded Outliner cards in Journal Feed no longer show a nested inner leaf header, so the editor content aligns with the outer day header on narrow/mobile layouts
+- Fix: embedded Outliner cards in Journal Feed no longer keep the standalone Outliner bottom spacer, making long notes easier to position inside the feed
+- Fix: embedded Outliner cards in Journal Feed now use a tighter left gutter/bullet column, removing the oversized left boundary on phones
+
+### 2.0.13
+- Fix: Outliner block editing now keeps focus/scroll stable when clicking tabs or working near the bottom of a long outline
+- Fix: Outliner `Tab` / `Shift+Tab` now preserve visible block order whenever possible instead of moving the block to the target parent's tail
+
+### 2.0.12
+- Fix: hide TaskNotes widgets inside inline embeds to avoid extra UI noise in embedded editors
+
+### 2.0.11
+- Improved: Journal Feed now mounts outliner-enabled daily notes as embedded Outliner views for a consistent editing experience
+- Fix: the embedded Outliner editor command bridge now follows real editor focus, so suggests and editor commands stay reliable inside Journal Feed embeds
 
 ### 2.0.10
 - Fix: Journal Feed now hides Outliner system tail lines in the embedded editors (same as Outliner)
