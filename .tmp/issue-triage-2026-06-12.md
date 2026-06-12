@@ -219,15 +219,19 @@ Runtime result:
 - Active inline-edit embeds had computed `.cm-content` `padding-bottom: 18px`.
 - This directly matches the reported persistent blank padding.
 
-Likely cause:
+Cause:
 
 - `src/css/Editor/InlineEdit/InlineEditEngine.css` sets fixed bottom padding on
   `.blp-inline-edit-root .cm-content`.
 
-Likely fix direction:
+Fix:
 
-- Remove or reduce the fixed padding for inline embeds, or scope it only where it
-  is needed.
+- Removed the fixed bottom padding from the inline edit embedded editor content
+  by setting `.blp-inline-edit-root .cm-content` `padding-bottom` to `0`.
+- Added a CSS regression test and a CDP runtime check for the computed
+  `.cm-content` `padding-bottom`.
+- This fixes only the persistent blank padding sub-issue, not the broader #33
+  overflow/lifecycle symptoms.
 
 ### #33: Reading View displays too much source
 

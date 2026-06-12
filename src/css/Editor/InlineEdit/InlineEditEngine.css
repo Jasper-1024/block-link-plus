@@ -54,7 +54,7 @@
 
 .blp-inline-edit-root .cm-content {
 	background-color: transparent !important;
-	padding-bottom: 18px !important;
+	padding-bottom: 0 !important;
 	padding-left: 10px !important;
 	padding-right: 10px !important;
 }
