@@ -84,19 +84,98 @@ Runtime result:
 - Page-level `.markdown-embed-link` count was `0`.
 - Each active embed had no native `.markdown-embed-link`.
 
-Likely cause:
+Focused CDP investigation after reloading current build:
+
+- Current repo `HEAD`: `1fc36441ad84188138fb54caf707c53cdd9ec64d`.
+- Repo `main.js` SHA256 matched debug vault plugin `main.js` SHA256:
+  `EBE44FE68288775B3C6D54BDFCA13745865B15EAB2064E7959DD496FC19F0775`.
+- CDP target: Obsidian `1.12.7`, vault `blp`, plugin version `2.0.15`.
+- The investigation disabled and re-enabled `block-link-plus` through CDP before
+  reproducing, so the in-memory plugin instance was loaded from the current
+  debug vault build.
+
+Controlled repro:
+
+- Source note: `_blp_tmp/issue35-arrow-source.md`.
+- Host note: `_blp_tmp/issue35-arrow-host.md`.
+- With the plugin disabled, the native embed had:
+  - `embedCount: 1`
+  - `activeInlineCount: 0`
+  - `pageLinkCount: 1`
+  - embed-local `linkCount: 1`
+- Clicking the native `.markdown-embed-link` with the plugin disabled navigated
+  to `_blp_tmp/issue35-arrow-source.md`.
+- With the plugin re-enabled and inline edit active, the same embed had:
+  - `embedCount: 1`
+  - `activeInlineCount: 1`
+  - `pageLinkCount: 0`
+  - embed-local `linkCount: 0`
+  - `hostCount: 1`
+  - `rootCount: 1`
+
+Confirmed cause:
 
 - `InlineEditEngine.prepareEmbedShell()` detaches native `.markdown-embed-content`
   and `.markdown-embed-link` when replacing the native preview with the detached
   inline editor host.
 - This conflicts with the inline editing spec requirement that the Obsidian
   embed jump/open affordance remains available.
+- Runtime monkeypatching of `Element.detach`, `Element.remove`, and
+  `Node.removeChild` captured the exact BLP stack for the target repro:
+  - `detachNative`
+  - `scanAndDetach`
+  - `InlineEditEngine.prepareEmbedShell`
+  - `InlineEditEngine.mountInlineEmbedCore`
+  - `InlineEditEngine.processInlineEmbed`
+  - `InlineEditEngine.processObserverEntry`
+- The first removal is not CSS hiding. The `.markdown-embed-link` element is
+  physically detached from the DOM by `detachNative(currentLink)`.
+- The `MutationObserver` inside `prepareEmbedShell()` also calls
+  `scanAndDetach()`, so if Obsidian recreates native embed content/link after
+  inline edit starts, BLP detaches it again.
 
 Likely fix direction:
 
 - Preserve or re-create a working jump affordance for active inline-edit embeds.
 - Keep the affordance outside the editor takeover host so it is not swallowed by
   the embedded editor DOM.
+
+Implementation result:
+
+- OpenSpec change: `fix-inline-edit-embed-jump-affordance`.
+- OpenSpec archive: `openspec/changes/archive/2026-06-12-fix-inline-edit-embed-jump-affordance`.
+- Review fix: changed the OpenSpec delta from a full `MODIFIED` requirement to
+  an independent `ADDED` requirement so archiving appends readable jump-affordance
+  behavior instead of replacing the existing inline-edit requirement text.
+- Refactored `InlineEditEngine.prepareEmbedShell()` so BLP preserves the native
+  top-level `.markdown-embed-link`.
+- The inline editor host now mounts inside the native `.markdown-embed-content`
+  wrapper; BLP hides native preview children through CSS instead of detaching the
+  Obsidian-owned shell.
+- Cleanup removes only BLP host state and the `blp-inline-edit-active` class.
+- CSS now allows the top-level native `.markdown-embed-link` while inline edit is
+  active.
+- Added Jest DOM regression coverage for native link preservation, cleanup,
+  nested preview links, and later-added native links.
+- Added CDP regression snippet:
+  `scripts/cdp-snippets/inline-edit-embed-jump-affordance.js`.
+
+Verification result:
+
+- `openspec validate fix-inline-edit-embed-jump-affordance --strict`: passed.
+- `openspec validate --changes --strict`: passed.
+- Targeted inline-edit Jest: passed.
+- Full Jest `npm test -- --runInBand`: passed, 37 suites / 212 tests.
+- `npm run build-with-types`: passed.
+- Repo `main.js` SHA256 matched debug vault plugin `main.js` SHA256 after build:
+  `3591F8EADA69BA1C76EA05E8F14DDE487E8607E48D249951E468568874...`.
+- CDP 9224 live validation passed:
+  - Plugin disabled baseline native link clicked to `_blp_tmp/issue35-arrow-source.md`.
+  - Plugin enabled inline edit had one active embed, one page link, one direct
+    native link, one host, one root, and `linkVisible: true`.
+  - Clicking the active inline-edit native link navigated to source.
+  - Remount kept exactly one native link and one host.
+  - Inline-edit embed text did not expose `blp_sys` or `blp_ver`.
 
 ### #33: Enter then Ctrl+Z causes inline-edit overflow
 

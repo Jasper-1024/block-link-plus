@@ -1497,76 +1497,43 @@ export class InlineEditEngine {
 	private prepareEmbedShell(embedEl: HTMLElement): { hostEl: HTMLElement; cleanup: () => void } {
 		embedEl.addClass(INLINE_EDIT_ACTIVE_CLASS);
 
-		// Inline edit replaces the native embed preview with a detached MarkdownView editor.
-		// Detach the preview DOM so system tail lines (Dataview inline fields) cannot leak.
-		let nativeContent = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
-		let nativeLink = embedEl.querySelector<HTMLElement>(".markdown-embed-link");
-
-		let contentParent = nativeContent?.parentElement ?? null;
-		let contentNext = nativeContent?.nextSibling ?? null;
-		let linkParent = nativeLink?.parentElement ?? null;
-		let linkNext = nativeLink?.nextSibling ?? null;
-
-		const detachNative = (el: HTMLElement | null) => {
-			if (!el) return;
-			try {
-				el.detach();
-				return;
-			} catch {
-				// ignore
+		const findDirectChildByClass = (className: string): HTMLElement | null => {
+			for (const child of Array.from(embedEl.children)) {
+				if (child instanceof HTMLElement && child.classList.contains(className)) return child;
 			}
+			return null;
+		};
+
+		let nativeContent = findDirectChildByClass("markdown-embed-content");
+		const hostEl = document.createElement("div");
+		hostEl.className = INLINE_EDIT_HOST_CLASS;
+
+		const placeHost = () => {
+			const currentContent = findDirectChildByClass("markdown-embed-content");
+			if (currentContent) nativeContent = currentContent;
+
+			const parent = nativeContent ?? embedEl;
+			if (hostEl.parentElement === parent) return;
+
 			try {
-				el.remove();
+				parent.insertBefore(hostEl, parent.firstChild);
 			} catch {
-				// ignore
+				try {
+					parent.appendChild(hostEl);
+				} catch {
+					// ignore
+				}
 			}
 		};
 
-		const scanAndDetach = () => {
-			// Native embed content/link can be created after we start inline edit; keep detaching it.
-			const currentContent = embedEl.querySelector<HTMLElement>(".markdown-embed-content");
-			if (currentContent) {
-				if (!nativeContent) {
-					nativeContent = currentContent;
-					contentParent = currentContent.parentElement ?? contentParent;
-					contentNext = currentContent.nextSibling ?? contentNext;
-				}
-				detachNative(currentContent);
-			}
-
-			const currentLink = embedEl.querySelector<HTMLElement>(".markdown-embed-link");
-			if (currentLink) {
-				if (!nativeLink) {
-					nativeLink = currentLink;
-					linkParent = currentLink.parentElement ?? linkParent;
-					linkNext = currentLink.nextSibling ?? linkNext;
-				}
-				detachNative(currentLink);
-			}
-		};
-
-		scanAndDetach();
+		placeHost();
 
 		let detachObserver: MutationObserver | null = null;
 		try {
-			detachObserver = new MutationObserver(() => scanAndDetach());
-			detachObserver.observe(embedEl, { childList: true, subtree: true });
+			detachObserver = new MutationObserver(() => placeHost());
+			detachObserver.observe(embedEl, { childList: true });
 		} catch {
 			detachObserver = null;
-		}
-
-		const hostEl = document.createElement("div");
-		hostEl.className = INLINE_EDIT_HOST_CLASS;
-		try {
-			const parent = contentParent ?? embedEl;
-			const before = contentNext && parent.contains(contentNext) ? contentNext : null;
-			parent.insertBefore(hostEl, before);
-		} catch {
-			try {
-				embedEl.appendChild(hostEl);
-			} catch {
-				// ignore
-			}
 		}
 
 		const cleanup = () => {
@@ -1579,31 +1546,15 @@ export class InlineEditEngine {
 			try {
 				hostEl.detach();
 			} catch {
-				// ignore
+				try {
+					hostEl.remove();
+				} catch {
+					// ignore
+				}
 			}
 
 			try {
 				embedEl.removeClass(INLINE_EDIT_ACTIVE_CLASS);
-			} catch {
-				// ignore
-			}
-
-			try {
-				if (nativeLink) {
-					const parent = linkParent ?? embedEl;
-					const before = linkNext && parent.contains(linkNext) ? linkNext : null;
-					parent.insertBefore(nativeLink, before);
-				}
-			} catch {
-				// ignore
-			}
-
-			try {
-				if (nativeContent) {
-					const parent = contentParent ?? embedEl;
-					const before = contentNext && parent.contains(contentNext) ? contentNext : null;
-					parent.insertBefore(nativeContent, before);
-				}
 			} catch {
 				// ignore
 			}

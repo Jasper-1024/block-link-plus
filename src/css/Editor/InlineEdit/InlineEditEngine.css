@@ -2,7 +2,7 @@
 	display: none !important;
 }
 
-.internal-embed.markdown-embed.blp-inline-edit-active > :not(.markdown-embed-content):not(.blp-inline-edit-host) {
+.internal-embed.markdown-embed.blp-inline-edit-active > :not(.markdown-embed-content):not(.markdown-embed-link):not(.blp-inline-edit-host) {
 	display: none !important;
 }
 
