@@ -36,6 +36,8 @@ export type OutlinerBlock = {
 	system: OutlinerSystemFields;
 	// Internal: helps choose between multiple competing system line candidates.
 	_systemHasBlpMarker?: boolean;
+	// Internal: original zero-based source lines owned by this block. Not serialized.
+	_sourceLineRanges?: Array<{ start: number; end: number }>;
 };
 
 export type ParsedOutlinerFile = {
@@ -141,22 +143,37 @@ function normalizeSystemFields(fields: Record<string, string>, now: DateTime): O
 	return { date, updated, extra: extractExtraSystemFields(fields) };
 }
 
-function mergeSplitSystemLines(lines: string[], fenceMap: boolean[]): string[] {
+type SourceLineRange = { start: number; end: number };
+
+function appendSourceLineRange(block: OutlinerBlock, range: SourceLineRange): void {
+	if (!block._sourceLineRanges) block._sourceLineRanges = [];
+	block._sourceLineRanges.push(range);
+}
+
+function mergeSplitSystemLines(
+	lines: string[],
+	fenceMap: boolean[],
+	sourceLineOffset: number
+): { lines: string[]; sourceLineRanges: SourceLineRange[] } {
 	// Merge `[date:: ...]` + `^id` pairs (legacy) into a single line so we can normalize
 	// everything through the same system-line parser.
 	const out: string[] = [];
+	const sourceLineRanges: SourceLineRange[] = [];
 
 	for (let i = 0; i < lines.length; i++) {
 		const lineNo = i + 1;
+		const sourceLine = sourceLineOffset + i;
 		const line = lines[i] ?? "";
 		if (fenceMap[lineNo]) {
 			out.push(line);
+			sourceLineRanges.push({ start: sourceLine, end: sourceLine });
 			continue;
 		}
 
 		const dateOnly = line.match(/^(\s*)\[date::\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\]\s*$/);
 		if (!dateOnly) {
 			out.push(line);
+			sourceLineRanges.push({ start: sourceLine, end: sourceLine });
 			continue;
 		}
 
@@ -164,6 +181,7 @@ function mergeSplitSystemLines(lines: string[], fenceMap: boolean[]): string[] {
 		const idOnly = next.match(/^(\s*)\^([a-zA-Z0-9_-]+)\s*$/);
 		if (!idOnly) {
 			out.push(line);
+			sourceLineRanges.push({ start: sourceLine, end: sourceLine });
 			continue;
 		}
 
@@ -171,21 +189,24 @@ function mergeSplitSystemLines(lines: string[], fenceMap: boolean[]): string[] {
 		const idIndent = idOnly[1] ?? "";
 		if (dateIndent !== idIndent) {
 			out.push(line);
+			sourceLineRanges.push({ start: sourceLine, end: sourceLine });
 			continue;
 		}
 
 		out.push(`${dateIndent}[date:: ${dateOnly[2]}] ^${idOnly[2]}`);
+		sourceLineRanges.push({ start: sourceLine, end: sourceLine + 1 });
 		i++; // consume id line
 	}
 
-	return out;
+	return { lines: out, sourceLineRanges };
 }
 
-function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTime }): OutlinerBlock[] {
+function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTime; sourceLineOffset: number }): OutlinerBlock[] {
 	const normalized = normalizeNewlines(body);
 	const rawLines = normalized.split("\n").map((l) => normalizeLineLeadingIndentTabsToSpaces(l, MARKDOWN_TAB_WIDTH));
 	const fenceMap0 = buildFenceStateMapFromLines(rawLines);
-	const mergedLines = mergeSplitSystemLines(rawLines, fenceMap0);
+	const merged = mergeSplitSystemLines(rawLines, fenceMap0, opts.sourceLineOffset);
+	const mergedLines = merged.lines;
 	const fenceMap = buildFenceStateMapFromLines(mergedLines);
 
 	const blocks: OutlinerBlock[] = [];
@@ -201,6 +222,10 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 	for (let i = 0; i < mergedLines.length; i++) {
 		const lineNo = i + 1;
 		const line = mergedLines[i] ?? "";
+		const sourceRange = merged.sourceLineRanges[i] ?? {
+			start: opts.sourceLineOffset + i,
+			end: opts.sourceLineOffset + i,
+		};
 		const inFence = fenceMap[lineNo] ?? false;
 
 		// Fence contents are opaque for structural parsing, BUT a fence may start on the
@@ -225,6 +250,7 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 					children: [],
 					system: { date: "", updated: "", extra: {} },
 					_systemHasBlpMarker: false,
+					_sourceLineRanges: [{ ...sourceRange }],
 				};
 
 				if (depth === 0) {
@@ -253,6 +279,8 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 				}
 
 				if (owner) {
+					appendSourceLineRange(owner.block, sourceRange);
+
 					// Legacy v2 canonical (tail-after-children) injected a blank continuation spacer line
 					// right before the tail line. Only strip it when the tail line is after a subtree so
 					// we don't eat user-authored blank lines in the new canonical (tail-before-children).
@@ -314,6 +342,7 @@ function parseBodyToBlocks(body: string, opts: { indentSize: number; now: DateTi
 
 		const stripped = line.trim().length === 0 ? "" : line.slice(Math.min(line.length, owner.contentIndent));
 		owner.block.text = owner.block.text.length ? `${owner.block.text}\n${stripped}` : stripped;
+		appendSourceLineRange(owner.block, sourceRange);
 	}
 
 	return blocks;
@@ -507,7 +536,8 @@ export function serializeOutlinerBlocksForClipboard(
 export function parseOutlinerFile(input: string, opts: { indentSize: number; now: DateTime }): ParsedOutlinerFile {
 	const src = normalizeNewlines(input);
 	const { frontmatter, body } = splitFrontmatter(src);
-	const blocks = parseBodyToBlocks(body, opts);
+	const sourceLineOffset = frontmatter ? frontmatter.split("\n").length : 0;
+	const blocks = parseBodyToBlocks(body, { ...opts, sourceLineOffset });
 	return { frontmatter, blocks };
 }
 

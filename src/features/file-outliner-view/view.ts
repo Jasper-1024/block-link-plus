@@ -59,6 +59,10 @@ import {
 	type ArrowNavDirection,
 	type VisibleBlockNav,
 } from "./arrow-navigation";
+import {
+	extractZeroBasedLineFromEphemeralState,
+	resolveOutlinerBlockIdForSourceLine,
+} from "./source-line-navigation";
 
 type PendingFocus = {
 	id: string;
@@ -108,6 +112,7 @@ function cloneOutlinerBlock(block: OutlinerBlock): OutlinerBlock {
 			extra: { ...(block.system.extra ?? {}) },
 		},
 		_systemHasBlpMarker: block._systemHasBlpMarker,
+		_sourceLineRanges: block._sourceLineRanges?.map((range) => ({ ...range })),
 	};
 }
 
@@ -629,10 +634,20 @@ export class FileOutlinerView extends TextFileView {
 	setEphemeralState(state: any): void {
 		super.setEphemeralState(state);
 		const id = extractCaretIdFromSubpath(state?.subpath);
-		if (!id) return;
+		if (id) {
+			this.pendingScrollToId = id;
+			this.scrollToBlockId(id);
+			return;
+		}
 
-		this.pendingScrollToId = id;
-		this.scrollToBlockId(id);
+		const line = extractZeroBasedLineFromEphemeralState(state);
+		if (line === null) return;
+
+		const lineId = resolveOutlinerBlockIdForSourceLine(this.outlinerFile, line);
+		if (!lineId) return;
+
+		this.pendingScrollToId = lineId;
+		this.scrollToBlockId(lineId);
 	}
 
 	setViewData(data: string, clear: boolean): void {
