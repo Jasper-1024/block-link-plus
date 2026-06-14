@@ -1,6 +1,6 @@
 // Probe whether Obsidian suggest UIs (link `[[` / slash `/`) appear for native editor vs outliner editor.
 // Run:
-//   node scripts/obsidian-cdp.js eval-file ".tmp/outliner-editor-investigation/03-suggest-ui.js"
+//   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/archive/outliner-editor-investigation/03-suggest-ui.js"
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));

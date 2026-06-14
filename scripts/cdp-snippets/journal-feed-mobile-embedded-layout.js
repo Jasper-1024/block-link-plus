@@ -2,7 +2,7 @@
 // and keep a compact left gutter inside the day card.
 //
 // Run:
-//   $env:OB_CDP_PORT='9223'; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-mobile-embedded-layout.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-mobile-embedded-layout.js"
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));

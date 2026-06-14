@@ -8,7 +8,7 @@
 // 2) Drag block B inside block A (append as child).
 //
 // Note: this snippet dispatches PointerEvents on the bullet handle. Obsidian must be
-// running with `--remote-debugging-port=9222` and a vault must be open.
+// running with CDP enabled and a vault must be open.
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -6,7 +6,7 @@
 // outliner block-range selection (whole-block highlight), instead of clamped CM6 text selection.
 //
 // Notes:
-// - Obsidian must be running with `--remote-debugging-port=9222`.
+// - Obsidian must be running with CDP enabled.
 // - This snippet uses DOM-dispatched PointerEvents to exercise the outliner root capture handlers.
 //
 

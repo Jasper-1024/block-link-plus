@@ -1,6 +1,6 @@
 // Baseline: compare outliner view editor plumbing vs native MarkdownView.
 // Run:
-//   node scripts/obsidian-cdp.js eval-file ".tmp/outliner-editor-investigation/01-baseline.js"
+//   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/archive/outliner-editor-investigation/01-baseline.js"
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));

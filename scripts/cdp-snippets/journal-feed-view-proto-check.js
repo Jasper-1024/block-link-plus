@@ -1,7 +1,7 @@
 // CDP debug: compare WorkspaceLeaf prototypes between workspace leaves and BLP-created detached leaves.
 //
 // Run:
-//   $env:OB_CDP_PORT=9223; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-view-proto-check.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-view-proto-check.js"
 
 (async () => {
   const plugin = window.BlockLinkPlus;
@@ -59,4 +59,3 @@
 
   return result;
 })();
-

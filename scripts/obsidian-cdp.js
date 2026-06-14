@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // Minimal CDP (Chrome DevTools Protocol) helper for driving a running Obsidian instance
-// that was started with `--remote-debugging-port=9222`.
+// that was started with `--remote-debugging-port=<port>`.
 //
 // Usage examples:
 //   node scripts/obsidian-cdp.js list
@@ -208,7 +208,7 @@ Env:
     urlContains: process.env.OB_CDP_URL_CONTAINS || DEFAULT_URL_CONTAINS,
   });
   if (!target?.webSocketDebuggerUrl) {
-    die("No CDP target found (is Obsidian running with --remote-debugging-port=9222?)");
+    die(`No CDP target found (is Obsidian running with --remote-debugging-port=${port}?)`);
   }
 
   const client = new CdpClient(target.webSocketDebuggerUrl);

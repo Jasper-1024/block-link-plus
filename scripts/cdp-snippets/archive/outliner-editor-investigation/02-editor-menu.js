@@ -1,6 +1,6 @@
 // Measure whether right-click triggers Obsidian's `editor-menu` event in outliner vs native MarkdownView.
 // Run:
-//   node scripts/obsidian-cdp.js eval-file ".tmp/outliner-editor-investigation/02-editor-menu.js"
+//   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/archive/outliner-editor-investigation/02-editor-menu.js"
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -10,6 +10,7 @@
 		"build-with-types": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"obsidian:cdp": "node scripts/obsidian-cdp.js",
+		"obsidian:debug-env": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:coverage": "jest --coverage"

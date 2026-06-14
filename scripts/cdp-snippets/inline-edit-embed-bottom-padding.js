@@ -2,7 +2,7 @@
 // whitespace inside the embedded editor `.cm-content`.
 //
 // Run:
-//   $env:OB_CDP_PORT='9224'; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/inline-edit-embed-bottom-padding.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/inline-edit-embed-bottom-padding.js"
 
 (async () => {
 	const wait = (ms) => new Promise((r) => setTimeout(r, ms));

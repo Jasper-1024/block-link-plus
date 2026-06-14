@@ -1,7 +1,7 @@
 // Scratch CDP driver: open a native markdown note, type `[[` via CDP Input.insertText, then screenshot.
 //
 // Run (from repo root):
-//   node .tmp/outliner-editor-investigation/cdp-suggest-native.js
+//   node scripts/cdp-snippets/archive/outliner-editor-investigation/cdp-suggest-native.js
 
 const http = require("http");
 const fs = require("fs");

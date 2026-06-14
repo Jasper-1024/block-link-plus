@@ -2,7 +2,7 @@
 // File Outliner View to the matching block.
 //
 // Run:
-//   $env:OB_CDP_PORT='9224'; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/file-outliner-search-line-jump.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/file-outliner-search-line-jump.js"
 
 (async () => {
 	const wait = (ms) => new Promise((r) => setTimeout(r, ms));

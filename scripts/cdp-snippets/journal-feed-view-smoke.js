@@ -1,7 +1,7 @@
 // CDP smoke: Journal Feed view routing + focus/commands + edit isolation.
 //
 // Run:
-//   $env:OB_CDP_PORT=9223; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-view-smoke.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/journal-feed-view-smoke.js"
 //
 // Assertions:
 // - Anchor file routes to `blp-journal-feed-view`.

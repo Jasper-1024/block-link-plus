@@ -2,7 +2,7 @@
 // native `.markdown-embed-link` jump affordance.
 //
 // Run:
-//   $env:OB_CDP_PORT='9224'; $env:OB_CDP_TITLE_CONTAINS='blp'; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/inline-edit-embed-jump-affordance.js"
+//   $env:OB_CDP_PORT='19225'; $env:OB_CDP_TITLE_CONTAINS=' - blp - '; node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/inline-edit-embed-jump-affordance.js"
 
 (async () => {
 	const wait = (ms) => new Promise((r) => setTimeout(r, ms));
