@@ -13,8 +13,8 @@
 //   node scripts/obsidian-cdp.js key "ctrl+c"
 //   node scripts/obsidian-cdp.js screenshot out.png
 //
-// Keep this script dependency-light: it uses the `ws` package that already exists in
-// this repo's dependency tree (via jsdom).
+// Keep this script dependency-light: it only requires the repo-declared `ws`
+// package for the CDP WebSocket connection.
 
 const http = require("http");
 const fs = require("fs");

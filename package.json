@@ -69,6 +69,7 @@
 		"monkey-around": "^2.3.0",
 		"range-analyzer": "^0.1.1-alpha.2",
 		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"react-dom": "^18.2.0",
+		"ws": "8.21.0"
 	}
 }
