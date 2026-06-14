@@ -1,6 +1,6 @@
 ---
 name: obsidian-runtime-debug
-description: Diagnose Obsidian Desktop plugin/editor bugs in the live app via Chrome DevTools Protocol (CDP): start or attach to Obsidian, reproduce in a clean note, reset baseline content, run Runtime.evaluate snippets, trace editor text transforms (replaceRange + CM6 transactions), triage plugin vs vendored deps, and turn evidence into regression tests.
+description: "Diagnose Obsidian Desktop plugin/editor bugs in the live app via Chrome DevTools Protocol (CDP): start or attach to Obsidian, reproduce in a clean note, reset baseline content, run Runtime.evaluate snippets, trace editor text transforms (replaceRange + CM6 transactions), triage plugin vs vendored deps, and turn evidence into regression tests."
 ---
 
 # Obsidian Runtime Debug

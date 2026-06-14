@@ -1,6 +1,6 @@
 ---
 name: blp-enhanced-list-ui-debug
-description: Debug Obsidian Live Preview list UX issues in Block Link Plus (BLP) Enhanced List Blocks and vendored vslinko outliner/zoom (handles, vertical lines, active connector, code block indentation).
+description: "Debug Obsidian Live Preview list UX issues in Block Link Plus (BLP) Enhanced List Blocks and vendored vslinko outliner/zoom (handles, vertical lines, active connector, code block indentation)."
 ---
 
 # BLP Enhanced List UI Debug
