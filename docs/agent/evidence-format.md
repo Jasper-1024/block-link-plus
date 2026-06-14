@@ -53,6 +53,9 @@ summaries. Keep it factual and scoped to the confirmed behavior.
 Rules:
 
 - Separate observed facts from hypotheses.
+- For runtime-gated tasks, keep static orientation separate from confirmed
+  evidence. If CDP preflight fails, use State: Runtime Blocked and leave Root
+  Cause / Fix Plan as not established.
 - Include exact commands and summarize important output.
 - Cite file paths and line numbers when available.
 - Do not claim a fix is validated unless the validation command or CDP check ran.

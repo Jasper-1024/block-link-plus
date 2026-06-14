@@ -37,6 +37,15 @@ Primary validation surfaces:
 - `npm run obsidian:debug-env`
 - `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"`
 
+Runtime-first rule:
+
+- For tasks marked `cdp-required`, or bugs involving Obsidian DOM, CodeMirror
+  state, plugin lifecycle, focus, scroll, settings, or real editor behavior, run
+  the isolated Obsidian/CDP preflight before making a root-cause or fix-plan
+  claim.
+- If CDP preflight fails, stop at a Runtime Blocked handoff. Do not promote
+  static owner mapping into root cause.
+
 CDP references:
 
 - [doc/debug/isolated-obsidian-cdp.md](doc/debug/isolated-obsidian-cdp.md)

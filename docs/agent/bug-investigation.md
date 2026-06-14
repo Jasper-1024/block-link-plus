@@ -30,11 +30,16 @@ handoffs.
    Use [openspec-gates.md](openspec-gates.md). Bug fixes that restore intended
    behavior usually do not need a proposal. Changes to intended behavior do.
 
-5. Reproduce with the smallest useful check.
+5. Reproduce with the required runtime gate.
 
-   Prefer targeted static evidence when enough. Use the isolated Obsidian/CDP
-   runtime when behavior depends on Obsidian DOM, CodeMirror state, plugin
-   lifecycle, focus, scroll, or settings.
+   For `cdp-required` tasks, and for behavior that depends on Obsidian DOM,
+   CodeMirror state, plugin lifecycle, focus, scroll, settings, or real editor
+   behavior, runtime evidence is mandatory. Static inspection may prepare the
+   repro, but it is not enough to identify root cause.
+
+   Run the CDP preflight from [cdp-validation.md](cdp-validation.md). If it
+   fails, stop and produce a Runtime Blocked handoff. Do not continue into root
+   cause or fix planning from static evidence alone.
 
 6. Identify root cause.
 
@@ -63,4 +68,5 @@ handoffs.
   CDP checks reflect current code.
 - Temporary notes should live in the isolated debug vault, usually under
   `_blp_tmp/`.
-- If static analysis is insufficient, say which runtime evidence is missing.
+- For runtime-gated tasks, "runtime unavailable" is a blocker, not a completed
+  investigation.

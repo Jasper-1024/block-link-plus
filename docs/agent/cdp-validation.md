@@ -3,6 +3,33 @@
 Use the project CDP runtime when a BLP issue needs real Obsidian Desktop
 evidence. Do not use the user's daily vault.
 
+For `cdp-required` tracker items, this preflight is mandatory before root-cause
+analysis:
+
+1. Confirm dependency availability:
+
+   ```powershell
+   Test-Path .\node_modules
+   node -e "require.resolve('ws')"
+   ```
+
+2. Launch the disposable Obsidian runtime:
+
+   ```powershell
+   npm.cmd run obsidian:debug-env
+   ```
+
+3. Confirm CDP target and plugin state with the printed port:
+
+   ```powershell
+   $env:OB_CDP_PORT='<printed port>'
+   $env:OB_CDP_TITLE_CONTAINS=' - blp - '
+   node scripts/obsidian-cdp.js list
+   ```
+
+If any step fails, stop at Runtime Blocked. Capture the exact command and
+important output. Do not produce static root-cause or fix-plan claims.
+
 ## Start Runtime
 
 ```powershell

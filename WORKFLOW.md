@@ -33,7 +33,10 @@ CDP scripts, or OpenSpec specs unless implementation is explicitly requested.
 3. Decide whether OpenSpec is required using
    [docs/agent/openspec-gates.md](docs/agent/openspec-gates.md).
 4. Locate relevant specs, source files, tests, docs, and CDP snippets with `rg`.
-5. Reproduce or disprove the report with the smallest static or runtime check.
+5. Reproduce or disprove the report with the required runtime gate. For
+   `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror state,
+   plugin lifecycle, focus, scroll, settings, or editor behavior, CDP preflight
+   must pass before root-cause analysis.
 6. Capture evidence: issue text assumptions, commands, DOM/runtime facts,
    screenshots if useful, and exact file/function references.
 7. Identify root cause. If the report is a cluster, split it into sub-bugs.
@@ -46,6 +49,16 @@ Middle-flow means evidence, root cause, and fix plan only. The agent may inspect
 files, run read-only commands, and use the isolated Obsidian/CDP runtime for
 evidence. The agent must not modify implementation files or tests until the
 runner/user asks for implementation.
+
+For `cdp-required` tasks, middle-flow is runtime-first:
+
+- Static reading is allowed only to understand the task, choose the smallest
+  repro path, and locate existing CDP snippets.
+- Run the CDP preflight in [docs/agent/cdp-validation.md](docs/agent/cdp-validation.md)
+  before claiming root cause.
+- If Obsidian/CDP cannot start, produce only a Runtime Blocked handoff with the
+  exact failed commands and missing prerequisites. Do not submit a root cause,
+  implementation target, or fix plan based on static analysis alone.
 
 When the next action is implementation, say so explicitly and list the expected
 files, risks, and validations before editing.
@@ -93,3 +106,13 @@ sections are:
 - Fix Plan
 - Validation Plan
 - Open Questions / Risks
+
+Canonical investigation artifacts belong under:
+
+```text
+docs/agent/runs/<tracker-key>/investigation.md
+```
+
+The external runner may keep raw prompts, logs, and turn metadata in its
+workspace, but Plane comments and follow-up agents should point to the canonical
+repo-local artifact above.
