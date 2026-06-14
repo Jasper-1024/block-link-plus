@@ -9,14 +9,16 @@ analysis:
 1. Confirm dependency availability:
 
    ```powershell
+   corepack pnpm install --frozen-lockfile
    Test-Path .\node_modules
    node -e "require.resolve('ws')"
+   corepack pnpm run build-with-types
    ```
 
 2. Launch the disposable Obsidian runtime:
 
    ```powershell
-   npm.cmd run obsidian:debug-env
+   corepack pnpm run obsidian:debug-env
    ```
 
 3. Confirm CDP target and plugin state with the printed port:
@@ -33,7 +35,7 @@ important output. Do not produce static root-cause or fix-plan claims.
 ## Start Runtime
 
 ```powershell
-npm run obsidian:debug-env
+corepack pnpm run obsidian:debug-env
 ```
 
 The launcher creates a disposable profile and vault, links the current checkout

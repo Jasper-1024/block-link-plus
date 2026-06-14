@@ -32,9 +32,10 @@ only create an OpenSpec change if the fix changes intended behavior.
 
 Primary validation surfaces:
 
-- `npm test`
-- `npm run build-with-types`
-- `npm run obsidian:debug-env`
+- `corepack pnpm install --frozen-lockfile`
+- `corepack pnpm test`
+- `corepack pnpm run build-with-types`
+- `corepack pnpm run obsidian:debug-env`
 - `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"`
 
 Runtime-first rule:

@@ -53,9 +53,9 @@ handoffs.
 
 8. Plan validation.
 
-   Pick targeted Jest tests, `npm test`, `npm run build-with-types`, and CDP
-   snippets according to blast radius. Runtime snippets must restore settings or
-   clearly state any side effects.
+   Pick targeted Jest tests, `corepack pnpm test`, `corepack pnpm run
+   build-with-types`, and CDP snippets according to blast radius. Runtime
+   snippets must restore settings or clearly state any side effects.
 
 9. Handoff.
 

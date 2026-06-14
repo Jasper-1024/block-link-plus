@@ -80,16 +80,19 @@ merged, released, or fully accepted. A Human Review handoff must state:
 Use the smallest validation that proves the claim, then broaden as risk grows.
 
 ```powershell
-npm test
-npm run build-with-types
-npm run obsidian:debug-env
+corepack pnpm install --frozen-lockfile
+corepack pnpm test
+corepack pnpm run build-with-types
+corepack pnpm run obsidian:debug-env
 $env:OB_CDP_PORT='19225'
 $env:OB_CDP_TITLE_CONTAINS=' - blp - '
 node scripts/obsidian-cdp.js list
 node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
 ```
 
-`npm run build-with-types` rebuilds the plugin bundle. Run it for implementation
+`corepack pnpm install --frozen-lockfile` prepares an issue worktree from the
+repo-owned lockfile without relying on the user's main checkout. `corepack pnpm
+run build-with-types` rebuilds the plugin bundle. Run it for implementation
 validation or when generated output is expected; otherwise prefer targeted tests
 and CDP evidence during investigation-only runs.
 

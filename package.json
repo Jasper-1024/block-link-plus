@@ -1,6 +1,7 @@
 {
 	"name": "block-link-plus",
 	"version": "2.0.15",
+	"packageManager": "pnpm@9.15.9",
 	"description": "Outliner, block link tooling, blp-view query, and inline edit for Obsidian.",
 	"main": "main.js",
 	"scripts": {
@@ -50,9 +51,12 @@
 	},
 	"dependencies": {
 		"@codemirror/basic-setup": "^0.20.0",
+		"@codemirror/commands": "6.8.1",
 		"@codemirror/highlight": "^0.19.8",
 		"@codemirror/lang-javascript": "^0.20.1",
 		"@codemirror/lint": "^0.20.3",
+		"@codemirror/state": "6.5.0",
+		"@codemirror/view": "6.38.6",
 		"@lezer/common": "^1.0.1",
 		"@lezer/highlight": "^1.2.0",
 		"classnames": "^2.3.2",
@@ -60,6 +64,8 @@
 		"date-fns": "^2.29.3",
 		"he": "^1.2.0",
 		"js-yaml": "^4.1.0",
+		"luxon": "3.7.2",
+		"moment": "2.29.4",
 		"monkey-around": "^2.3.0",
 		"range-analyzer": "^0.1.1-alpha.2",
 		"react": "^18.2.0",
