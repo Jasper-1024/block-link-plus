@@ -42,6 +42,12 @@ The launcher creates a disposable profile and vault, links the current checkout
 as the `block-link-plus` plugin, enables community plugins, opens a debug note,
 and prints JSON with the selected CDP port.
 
+The launcher treats Obsidian community-plugin trust as part of runtime setup. It
+sets the profile-local `enable-plugin-<vaultId>` flag, then uses CDP to dismiss
+matching trust or restricted-mode prompts before loading the plugin. The printed
+JSON includes `pluginTrust`, `trustPrompts`, and `runtime`; if `runtime` does not
+show `blockLinkPlusLoaded: true`, stop the run and record the failed phase.
+
 For a fixed port:
 
 ```powershell

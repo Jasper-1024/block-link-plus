@@ -206,6 +206,104 @@ function Wait-ObsidianApp {
 	throw "Timed out waiting for Obsidian vault '$script:VaultName' on CDP port $script:Port. Last error: $LastError"
 }
 
+function Set-ObsidianPluginTrust {
+	param([Parameter(Mandatory = $true)][string]$VaultId, [int]$TimeoutSec = 20)
+	$TrustKey = "enable-plugin-$VaultId"
+	$Expression = @"
+(() => {
+  const key = "$TrustKey";
+  localStorage.setItem(key, "true");
+  return {
+    key,
+    value: localStorage.getItem(key),
+    title: document.title,
+    href: location.href
+  };
+})()
+"@
+	$Deadline = (Get-Date).AddSeconds($TimeoutSec)
+	$LastError = $null
+	do {
+		try {
+			$Text = Invoke-ObsidianEval -Expression $Expression
+			$State = $Text | ConvertFrom-Json
+			if ($State.value -eq "true") {
+				return $State
+			}
+		} catch {
+			$LastError = $_
+		}
+		Start-Sleep -Milliseconds 500
+	} while ((Get-Date) -lt $Deadline)
+
+	throw "Timed out setting Obsidian community-plugin trust key '$TrustKey'. Last error: $LastError"
+}
+
+function Dismiss-ObsidianTrustPrompts {
+	param([Parameter(Mandatory = $true)][string]$VaultId)
+	$TrustKey = "enable-plugin-$VaultId"
+	$Expression = @"
+(async () => {
+  const trustKey = "$TrustKey";
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const modalPattern = /trust|restricted|community plugins|safe mode/i;
+  const buttonPattern = /trust|turn on|turn off|enable|allow|continue/i;
+  const describeModal = (modal) => ({
+    className: modal.className,
+    text: (modal.innerText || "").replace(/\s+/g, " ").trim().slice(0, 500),
+    buttons: Array.from(modal.querySelectorAll("button")).map((button) => ({
+      className: button.className,
+      text: (button.innerText || button.textContent || "").replace(/\s+/g, " ").trim()
+    }))
+  });
+  const selectModal = () => Array.from(document.querySelectorAll(".modal"))
+    .find((modal) => {
+      const className = modal.className || "";
+      const text = modal.innerText || "";
+      return className.includes("mod-trust-folder")
+        || className.includes("mod-restricted-mode")
+        || modalPattern.test(text);
+    });
+  const attempts = [];
+
+  localStorage.setItem(trustKey, "true");
+  for (let i = 0; i < 6; i++) {
+    const modal = selectModal();
+    if (!modal) {
+      attempts.push({ attempt: i + 1, clicked: false, reason: "no matching trust/restricted modal" });
+      break;
+    }
+
+    const buttons = Array.from(modal.querySelectorAll("button"));
+    const button = buttons.find((candidate) => candidate.classList.contains("mod-cta"))
+      || buttons.find((candidate) => buttonPattern.test(candidate.innerText || candidate.textContent || ""));
+    if (!button) {
+      attempts.push({ attempt: i + 1, clicked: false, reason: "matching modal without safe button", modal: describeModal(modal) });
+      break;
+    }
+
+    const buttonText = (button.innerText || button.textContent || "").replace(/\s+/g, " ").trim();
+    attempts.push({ attempt: i + 1, clicked: true, buttonText, modal: describeModal(modal) });
+    button.click();
+    await sleep(500);
+  }
+
+  return {
+    trustKey,
+    trustValue: localStorage.getItem(trustKey),
+    attempts,
+    remainingTrustModals: Array.from(document.querySelectorAll(".modal"))
+      .filter((modal) => modal.className.includes("mod-trust-folder")
+        || modal.className.includes("mod-restricted-mode")
+        || modalPattern.test(modal.innerText || ""))
+      .map(describeModal)
+  };
+})()
+"@
+	$Text = Invoke-ObsidianEval -Expression $Expression
+	return ($Text | ConvertFrom-Json)
+}
+
 function Enable-BlockLinkPlus {
 	$Expression = @'
 (async () => {
@@ -315,7 +413,9 @@ $Arguments = @(
 $Process = Start-Process -FilePath $ObsidianPath -ArgumentList $Arguments -PassThru
 
 Wait-HttpJson -Uri "http://127.0.0.1:$script:Port/json/version" -TimeoutSec $TimeoutSec | Out-Null
+$PluginTrust = Set-ObsidianPluginTrust -VaultId $VaultId -TimeoutSec $TimeoutSec
 Wait-ObsidianApp -TimeoutSec $TimeoutSec | Out-Null
+$TrustPrompts = Dismiss-ObsidianTrustPrompts -VaultId $VaultId
 $Runtime = Enable-BlockLinkPlus
 
 $Result = [ordered]@{
@@ -329,6 +429,8 @@ $Result = [ordered]@{
 	pluginLinkPath = $PluginLink
 	pluginLinkType = $PluginLinkType
 	repoRoot = $RepoRoot
+	pluginTrust = $PluginTrust
+	trustPrompts = $TrustPrompts
 	cdp = [ordered]@{
 		host = "127.0.0.1"
 		port = $script:Port
