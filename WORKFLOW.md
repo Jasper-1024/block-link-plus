@@ -51,6 +51,8 @@ and project-specific workflow live in this repo:
 
 - [docs/agent/stages/investigation.md](docs/agent/stages/investigation.md)
 - [docs/agent/stages/rca-review.md](docs/agent/stages/rca-review.md)
+- [docs/agent/stages/fix-design.md](docs/agent/stages/fix-design.md)
+- [docs/agent/stages/fix-design-review.md](docs/agent/stages/fix-design-review.md)
 
 Runner prompts should point workers at these specs instead of embedding BLP
 stage rules in external orchestration code.
@@ -74,8 +76,10 @@ For `cdp-required` tasks, middle-flow is runtime-first:
   exact failed commands and missing prerequisites. Do not submit a root cause,
   implementation target, or fix-design handoff based on static analysis alone.
 
-When the next action is implementation, say so explicitly and list the expected
-files, risks, and validations before editing.
+When RCA review is accepted, the next middle-flow stage is fix design, followed
+by adversarial fix-design review. Implementation starts only after fix-design
+review accepts the design. When the next action is implementation, say so
+explicitly and list the expected files, risks, and validations before editing.
 
 ## Human Review
 
