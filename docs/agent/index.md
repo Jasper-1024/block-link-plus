@@ -11,6 +11,7 @@ Link Plus issues.
 - [cdp-validation.md](cdp-validation.md): isolated Obsidian/CDP validation.
 - [openspec-gates.md](openspec-gates.md): when OpenSpec is required.
 - [evidence-format.md](evidence-format.md): required handoff format.
+- [stages/index.md](stages/index.md): repo-owned runner stage identities.
 
 ## Existing Sources Of Truth
 

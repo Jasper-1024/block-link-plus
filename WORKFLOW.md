@@ -40,15 +40,28 @@ CDP scripts, or OpenSpec specs unless implementation is explicitly requested.
 6. Capture evidence: issue text assumptions, commands, DOM/runtime facts,
    screenshots if useful, and exact file/function references.
 7. Identify root cause. If the report is a cluster, split it into sub-bugs.
-8. Produce a fix plan and validation plan. Stop at the middle-flow gate unless
-   code changes were explicitly requested.
+8. Produce a bounded investigation handoff. If an RCA review exists, answer its
+   specific evidence gaps instead of restarting broad triage. Stop at the
+   middle-flow gate unless code changes were explicitly requested.
+
+## Repo-Owned Stage Specs
+
+External runners choose a stage and pass task metadata, but the stage identity
+and project-specific workflow live in this repo:
+
+- [docs/agent/stages/investigation.md](docs/agent/stages/investigation.md)
+- [docs/agent/stages/rca-review.md](docs/agent/stages/rca-review.md)
+
+Runner prompts should point workers at these specs instead of embedding BLP
+stage rules in external orchestration code.
 
 ## Middle-Flow Gate
 
-Middle-flow means evidence, root cause, and fix plan only. The agent may inspect
+Middle-flow means evidence, RCA, and gate handoff only. The agent may inspect
 files, run read-only commands, and use the isolated Obsidian/CDP runtime for
 evidence. The agent must not modify implementation files or tests until the
-runner/user asks for implementation.
+runner/user asks for implementation. Do not produce an implementation-ready fix
+plan while the RCA review loop still has blocking evidence gaps.
 
 For `cdp-required` tasks, middle-flow is runtime-first:
 
@@ -58,7 +71,7 @@ For `cdp-required` tasks, middle-flow is runtime-first:
   before claiming root cause.
 - If Obsidian/CDP cannot start, produce only a Runtime Blocked handoff with the
   exact failed commands and missing prerequisites. Do not submit a root cause,
-  implementation target, or fix plan based on static analysis alone.
+  implementation target, or fix-design handoff based on static analysis alone.
 
 When the next action is implementation, say so explicitly and list the expected
 files, risks, and validations before editing.
