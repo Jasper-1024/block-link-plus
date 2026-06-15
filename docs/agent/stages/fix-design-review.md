@@ -21,7 +21,7 @@ Read these before reaching a verdict:
 - `docs/agent/runs/<key>/investigation.md`
 - `docs/agent/runs/<key>/rca-review.md`
 - `docs/agent/runs/<key>/fix-design.md`
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the fix design verdict is not `ready-for-review`, stop and produce a Context
 Blocked review. Do not invent a design to review.

@@ -19,7 +19,7 @@ Read these before reaching a verdict:
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
 - `docs/agent/runs/<key>/investigation.md`
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Verdicts
 

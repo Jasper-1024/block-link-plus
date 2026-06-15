@@ -22,7 +22,7 @@ Read these before editing:
 - `docs/agent/runs/<key>/rca-review.md`
 - `docs/agent/runs/<key>/fix-design.md`
 - `docs/agent/runs/<key>/fix-design-review.md`
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the fix-design review verdict is not `accepted`, stop and produce a Context
 Blocked handoff. Do not implement from an unreviewed or rejected design.

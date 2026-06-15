@@ -26,7 +26,7 @@ Read these before reaching a verdict:
 - `docs/agent/runs/<key>/implementation.md`
 - current `git status --short`
 - current source diff against the implementation base
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the implementation verdict is not `ready-for-review`, stop and produce a
 Context Blocked review. Do not review a failed or incomplete patch as if it were

@@ -31,6 +31,22 @@ Link Plus issues.
 `memory-bank/` is historical project context. Verify against current source,
 OpenSpec, and runtime behavior before relying on it.
 
+## Run Archives
+
+`docs/agent/runs/<key>/` is the durable archive for one tracked task. The stage
+handoff files at that level are the canonical inputs for later stages of the
+same task. `context/` stores the tracker/source snapshots used for that run.
+`trace/` stores raw runner prompts, event streams, turn metadata, and preflight
+logs for audit and debugging.
+
+Do not scan historical run archives or `trace/` directories as normal context.
+Read only the artifacts named by the current stage spec or the runner prompt.
+Use older run archives only when a human explicitly asks for historical
+comparison or when the current stage spec names them as evidence.
+
+The repo `.rgignore` excludes raw `trace/` files from normal ripgrep searches.
+Use `rg --no-ignore` only when explicitly auditing historical traces.
+
 ## Quick Rule
 
 For direct bugs, investigate and prove the current behavior first. For new or

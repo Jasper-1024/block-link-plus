@@ -1,0 +1,15 @@
+{
+  "title": "issue-inline-host-probe3 - blp - Obsidian 1.12.4",
+  "href": "app://obsidian.md/index.html",
+  "vaultName": "blp",
+  "vaultBasePath": "C:\\Users\\stati\\AppData\\Local\\Temp\\blp-obsidian-debug\\20260615-164343-p19226\\vault\\blp",
+  "activeFile": "_blp_tmp/issue-inline-host-probe3.md",
+  "communityPluginsEnabled": true,
+  "loadedPluginIds": [
+    "block-link-plus"
+  ],
+  "blockLinkPlusEnabled": true,
+  "blockLinkPlusLoaded": true,
+  "blockLinkPlusVersion": "2.0.15",
+  "blockLinkPlusDir": ".obsidian/plugins/block-link-plus"
+}

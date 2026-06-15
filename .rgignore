@@ -1,0 +1,2 @@
+# Keep raw agent traces out of normal searches. Use `rg --no-ignore` for audits.
+docs/agent/runs/**/trace/**

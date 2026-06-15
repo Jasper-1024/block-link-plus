@@ -61,6 +61,51 @@ export const hiddenLine = Decoration.replace({ inclusive: true, block: true });
 // Outliner v2 system tail line marker (Dataview inline field).
 const OUTLINER_SYS_MARKER_RE = /\[blp_sys::\s*1\]/;
 
+export const lineRangeToPosRange = (
+  state: EditorState,
+  range: [number, number]
+) => {
+  return {
+    from: state.doc.line(range[0]).from,
+    to: state.doc.line(Math.min(state.doc.lines, range[1])).to,
+  };
+};
+
+const syncLineRangeForTransaction = (
+  tr: Transaction,
+  targetRange: ContentRangeType,
+  boundaryRange: ContentRangeType
+): ContentRangeType | undefined => {
+  if (tr.newDoc.lines === tr.startState.doc.lines) {
+    return undefined;
+  }
+  if (!isCompleteLineRange(targetRange) || !isCompleteLineRange(boundaryRange)) {
+    return undefined;
+  }
+
+  const numberNewLines = tr.newDoc.lines - tr.startState.doc.lines;
+  const posRange = lineRangeToPosRange(
+    tr.startState,
+    boundaryRange
+  );
+  const safeFromBefore = Math.max(0, posRange.from - 1);
+
+  if (tr.changes.touchesRange(0, safeFromBefore)) {
+    return [
+      targetRange[0] + numberNewLines,
+      targetRange[1] + numberNewLines,
+    ];
+  }
+  if (tr.changes.touchesRange(safeFromBefore, posRange.to)) {
+    return [
+      targetRange[0],
+      targetRange[1] + numberNewLines,
+    ];
+  }
+
+  return undefined;
+};
+
 //partial note editor
 
 export const hideLine = StateField.define<DecorationSet>({
@@ -131,6 +176,16 @@ export const frontmatterFacet = StateField.define<
         next = facetNext;
       }
     }
+    const editableLines =
+      tr.startState.field(selectiveLinesFacet, false) ?? [undefined, undefined];
+    const lineSyncedNext = syncLineRangeForTransaction(
+      tr,
+      value,
+      combinedRangeFacets(value, editableLines)
+    );
+    if (lineSyncedNext !== undefined) {
+      next = lineSyncedNext;
+    }
 
     if (next !== undefined) {
       const [startLine, endLine] = next;
@@ -163,6 +218,16 @@ export const selectiveLinesFacet = StateField.define<
         next = facetNext;
       }
     }
+    const contentLines =
+      tr.startState.field(frontmatterFacet, false) ?? [undefined, undefined];
+    const lineSyncedNext = syncLineRangeForTransaction(
+      tr,
+      value,
+      combinedRangeFacets(value, contentLines)
+    );
+    if (lineSyncedNext !== undefined) {
+      next = lineSyncedNext;
+    }
 
     if (next !== undefined) {
       const [startLine, endLine] = next;
@@ -176,16 +241,6 @@ export const selectiveLinesFacet = StateField.define<
     return value;
   },
 });
-
-export const lineRangeToPosRange = (
-  state: EditorState,
-  range: [number, number]
-) => {
-  return {
-    from: state.doc.line(range[0]).from,
-    to: state.doc.line(Math.min(state.doc.lines, range[1])).to,
-  };
-};
 
 
 export const smartDelete = EditorState.transactionFilter.of(
@@ -230,7 +285,6 @@ export const smartDelete = EditorState.transactionFilter.of(
 
 export const preventModifyTargetRanges = EditorState.transactionFilter.of(
   (tr: Transaction) => {
-    const newTrans = [];
     try {
       const editableLines =
         tr.startState.field(selectiveLinesFacet, false) ?? [undefined, undefined];
@@ -255,60 +309,10 @@ export const preventModifyTargetRanges = EditorState.transactionFilter.of(
           }
         }
       }
-      if (tr.state.doc.lines != tr.startState.doc.lines) {
-        const numberNewLines = tr.state.doc.lines - tr.startState.doc.lines;
-        if (isCompleteLineRange(selectiveLines)) {
-          const posRange = lineRangeToPosRange(
-            tr.startState,
-            selectiveLines
-          );
-          const safeFromBefore = Math.max(0, posRange.from - 1);
-          if (tr.changes.touchesRange(0, safeFromBefore)) {
-            const newAnnotations = [];
-            if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
-              newAnnotations.push(editableRange.of([
-                editableLines[0] + numberNewLines,
-                editableLines[1] + numberNewLines,
-              ]))
-               
-            }
-            if (contentLines[0] !== undefined && contentLines[1] !== undefined) {
-              newAnnotations.push(contentRange.of([
-                contentLines[0] + numberNewLines,
-                contentLines[1] + numberNewLines,
-              ]))
-               
-            }
-            newTrans.push({
-              annotations: newAnnotations,
-            });
-            
-          } else if (tr.changes.touchesRange(safeFromBefore, posRange.to)) {
-            const newAnnotations = [];
-            if (editableLines[0] !== undefined && editableLines[1] !== undefined) {
-              newAnnotations.push(editableRange.of([
-                editableLines[0],
-                editableLines[1] + numberNewLines,
-              ]))
-               
-            }
-            if (contentLines[0] !== undefined && contentLines[1] !== undefined) {
-              newAnnotations.push(contentRange.of([
-                contentLines[0],
-                contentLines[1] + numberNewLines,
-              ]))
-               
-            }
-            newTrans.push({
-              annotations: newAnnotations,
-            });
-          }
-        }
-      }
     } catch (e) {
       return [];
     }
-    return [tr, ...newTrans];
+    return tr;
   }
 );
 
@@ -348,7 +352,10 @@ export const smartPaste = (
     },
   });
 
-const readOnlyRangesExtension = [smartDelete, preventModifyTargetRanges];
+const readOnlyRangesExtension = [
+  smartDelete,
+  preventModifyTargetRanges,
+];
 export const editBlockExtensions = () => [
   readOnlyRangesExtension,
   hideLine,

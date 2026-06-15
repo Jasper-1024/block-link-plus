@@ -20,7 +20,7 @@ Read these before designing:
 - `docs/agent/cdp-validation.md`
 - `docs/agent/runs/<key>/investigation.md`
 - `docs/agent/runs/<key>/rca-review.md`
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the RCA review verdict is not `accepted`, stop and produce a Context Blocked
 handoff. Do not design a fix from an open RCA loop.

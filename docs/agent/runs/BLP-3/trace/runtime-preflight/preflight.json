@@ -1,0 +1,131 @@
+{
+  "passed": true,
+  "blocker": null,
+  "failed_step": null,
+  "dependency_state": {
+    "issue_worktree": {
+      "path": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3",
+      "exists": true,
+      "node_modules": true,
+      "ws": true,
+      "ws_output": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\node_modules\\.pnpm\\ws@8.21.0\\node_modules\\ws\\index.js"
+    },
+    "source_repo": {
+      "path": "C:\\Users\\stati\\Git\\blp\\block-link-plus",
+      "exists": true,
+      "node_modules": true,
+      "ws": true,
+      "ws_output": "C:\\Users\\stati\\Git\\blp\\block-link-plus\\node_modules\\.pnpm\\ws@8.21.0\\node_modules\\ws\\index.js"
+    }
+  },
+  "pnpm_store_dir": "C:\\Users\\stati\\Git\\blp\\.pnpm-store",
+  "obsidian_cdp_port": 19226,
+  "reuse_obsidian_runtime": true,
+  "log_dir": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight",
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": [
+        "corepack.cmd",
+        "pnpm",
+        "--version"
+      ],
+      "started_at": 1781513794,
+      "timeout_seconds": 60,
+      "returncode": 0,
+      "timed_out": false,
+      "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\pnpm-version.stdout.log",
+      "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\pnpm-version.stderr.log",
+      "passed": true
+    },
+    {
+      "name": "pnpm-install",
+      "command": [
+        "corepack.cmd",
+        "pnpm",
+        "install",
+        "--frozen-lockfile",
+        "--store-dir",
+        "C:\\Users\\stati\\Git\\blp\\.pnpm-store"
+      ],
+      "started_at": 1781513794,
+      "timeout_seconds": 900,
+      "returncode": 0,
+      "timed_out": false,
+      "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\pnpm-install.stdout.log",
+      "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\pnpm-install.stderr.log",
+      "passed": true
+    },
+    {
+      "name": "node_modules",
+      "command": [
+        "test-path",
+        "node_modules"
+      ],
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "name": "resolve-ws",
+      "command": [
+        "node",
+        "-e",
+        "require.resolve('ws')"
+      ],
+      "started_at": 1781513796,
+      "timeout_seconds": 30,
+      "returncode": 0,
+      "timed_out": false,
+      "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\resolve-ws.stdout.log",
+      "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\resolve-ws.stderr.log",
+      "passed": true
+    },
+    {
+      "name": "build-with-types",
+      "command": [
+        "corepack.cmd",
+        "pnpm",
+        "run",
+        "build-with-types"
+      ],
+      "started_at": 1781513796,
+      "timeout_seconds": 300,
+      "returncode": 0,
+      "timed_out": false,
+      "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\build-with-types.stdout.log",
+      "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\build-with-types.stderr.log",
+      "passed": true
+    },
+    {
+      "name": "obsidian-debug-env",
+      "command": [
+        "reuse-existing-cdp-runtime",
+        "19226"
+      ],
+      "started_at": 1781513799,
+      "timeout_seconds": 180,
+      "returncode": 0,
+      "timed_out": false,
+      "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\obsidian-debug-env.stdout.log",
+      "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\obsidian-debug-env.stderr.log",
+      "passed": true,
+      "reused_existing_runtime": true,
+      "probe_step": {
+        "name": "obsidian-debug-env-reuse-probe",
+        "command": [
+          "node",
+          "scripts/obsidian-cdp.js",
+          "eval",
+          "(() => ({title: document.title,href: location.href,vaultName: app?.vault?.getName?.(),vaultBasePath: app?.vault?.adapter?.basePath,activeFile: app?.workspace?.getActiveFile?.()?.path ?? null,communityPluginsEnabled: app?.customCss?.enabledSnippets !== undefined,loadedPluginIds: Object.keys(app?.plugins?.plugins ?? {}),blockLinkPlusEnabled: !!app?.plugins?.enabledPlugins?.has?.('block-link-plus'),blockLinkPlusLoaded: !!app?.plugins?.plugins?.['block-link-plus'],blockLinkPlusVersion: app?.plugins?.plugins?.['block-link-plus']?.manifest?.version ?? null,blockLinkPlusDir: app?.plugins?.plugins?.['block-link-plus']?.manifest?.dir ?? null}))()"
+        ],
+        "started_at": 1781513799,
+        "timeout_seconds": 180,
+        "returncode": 0,
+        "timed_out": false,
+        "stdout_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\obsidian-debug-env-reuse-probe.stdout.log",
+        "stderr_log": "C:\\Users\\stati\\Documents\\Codex\\2026-06-13\\hermes\\outputs\\plane-symphony-like-demo\\workspaces\\BLP-3\\runner-runtime-preflight\\obsidian-debug-env-reuse-probe.stderr.log",
+        "passed": true
+      }
+    }
+  ]
+}

@@ -1,7 +1,14 @@
+import { history, redo, undo } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
-import { contentRange, editableRange, editBlockExtensions } from "../selectiveEditor";
+import {
+	contentRange,
+	editableRange,
+	editBlockExtensions,
+	frontmatterFacet,
+	selectiveLinesFacet,
+} from "../selectiveEditor";
 
 describe("selectiveEditor: hide outliner v2 system tail lines", () => {
 	test("hides lines containing [blp_sys:: 1] inside visible range", () => {
@@ -117,6 +124,81 @@ describe("selectiveEditor: hide outliner v2 system tail lines", () => {
 			expect(text).toContain("new line");
 			expect(text).not.toContain("blp_sys");
 			expect(text).not.toContain("^child");
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
+	test("restores inline-edit visible range after Enter undo and redo", () => {
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const leakedParagraph = "Paragraph block for regular embed ^para1";
+		const doc = [
+			"host lead",
+			"intro one",
+			"intro two",
+			"",
+			"- Alpha parent block ^alpha1",
+			"  - Alpha child one",
+			"  - Alpha child two",
+			"  Alpha continuation",
+			"",
+			leakedParagraph,
+			"",
+		].join("\n");
+
+		const view = new EditorView({
+			parent,
+			state: EditorState.create({
+				doc,
+				extensions: [history(), editBlockExtensions()],
+			}),
+		});
+
+		try {
+			const initialLineCount = view.state.doc.lines;
+
+			view.dispatch({
+				annotations: [contentRange.of([5, 9]), editableRange.of([5, 9])],
+			});
+
+			const insertAt = view.state.doc.line(7).to;
+			view.dispatch({
+				changes: { from: insertAt, insert: "\n  - inserted child" },
+				userEvent: "input",
+			});
+
+			expect(view.state.doc.lines).toBe(initialLineCount + 1);
+			expect(view.state.field(frontmatterFacet)).toEqual([5, 10]);
+			expect(view.state.field(selectiveLinesFacet)).toEqual([5, 10]);
+			expect(view.dom.textContent ?? "").toContain("inserted child");
+			expect(view.dom.textContent ?? "").not.toContain(leakedParagraph);
+
+			const didUndo = undo({
+				state: view.state,
+				dispatch: (tr) => view.dispatch(tr),
+			});
+
+			expect(didUndo).toBe(true);
+			expect(view.state.doc.lines).toBe(initialLineCount);
+			expect(view.state.field(frontmatterFacet)).toEqual([5, 9]);
+			expect(view.state.field(selectiveLinesFacet)).toEqual([5, 9]);
+			expect(view.dom.textContent ?? "").not.toContain("inserted child");
+			expect(view.dom.textContent ?? "").not.toContain(leakedParagraph);
+
+			const didRedo = redo({
+				state: view.state,
+				dispatch: (tr) => view.dispatch(tr),
+			});
+
+			expect(didRedo).toBe(true);
+			expect(view.state.doc.lines).toBe(initialLineCount + 1);
+			expect(view.state.field(frontmatterFacet)).toEqual([5, 10]);
+			expect(view.state.field(selectiveLinesFacet)).toEqual([5, 10]);
+			expect(view.dom.textContent ?? "").toContain("inserted child");
+			expect(view.dom.textContent ?? "").not.toContain(leakedParagraph);
 		} finally {
 			view.destroy();
 			parent.remove();

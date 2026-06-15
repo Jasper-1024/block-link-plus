@@ -19,7 +19,7 @@ Read these before making RCA claims:
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
 - `docs/agent/runs/<key>/rca-review.md`, if it exists
-- `issue-context.json`, if the runner wrote it
+- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Loop Semantics
 

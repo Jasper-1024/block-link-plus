@@ -1,0 +1,16 @@
+{
+  "method": "turn/completed",
+  "params": {
+    "threadId": "019ecb02-fea3-7880-a722-b3ad1c9424c5",
+    "turn": {
+      "id": "019ecb02-ff7d-73d1-adb6-e287f9354886",
+      "items": [],
+      "itemsView": "notLoaded",
+      "status": "completed",
+      "error": null,
+      "startedAt": 1781522431,
+      "completedAt": 1781522826,
+      "durationMs": 394426
+    }
+  }
+}
