@@ -15,3 +15,7 @@ Stages:
   design.
 - [fix-design-review.md](fix-design-review.md): adversarial review of the fix
   design before implementation.
+- [implementation.md](implementation.md): execute an accepted design with the
+  smallest source patch, regression tests, and runtime validation.
+- [code-review.md](code-review.md): adversarial review of the implementation
+  patch before human merge/release review.

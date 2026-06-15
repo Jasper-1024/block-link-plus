@@ -53,6 +53,8 @@ and project-specific workflow live in this repo:
 - [docs/agent/stages/rca-review.md](docs/agent/stages/rca-review.md)
 - [docs/agent/stages/fix-design.md](docs/agent/stages/fix-design.md)
 - [docs/agent/stages/fix-design-review.md](docs/agent/stages/fix-design-review.md)
+- [docs/agent/stages/implementation.md](docs/agent/stages/implementation.md)
+- [docs/agent/stages/code-review.md](docs/agent/stages/code-review.md)
 
 Runner prompts should point workers at these specs instead of embedding BLP
 stage rules in external orchestration code.
@@ -78,8 +80,13 @@ For `cdp-required` tasks, middle-flow is runtime-first:
 
 When RCA review is accepted, the next middle-flow stage is fix design, followed
 by adversarial fix-design review. Implementation starts only after fix-design
-review accepts the design. When the next action is implementation, say so
-explicitly and list the expected files, risks, and validations before editing.
+review accepts the design. The implementation agent must follow
+[docs/agent/stages/implementation.md](docs/agent/stages/implementation.md),
+make the smallest accepted patch, and record tests, build, and CDP evidence in
+`docs/agent/runs/<tracker-key>/implementation.md`. A separate code-review agent
+then follows [docs/agent/stages/code-review.md](docs/agent/stages/code-review.md)
+and writes `docs/agent/runs/<tracker-key>/code-review.md` before a human merge
+or release decision.
 
 ## Human Review
 
