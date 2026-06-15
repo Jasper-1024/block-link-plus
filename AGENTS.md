@@ -42,9 +42,9 @@ Runtime-first rule:
 
 - For tasks marked `cdp-required`, or bugs involving Obsidian DOM, CodeMirror
   state, plugin lifecycle, focus, scroll, settings, or real editor behavior, run
-  the isolated Obsidian/CDP preflight before making a root-cause or fix-plan
+  the isolated Obsidian/CDP runtime check before making a root-cause or fix-plan
   claim.
-- If CDP preflight fails, stop at a Runtime Blocked handoff. Do not promote
+- If the CDP runtime check fails, stop at a Runtime Blocked handoff. Do not promote
   static owner mapping into root cause.
 
 CDP references:

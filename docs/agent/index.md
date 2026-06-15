@@ -36,8 +36,8 @@ OpenSpec, and runtime behavior before relying on it.
 `docs/agent/runs/<key>/` is the durable archive for one tracked task. The stage
 handoff files at that level are the canonical inputs for later stages of the
 same task. `context/` stores the tracker/source snapshots used for that run.
-`trace/` stores raw runner prompts, event streams, turn metadata, and preflight
-logs for audit and debugging.
+`trace/` stores raw runner prompts, event streams, turn metadata, and runtime
+command logs for audit and debugging.
 
 Do not scan historical run archives or `trace/` directories as normal context.
 Read only the artifacts named by the current stage spec or the runner prompt.

@@ -141,6 +141,7 @@ Canonical investigation artifacts belong under:
 docs/agent/runs/<tracker-key>/investigation.md
 ```
 
-The external runner may keep raw prompts, logs, and turn metadata in its
-workspace, but Plane comments and follow-up agents should point to the canonical
-repo-local artifact above.
+Raw prompts, event streams, turn metadata, and runtime command logs belong under
+`docs/agent/runs/<tracker-key>/trace/<stage>/`. Plane comments and follow-up
+agents should point to the canonical repo-local artifact above, not to raw trace
+files.
