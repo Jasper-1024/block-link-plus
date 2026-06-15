@@ -10,7 +10,7 @@ prints a JSON context object for follow-up CDP commands.
 #>
 [CmdletBinding()]
 param(
-	[int]$Port = 0,
+	[int]$Port = 19225,
 	[int]$MinPort = 19225,
 	[string]$VaultName = "blp",
 	[string]$Root = "",

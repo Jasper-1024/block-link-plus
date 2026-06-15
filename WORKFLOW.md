@@ -35,8 +35,8 @@ CDP scripts, or OpenSpec specs unless implementation is explicitly requested.
 4. Locate relevant specs, source files, tests, docs, and CDP snippets with `rg`.
 5. Reproduce or disprove the report with the required runtime gate. For
    `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror state,
-   plugin lifecycle, focus, scroll, settings, or editor behavior, CDP preflight
-   must pass before root-cause analysis.
+   plugin lifecycle, focus, scroll, settings, or editor behavior, the CDP
+   runtime check must pass before root-cause analysis.
 6. Capture evidence: issue text assumptions, commands, DOM/runtime facts,
    screenshots if useful, and exact file/function references.
 7. Identify root cause. If the report is a cluster, split it into sub-bugs.
@@ -67,8 +67,9 @@ For `cdp-required` tasks, middle-flow is runtime-first:
 
 - Static reading is allowed only to understand the task, choose the smallest
   repro path, and locate existing CDP snippets.
-- Run the CDP preflight in [docs/agent/cdp-validation.md](docs/agent/cdp-validation.md)
-  before claiming root cause.
+- Run the fixed-port CDP runtime check in
+  [docs/agent/cdp-validation.md](docs/agent/cdp-validation.md) before claiming
+  root cause.
 - If Obsidian/CDP cannot start, produce only a Runtime Blocked handoff with the
   exact failed commands and missing prerequisites. Do not submit a root cause,
   implementation target, or fix-design handoff based on static analysis alone.
@@ -96,10 +97,10 @@ Use the smallest validation that proves the claim, then broaden as risk grows.
 corepack pnpm install --frozen-lockfile
 corepack pnpm test
 corepack pnpm run build-with-types
-corepack pnpm run obsidian:debug-env
 $env:OB_CDP_PORT='19225'
 $env:OB_CDP_TITLE_CONTAINS=' - blp - '
 node scripts/obsidian-cdp.js list
+corepack pnpm run obsidian:debug-env -- -Port 19225
 node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
 ```
 

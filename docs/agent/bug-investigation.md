@@ -37,9 +37,10 @@ handoffs.
    behavior, runtime evidence is mandatory. Static inspection may prepare the
    repro, but it is not enough to identify root cause.
 
-   Run the CDP preflight from [cdp-validation.md](cdp-validation.md). If it
-   fails, stop and produce a Runtime Blocked handoff. Do not continue into root
-   cause or fix planning from static evidence alone.
+   Run the fixed-port CDP runtime check from
+   [cdp-validation.md](cdp-validation.md). If it fails, stop and produce a
+   Runtime Blocked handoff. Do not continue into root cause or fix planning
+   from static evidence alone.
 
 6. Identify root cause.
 

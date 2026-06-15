@@ -40,9 +40,10 @@ For `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror state,
 plugin lifecycle, focus, scroll, settings, or real editor behavior, CDP runtime
 evidence is mandatory before RCA claims.
 
-The external runner may run the first preflight. If runtime evidence becomes
-unavailable after preflight, stop and mark the artifact Runtime Blocked. Do not
-promote static owner mapping into root cause.
+The runner supplies task context only. Runtime setup and validation are owned by
+this repo. Use the fixed-port flow in `docs/agent/cdp-validation.md`; if the
+fixed runtime cannot be reached or started, stop and mark the artifact Runtime
+Blocked. Do not promote static owner mapping into root cause.
 
 Use `docs/agent/cdp-validation.md` as the source of truth for launching and
 checking the disposable Obsidian runtime.
@@ -86,6 +87,6 @@ maps each reviewed gap to the new evidence or explains why it remains open.
 The investigation can exit to RCA review when it has one of these outcomes:
 
 - confirmed runtime evidence and a bounded RCA
-- Runtime Blocked with exact failed preflight/runtime steps
+- Runtime Blocked with exact failed runtime-check steps
 - evidence that the reported behavior is not reproduced, with commands and
   runtime state

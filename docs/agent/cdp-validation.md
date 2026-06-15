@@ -3,8 +3,8 @@
 Use the project CDP runtime when a BLP issue needs real Obsidian Desktop
 evidence. Do not use the user's daily vault.
 
-For `cdp-required` tracker items, this preflight is mandatory before root-cause
-analysis:
+For `cdp-required` tracker items, this runtime check is mandatory before
+root-cause analysis. Use the fixed debug port `19225` for this experiment.
 
 1. Confirm dependency availability:
 
@@ -15,32 +15,37 @@ analysis:
    corepack pnpm run build-with-types
    ```
 
-2. Launch the disposable Obsidian runtime:
+2. Try the fixed runtime first:
 
    ```powershell
-   corepack pnpm run obsidian:debug-env
-   ```
-
-3. Confirm CDP target and plugin state with the printed port:
-
-   ```powershell
-   $env:OB_CDP_PORT='<printed port>'
+   $env:OB_CDP_PORT='19225'
    $env:OB_CDP_TITLE_CONTAINS=' - blp - '
    node scripts/obsidian-cdp.js list
    ```
 
-If any step fails, stop at Runtime Blocked. Capture the exact command and
-important output. Do not produce static root-cause or fix-plan claims.
+3. If the fixed runtime is not reachable, launch it on the same fixed port:
+
+   ```powershell
+   corepack pnpm run obsidian:debug-env -- -Port 19225
+   ```
+
+4. Confirm CDP target and plugin state on `19225`.
+
+If the port is occupied by a non-BLP target, or the fixed-port runtime cannot be
+started and verified, stop at Runtime Blocked. Capture the exact command and
+important output. Do not fall back to an auto-selected port such as `19226`, and
+do not produce static root-cause or fix-plan claims.
 
 ## Start Runtime
 
 ```powershell
-corepack pnpm run obsidian:debug-env
+corepack pnpm run obsidian:debug-env -- -Port 19225
 ```
 
 The launcher creates a disposable profile and vault, links the current checkout
 as the `block-link-plus` plugin, enables community plugins, opens a debug note,
-and prints JSON with the selected CDP port.
+and prints JSON with the selected CDP port. The default script port is also
+`19225`; passing `-Port 19225` makes the intended runtime explicit in logs.
 
 The launcher treats Obsidian community-plugin trust as part of runtime setup. It
 sets the profile-local `enable-plugin-<vaultId>` flag, then uses CDP to dismiss
@@ -48,15 +53,13 @@ matching trust or restricted-mode prompts before loading the plugin. The printed
 JSON includes `pluginTrust`, `trustPrompts`, and `runtime`; if `runtime` does not
 show `blockLinkPlusLoaded: true`, stop the run and record the failed phase.
 
-For a fixed port:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port 19225
-```
+Do not start a second runtime just because `19225` is already in use. First
+check whether it is the current BLP debug runtime. If it is not reusable, stop
+with Runtime Blocked for this experiment.
 
 ## Select Target
 
-Set the printed port before follow-up commands:
+Set the fixed port before follow-up commands:
 
 ```powershell
 $env:OB_CDP_PORT='19225'
