@@ -80,7 +80,7 @@
 			hostCount: embed?.querySelectorAll(".blp-inline-edit-host").length ?? 0,
 			rootCount: embed?.querySelectorAll(".blp-inline-edit-root").length ?? 0,
 			linkVisible: isVisible(link),
-			text: String(embed?.textContent ?? ""),
+			text: String(embed?.innerText ?? embed?.textContent ?? ""),
 		};
 	};
 	const waitForStableInlineEdit = async (leaf, label) => {

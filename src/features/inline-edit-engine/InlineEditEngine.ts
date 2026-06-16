@@ -1654,6 +1654,10 @@ export class InlineEditEngine {
 		await this.mountInlineEmbedCore(embedEl, ctx, { requireLivePreview: true, hostView, origin: "live-preview" });
 	}
 
+	private isPassiveLivePreviewMount(opts: { requireLivePreview: boolean; origin: string }): boolean {
+		return opts.requireLivePreview && opts.origin === "live-preview";
+	}
+
 	private async mountInlineEmbedCore(
 		embedEl: HTMLElement,
 		ctx: MarkdownPostProcessorContext,
@@ -1683,6 +1687,7 @@ export class InlineEditEngine {
 			return;
 		}
 
+		const passiveLivePreviewMount = this.isPassiveLivePreviewMount(opts);
 		const parsed = this.parseInlineEmbed(embedEl, ctx);
 		if (!parsed) {
 			this.debugSkip(embedEl, "skip:parse-failed", {
@@ -1825,15 +1830,17 @@ export class InlineEditEngine {
 					// ignore
 				}
 
-				try {
-					const startLine = Math.max(0, resolvedRanges.editableRange[0] - 1);
-					embed.view.editor?.setCursor({ line: startLine, ch: 0 });
-					embed.view.editor?.scrollIntoView(
-						{ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } },
-						true
-					);
-				} catch {
-					// ignore
+				if (!passiveLivePreviewMount) {
+					try {
+						const startLine = Math.max(0, resolvedRanges.editableRange[0] - 1);
+						embed.view.editor?.setCursor({ line: startLine, ch: 0 });
+						embed.view.editor?.scrollIntoView(
+							{ from: { line: startLine, ch: 0 }, to: { line: startLine, ch: 0 } },
+							true
+						);
+					} catch {
+						// ignore
+					}
 				}
 			} else {
 				this.debugLog("mount:no-cm", embedEl.getAttribute("src"));
