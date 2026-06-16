@@ -26,3 +26,5 @@ Stages:
   smallest source patch, regression tests, and runtime validation.
 - [code-review.md](code-review.md): adversarial review of the implementation
   patch before human merge/release review.
+- [finalize.md](finalize.md): mechanical commit/merge finalization after a
+  human moves the tracker item to `Ready to Merge`.

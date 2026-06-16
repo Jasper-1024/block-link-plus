@@ -101,8 +101,10 @@ accepted, what blocks acceptance, and what the next stage should do.
 
 ## Gate Semantics
 
-Use `accepted` only when the implementation is ready for human review or merge
-decision within the accepted scope.
+Use `accepted` only when the implementation is ready for human review within the
+accepted scope. The tracker stays at `Human Review` until a person approves the
+final merge path by moving the item to `Ready to Merge`; the finalization agent
+handles the mechanical commit/merge step after that.
 
 Use `needs-revision` when the implementation is directionally correct but needs
 targeted code, test, or validation changes.

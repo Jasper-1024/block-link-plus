@@ -40,6 +40,11 @@ same task. `context/` stores the tracker/source snapshots used for that run.
 `trace/` stores raw runner prompts, event streams, turn metadata, and runtime
 command logs for audit and debugging.
 
+After `code-review.md` is accepted, the tracker remains at `Human Review` until
+a person approves finalization by moving it to `Ready to Merge`. The finalizer
+then writes `docs/agent/runs/<key>/finalize.md` and performs only mechanical
+commit/merge work described by [stages/finalize.md](stages/finalize.md).
+
 These archives are allowed to live on the main branch as process evidence, but
 they are not normal task context. Future agents should use them only when a
 stage spec, runner prompt, or human request explicitly names them.

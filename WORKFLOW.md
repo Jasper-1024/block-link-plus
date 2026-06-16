@@ -68,6 +68,7 @@ and project-specific workflow live in this repo:
 - [docs/agent/stages/fix-design-review.md](docs/agent/stages/fix-design-review.md)
 - [docs/agent/stages/implementation.md](docs/agent/stages/implementation.md)
 - [docs/agent/stages/code-review.md](docs/agent/stages/code-review.md)
+- [docs/agent/stages/finalize.md](docs/agent/stages/finalize.md)
 
 Runner prompts should point workers at these specs instead of embedding BLP
 stage rules in external orchestration code.
@@ -108,7 +109,10 @@ make the smallest accepted patch, and record tests, build, and CDP evidence in
 `docs/agent/runs/<tracker-key>/implementation.md`. A separate code-review agent
 then follows [docs/agent/stages/code-review.md](docs/agent/stages/code-review.md)
 and writes `docs/agent/runs/<tracker-key>/code-review.md` before a human merge
-or release decision.
+or release decision. If a person accepts that final decision, they move the
+tracker item to `Ready to Merge`; only then may the finalization agent follow
+[docs/agent/stages/finalize.md](docs/agent/stages/finalize.md) and write
+`docs/agent/runs/<tracker-key>/finalize.md`.
 
 ## Human Review
 
@@ -121,6 +125,10 @@ merged, released, or fully accepted. A Human Review handoff must state:
 - what changed, if anything
 - validation performed
 - remaining risks or decisions
+
+For the final merge path, do not move `Human Review` back to `Todo` or
+`In Progress`. Move it to `Ready to Merge` only after the human accepts the
+code-review result and wants the runner to perform mechanical finalization.
 
 ## Validation Commands
 

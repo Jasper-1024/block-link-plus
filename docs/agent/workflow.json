@@ -4,8 +4,10 @@
   "autoStage": "auto",
   "artifactPattern": "docs/agent/runs/{key}/{stage}.md",
   "states": {
-    "active": ["Todo", "In Progress"],
+    "active": ["Todo", "In Progress", "Ready to Merge"],
     "humanReview": "Human Review",
+    "readyToMerge": "Ready to Merge",
+    "done": "Done",
     "runtimeBlocked": "Runtime Blocked"
   },
   "loops": {
@@ -52,6 +54,13 @@
       "spec": "docs/agent/stages/code-review.md",
       "artifact": "docs/agent/runs/{key}/code-review.md",
       "reviews": "implementation"
+    },
+    {
+      "name": "finalize",
+      "label": "final merge finalization",
+      "spec": "docs/agent/stages/finalize.md",
+      "artifact": "docs/agent/runs/{key}/finalize.md",
+      "reviews": "code-review"
     }
   ]
 }
