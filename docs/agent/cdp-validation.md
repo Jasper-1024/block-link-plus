@@ -26,7 +26,7 @@ root-cause analysis. Use the fixed debug port `19225` for this experiment.
 3. If the fixed runtime is not reachable, launch it on the same fixed port:
 
    ```powershell
-   corepack pnpm run obsidian:debug-env -- -Port 19225
+   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port 19225
    ```
 
 4. Confirm CDP target and plugin state on `19225`.
@@ -39,13 +39,16 @@ do not produce static root-cause or fix-plan claims.
 ## Start Runtime
 
 ```powershell
-corepack pnpm run obsidian:debug-env -- -Port 19225
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port 19225
 ```
 
 The launcher creates a disposable profile and vault, links the current checkout
 as the `block-link-plus` plugin, enables community plugins, opens a debug note,
 and prints JSON with the selected CDP port. The default script port is also
 `19225`; passing `-Port 19225` makes the intended runtime explicit in logs.
+Use the direct PowerShell launcher form above on Windows. Do not use
+`corepack pnpm run obsidian:debug-env -- -Port 19225`; that form can forward a
+literal `--` into PowerShell and fail before Obsidian starts.
 
 The launcher treats Obsidian community-plugin trust as part of runtime setup. It
 sets the profile-local `enable-plugin-<vaultId>` flag, then uses CDP to dismiss

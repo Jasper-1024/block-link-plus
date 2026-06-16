@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "workflow": "blp",
+  "autoStage": "auto",
+  "artifactPattern": "docs/agent/runs/{key}/{stage}.md",
+  "states": {
+    "active": ["Todo", "In Progress"],
+    "humanReview": "Human Review",
+    "runtimeBlocked": "Runtime Blocked"
+  },
+  "loops": {
+    "rca": 2,
+    "fix-design": 2,
+    "implementation": 2
+  },
+  "stages": [
+    {
+      "name": "investigation",
+      "label": "runtime investigation",
+      "spec": "docs/agent/stages/investigation.md",
+      "artifact": "docs/agent/runs/{key}/investigation.md"
+    },
+    {
+      "name": "rca-review",
+      "label": "adversarial RCA review",
+      "spec": "docs/agent/stages/rca-review.md",
+      "artifact": "docs/agent/runs/{key}/rca-review.md",
+      "reviews": "investigation"
+    },
+    {
+      "name": "fix-design",
+      "label": "fix design",
+      "spec": "docs/agent/stages/fix-design.md",
+      "artifact": "docs/agent/runs/{key}/fix-design.md"
+    },
+    {
+      "name": "fix-design-review",
+      "label": "adversarial fix design review",
+      "spec": "docs/agent/stages/fix-design-review.md",
+      "artifact": "docs/agent/runs/{key}/fix-design-review.md",
+      "reviews": "fix-design"
+    },
+    {
+      "name": "implementation",
+      "label": "implementation",
+      "spec": "docs/agent/stages/implementation.md",
+      "artifact": "docs/agent/runs/{key}/implementation.md"
+    },
+    {
+      "name": "code-review",
+      "label": "adversarial code review",
+      "spec": "docs/agent/stages/code-review.md",
+      "artifact": "docs/agent/runs/{key}/code-review.md",
+      "reviews": "implementation"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ Link Plus issues.
 - [openspec-gates.md](openspec-gates.md): when OpenSpec is required.
 - [evidence-format.md](evidence-format.md): required handoff format.
 - [stages/index.md](stages/index.md): repo-owned runner stage identities.
+- [workflow.json](workflow.json): machine-readable harness contract for external runners.
 
 ## Existing Sources Of Truth
 

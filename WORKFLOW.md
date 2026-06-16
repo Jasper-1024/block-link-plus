@@ -19,7 +19,8 @@ should treat these repo-owned stage specs and artifact rules as the baseline.
 External runners may evolve independently, but they must not embed BLP-specific
 stage policy as their source of truth. If runner behavior and this repository
 disagree, update this workflow or the matching stage spec first, then adjust the
-runner to follow it.
+runner to follow it. Machine-readable runner metadata lives in
+[docs/agent/workflow.json](docs/agent/workflow.json).
 
 ## Tracker Relationship
 
@@ -70,6 +71,15 @@ and project-specific workflow live in this repo:
 
 Runner prompts should point workers at these specs instead of embedding BLP
 stage rules in external orchestration code.
+
+## OpenSpec Boundary
+
+OpenSpec remains the product behavior/specification system under `openspec/`.
+It is not a runner workflow stage. Agents use
+[docs/agent/openspec-gates.md](docs/agent/openspec-gates.md) to decide whether a
+task is direct bug restoration or requires a human-approved OpenSpec proposal.
+If a stage discovers that a proposal is required, it must stop with
+`human-review-required` instead of creating a parallel agent loop.
 
 ## Middle-Flow Gate
 
@@ -123,8 +133,9 @@ corepack pnpm run build-with-types
 $env:OB_CDP_PORT='19225'
 $env:OB_CDP_TITLE_CONTAINS=' - blp - '
 node scripts/obsidian-cdp.js list
-corepack pnpm run obsidian:debug-env -- -Port 19225
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port 19225
 node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
+corepack pnpm run agent:workflow-check
 ```
 
 `corepack pnpm install --frozen-lockfile` prepares an issue worktree from the
@@ -156,4 +167,4 @@ docs/agent/runs/<tracker-key>/investigation.md
 Raw prompts, event streams, turn metadata, and runtime command logs belong under
 `docs/agent/runs/<tracker-key>/trace/<stage>/`. Plane comments and follow-up
 agents should point to the canonical repo-local artifact above, not to raw trace
-files.
+files. Trace files are audit material, not default task context.

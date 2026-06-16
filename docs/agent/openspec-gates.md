@@ -4,6 +4,10 @@ OpenSpec is required when the requested work changes intended behavior. Direct
 bug investigation is appropriate when the work is to understand or restore
 existing behavior.
 
+OpenSpec is a product specification gate, not a runner stage. If a harness stage
+finds that OpenSpec is required, stop with `human-review-required` and state the
+proposal boundary.
+
 ## Use OpenSpec For
 
 - New capabilities or user-visible workflows.

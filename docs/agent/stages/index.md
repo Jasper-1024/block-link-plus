@@ -9,6 +9,10 @@ paths, then instruct the worker to read the matching stage spec.
 These stage specs are the maintained BLP mainline contract. Do not treat them
 as demo prompts or disposable runner-side scaffolding.
 
+The machine-readable stage list and artifact paths are mirrored in
+[../workflow.json](../workflow.json). Keep this index, each stage spec, and the
+workflow manifest in sync.
+
 Stages:
 
 - [investigation.md](investigation.md): runtime-first bug investigation and
