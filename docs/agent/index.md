@@ -6,7 +6,7 @@ Link Plus issues.
 ## Start Here
 
 - [../../AGENTS.md](../../AGENTS.md): short top-level map for agents.
-- [../../WORKFLOW.md](../../WORKFLOW.md): standard Symphony-like task workflow.
+- [../../WORKFLOW.md](../../WORKFLOW.md): maintained Plane-backed harness task workflow.
 - [bug-investigation.md](bug-investigation.md): issue investigation process.
 - [cdp-validation.md](cdp-validation.md): isolated Obsidian/CDP validation.
 - [openspec-gates.md](openspec-gates.md): when OpenSpec is required.
@@ -38,6 +38,10 @@ handoff files at that level are the canonical inputs for later stages of the
 same task. `context/` stores the tracker/source snapshots used for that run.
 `trace/` stores raw runner prompts, event streams, turn metadata, and runtime
 command logs for audit and debugging.
+
+These archives are allowed to live on the main branch as process evidence, but
+they are not normal task context. Future agents should use them only when a
+stage spec, runner prompt, or human request explicitly names them.
 
 Do not scan historical run archives or `trace/` directories as normal context.
 Read only the artifacts named by the current stage spec or the runner prompt.

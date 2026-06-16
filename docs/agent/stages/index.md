@@ -6,6 +6,9 @@ External trackers and runners may choose which stage to start, but the stage
 contract itself lives here. A runner should pass task metadata and artifact
 paths, then instruct the worker to read the matching stage spec.
 
+These stage specs are the maintained BLP mainline contract. Do not treat them
+as demo prompts or disposable runner-side scaffolding.
+
 Stages:
 
 - [investigation.md](investigation.md): runtime-first bug investigation and

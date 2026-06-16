@@ -20,7 +20,7 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 # Agent Map
 
 Start with [WORKFLOW.md](WORKFLOW.md). It is the repo-owned contract for
-Symphony-like task runs; external trackers provide task state only.
+Plane-backed harness task runs; external trackers provide task state only.
 
 For detailed harness guidance, use [docs/agent/index.md](docs/agent/index.md).
 It links bug investigation, CDP validation, OpenSpec gates, and handoff formats.

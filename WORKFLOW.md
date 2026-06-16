@@ -2,12 +2,24 @@
 
 ## Purpose
 
-This file is the entrypoint for Codex, Symphony-like runners, and other agents
-working inside Block Link Plus. It defines how to investigate BLP issues using
-repo-owned docs, scripts, and specs without relying on external chat context.
+This file is the entrypoint for Codex, Plane-backed harness runners, and other
+agents working inside Block Link Plus. It defines how to investigate BLP issues
+using repo-owned docs, scripts, and specs without relying on external chat
+context.
 
 Scope: bug triage, regression investigation, validation planning, and
 implementation handoff. Do not move external runner code into this repo.
+
+## Production Status
+
+This workflow is the maintained BLP mainline process. The earlier
+`agent-test`/trial runner phase has ended; future tracker-driven issue work
+should treat these repo-owned stage specs and artifact rules as the baseline.
+
+External runners may evolve independently, but they must not embed BLP-specific
+stage policy as their source of truth. If runner behavior and this repository
+disagree, update this workflow or the matching stage spec first, then adjust the
+runner to follow it.
 
 ## Tracker Relationship
 
