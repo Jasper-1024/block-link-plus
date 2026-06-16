@@ -3,6 +3,23 @@
   "workflow": "blp",
   "autoStage": "auto",
   "artifactPattern": "docs/agent/runs/{key}/{stage}.md",
+  "requiredPaths": [
+    "AGENTS.md",
+    "WORKFLOW.md",
+    "CONTEXT.md",
+    "docs/agent/index.md",
+    "docs/agent/workflow.json",
+    "docs/agent/cdp-validation.md",
+    "docs/agent/evidence-format.md",
+    "docs/agent/stages/index.md",
+    "docs/agents/domain.md",
+    "docs/agents/issue-tracker.md",
+    "docs/agents/triage-labels.md",
+    ".codex/skills/setup-matt-pocock-skills/SKILL.md",
+    ".codex/skills/grill-with-docs/SKILL.md",
+    ".codex/skills/diagnose/SKILL.md",
+    ".codex/skills/tdd/SKILL.md"
+  ],
   "states": {
     "active": ["Todo", "In Progress", "Ready to Merge"],
     "humanReview": "Human Review",
@@ -10,12 +27,35 @@
     "done": "Done",
     "runtimeBlocked": "Runtime Blocked"
   },
+  "lanes": {
+    "bug": {
+      "labels": ["bug"],
+      "entryStage": "investigation",
+      "automation": "full"
+    },
+    "enhancement": {
+      "labels": ["enhancement"],
+      "entryStage": "design-intake",
+      "automation": "intake"
+    },
+    "maintenance": {
+      "labels": ["maintenance"],
+      "entryStage": "design-intake",
+      "automation": "intake"
+    }
+  },
   "loops": {
     "rca": 2,
     "fix-design": 2,
     "implementation": 2
   },
   "stages": [
+    {
+      "name": "design-intake",
+      "label": "design intake",
+      "spec": "docs/agent/stages/design-intake.md",
+      "artifact": "docs/agent/runs/{key}/design-intake.md"
+    },
     {
       "name": "investigation",
       "label": "runtime investigation",

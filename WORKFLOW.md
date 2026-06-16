@@ -89,6 +89,17 @@ Do not use the bug RCA loop as a substitute for feature discussion. If a Plane
 task needs product or architecture judgment, stop with `human-review-required`
 and state what must be clarified.
 
+The runner-visible non-bug lane is:
+
+```text
+enhancement|maintenance -> design-intake -> Human Review
+```
+
+`design-intake` prepares the discussion brief and recommended questions for a
+human `grill-with-docs` session. It is not approval to implement. After the
+discussion resolves scope and acceptance criteria, create or update a concrete
+implementation task instead of resuming the bug RCA lane.
+
 ## Implementation Lane
 
 Implementation follows `.codex/skills/tdd/SKILL.md`.
@@ -111,6 +122,7 @@ External runners choose a stage and pass task metadata, but the stage identity
 and project-specific workflow live in this repo:
 
 - [docs/agent/stages/investigation.md](docs/agent/stages/investigation.md)
+- [docs/agent/stages/design-intake.md](docs/agent/stages/design-intake.md)
 - [docs/agent/stages/rca-review.md](docs/agent/stages/rca-review.md)
 - [docs/agent/stages/fix-design.md](docs/agent/stages/fix-design.md)
 - [docs/agent/stages/fix-design-review.md](docs/agent/stages/fix-design-review.md)

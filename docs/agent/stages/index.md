@@ -15,6 +15,8 @@ workflow manifest in sync.
 
 Stages:
 
+- [design-intake.md](design-intake.md): non-bug enhancement/maintenance intake
+  that prepares a human `grill-with-docs` discussion brief.
 - [investigation.md](investigation.md): runtime-first bug investigation and
   evidence completion, following the repo-local `diagnose` skill.
 - [rca-review.md](rca-review.md): adversarial RCA review and loop gate.
