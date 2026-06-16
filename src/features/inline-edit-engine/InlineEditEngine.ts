@@ -62,6 +62,7 @@ type LivePreviewObserverEntry = {
 	scheduled: number | null;
 	processing: boolean;
 	createdAt: number;
+	lastShown: boolean;
 };
 
 type ParsedInlineEmbed = {
@@ -108,20 +109,10 @@ export class InlineEditEngine {
 		this.installReadingRangeRendering();
 
 		this.plugin.registerEvent(
-			this.plugin.app.workspace.on("layout-change", () => {
-				if (!this.loaded) return;
-				if (!this.isInlineEditActive()) {
-					this.disconnectAllObservers();
-					this.leaves.cleanup();
-					this.focus.cleanup();
-					return;
-				}
-
-				window.setTimeout(() => {
-					this.refreshLivePreviewObservers();
-					this.cleanupHiddenEmbeds();
-				}, 50);
-			})
+			this.plugin.app.workspace.on("layout-change", () => this.scheduleLivePreviewLifecycleRefresh())
+		);
+		this.plugin.registerEvent(
+			this.plugin.app.workspace.on("active-leaf-change", () => this.scheduleLivePreviewLifecycleRefresh())
 		);
 
 		this.plugin.app.workspace.onLayoutReady(() => {
@@ -269,6 +260,21 @@ export class InlineEditEngine {
 	private isInlineEditActive(): boolean {
 		const { inlineEditEnabled, inlineEditFile, inlineEditHeading, inlineEditBlock } = this.plugin.settings;
 		return inlineEditEnabled && (inlineEditFile || inlineEditHeading || inlineEditBlock);
+	}
+
+	private scheduleLivePreviewLifecycleRefresh(): void {
+		if (!this.loaded) return;
+		if (!this.isInlineEditActive()) {
+			this.disconnectAllObservers();
+			this.leaves.cleanup();
+			this.focus.cleanup();
+			return;
+		}
+
+		window.setTimeout(() => {
+			this.refreshLivePreviewObservers();
+			this.cleanupHiddenEmbeds();
+		}, 50);
 	}
 
 	onSettingsChanged(): void {
@@ -978,8 +984,16 @@ export class InlineEditEngine {
 		const rootEl = view.containerEl.querySelector<HTMLElement>(".markdown-source-view");
 		if (!rootEl) return;
 
+		const currentShown = this.isMarkdownViewShown(view);
 		const existing = this.livePreviewObservers.get(view);
-		if (existing && existing.rootEl === rootEl && !forceRescan) return;
+		if (existing && existing.rootEl === rootEl && !forceRescan) {
+			const becameShown = !existing.lastShown && currentShown;
+			existing.lastShown = currentShown;
+			if (becameShown) {
+				this.queueExistingLivePreviewEmbeds(existing);
+			}
+			return;
+		}
 
 		if (existing) {
 			this.disconnectObserverEntry(existing);
@@ -994,6 +1008,7 @@ export class InlineEditEngine {
 			scheduled: null,
 			processing: false,
 			createdAt: Date.now(),
+			lastShown: currentShown,
 		};
 
 		entry.observer = new MutationObserver((mutations) => {
@@ -1031,12 +1046,31 @@ export class InlineEditEngine {
 
 		this.livePreviewObservers.set(view, entry);
 
-		rootEl.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed").forEach((embed) => {
+		this.queueExistingLivePreviewEmbeds(entry);
+	}
+
+	private isMarkdownViewShown(view: MarkdownView): boolean {
+		const containerEl = view.containerEl as HTMLElement & { isShown?: () => boolean };
+		if (typeof containerEl.isShown === "function") {
+			try {
+				return containerEl.isShown();
+			} catch {
+				return false;
+			}
+		}
+
+		return containerEl.isConnected;
+	}
+
+	private queueExistingLivePreviewEmbeds(entry: LivePreviewObserverEntry): void {
+		const before = entry.pendingEmbeds.size;
+		entry.rootEl.querySelectorAll<HTMLElement>(".internal-embed.markdown-embed").forEach((embed) => {
+			if (!embed.isConnected) return;
 			if (this.leaves.isNestedWithinEmbed(embed)) return;
 			entry.pendingEmbeds.add(embed);
 		});
 
-		if (entry.pendingEmbeds.size > 0) {
+		if (entry.pendingEmbeds.size > before) {
 			this.scheduleObserverEntry(entry);
 		}
 	}

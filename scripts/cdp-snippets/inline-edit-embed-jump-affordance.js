@@ -83,6 +83,22 @@
 			text: String(embed?.textContent ?? ""),
 		};
 	};
+	const waitForStableInlineEdit = async (leaf, label) => {
+		const stable = await waitFor(() => {
+			const state = snapshot(leaf);
+			const tailHidden = !state.text.includes("blp_sys") && !state.text.includes("blp_ver");
+			const ready = state.activeInlineCount === 1 &&
+				state.pageLinkCount === 1 &&
+				state.directLinkCount === 1 &&
+				state.hostCount === 1 &&
+				state.rootCount === 1 &&
+				state.linkVisible &&
+				tailHidden;
+			return ready ? state : null;
+		}, { timeoutMs: 15000 });
+		assert(stable, `${label} did not reach stable inline-edit state: ${JSON.stringify(snapshot(leaf))}`);
+		return stable;
+	};
 
 	try {
 		try {
@@ -119,13 +135,7 @@
 
 		step("open host with plugin enabled");
 		const activeLeaf = await openHost();
-		await waitFor(
-			() => getEmbed(activeLeaf)?.querySelector(".blp-inline-edit-host.blp-inline-edit-root, .blp-inline-edit-host .blp-inline-edit-root"),
-			{ timeoutMs: 15000 }
-		);
-		await wait(300);
-
-		const active = snapshot(activeLeaf);
+		const active = await waitForStableInlineEdit(activeLeaf, "active inline-edit host");
 		assert(active.activeInlineCount === 1, `expected one active inline-edit embed, got ${active.activeInlineCount}`);
 		assert(active.pageLinkCount === 1, `expected one page markdown-embed-link, got ${active.pageLinkCount}`);
 		assert(active.directLinkCount === 1, `expected one direct native markdown-embed-link, got ${active.directLinkCount}`);
@@ -143,11 +153,7 @@
 
 		step("remount host");
 		const remountLeaf = await openHost();
-		await waitFor(
-			() => getEmbed(remountLeaf)?.querySelector(".blp-inline-edit-host.blp-inline-edit-root, .blp-inline-edit-host .blp-inline-edit-root"),
-			{ timeoutMs: 15000 }
-		);
-		const remount = snapshot(remountLeaf);
+		const remount = await waitForStableInlineEdit(remountLeaf, "remounted inline-edit host");
 		assert(remount.pageLinkCount === 1, `remount duplicated or removed link, got ${remount.pageLinkCount}`);
 		assert(remount.hostCount === 1, `remount duplicated or removed host, got ${remount.hostCount}`);
 

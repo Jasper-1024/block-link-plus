@@ -1,0 +1,28 @@
+{
+  "key": "BLP-2",
+  "loops": {
+    "rca": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "fix-design": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "last_stage": "code-review",
+  "last_verdict": "accepted",
+  "last_target_state": "Human Review",
+  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "updated_at": "2026-06-15T17:33:32Z"
+}
