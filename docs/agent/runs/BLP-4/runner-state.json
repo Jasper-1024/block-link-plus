@@ -20,10 +20,10 @@
       "last_counted_verdict": null
     }
   },
-  "last_stage": "code-review",
-  "last_verdict": "accepted",
-  "last_target_state": "Human Review",
-  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "last_stage": "finalize",
+  "last_verdict": "completed",
+  "last_target_state": "Done",
+  "last_reason": "finalization completed after human Ready to Merge approval",
   "artifacts": {
     "investigation": {
       "path": "docs/agent/runs/BLP-4/investigation.md",
@@ -48,9 +48,13 @@
     "code-review": {
       "path": "docs/agent/runs/BLP-4/code-review.md",
       "sha256": "3ff14da5918647d0428016ad218babb76c6c847798a5105f74900b4b76970869"
+    },
+    "finalize": {
+      "path": "docs/agent/runs/BLP-4/finalize.md",
+      "sha256": "e74cbfbb1108e2428f5460be3089aac4be64e75bb3622b21de836ff1fb2ead5f"
     }
   },
-  "updated_at": "2026-06-16T07:36:29Z",
+  "updated_at": "2026-06-16T08:45:38Z",
   "reviews": {
     "rca-review": {
       "source_stage": "investigation",
@@ -66,6 +70,11 @@
       "source_stage": "implementation",
       "source_sha256": "e1276cc93b191ff85d4648cac43ccb587209f8a558d47447d6fc7cafcee50ac4",
       "review_sha256": "3ff14da5918647d0428016ad218babb76c6c847798a5105f74900b4b76970869"
+    },
+    "finalize": {
+      "source_stage": "code-review",
+      "source_sha256": "883b0abf96bb73403dd2d2f273ed22f8f70172ede9157e896551043dd1d0c7b4",
+      "review_sha256": "e74cbfbb1108e2428f5460be3089aac4be64e75bb3622b21de836ff1fb2ead5f"
     }
   }
 }
