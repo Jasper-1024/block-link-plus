@@ -9,13 +9,26 @@ Link Plus issues.
 - [../../WORKFLOW.md](../../WORKFLOW.md): maintained Plane-backed harness task workflow.
 - [bug-investigation.md](bug-investigation.md): issue investigation process.
 - [cdp-validation.md](cdp-validation.md): isolated Obsidian/CDP validation.
-- [openspec-gates.md](openspec-gates.md): when OpenSpec is required.
+- [openspec-gates.md](openspec-gates.md): OpenSpec boundary after Matt-style clarification.
 - [evidence-format.md](evidence-format.md): required handoff format.
 - [stages/index.md](stages/index.md): repo-owned runner stage identities.
 - [workflow.json](workflow.json): machine-readable harness contract for external runners.
 
 ## Existing Sources Of Truth
 
+- [../../CONTEXT.md](../../CONTEXT.md): BLP domain language.
+- [../../docs/agents/domain.md](../../docs/agents/domain.md): domain-doc
+  consumption rules for installed skills.
+- [../../docs/agents/issue-tracker.md](../../docs/agents/issue-tracker.md):
+  Plane/GitHub tracker boundary.
+- [../../docs/agents/triage-labels.md](../../docs/agents/triage-labels.md):
+  Matt-style triage role mapping.
+- [../../.codex/skills/grill-with-docs/SKILL.md](../../.codex/skills/grill-with-docs/SKILL.md):
+  feature/refactor clarification.
+- [../../.codex/skills/diagnose/SKILL.md](../../.codex/skills/diagnose/SKILL.md):
+  disciplined bug diagnosis.
+- [../../.codex/skills/tdd/SKILL.md](../../.codex/skills/tdd/SKILL.md):
+  vertical-slice implementation.
 - [../../openspec/project.md](../../openspec/project.md): project conventions.
 - `openspec/specs/`: accepted behavior.
 - `openspec/changes/`: proposed or in-progress behavior changes.
@@ -59,5 +72,7 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 
 ## Quick Rule
 
-For direct bugs, investigate and prove the current behavior first. For new or
-changed behavior, start with OpenSpec.
+For direct bugs, use `diagnose` and prove the current behavior first. For new
+features, refactors, or unclear behavior changes, use `grill-with-docs` before
+implementation planning. Use OpenSpec only when a stage or human explicitly
+needs a formal behavior delta.

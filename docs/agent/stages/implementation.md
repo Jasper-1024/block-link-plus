@@ -15,9 +15,12 @@ Read these before editing:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
+- `CONTEXT.md`
+- `.codex/skills/tdd/SKILL.md`
 - `docs/agent/index.md`
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
+- `docs/agents/domain.md`
 - `docs/agent/runs/<key>/investigation.md`
 - `docs/agent/runs/<key>/rca-review.md`
 - `docs/agent/runs/<key>/fix-design.md`
@@ -33,7 +36,9 @@ Do:
 
 - preserve the accepted child-issue boundary
 - make the smallest source patch that satisfies the accepted design
-- add or update targeted regression tests before relying on broader tests
+- implement with vertical-slice TDD: one behavior test, smallest code to pass,
+  then the next behavior
+- prefer public interfaces and the highest stable behavior seam for tests
 - run the required validation from the accepted review
 - record exact commands, important output, and any validation that could not run
 - keep temporary probes under `.tmp/`
@@ -54,6 +59,8 @@ Do not:
 - change OpenSpec unless the accepted design review explicitly requires it
 - change generated files, package metadata, or CDP snippets unless they are
   necessary for the accepted fix and called out in the handoff
+- write all tests first and then all implementation
+- mock BLP-owned internal collaborators when a real behavior seam exists
 - call Plane or other tracker APIs
 - hide failed validation by replacing it with static reasoning
 
@@ -85,6 +92,8 @@ Use these sections:
 
 ## Tests Added Or Updated
 
+## TDD Slices
+
 ## Validation
 
 ## Runtime Evidence
@@ -103,9 +112,9 @@ attack.
 ## Gate Semantics
 
 Use `ready-for-review` only when the implementation patch exists, the targeted
-regression passes, and required broader validation has either passed or is
-clearly reported with a non-blocking reason. This exits to code review, not to
-merge or release.
+behavior tests pass, required broader validation has either passed or is clearly
+reported with a non-blocking reason, and the artifact records the TDD slices
+actually executed. This exits to code review, not to merge or release.
 
 Use `validation-failed` when the patch was made but a required test, build, or
 runtime check failed.

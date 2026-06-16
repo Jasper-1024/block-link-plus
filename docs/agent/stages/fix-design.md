@@ -15,9 +15,11 @@ Read these before designing:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
+- `CONTEXT.md`
 - `docs/agent/index.md`
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
+- `docs/agent/openspec-gates.md`
 - `docs/agent/runs/<key>/investigation.md`
 - `docs/agent/runs/<key>/rca-review.md`
 - `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -34,7 +36,9 @@ Do:
 - cite exact source files, functions, and framework behavior
 - include at least one rejected alternative and why it is worse
 - define targeted unit tests and Obsidian/CDP runtime validation
-- call out any required OpenSpec gate before implementation
+- call out when the task is actually feature/refactor work that should go
+  through `grill-with-docs` instead of bug fix design
+- call out any explicitly required OpenSpec delta before implementation
 
 For BLP inline-edit issues involving CodeMirror transactions, explicitly check
 whether the proposed path depends on `transactionFilter`. CodeMirror regular
@@ -47,6 +51,7 @@ Do not:
 
 - broaden the fix to the full GitHub issue when the accepted RCA is a child
   sub-bug
+- use fix design as a substitute for feature discussion
 - turn a speculative cleanup into the recommended fix
 - claim runtime validation before implementation exists
 - call Plane or other tracker APIs
@@ -105,4 +110,5 @@ Use `context-blocked` when required RCA artifacts or accepted verdicts are
 missing.
 
 Use `human-review-required` when the design depends on a product or architecture
-decision that should not be delegated to agents.
+decision that should not be delegated to agents, or when the accepted RCA shows
+the request is really new feature/refactor work that needs `grill-with-docs`.

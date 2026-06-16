@@ -16,6 +16,8 @@ Read these before reaching a verdict:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
+- `CONTEXT.md`
+- `.codex/skills/tdd/SKILL.md`
 - `docs/agent/index.md`
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
@@ -39,6 +41,8 @@ Do:
 - check whether the patch implements the accepted design and nothing broader
 - review correctness, regression risk, edge cases, and missing tests
 - verify that validation evidence matches the changed behavior
+- verify that the implementation used behavior-oriented vertical slices, or
+  clearly justified why a different test seam was necessary
 - inspect source and test diffs directly instead of relying only on summaries
 - call out exact files, functions, and validation gaps
 - propose narrow revision instructions when the verdict is `needs-revision`
@@ -58,6 +62,8 @@ Do not:
 - broaden the review to unrelated repository cleanup
 - accept a patch whose targeted regression or required runtime validation is
   missing without a documented non-blocking reason
+- accept tests that mostly assert private implementation details when a public
+  behavior seam was available
 - call Plane or other tracker APIs
 
 Avoid MCP/file tools that require interactive elicitation. If you need a small
@@ -88,6 +94,8 @@ Use these sections:
 ## Design Compliance
 
 ## Test And Validation Review
+
+## TDD Review
 
 ## Required Revisions
 

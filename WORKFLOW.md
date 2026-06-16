@@ -3,30 +3,45 @@
 ## Purpose
 
 This file is the entrypoint for Codex, Plane-backed harness runners, and other
-agents working inside Block Link Plus. It defines how to investigate BLP issues
-using repo-owned docs, scripts, and specs without relying on external chat
-context.
+agents working inside Block Link Plus. It defines how BLP uses repo-local Matt
+Pocock engineering skills, Obsidian/CDP runtime evidence, and stage artifacts
+without relying on external chat context.
 
-Scope: bug triage, regression investigation, validation planning, and
-implementation handoff. Do not move external runner code into this repo.
+Do not move external runner code into this repo. The runner supplies task
+identity, tracker state, and artifact paths; the repo owns the stage policy.
 
 ## Production Status
 
-This workflow is the maintained BLP mainline process. The earlier
-`agent-test`/trial runner phase has ended; future tracker-driven issue work
-should treat these repo-owned stage specs and artifact rules as the baseline.
+This workflow is the maintained BLP mainline process. External runners may
+evolve independently, but they must not embed BLP-specific stage policy as their
+source of truth. If runner behavior and this repository disagree, update this
+workflow or the matching stage spec first, then adjust the runner to follow it.
 
-External runners may evolve independently, but they must not embed BLP-specific
-stage policy as their source of truth. If runner behavior and this repository
-disagree, update this workflow or the matching stage spec first, then adjust the
-runner to follow it. Machine-readable runner metadata lives in
+Machine-readable runner metadata lives in
 [docs/agent/workflow.json](docs/agent/workflow.json).
+
+## Matt Skills Baseline
+
+BLP installs the following repo-local skills:
+
+- `.codex/skills/setup-matt-pocock-skills/SKILL.md`
+- `.codex/skills/grill-with-docs/SKILL.md`
+- `.codex/skills/diagnose/SKILL.md`
+- `.codex/skills/tdd/SKILL.md`
+
+Agents should also read:
+
+- [CONTEXT.md](CONTEXT.md): BLP domain language.
+- [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md): Plane/GitHub boundary.
+- [docs/agents/triage-labels.md](docs/agents/triage-labels.md): role/state mapping.
+- [docs/agents/domain.md](docs/agents/domain.md): how to consume context docs.
 
 ## Tracker Relationship
 
-Plane or another tracker supplies task identity, status, and task text only. Do
-not call Plane APIs from repo runs. Treat this repo, its OpenSpec files, and the
-agent docs under `docs/agent/` as the working contract.
+Plane supplies task identity, status, labels, and task text only. Repo-local
+agents must not call Plane APIs. Treat this repo, its skills, and
+`docs/agent/` as the working contract. The runner writes comments, links, and
+state transitions back to Plane.
 
 ## Workspace Expectations
 
@@ -34,28 +49,61 @@ Use an issue-specific git worktree, not the user's main worktree. At the start
 and end of a run, record `git status --short`. Keep disposable Obsidian
 profile/vault state out of git.
 
-Documentation-only harness tasks may edit repo docs. Bug investigation at the
-middle-flow gate must not edit source, tests, package metadata, generated files,
+Documentation-only harness tasks may edit repo docs. Bug investigation and
+design stages must not edit source, tests, package metadata, generated files,
 CDP scripts, or OpenSpec specs unless implementation is explicitly requested.
 
-## Standard Bug Investigation Flow
+## Bug Lane
 
-1. Read the task text and classify it as confirmed bug, possible bug, feature
-   request, documentation issue, or cluster.
-2. Read `AGENTS.md`, this file, and [docs/agent/index.md](docs/agent/index.md).
-3. Decide whether OpenSpec is required using
-   [docs/agent/openspec-gates.md](docs/agent/openspec-gates.md).
-4. Locate relevant specs, source files, tests, docs, and CDP snippets with `rg`.
-5. Reproduce or disprove the report with the required runtime gate. For
-   `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror state,
-   plugin lifecycle, focus, scroll, settings, or editor behavior, the CDP
-   runtime check must pass before root-cause analysis.
-6. Capture evidence: issue text assumptions, commands, DOM/runtime facts,
-   screenshots if useful, and exact file/function references.
-7. Identify root cause. If the report is a cluster, split it into sub-bugs.
-8. Produce a bounded investigation handoff. If an RCA review exists, answer its
-   specific evidence gaps instead of restarting broad triage. Stop at the
-   middle-flow gate unless code changes were explicitly requested.
+Bug work follows `.codex/skills/diagnose/SKILL.md`:
+
+1. Build a feedback loop.
+2. Reproduce the reported symptom.
+3. Generate ranked falsifiable hypotheses.
+4. Instrument one hypothesis at a time.
+5. Fix with a regression test when a correct seam exists.
+6. Clean up probes and record the cause.
+
+For `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror state,
+plugin lifecycle, focus, scroll, settings, or editor behavior, the CDP runtime
+check must pass before root-cause analysis.
+
+The runner-visible bug lane remains:
+
+```text
+investigation -> rca-review -> fix-design -> fix-design-review
+-> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
+```
+
+## Feature And Refactor Lane
+
+New features, behavior changes, unclear product work, and large refactors start
+with `.codex/skills/grill-with-docs/SKILL.md`.
+
+The goal is to align language, scenarios, boundaries, and hard-to-reverse
+decisions before implementation. Update `CONTEXT.md` only when a
+project-specific term is resolved. Add an ADR only when the decision is
+hard-to-reverse, surprising without context, and the result of a real trade-off.
+
+Do not use the bug RCA loop as a substitute for feature discussion. If a Plane
+task needs product or architecture judgment, stop with `human-review-required`
+and state what must be clarified.
+
+## Implementation Lane
+
+Implementation follows `.codex/skills/tdd/SKILL.md`.
+
+Use vertical slices:
+
+- one behavior test at the highest stable public seam
+- the smallest implementation that makes that test pass
+- repeat for the next behavior
+- refactor only after the slice is green
+
+Tests should verify behavior through public interfaces, not private
+implementation details. Mock only at system boundaries. For Obsidian runtime
+behavior, pair tests with the smallest CDP validation that proves the behavior
+in the real app.
 
 ## Repo-Owned Stage Specs
 
@@ -75,56 +123,19 @@ stage rules in external orchestration code.
 
 ## OpenSpec Boundary
 
-OpenSpec remains the product behavior/specification system under `openspec/`.
-It is not a runner workflow stage. Agents use
-[docs/agent/openspec-gates.md](docs/agent/openspec-gates.md) to decide whether a
-task is direct bug restoration or requires a human-approved OpenSpec proposal.
-If a stage discovers that a proposal is required, it must stop with
-`human-review-required` instead of creating a parallel agent loop.
+OpenSpec remains historical and formal behavior documentation under
+`openspec/`. It is not the default first step for new work.
 
-## Middle-Flow Gate
-
-Middle-flow means evidence, RCA, and gate handoff only. The agent may inspect
-files, run read-only commands, and use the isolated Obsidian/CDP runtime for
-evidence. The agent must not modify implementation files or tests until the
-runner/user asks for implementation. Do not produce an implementation-ready fix
-plan while the RCA review loop still has blocking evidence gaps.
-
-For `cdp-required` tasks, middle-flow is runtime-first:
-
-- Static reading is allowed only to understand the task, choose the smallest
-  repro path, and locate existing CDP snippets.
-- Run the fixed-port CDP runtime check in
-  [docs/agent/cdp-validation.md](docs/agent/cdp-validation.md) before claiming
-  root cause.
-- If Obsidian/CDP cannot start, produce only a Runtime Blocked handoff with the
-  exact failed commands and missing prerequisites. Do not submit a root cause,
-  implementation target, or fix-design handoff based on static analysis alone.
-
-When RCA review is accepted, the next middle-flow stage is fix design, followed
-by adversarial fix-design review. Implementation starts only after fix-design
-review accepts the design. The implementation agent must follow
-[docs/agent/stages/implementation.md](docs/agent/stages/implementation.md),
-make the smallest accepted patch, and record tests, build, and CDP evidence in
-`docs/agent/runs/<tracker-key>/implementation.md`. A separate code-review agent
-then follows [docs/agent/stages/code-review.md](docs/agent/stages/code-review.md)
-and writes `docs/agent/runs/<tracker-key>/code-review.md` before a human merge
-or release decision. If a person accepts that final decision, they move the
-tracker item to `Ready to Merge`; only then may the finalization agent follow
-[docs/agent/stages/finalize.md](docs/agent/stages/finalize.md) and write
-`docs/agent/runs/<tracker-key>/finalize.md`.
+Use `grill-with-docs` first for feature/refactor clarification. Create or update
+OpenSpec only when a stage or human explicitly asks for a formal behavior delta,
+or when an accepted design changes documented behavior and a formal spec record
+adds value.
 
 ## Human Review
 
 Human Review means the agent has finished the requested investigation or change
-and needs a person to decide what happens next. It is not proof that the issue is
-merged, released, or fully accepted. A Human Review handoff must state:
-
-- what was confirmed
-- what was not confirmed
-- what changed, if anything
-- validation performed
-- remaining risks or decisions
+and needs a person to decide what happens next. It is not proof that the issue
+is merged, released, or fully accepted.
 
 For the final merge path, do not move `Human Review` back to `Todo` or
 `In Progress`. Move it to `Ready to Merge` only after the human accepts the
@@ -138,6 +149,7 @@ Use the smallest validation that proves the claim, then broaden as risk grows.
 corepack pnpm install --frozen-lockfile
 corepack pnpm test
 corepack pnpm run build-with-types
+corepack pnpm run obsidian:debug-env
 $env:OB_CDP_PORT='19225'
 $env:OB_CDP_TITLE_CONTAINS=' - blp - '
 node scripts/obsidian-cdp.js list
@@ -147,32 +159,18 @@ corepack pnpm run agent:workflow-check
 ```
 
 `corepack pnpm install --frozen-lockfile` prepares an issue worktree from the
-repo-owned lockfile without relying on the user's main checkout. `corepack pnpm
-run build-with-types` rebuilds the plugin bundle. Run it for implementation
-validation or when generated output is expected; otherwise prefer targeted tests
-and CDP evidence during investigation-only runs.
+repo-owned lockfile without relying on the user's main checkout. Run
+`corepack pnpm run build-with-types` for implementation validation or when
+generated output is expected; otherwise prefer targeted tests and CDP evidence.
 
-## Investigation Handoff
+## Run Archives
 
-Use the format in
-[docs/agent/evidence-format.md](docs/agent/evidence-format.md). Minimum
-sections are:
-
-- Status
-- Scope
-- Evidence
-- Root Cause
-- Fix Plan
-- Validation Plan
-- Open Questions / Risks
-
-Canonical investigation artifacts belong under:
+Canonical artifacts belong under:
 
 ```text
-docs/agent/runs/<tracker-key>/investigation.md
+docs/agent/runs/<tracker-key>/
 ```
 
 Raw prompts, event streams, turn metadata, and runtime command logs belong under
 `docs/agent/runs/<tracker-key>/trace/<stage>/`. Plane comments and follow-up
-agents should point to the canonical repo-local artifact above, not to raw trace
-files. Trace files are audit material, not default task context.
+agents should point to canonical repo-local artifacts, not raw trace files.

@@ -31,7 +31,20 @@ if (workflow.artifactPattern !== "docs/agent/runs/{key}/{stage}.md") {
   fail("artifactPattern must be docs/agent/runs/{key}/{stage}.md");
 }
 
-for (const requiredPath of ["AGENTS.md", "WORKFLOW.md", "docs/agent/index.md", "docs/agent/cdp-validation.md"]) {
+for (const requiredPath of [
+  "AGENTS.md",
+  "WORKFLOW.md",
+  "CONTEXT.md",
+  "docs/agent/index.md",
+  "docs/agent/cdp-validation.md",
+  "docs/agents/domain.md",
+  "docs/agents/issue-tracker.md",
+  "docs/agents/triage-labels.md",
+  ".codex/skills/setup-matt-pocock-skills/SKILL.md",
+  ".codex/skills/grill-with-docs/SKILL.md",
+  ".codex/skills/diagnose/SKILL.md",
+  ".codex/skills/tdd/SKILL.md",
+]) {
   if (!exists(requiredPath)) fail(`required harness path is missing: ${requiredPath}`);
 }
 

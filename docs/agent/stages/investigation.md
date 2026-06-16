@@ -15,9 +15,12 @@ Read these before making RCA claims:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
+- `CONTEXT.md`
+- `.codex/skills/diagnose/SKILL.md`
 - `docs/agent/index.md`
 - `docs/agent/evidence-format.md`
 - `docs/agent/cdp-validation.md`
+- `docs/agents/domain.md`
 - `docs/agent/runs/<key>/rca-review.md`, if it exists
 - `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
 
@@ -48,6 +51,16 @@ Blocked. Do not promote static owner mapping into root cause.
 Use `docs/agent/cdp-validation.md` as the source of truth for launching and
 checking the disposable Obsidian runtime.
 
+## Diagnose Discipline
+
+Follow `.codex/skills/diagnose/SKILL.md`:
+
+- build a fast enough feedback loop before claiming cause
+- reproduce the user's symptom, not a nearby failure
+- generate ranked falsifiable hypotheses before instrumenting
+- map each probe to a hypothesis prediction
+- remove or isolate throwaway probes before declaring the stage complete
+
 ## Scope
 
 Do:
@@ -57,6 +70,7 @@ Do:
 - split cluster symptoms before implementation
 - collect exact runtime evidence, commands, and file/function references
 - separate hard facts from hypotheses
+- use `CONTEXT.md` vocabulary in the artifact
 - answer prior RCA review gaps narrowly when this is a loop continuation
 
 Do not:

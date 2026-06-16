@@ -1,22 +1,42 @@
-# OpenSpec Gates
+# OpenSpec Boundary
 
-OpenSpec is required when the requested work changes intended behavior. Direct
-bug investigation is appropriate when the work is to understand or restore
-existing behavior.
+OpenSpec is optional formal behavior documentation for BLP. It is not the
+default entry point for new features, refactors, or unclear product work.
 
-OpenSpec is a product specification gate, not a runner stage. If a harness stage
-finds that OpenSpec is required, stop with `human-review-required` and state the
-proposal boundary.
+Start feature/refactor clarification with:
 
-## Use OpenSpec For
+- `CONTEXT.md`
+- `.codex/skills/grill-with-docs/SKILL.md`
+- `docs/agents/domain.md`
+
+Create or update OpenSpec only when a stage or human explicitly asks for a
+formal behavior delta, or when an accepted design changes behavior that existing
+specs already treat as authoritative.
+
+## Usually Use Grill With Docs
 
 - New capabilities or user-visible workflows.
 - Breaking behavior, schema, command, settings, or API changes.
 - Architecture shifts or cross-cutting implementation patterns.
 - Security or performance work that changes behavior.
-- Ambiguous requests where the intended behavior is not clear.
+- Ambiguous requests where intended behavior is not clear.
 
-Start by reading [../../openspec/AGENTS.md](../../openspec/AGENTS.md), then run:
+## Usually Direct Diagnosis
+
+- Regressions where expected behavior is already covered by docs, tests, specs,
+  or shipped behavior.
+- Runtime evidence gathering.
+- Narrow bug fixes that restore intended behavior.
+- Test additions for existing behavior.
+- Documentation-only harness changes.
+
+For direct diagnosis, still read relevant specs when they define expected
+behavior. If the fix plan would alter documented behavior, stop with
+`human-review-required` unless the human has explicitly asked for OpenSpec work.
+
+## If OpenSpec Is Explicitly Needed
+
+Read [../../openspec/AGENTS.md](../../openspec/AGENTS.md), then run:
 
 ```powershell
 openspec list
@@ -24,27 +44,3 @@ openspec list --specs
 ```
 
 Do not implement an OpenSpec change before proposal approval.
-
-## Usually Direct Investigation
-
-- Regressions where expected behavior is already covered by specs, docs, tests,
-  or shipped behavior.
-- Runtime evidence gathering.
-- Narrow bug fixes that restore intended behavior.
-- Test additions for existing behavior.
-- Documentation-only harness changes.
-
-For direct investigation, still read relevant specs when they define expected
-behavior. If the fix plan would alter the spec, stop and create or request an
-OpenSpec proposal.
-
-## Conflict Check
-
-Before implementation, check active changes for overlap:
-
-```powershell
-openspec list
-rg -n "<capability-or-keyword>" openspec/changes openspec/specs
-```
-
-If a pending change owns the same behavior, call that out in the handoff.

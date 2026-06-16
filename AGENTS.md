@@ -27,10 +27,37 @@ Runner-readable workflow metadata lives in
 For detailed harness guidance, use [docs/agent/index.md](docs/agent/index.md).
 It links bug investigation, CDP validation, OpenSpec gates, and handoff formats.
 
-Use OpenSpec when a request adds or changes capabilities, changes architecture,
-or is ambiguous enough that the spec must lead. For direct bug investigation,
-triage and reproduce the issue first, read the relevant specs as needed, and
-only create an OpenSpec change if the fix changes intended behavior.
+BLP now uses Matt Pocock's small engineering skills as the first workflow layer.
+For new features, refactors, or unclear product direction, use
+`.codex/skills/grill-with-docs/SKILL.md` before implementation planning. For
+hard bugs, use `.codex/skills/diagnose/SKILL.md`. For implementation, use
+`.codex/skills/tdd/SKILL.md` and work in vertical slices. OpenSpec remains
+historical/formal behavior documentation; create or modify OpenSpec only when a
+stage or human explicitly asks for a formal spec delta.
+
+## Agent skills
+
+### Issue tracker
+
+BLP work is coordinated in Plane; repo-local agents write artifacts and the
+external runner updates Plane. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Plane states and labels are mapped to Matt-style triage roles. See
+[docs/agents/triage-labels.md](docs/agents/triage-labels.md).
+
+### Domain docs
+
+BLP uses a single-context `CONTEXT.md` plus lightweight ADRs in `docs/adr/`.
+See [docs/agents/domain.md](docs/agents/domain.md).
+
+### Installed skills
+
+- `.codex/skills/setup-matt-pocock-skills/SKILL.md`
+- `.codex/skills/grill-with-docs/SKILL.md`
+- `.codex/skills/diagnose/SKILL.md`
+- `.codex/skills/tdd/SKILL.md`
 
 Primary validation surfaces:
 
