@@ -17,15 +17,15 @@ Read these before editing:
 - `WORKFLOW.md`
 - `CONTEXT.md`
 - `.codex/skills/tdd/SKILL.md`
-- `docs/agent/index.md`
-- `docs/agent/evidence-format.md`
-- `docs/agent/cdp-validation.md`
+- `docs/harness/README.md`
+- `docs/harness/guides/evidence-format.md`
+- `docs/harness/guides/cdp-runtime.md`
 - `docs/agents/domain.md`
-- `docs/agent/runs/<key>/investigation.md`
-- `docs/agent/runs/<key>/rca-review.md`
-- `docs/agent/runs/<key>/fix-design.md`
-- `docs/agent/runs/<key>/fix-design-review.md`
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/rca-review.md`
+- `docs/harness/runs/<key>/fix-design.md`
+- `docs/harness/runs/<key>/fix-design-review.md`
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the fix-design review verdict is not `accepted`, stop and produce a Context
 Blocked handoff. Do not implement from an unreviewed or rejected design.
@@ -73,7 +73,7 @@ smallest design question that must be reopened.
 Create or update the runner-provided implementation artifact, normally:
 
 ```text
-docs/agent/runs/<key>/implementation.md
+docs/harness/runs/<key>/implementation.md
 ```
 
 Use these sections:

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const workflowPath = path.join(repoRoot, "docs", "agent", "workflow.json");
+const workflowPath = path.join(repoRoot, "docs", "harness", "workflow.json");
 
 function fail(message) {
   console.error(`agent workflow check failed: ${message}`);
@@ -17,16 +17,34 @@ function exists(relativePath) {
   return fs.existsSync(path.join(repoRoot, relativePath));
 }
 
+function walkFiles(relativeDir) {
+  const root = path.join(repoRoot, relativeDir);
+  const results = [];
+  if (!fs.existsSync(root)) return results;
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    const relativePath = path.join(relativeDir, entry.name).replaceAll("\\", "/");
+    if (relativePath.startsWith("docs/harness/runs/")) continue;
+    if (entry.isDirectory()) {
+      results.push(...walkFiles(relativePath));
+    } else {
+      results.push(relativePath);
+    }
+  }
+  return results;
+}
+
 const workflow = readJson(workflowPath);
 const baselineRequiredPaths = [
   "AGENTS.md",
   "WORKFLOW.md",
   "CONTEXT.md",
-  "docs/agent/index.md",
-  "docs/agent/workflow.json",
-  "docs/agent/cdp-validation.md",
-  "docs/agent/evidence-format.md",
-  "docs/agent/stages/index.md",
+  "docs/harness/README.md",
+  "docs/harness/workflow.json",
+  "docs/harness/guides/bug-investigation.md",
+  "docs/harness/guides/cdp-runtime.md",
+  "docs/harness/guides/evidence-format.md",
+  "docs/harness/guides/openspec-boundary.md",
+  "docs/harness/stages/index.md",
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",
   "docs/agents/triage-labels.md",
@@ -44,8 +62,8 @@ if (workflow.workflow !== "blp") {
   fail("workflow.json workflow must be blp");
 }
 
-if (workflow.artifactPattern !== "docs/agent/runs/{key}/{stage}.md") {
-  fail("artifactPattern must be docs/agent/runs/{key}/{stage}.md");
+if (workflow.artifactPattern !== "docs/harness/runs/{key}/{stage}.md") {
+  fail("artifactPattern must be docs/harness/runs/{key}/{stage}.md");
 }
 
 if (!Array.isArray(workflow.requiredPaths) || workflow.requiredPaths.length === 0) {
@@ -87,8 +105,8 @@ for (const stage of stages) {
       fail(`${stageName} is missing ${key}`);
     }
   }
-  if (stage.artifact !== `docs/agent/runs/{key}/${stage.name}.md`) {
-    fail(`${stageName} artifact must follow docs/agent/runs/{key}/${stage.name}.md`);
+  if (stage.artifact !== `docs/harness/runs/{key}/${stage.name}.md`) {
+    fail(`${stageName} artifact must follow docs/harness/runs/{key}/${stage.name}.md`);
   }
   if (!exists(stage.spec)) {
     fail(`${stageName} spec does not exist: ${stage.spec}`);
@@ -125,10 +143,30 @@ for (const laneName of ["bug", "enhancement", "maintenance"]) {
   }
 }
 
-for (const file of ["WORKFLOW.md", "docs/agent/cdp-validation.md"]) {
+for (const file of ["WORKFLOW.md", "docs/harness/guides/cdp-runtime.md"]) {
   const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
   if (text.includes("```powershell\ncorepack pnpm run obsidian:debug-env -- -Port")) {
     fail(`${file} still uses the known-bad pnpm -- forwarding form as a command block`);
+  }
+}
+
+const activeFiles = [
+  "AGENTS.md",
+  "WORKFLOW.md",
+  "CONTEXT.md",
+  ".rgignore",
+  "scripts/check-agent-workflow.mjs",
+  ...walkFiles("docs/harness"),
+  ...walkFiles("docs/agents"),
+];
+const retiredForwardHarnessPath = ["docs", "agent", ""].join("/");
+const retiredWindowsHarnessPath = ["docs", "agent", ""].join("\\");
+
+for (const file of activeFiles) {
+  if (!exists(file)) continue;
+  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
+  if (text.includes(retiredForwardHarnessPath) || text.includes(retiredWindowsHarnessPath)) {
+    fail(`${file} still references the retired harness path`);
   }
 }
 

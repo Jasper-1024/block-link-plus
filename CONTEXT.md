@@ -48,6 +48,6 @@ Protocol for evidence gathering and validation. _Avoid_: browser test when the
 assertion depends on the Obsidian app.
 
 **Agent Run**:
-One tracked task execution under `docs/agent/runs/<key>/`, including canonical
+One tracked task execution under `docs/harness/runs/<key>/`, including canonical
 stage artifacts and raw trace material. _Avoid_: chat log when referring to the
 repo-local audit archive.

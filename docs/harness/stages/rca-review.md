@@ -15,11 +15,11 @@ Read these before reaching a verdict:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
-- `docs/agent/index.md`
-- `docs/agent/evidence-format.md`
-- `docs/agent/cdp-validation.md`
-- `docs/agent/runs/<key>/investigation.md`
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/README.md`
+- `docs/harness/guides/evidence-format.md`
+- `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Verdicts
 
@@ -64,7 +64,7 @@ normal shell or repo tools so a non-interactive runner can continue.
 Create or update the runner-provided RCA review artifact, normally:
 
 ```text
-docs/agent/runs/<key>/rca-review.md
+docs/harness/runs/<key>/rca-review.md
 ```
 
 Use these sections:

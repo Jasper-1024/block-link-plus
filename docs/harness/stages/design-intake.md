@@ -17,8 +17,8 @@ Read these before writing the artifact:
 - `docs/agents/issue-tracker.md`
 - `docs/agents/triage-labels.md`
 - `.codex/skills/grill-with-docs/SKILL.md`
-- `docs/agent/runs/<key>/source-issue.md`
-- `docs/agent/runs/<key>/issue-context.json`
+- `docs/harness/runs/<key>/context/source-issue.md`
+- `docs/harness/runs/<key>/context/issue-context.json`
 
 ## Rules
 
@@ -37,7 +37,7 @@ Read these before writing the artifact:
 Write the artifact to:
 
 ```text
-docs/agent/runs/<key>/design-intake.md
+docs/harness/runs/<key>/design-intake.md
 ```
 
 Use this structure:

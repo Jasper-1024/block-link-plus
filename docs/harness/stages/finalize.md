@@ -15,15 +15,15 @@ Read these before doing any merge or commit work:
 
 - `AGENTS.md`
 - `WORKFLOW.md`
-- `docs/agent/index.md`
-- `docs/agent/workflow.json`
-- `docs/agent/runs/<key>/investigation.md`
-- `docs/agent/runs/<key>/rca-review.md`
-- `docs/agent/runs/<key>/fix-design.md`
-- `docs/agent/runs/<key>/fix-design-review.md`
-- `docs/agent/runs/<key>/implementation.md`
-- `docs/agent/runs/<key>/code-review.md`
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/README.md`
+- `docs/harness/workflow.json`
+- `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/rca-review.md`
+- `docs/harness/runs/<key>/fix-design.md`
+- `docs/harness/runs/<key>/fix-design-review.md`
+- `docs/harness/runs/<key>/implementation.md`
+- `docs/harness/runs/<key>/code-review.md`
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 - current `git status --short`
 - current branch and merge target
 
@@ -63,7 +63,7 @@ the merge is not clean, stop and route back to human review.
 Create or update the runner-provided finalization artifact, normally:
 
 ```text
-docs/agent/runs/<key>/finalize.md
+docs/harness/runs/<key>/finalize.md
 ```
 
 Use these sections:

@@ -17,12 +17,12 @@ Read these before making RCA claims:
 - `WORKFLOW.md`
 - `CONTEXT.md`
 - `.codex/skills/diagnose/SKILL.md`
-- `docs/agent/index.md`
-- `docs/agent/evidence-format.md`
-- `docs/agent/cdp-validation.md`
+- `docs/harness/README.md`
+- `docs/harness/guides/evidence-format.md`
+- `docs/harness/guides/cdp-runtime.md`
 - `docs/agents/domain.md`
-- `docs/agent/runs/<key>/rca-review.md`, if it exists
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/runs/<key>/rca-review.md`, if it exists
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Loop Semantics
 
@@ -32,7 +32,7 @@ This stage is part of the RCA loop:
 investigation -> rca-review -> gate
 ```
 
-If `docs/agent/runs/<key>/rca-review.md` exists, do not restart broad triage.
+If `docs/harness/runs/<key>/rca-review.md` exists, do not restart broad triage.
 Treat the review's Challenges, Evidence Gaps, and Required Investigation
 Follow-up as your input. Update the same canonical investigation artifact with
 the missing evidence needed to close the RCA.
@@ -44,11 +44,11 @@ plugin lifecycle, focus, scroll, settings, or real editor behavior, CDP runtime
 evidence is mandatory before RCA claims.
 
 The runner supplies task context only. Runtime setup and validation are owned by
-this repo. Use the fixed-port flow in `docs/agent/cdp-validation.md`; if the
+this repo. Use the fixed-port flow in `docs/harness/guides/cdp-runtime.md`; if the
 fixed runtime cannot be reached or started, stop and mark the artifact Runtime
 Blocked. Do not promote static owner mapping into root cause.
 
-Use `docs/agent/cdp-validation.md` as the source of truth for launching and
+Use `docs/harness/guides/cdp-runtime.md` as the source of truth for launching and
 checking the disposable Obsidian runtime.
 
 ## Diagnose Discipline
@@ -86,10 +86,10 @@ Do not:
 Create or update the runner-provided investigation artifact, normally:
 
 ```text
-docs/agent/runs/<key>/investigation.md
+docs/harness/runs/<key>/investigation.md
 ```
 
-Use `docs/agent/evidence-format.md` as the base structure. Include concrete
+Use `docs/harness/guides/evidence-format.md` as the base structure. Include concrete
 file paths, line references, commands, runtime facts, current-vs-unverified
 distinctions, and remaining risks.
 

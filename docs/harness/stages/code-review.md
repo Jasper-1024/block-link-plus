@@ -18,17 +18,17 @@ Read these before reaching a verdict:
 - `WORKFLOW.md`
 - `CONTEXT.md`
 - `.codex/skills/tdd/SKILL.md`
-- `docs/agent/index.md`
-- `docs/agent/evidence-format.md`
-- `docs/agent/cdp-validation.md`
-- `docs/agent/runs/<key>/investigation.md`
-- `docs/agent/runs/<key>/rca-review.md`
-- `docs/agent/runs/<key>/fix-design.md`
-- `docs/agent/runs/<key>/fix-design-review.md`
-- `docs/agent/runs/<key>/implementation.md`
+- `docs/harness/README.md`
+- `docs/harness/guides/evidence-format.md`
+- `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/rca-review.md`
+- `docs/harness/runs/<key>/fix-design.md`
+- `docs/harness/runs/<key>/fix-design-review.md`
+- `docs/harness/runs/<key>/implementation.md`
 - current `git status --short`
 - current source diff against the implementation base
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the implementation verdict is not `ready-for-review`, stop and produce a
 Context Blocked review. Do not review a failed or incomplete patch as if it were
@@ -75,7 +75,7 @@ repo tools so a non-interactive runner can continue.
 Create or update the runner-provided code review artifact, normally:
 
 ```text
-docs/agent/runs/<key>/code-review.md
+docs/harness/runs/<key>/code-review.md
 ```
 
 Use these sections:

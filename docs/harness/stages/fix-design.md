@@ -16,13 +16,13 @@ Read these before designing:
 - `AGENTS.md`
 - `WORKFLOW.md`
 - `CONTEXT.md`
-- `docs/agent/index.md`
-- `docs/agent/evidence-format.md`
-- `docs/agent/cdp-validation.md`
-- `docs/agent/openspec-gates.md`
-- `docs/agent/runs/<key>/investigation.md`
-- `docs/agent/runs/<key>/rca-review.md`
-- `docs/agent/runs/<key>/context/issue-context.json`, if the runner wrote it
+- `docs/harness/README.md`
+- `docs/harness/guides/evidence-format.md`
+- `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/openspec-boundary.md`
+- `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/rca-review.md`
+- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 If the RCA review verdict is not `accepted`, stop and produce a Context Blocked
 handoff. Do not design a fix from an open RCA loop.
@@ -65,7 +65,7 @@ repo tools so a non-interactive runner can continue.
 Create or update the runner-provided fix design artifact, normally:
 
 ```text
-docs/agent/runs/<key>/fix-design.md
+docs/harness/runs/<key>/fix-design.md
 ```
 
 Use these sections:

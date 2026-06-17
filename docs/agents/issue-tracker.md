@@ -14,5 +14,5 @@ Agent-facing task contracts should be durable:
 - Prefer behavior, key interfaces, acceptance criteria, and scope boundaries.
 - Avoid file paths or line numbers in tracker comments unless the task is a
   narrow review finding.
-- Keep complete evidence and raw traces in `docs/agent/runs/<key>/`; Plane
+- Keep complete evidence and raw traces in `docs/harness/runs/<key>/`; Plane
   comments should summarize and link to the canonical artifact.

@@ -22,9 +22,9 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 Start with [WORKFLOW.md](WORKFLOW.md). It is the repo-owned contract for
 Plane-backed harness task runs; external trackers provide task state only.
 Runner-readable workflow metadata lives in
-[docs/agent/workflow.json](docs/agent/workflow.json).
+[docs/harness/workflow.json](docs/harness/workflow.json).
 
-For detailed harness guidance, use [docs/agent/index.md](docs/agent/index.md).
+For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.md).
 It links bug investigation, CDP validation, OpenSpec gates, and handoff formats.
 
 BLP now uses Matt Pocock's small engineering skills as the first workflow layer.

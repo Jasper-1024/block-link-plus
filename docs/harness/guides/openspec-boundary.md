@@ -36,7 +36,7 @@ behavior. If the fix plan would alter documented behavior, stop with
 
 ## If OpenSpec Is Explicitly Needed
 
-Read [../../openspec/AGENTS.md](../../openspec/AGENTS.md), then run:
+Read [../../../openspec/AGENTS.md](../../../openspec/AGENTS.md), then run:
 
 ```powershell
 openspec list

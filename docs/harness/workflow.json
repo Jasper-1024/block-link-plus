@@ -2,16 +2,18 @@
   "schemaVersion": 1,
   "workflow": "blp",
   "autoStage": "auto",
-  "artifactPattern": "docs/agent/runs/{key}/{stage}.md",
+  "artifactPattern": "docs/harness/runs/{key}/{stage}.md",
   "requiredPaths": [
     "AGENTS.md",
     "WORKFLOW.md",
     "CONTEXT.md",
-    "docs/agent/index.md",
-    "docs/agent/workflow.json",
-    "docs/agent/cdp-validation.md",
-    "docs/agent/evidence-format.md",
-    "docs/agent/stages/index.md",
+    "docs/harness/README.md",
+    "docs/harness/workflow.json",
+    "docs/harness/guides/bug-investigation.md",
+    "docs/harness/guides/cdp-runtime.md",
+    "docs/harness/guides/evidence-format.md",
+    "docs/harness/guides/openspec-boundary.md",
+    "docs/harness/stages/index.md",
     "docs/agents/domain.md",
     "docs/agents/issue-tracker.md",
     "docs/agents/triage-labels.md",
@@ -53,53 +55,53 @@
     {
       "name": "design-intake",
       "label": "design intake",
-      "spec": "docs/agent/stages/design-intake.md",
-      "artifact": "docs/agent/runs/{key}/design-intake.md"
+      "spec": "docs/harness/stages/design-intake.md",
+      "artifact": "docs/harness/runs/{key}/design-intake.md"
     },
     {
       "name": "investigation",
       "label": "runtime investigation",
-      "spec": "docs/agent/stages/investigation.md",
-      "artifact": "docs/agent/runs/{key}/investigation.md"
+      "spec": "docs/harness/stages/investigation.md",
+      "artifact": "docs/harness/runs/{key}/investigation.md"
     },
     {
       "name": "rca-review",
       "label": "adversarial RCA review",
-      "spec": "docs/agent/stages/rca-review.md",
-      "artifact": "docs/agent/runs/{key}/rca-review.md",
+      "spec": "docs/harness/stages/rca-review.md",
+      "artifact": "docs/harness/runs/{key}/rca-review.md",
       "reviews": "investigation"
     },
     {
       "name": "fix-design",
       "label": "fix design",
-      "spec": "docs/agent/stages/fix-design.md",
-      "artifact": "docs/agent/runs/{key}/fix-design.md"
+      "spec": "docs/harness/stages/fix-design.md",
+      "artifact": "docs/harness/runs/{key}/fix-design.md"
     },
     {
       "name": "fix-design-review",
       "label": "adversarial fix design review",
-      "spec": "docs/agent/stages/fix-design-review.md",
-      "artifact": "docs/agent/runs/{key}/fix-design-review.md",
+      "spec": "docs/harness/stages/fix-design-review.md",
+      "artifact": "docs/harness/runs/{key}/fix-design-review.md",
       "reviews": "fix-design"
     },
     {
       "name": "implementation",
       "label": "implementation",
-      "spec": "docs/agent/stages/implementation.md",
-      "artifact": "docs/agent/runs/{key}/implementation.md"
+      "spec": "docs/harness/stages/implementation.md",
+      "artifact": "docs/harness/runs/{key}/implementation.md"
     },
     {
       "name": "code-review",
       "label": "adversarial code review",
-      "spec": "docs/agent/stages/code-review.md",
-      "artifact": "docs/agent/runs/{key}/code-review.md",
+      "spec": "docs/harness/stages/code-review.md",
+      "artifact": "docs/harness/runs/{key}/code-review.md",
       "reviews": "implementation"
     },
     {
       "name": "finalize",
       "label": "final merge finalization",
-      "spec": "docs/agent/stages/finalize.md",
-      "artifact": "docs/agent/runs/{key}/finalize.md",
+      "spec": "docs/harness/stages/finalize.md",
+      "artifact": "docs/harness/runs/{key}/finalize.md",
       "reviews": "code-review"
     }
   ]

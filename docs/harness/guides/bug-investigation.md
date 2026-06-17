@@ -27,7 +27,7 @@ handoffs.
 
 4. Decide the gate.
 
-   Use [openspec-gates.md](openspec-gates.md). Bug fixes that restore intended
+   Use [openspec-boundary.md](openspec-boundary.md). Bug fixes that restore intended
    behavior usually do not need a proposal. Changes to intended behavior do.
 
 5. Reproduce with the required runtime gate.
@@ -38,7 +38,7 @@ handoffs.
    repro, but it is not enough to identify root cause.
 
    Run the fixed-port CDP runtime check from
-   [cdp-validation.md](cdp-validation.md). If it fails, stop and produce a
+   [cdp-runtime.md](cdp-runtime.md). If it fails, stop and produce a
    Runtime Blocked handoff. Do not continue into root cause or fix planning
    from static evidence alone.
 
