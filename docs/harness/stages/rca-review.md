@@ -51,7 +51,7 @@ Do not:
 - call Plane or other tracker APIs
 - write a fix plan
 - edit product source, tests, package metadata, CDP snippets, generated files,
-  or OpenSpec specs
+  or formal spec/history files
 - accept a broad issue cluster as one RCA without evidence
 - treat `accepted_with_refinement` as permission to proceed to fix design
 

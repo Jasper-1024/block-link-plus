@@ -35,12 +35,22 @@ investigation -> rca-review -> fix-design -> fix-design-review
 Non-bug lane:
 
 ```text
-enhancement|maintenance -> design-intake -> Human Review
+enhancement|maintenance parent -> design-intake -> Human Review
+-> CLI grill-with-docs -> to-prd -> to-issues
+-> plane-control-plane publishes PRD and child items
+-> runner executes only AFK + agent-ready child items
 ```
 
 Bug work follows `.codex/skills/diagnose/SKILL.md`. Feature, refactor, and
 unclear product work starts with `.codex/skills/grill-with-docs/SKILL.md`.
-Implementation follows `.codex/skills/tdd/SKILL.md`.
+Accepted design is synthesized with `.codex/skills/to-prd/SKILL.md`, broken
+into vertical slices with `.codex/skills/to-issues/SKILL.md`, and published to
+Plane through the global `plane-control-plane` skill. Implementation follows
+`.codex/skills/tdd/SKILL.md`. Periodic technical-debt review uses
+`.codex/skills/improve-codebase-architecture/SKILL.md`.
+
+`grill-with-docs`, `to-prd`, `to-issues`, and architecture grilling are
+foreground CLI/HITL workflows. They are not unattended runner stages.
 
 ## Runtime Evidence
 
@@ -56,6 +66,13 @@ the exact failed command.
 
 Human Review means an agent stage has finished and a person must choose the next
 step. It is not proof that the issue is merged, released, or accepted.
+
+For feature/refactor parents, use Human Review as the handoff into CLI
+discussion. After a PRD or issue breakdown is accepted, use the global
+`plane-control-plane` skill to publish the artifact or child tasks through the
+persistent runner/control-plane. Do not copy/paste Plane updates by hand unless
+the control-plane is unavailable and the human explicitly chooses a manual
+fallback.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and

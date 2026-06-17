@@ -56,7 +56,8 @@ For BLP inline-edit CodeMirror fixes:
 Do not:
 
 - broaden a child sub-bug into the whole GitHub issue cluster
-- change OpenSpec unless the accepted design review explicitly requires it
+- change formal spec/history files unless the accepted design review explicitly
+  requires it
 - change generated files, package metadata, or CDP snippets unless they are
   necessary for the accepted fix and called out in the handoff
 - write all tests first and then all implementation

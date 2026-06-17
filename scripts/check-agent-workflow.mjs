@@ -43,7 +43,7 @@ const baselineRequiredPaths = [
   "docs/harness/guides/bug-investigation.md",
   "docs/harness/guides/cdp-runtime.md",
   "docs/harness/guides/evidence-format.md",
-  "docs/harness/guides/openspec-boundary.md",
+  "docs/harness/guides/hitl-control-plane.md",
   "docs/harness/stages/index.md",
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",
@@ -51,7 +51,10 @@ const baselineRequiredPaths = [
   ".codex/skills/setup-matt-pocock-skills/SKILL.md",
   ".codex/skills/grill-with-docs/SKILL.md",
   ".codex/skills/diagnose/SKILL.md",
+  ".codex/skills/to-prd/SKILL.md",
+  ".codex/skills/to-issues/SKILL.md",
   ".codex/skills/tdd/SKILL.md",
+  ".codex/skills/improve-codebase-architecture/SKILL.md",
 ];
 
 if (workflow.schemaVersion !== 1) {

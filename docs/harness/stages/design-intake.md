@@ -23,7 +23,7 @@ Read these before writing the artifact:
 ## Rules
 
 - Do not edit product code, tests, package metadata, generated files, or
-  OpenSpec specs.
+  formal spec/history files.
 - Do not invent product decisions. If a question needs human judgment, record it
   as a question with a recommended default.
 - Inspect existing code and docs when they can answer a question directly.

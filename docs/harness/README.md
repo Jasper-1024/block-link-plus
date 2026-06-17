@@ -14,7 +14,7 @@ runs. Keep this file short: it is a map, not the manual.
 
 - [guides/cdp-runtime.md](guides/cdp-runtime.md): isolated Obsidian/CDP runtime.
 - [guides/evidence-format.md](guides/evidence-format.md): investigation handoff shape.
-- [guides/openspec-boundary.md](guides/openspec-boundary.md): when OpenSpec is required.
+- [guides/hitl-control-plane.md](guides/hitl-control-plane.md): CLI/HITL publishing through the runner control-plane.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
 
 ## Matt Skill Context
@@ -25,7 +25,10 @@ runs. Keep this file short: it is a map, not the manual.
 - [../agents/triage-labels.md](../agents/triage-labels.md): category and state labels.
 - [../../.codex/skills/grill-with-docs/SKILL.md](../../.codex/skills/grill-with-docs/SKILL.md): feature/refactor clarification.
 - [../../.codex/skills/diagnose/SKILL.md](../../.codex/skills/diagnose/SKILL.md): bug diagnosis loop.
+- [../../.codex/skills/to-prd/SKILL.md](../../.codex/skills/to-prd/SKILL.md): accepted discussion to PRD.
+- [../../.codex/skills/to-issues/SKILL.md](../../.codex/skills/to-issues/SKILL.md): PRD/plan to vertical-slice issues.
 - [../../.codex/skills/tdd/SKILL.md](../../.codex/skills/tdd/SKILL.md): vertical-slice implementation.
+- [../../.codex/skills/improve-codebase-architecture/SKILL.md](../../.codex/skills/improve-codebase-architecture/SKILL.md): technical-debt and testability review.
 
 ## Run Archives
 
@@ -44,6 +47,7 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 ## Quick Rule
 
 For direct bugs, use `diagnose` and prove current behavior first. For new
-features, refactors, or unclear behavior changes, use `grill-with-docs` before
-implementation planning. Use OpenSpec only when a stage or human explicitly
-needs a formal behavior delta.
+features, refactors, or unclear behavior changes, use foreground
+`grill-with-docs -> to-prd -> to-issues`, then publish through the global
+`plane-control-plane` skill. The unattended runner should execute only
+published `AFK + agent-ready` child items.

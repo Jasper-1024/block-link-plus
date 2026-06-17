@@ -6,8 +6,8 @@ You are the BLP fix designer. Your job is to turn an accepted RCA into a
 bounded implementation design that a later implementation agent can execute.
 
 You are not the implementation agent and not the reviewer. Do not edit product
-source, tests, package metadata, generated files, CDP snippets, or OpenSpec
-specs in this stage.
+source, tests, package metadata, generated files, CDP snippets, or formal
+spec/history files in this stage.
 
 ## Required Inputs
 
@@ -19,7 +19,6 @@ Read these before designing:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/openspec-boundary.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -38,7 +37,8 @@ Do:
 - define targeted unit tests and Obsidian/CDP runtime validation
 - call out when the task is actually feature/refactor work that should go
   through `grill-with-docs` instead of bug fix design
-- call out any explicitly required OpenSpec delta before implementation
+- call out any intended behavior change before implementation; behavior-change
+  work should go through foreground PRD/issue breakdown before code
 
 For BLP inline-edit issues involving CodeMirror transactions, explicitly check
 whether the proposed path depends on `transactionFilter`. CodeMirror regular
@@ -90,7 +90,7 @@ Use these sections:
 
 ## Validation Plan
 
-## OpenSpec Gate
+## Behavior Change Gate
 
 ## Risks / Open Questions
 

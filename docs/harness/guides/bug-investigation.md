@@ -19,16 +19,18 @@ handoffs.
 
 3. Find the relevant capability.
 
-   Search specs, source, tests, docs, and CDP snippets:
+   Search source, tests, docs, and CDP snippets:
 
    ```powershell
-   rg -n "<keyword>" openspec src scripts doc docs
+   rg -n "<keyword>" src scripts doc docs
    ```
 
 4. Decide the gate.
 
-   Use [openspec-boundary.md](openspec-boundary.md). Bug fixes that restore intended
-   behavior usually do not need a proposal. Changes to intended behavior do.
+   Bug fixes that restore intended behavior can stay in the bug lane. If the
+   report actually asks for new behavior, unclear product intent, or a broader
+   refactor, stop and route it to the foreground `grill-with-docs -> to-prd ->
+   to-issues` flow.
 
 5. Reproduce with the required runtime gate.
 

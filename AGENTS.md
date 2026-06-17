@@ -1,22 +1,3 @@
-<!-- OPENSPEC:START -->
-# OpenSpec Instructions
-
-These instructions are for AI assistants working in this project.
-
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
-
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
-
-Keep this managed block so 'openspec update' can refresh the instructions.
-
-<!-- OPENSPEC:END -->
-
 # Agent Map
 
 Start with [WORKFLOW.md](WORKFLOW.md). It is the repo-owned contract for
@@ -25,15 +6,22 @@ Runner-readable workflow metadata lives in
 [docs/harness/workflow.json](docs/harness/workflow.json).
 
 For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.md).
-It links bug investigation, CDP validation, OpenSpec gates, and handoff formats.
+It links bug investigation, CDP validation, HITL control-plane publishing, and
+handoff formats.
 
 BLP now uses Matt Pocock's small engineering skills as the first workflow layer.
 For new features, refactors, or unclear product direction, use
-`.codex/skills/grill-with-docs/SKILL.md` before implementation planning. For
-hard bugs, use `.codex/skills/diagnose/SKILL.md`. For implementation, use
-`.codex/skills/tdd/SKILL.md` and work in vertical slices. OpenSpec remains
-historical/formal behavior documentation; create or modify OpenSpec only when a
-stage or human explicitly asks for a formal spec delta.
+`.codex/skills/grill-with-docs/SKILL.md` before implementation planning, then
+`.codex/skills/to-prd/SKILL.md` and `.codex/skills/to-issues/SKILL.md` once the
+discussion is ready to publish. For hard bugs, use
+`.codex/skills/diagnose/SKILL.md`. For implementation, use
+`.codex/skills/tdd/SKILL.md` and work in vertical slices. For periodic technical
+debt and testability review, use
+`.codex/skills/improve-codebase-architecture/SKILL.md`.
+
+Use the global Codex skill `plane-control-plane` to publish accepted PRDs,
+issue breakdowns, and human gate decisions to Plane through the persistent
+runner/control-plane. Do not call Plane APIs from this repo.
 
 ## Agent skills
 
@@ -57,7 +45,10 @@ See [docs/agents/domain.md](docs/agents/domain.md).
 - `.codex/skills/setup-matt-pocock-skills/SKILL.md`
 - `.codex/skills/grill-with-docs/SKILL.md`
 - `.codex/skills/diagnose/SKILL.md`
+- `.codex/skills/to-prd/SKILL.md`
+- `.codex/skills/to-issues/SKILL.md`
 - `.codex/skills/tdd/SKILL.md`
+- `.codex/skills/improve-codebase-architecture/SKILL.md`
 
 Primary validation surfaces:
 
