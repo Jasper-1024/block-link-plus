@@ -6,7 +6,7 @@ Runner-readable workflow metadata lives in
 [docs/harness/workflow.json](docs/harness/workflow.json).
 
 For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.md).
-It links bug investigation, CDP validation, HITL control-plane publishing, and
+It links bug investigation, CDP validation, HITL Plane publishing, and
 handoff formats.
 
 BLP now uses Matt Pocock's small engineering skills as the first workflow layer.
@@ -19,16 +19,17 @@ discussion is ready to publish. For hard bugs, use
 debt and testability review, use
 `.codex/skills/improve-codebase-architecture/SKILL.md`.
 
-Use the global Codex skill `plane-control-plane` to publish accepted PRDs,
-issue breakdowns, and human gate decisions to Plane through the persistent
-runner/control-plane. Do not call Plane APIs from this repo.
+Use the global Codex skill `plane-ops` to publish accepted PRDs, issue
+breakdowns, and human gate decisions to Plane. Keep Plane credentials and
+runner-local paths out of this repo.
 
 ## Agent skills
 
 ### Issue tracker
 
-BLP work is coordinated in Plane; repo-local agents write artifacts and the
-external runner updates Plane. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
+BLP work is coordinated in Plane; repo-local agents write artifacts and Plane
+updates happen through explicit `plane-ops` operations. See
+[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ### Triage labels
 

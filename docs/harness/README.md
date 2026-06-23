@@ -14,7 +14,7 @@ runs. Keep this file short: it is a map, not the manual.
 
 - [guides/cdp-runtime.md](guides/cdp-runtime.md): isolated Obsidian/CDP runtime.
 - [guides/evidence-format.md](guides/evidence-format.md): investigation handoff shape.
-- [guides/hitl-control-plane.md](guides/hitl-control-plane.md): CLI/HITL publishing through the runner control-plane.
+- [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing through `plane-ops`.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
 
 ## Matt Skill Context
@@ -49,5 +49,5 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 For direct bugs, use `diagnose` and prove current behavior first. For new
 features, refactors, or unclear behavior changes, use foreground
 `grill-with-docs -> to-prd -> to-issues`, then publish through the global
-`plane-control-plane` skill. The unattended runner should execute only
-published `AFK + agent-ready` child items.
+`plane-ops` skill. The unattended runner should execute only published
+`AFK + agent-ready` child items.

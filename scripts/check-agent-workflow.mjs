@@ -43,7 +43,7 @@ const baselineRequiredPaths = [
   "docs/harness/guides/bug-investigation.md",
   "docs/harness/guides/cdp-runtime.md",
   "docs/harness/guides/evidence-format.md",
-  "docs/harness/guides/hitl-control-plane.md",
+  "docs/harness/guides/hitl-plane-publishing.md",
   "docs/harness/stages/index.md",
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",

@@ -8,9 +8,11 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
 - The repository is the source of truth for agent policy, stage specs, domain
   language, and validation commands.
 - Plane supplies task identity, state, labels, and short task text.
-- The external runner chooses a stage, launches workers, and writes comments or
-  state changes back to Plane.
-- Repo-local workers do not call Plane APIs.
+- The external runner chooses a stage, launches workers, and records repo
+  artifacts.
+- Plane comments, links, and state changes happen through explicit external
+  `plane-ops` operations.
+- Repo-local unattended workers do not embed Plane API calls.
 
 ## Required Map
 
@@ -37,7 +39,7 @@ Non-bug lane:
 ```text
 enhancement|maintenance parent -> design-intake -> Human Review
 -> CLI grill-with-docs -> to-prd -> to-issues
--> plane-control-plane publishes PRD and child items
+-> plane-ops publishes PRD and child items
 -> runner executes only AFK + agent-ready child items
 ```
 
@@ -45,7 +47,7 @@ Bug work follows `.codex/skills/diagnose/SKILL.md`. Feature, refactor, and
 unclear product work starts with `.codex/skills/grill-with-docs/SKILL.md`.
 Accepted design is synthesized with `.codex/skills/to-prd/SKILL.md`, broken
 into vertical slices with `.codex/skills/to-issues/SKILL.md`, and published to
-Plane through the global `plane-control-plane` skill. Implementation follows
+Plane through the global `plane-ops` skill. Implementation follows
 `.codex/skills/tdd/SKILL.md`. Periodic technical-debt review uses
 `.codex/skills/improve-codebase-architecture/SKILL.md`.
 
@@ -69,10 +71,9 @@ step. It is not proof that the issue is merged, released, or accepted.
 
 For feature/refactor parents, use Human Review as the handoff into CLI
 discussion. After a PRD or issue breakdown is accepted, use the global
-`plane-control-plane` skill to publish the artifact or child tasks through the
-persistent runner/control-plane. Do not copy/paste Plane updates by hand unless
-the control-plane is unavailable and the human explicitly chooses a manual
-fallback.
+`plane-ops` skill to publish the artifact summary or child tasks. Do not
+copy/paste Plane updates through the UI unless the human explicitly chooses that
+manual fallback.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and

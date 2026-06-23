@@ -1,4 +1,4 @@
-# HITL Control Plane
+# HITL Plane Publishing
 
 Interactive design work happens in CLI, not in the background runner.
 
@@ -7,9 +7,11 @@ Interactive design work happens in CLI, not in the background runner.
 - BLP repo is the durable source of truth for PRDs, issue breakdowns, run
   artifacts, domain language, and validation evidence.
 - Plane is the control panel for state, comments, links, and AFK child tasks.
-- The persistent runner/control-plane is the only component that holds Plane
-  API credentials.
-- Repo-local skills and agents must not call Plane APIs directly.
+- Plane updates are explicit foreground operations through the global
+  `plane-ops` skill.
+- The BLP repo never stores Plane API credentials or runner-local paths.
+- Repo-local unattended stage workers must not embed Plane API calls in repo
+  scripts or artifacts.
 
 ## Feature / Refactor Flow
 
@@ -17,9 +19,9 @@ Interactive design work happens in CLI, not in the background runner.
 Plane parent item
 -> CLI grill-with-docs discussion
 -> repo-local PRD artifact
--> global plane-control-plane skill publishes PRD summary to Plane
+-> global plane-ops skill publishes PRD summary to Plane
 -> CLI to-issues vertical-slice breakdown
--> global plane-control-plane skill creates/updates Plane child items
+-> global plane-ops skill creates/updates Plane child items
 -> runner executes only AFK + agent-ready child items
 ```
 
@@ -35,14 +37,10 @@ status are enough.
 
 ## Publishing
 
-Use the global Codex skill `plane-control-plane`. It calls the persistent
-runner/control-plane HTTP tools:
+Use the global Codex skill `plane-ops` for Plane comments, links, state changes,
+and child item creation. Keep long-form content in repo artifacts and publish a
+concise Plane projection: summary, artifact path, artifact SHA-256 when useful,
+and the next human or AFK action.
 
-- `publish_prd`
-- `publish_issue_breakdown`
-- `create_or_update_child_item`
-- `resolve_human_gate`
-- `get_work_item_context`
-- `get_publish_status`
-
-The BLP repo never stores the Plane token or runner path.
+Do not reintroduce harness-local tracker adapters or control-plane dependencies
+for these HITL publishing steps.

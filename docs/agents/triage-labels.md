@@ -27,5 +27,6 @@ bugs or mixes a bug with an enhancement, split it before AFK implementation.
 - Human approval for final merge maps to `Ready to Merge`.
 - Completed work maps to `Done`.
 
-Only the runner updates Plane during automated runs. Repo-local agents write
-stage artifacts and concise `Plane Reply` sections for the runner to publish.
+Plane updates happen through explicit `plane-ops` operations outside unattended
+stage workers. Repo-local agents write stage artifacts and concise `Plane Reply`
+sections for publishing.

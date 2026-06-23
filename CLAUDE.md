@@ -23,8 +23,9 @@ BLP uses Matt Pocock's small engineering skills as the first workflow layer.
 
 ## Issue tracker
 
-BLP work is coordinated in Plane; repo-local agents write artifacts and the
-external runner updates Plane. See `docs/agents/issue-tracker.md`.
+BLP work is coordinated in Plane; repo-local agents write artifacts and Plane
+updates happen through explicit `plane-ops` operations. See
+`docs/agents/issue-tracker.md`.
 
 ## Triage labels
 
