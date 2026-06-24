@@ -129,8 +129,14 @@ The publisher maintains one Project Page per parent work item. It rebuilds the
 whole Page body from the accepted publish log and current child items; it does
 not patch paragraphs in place.
 
-The dossier is an index, not a transcript:
+The dossier is a human review brief backed by the canonical artifact. The
+runner extracts the stage-specific review sections from `artifact.path`; the
+Publish Plan keeps only `page.summary` so workers do not maintain a second copy
+of the design or implementation text.
 
+The dossier contains:
+
+- Review Brief
 - Snapshot
 - Scope
 - Timeline

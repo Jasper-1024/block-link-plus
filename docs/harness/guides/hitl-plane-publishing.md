@@ -50,10 +50,11 @@ enough.
   artifacts. Do not paste full investigations here.
 - Work item links: canonical repo artifacts, GitHub source reports, validation
   traces, and Project Page dossiers.
-- Project Page dossier: runner-maintained long-form index for complex bug-fix
-  work, especially when several comments, source reports, and validations need
-  one stable index. The runner sends minimal HTML to Plane+ Pages because this
-  self-hosted instance does not render API-written Markdown reliably.
+- Project Page dossier: runner-maintained review brief for the current human
+  gate, followed by a stable evidence index. The brief is extracted from the
+  canonical repo artifact, not duplicated in the Publish Plan. The runner sends
+  minimal HTML to Plane+ Pages because this self-hosted instance does not render
+  API-written Markdown reliably.
 - Repo artifact: canonical, reviewable evidence and accepted design text under
   `docs/harness/runs/<archive-key>/`.
 
