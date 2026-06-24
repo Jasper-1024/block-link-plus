@@ -48,6 +48,9 @@ const baselineRequiredPaths = [
   "docs/harness/guides/hitl-plane-publishing.md",
   "docs/harness/guides/publishing.md",
   "docs/harness/stages/index.md",
+  "docs/runtime/README.md",
+  "docs/runtime/isolated-obsidian-cdp.md",
+  "docs/runtime/cdp-script-inventory.md",
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",
   "docs/agents/triage-labels.md",
@@ -71,6 +74,8 @@ if (exists("openspec")) fail("openspec must stay archived under archive/openspec
 if (exists("memory-bank")) fail("memory-bank must stay archived under archive/memory-bank");
 if (!exists("archive/openspec")) fail("archived OpenSpec directory is missing: archive/openspec");
 if (!exists("archive/memory-bank")) fail("archived memory-bank directory is missing: archive/memory-bank");
+if (!exists("archive/internal-docs")) fail("archived internal docs directory is missing: archive/internal-docs");
+if (exists("docs/debug")) fail("current runtime docs must live under docs/runtime, not docs/debug");
 
 const mkdocsText = fs.readFileSync(mkdocsPath, "utf8");
 if (!/^docs_dir:\s*doc\s*$/m.test(mkdocsText)) {
@@ -83,6 +88,11 @@ if (!docsWorkflowText.includes("'doc/**'")) {
 }
 if (docsWorkflowText.includes("'docs/**'")) {
   fail("deploy-docs workflow must not listen to docs/**");
+}
+
+const rgignoreText = fs.readFileSync(path.join(repoRoot, ".rgignore"), "utf8");
+if (!rgignoreText.includes("docs/harness/runs/**")) {
+  fail(".rgignore must hide docs/harness/runs/** from normal searches");
 }
 
 if (workflow.schemaVersion !== 1) {
@@ -216,16 +226,21 @@ const activeFiles = [
   "mkdocs.yml",
   ".github/workflows/deploy-docs.yml",
   "scripts/check-agent-workflow.mjs",
+  "scripts/obsidian-cdp.js",
   ...walkFiles("docs/harness"),
   ...walkFiles("docs/agents"),
   ...walkFiles("docs/adr"),
+  ...walkFiles("docs/runtime"),
 ];
 const retiredForwardHarnessPath = ["docs", "agent", ""].join("/");
 const retiredWindowsHarnessPath = ["docs", "agent", ""].join("\\");
 const retiredInternalDocPath = ["doc", "debug", ""].join("/");
 const retiredInternalWindowsDocPath = ["doc", "debug", ""].join("\\");
+const retiredDebugDocPath = ["docs", "debug", ""].join("/");
+const retiredDebugWindowsDocPath = ["docs", "debug", ""].join("\\");
 const retiredOpenSpecInstruction = ["@", "openspec"].join("/");
 const retiredOpenSpecMarker = ["OPENSPEC", "START"].join(":");
+const retiredFixtureDocPath = ["doc", "_blp-ai"].join("/");
 
 for (const file of activeFiles) {
   if (!exists(file)) continue;
@@ -235,6 +250,12 @@ for (const file of activeFiles) {
   }
   if (text.includes(retiredInternalDocPath) || text.includes(retiredInternalWindowsDocPath)) {
     fail(`${file} still references retired internal doc/debug path`);
+  }
+  if (text.includes(retiredDebugDocPath) || text.includes(retiredDebugWindowsDocPath)) {
+    fail(`${file} still references retired docs/debug path`);
+  }
+  if (text.includes(retiredFixtureDocPath)) {
+    fail(`${file} still references the retired BLP fixture path under public docs`);
   }
   if (text.includes(retiredOpenSpecInstruction) || text.includes(retiredOpenSpecMarker)) {
     fail(`${file} still references active OpenSpec instructions`);

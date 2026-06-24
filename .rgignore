@@ -1,2 +1,3 @@
-# Keep raw agent traces out of normal searches. Use `rg --no-ignore` for audits.
-docs/harness/runs/**/trace/**
+# Keep archived agent run evidence out of normal searches. Use `rg --no-ignore`
+# when explicitly auditing historical task artifacts.
+docs/harness/runs/**

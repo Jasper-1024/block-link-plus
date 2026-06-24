@@ -35,7 +35,7 @@ _research/
 .tmp/
 
 # CDP debug artifacts (screenshots, dumps, etc.)
-doc/**/_cdp-*
+docs/runtime/**/_cdp-*
 
 # Local CDP scratch (keep out of commits)
 _cdp_*

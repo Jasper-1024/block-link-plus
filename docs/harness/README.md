@@ -18,6 +18,12 @@ runs. Keep this file short: it is a map, not the manual.
 - [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing boundary.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
 
+## Runtime Knowledge
+
+- [../runtime/README.md](../runtime/README.md): current runtime evidence map.
+- [../runtime/isolated-obsidian-cdp.md](../runtime/isolated-obsidian-cdp.md): disposable Obsidian/CDP environment.
+- [../runtime/cdp-script-inventory.md](../runtime/cdp-script-inventory.md): reusable CDP snippet inventory.
+
 ## Harness Context
 
 - [../../CONTEXT.md](../../CONTEXT.md): BLP domain language.
@@ -38,8 +44,8 @@ Run archives are allowed on the main branch as process evidence, but they are
 not normal task context. Future agents should read them only when a stage spec,
 runner prompt, or human request explicitly names them.
 
-The repo `.rgignore` excludes raw `trace/` files from normal ripgrep searches.
-Use `rg --no-ignore` only when explicitly auditing historical traces.
+The repo `.rgignore` excludes run archives from normal ripgrep searches. Use
+`rg --no-ignore` only when explicitly auditing historical task evidence.
 
 ## Quick Rule
 

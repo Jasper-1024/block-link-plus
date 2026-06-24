@@ -8,8 +8,8 @@
 //   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/dump-state.js"
 //   node scripts/obsidian-cdp.js eval "(async()=>app.workspace.getActiveFile()?.path)()"
 //   node scripts/obsidian-cdp.js open-note "Review/_blp-ai-workbench.md"
-//   node scripts/obsidian-cdp.js set-editor "doc/_blp-ai-workbench-baseline.md"
-//   node scripts/obsidian-cdp.js write-note "Review/_blp-ai-workbench.md" "doc/_blp-ai-workbench-baseline.md"
+//   node scripts/obsidian-cdp.js set-editor "docs/runtime/fixtures/_blp-ai-workbench-baseline.md"
+//   node scripts/obsidian-cdp.js write-note "Review/_blp-ai-workbench.md" "docs/runtime/fixtures/_blp-ai-workbench-baseline.md"
 //   node scripts/obsidian-cdp.js key "ctrl+c"
 //   node scripts/obsidian-cdp.js screenshot out.png
 //
