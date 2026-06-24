@@ -26,6 +26,7 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
 - **enable_block_notification** - Show a notice after copying a block link
 - **alias_type** - Alias type (0=none, 1=first X chars, 2=parent heading, 3=selected text)
 - **alias_length** - Alias length (1-100)
+- **escape_alias_pipe** - Escape `|` as `\|` in generated Markdown link aliases
 - **heading_id_newline** - Put heading block ID on a new line (experimental)
 
 ### Embed links
@@ -107,6 +108,7 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
   "enable_right_click_embed": true,
   "enable_right_click_url": false,
   "alias_length": 20,
+  "escape_alias_pipe": true,
   "enable_prefix": false,
   "id_prefix": "",
   "id_length": 4,

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-4",
+  "stage": "implementation",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/GH-34-BLP-4/implementation.md",
+    "sha256": "6292da8b424a2f9817402b1469c21034ddee32d46342786ffe820f8f3c1c093f"
+  },
+  "comment": "Implemented default-on alias pipe escaping for generated Markdown block-link aliases with focused tests and docs.",
+  "links": [
+    {
+      "title": "Implementation",
+      "url": "repo:docs/harness/runs/GH-34-BLP-4/implementation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "BLP-4 implementation adds a default-on setting that escapes pipe characters only in generated Markdown block-link aliases, keeps URI output unchanged, and passes focused tests, full Jest, and build-with-types validation."
+  },
+  "outOfScope": []
+}

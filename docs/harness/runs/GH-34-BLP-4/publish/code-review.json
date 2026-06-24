@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-4",
+  "stage": "code-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/GH-34-BLP-4/code-review.md",
+    "sha256": "7564936fe5ed02158778aa9b4778812b6084b18d76c39096caa7dedda51bba63"
+  },
+  "comment": "Code review accepted the BLP-4 alias pipe escaping implementation; ready for human merge review.",
+  "links": [
+    {
+      "title": "Code review",
+      "url": "repo:docs/harness/runs/GH-34-BLP-4/code-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Code review accepts the BLP-4 implementation: default-on pipe escaping is limited to generated Markdown wikilink aliases, focused tests and full validation pass, and the human should decide whether to move the item to Ready to Merge."
+  },
+  "outOfScope": []
+}

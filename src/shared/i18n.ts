@@ -88,6 +88,10 @@ class T {
             name: "Alias length",
             desc: "Set the length of the alias (1-100). Only used when alias style is 'First X chars'."
           },
+          escapeAliasPipe: {
+            name: "Escape pipe characters in aliases",
+            desc: "Escape | as \\| in generated Markdown link aliases so copied block links stay safe inside tables."
+          },
           headingIdNewline: {
             name: "Experimental: Heading block ID style",
             desc: "Place block ID in new line when selecting a single heading line only"
@@ -644,6 +648,10 @@ class T {
             name: "别名长度",
             desc: "设置别名的长度(1-100) 仅在别名样式为'前 X 个字符'时使用。"
           },
+          escapeAliasPipe: {
+            name: "转义别名中的竖线字符",
+            desc: "在生成的 Markdown 链接别名中将 | 转义为 \\|，避免复制的块链接破坏表格。"
+          },
           headingIdNewline: {
             name: "实验性：标题块 ID 样式",
             desc: "仅选择单个标题行时，将块 ID 放在新行中"
@@ -1198,6 +1206,10 @@ class T {
           aliasLength: {
             name: "別名長度",
             desc: "設定別名的長度(1-100). 僅在別名樣式為'前 X 個字元'時使用.",
+          },
+          escapeAliasPipe: {
+            name: "跳脫別名中的直線字元",
+            desc: "在產生的 Markdown 連結別名中將 | 跳脫為 \\|，避免複製的區塊連結破壞表格。",
           },
           headingIdNewline: {
             name: "實驗性：標題區塊 ID 樣式",

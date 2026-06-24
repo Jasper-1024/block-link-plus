@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-4",
+  "stage": "implementation-routing",
+  "verdict": "same-task-ready",
+  "artifact": {
+    "path": "docs/harness/runs/GH-34-BLP-4/implementation-routing.md",
+    "sha256": "4a045d6a53fb220008cbde4e148dd78b9bfa4ed51a217fd38cae9331d0c18e2e"
+  },
+  "comment": "Implementation routing accepted same-task implementation for the approved alias pipe escaping design.",
+  "links": [
+    {
+      "title": "Implementation routing",
+      "url": "repo:docs/harness/runs/GH-34-BLP-4/implementation-routing.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "BLP-4 is ready for same-task implementation: add a default-on setting that escapes pipe characters only in generated Markdown wikilink aliases, with focused tests and settings docs."
+  },
+  "outOfScope": []
+}

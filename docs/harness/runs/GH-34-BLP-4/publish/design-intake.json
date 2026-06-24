@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-4",
+  "stage": "design-intake",
+  "verdict": "human-review-required",
+  "artifact": {
+    "path": "docs/harness/runs/GH-34-BLP-4/design-intake.md",
+    "sha256": "32be399c571aa8449a41da6f9e76be655e012aa8fd8d5c4e32e8513114e0ef29"
+  },
+  "comment": "Design intake recommends a default-on pipe escape setting for generated block-link aliases; human approval or feedback needed.",
+  "links": [
+    {
+      "title": "Design intake",
+      "url": "repo:docs/harness/runs/GH-34-BLP-4/design-intake.md"
+    },
+    {
+      "title": "GitHub issue #34",
+      "url": "https://github.com/Jasper-1024/block-link-plus/issues/34"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Human should approve or reject a default-on setting that escapes pipe characters in generated block-link aliases, with implementation scoped to alias formatting and tests."
+  },
+  "outOfScope": []
+}

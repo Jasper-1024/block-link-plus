@@ -53,6 +53,7 @@ export interface PluginSettings {
 	enable_right_click_embed: boolean;
 	enable_right_click_url: boolean;
 	alias_length: number;
+	escape_alias_pipe: boolean;
 	enable_prefix: boolean;
 	id_prefix: string;
 	id_length: number;
@@ -101,6 +102,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enable_right_click_embed: true,
 	enable_right_click_url: false,
 	alias_length: 20,
+	escape_alias_pipe: true,
 	enable_prefix: false, // Default: no prefix for block IDs
 	id_prefix: "", // Custom prefix for block IDs (empty by default)
 	id_length: 4, // Default block ID length in characters

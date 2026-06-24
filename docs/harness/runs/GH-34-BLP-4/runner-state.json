@@ -1,0 +1,41 @@
+{
+  "key": "GH-34-BLP-4",
+  "loops": {
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "last_stage": "code-review",
+  "last_verdict": "accepted",
+  "last_target_state": "Human Review",
+  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "artifacts": {
+    "design-intake": {
+      "path": "docs/harness/runs/GH-34-BLP-4/design-intake.md",
+      "sha256": "32be399c571aa8449a41da6f9e76be655e012aa8fd8d5c4e32e8513114e0ef29"
+    },
+    "implementation-routing": {
+      "path": "docs/harness/runs/GH-34-BLP-4/implementation-routing.md",
+      "sha256": "4a045d6a53fb220008cbde4e148dd78b9bfa4ed51a217fd38cae9331d0c18e2e"
+    },
+    "implementation": {
+      "path": "docs/harness/runs/GH-34-BLP-4/implementation.md",
+      "sha256": "6292da8b424a2f9817402b1469c21034ddee32d46342786ffe820f8f3c1c093f"
+    },
+    "code-review": {
+      "path": "docs/harness/runs/GH-34-BLP-4/code-review.md",
+      "sha256": "7564936fe5ed02158778aa9b4778812b6084b18d76c39096caa7dedda51bba63"
+    }
+  },
+  "updated_at": "2026-06-24T14:16:41Z",
+  "reviews": {
+    "code-review": {
+      "source_stage": "implementation",
+      "source_sha256": "6292da8b424a2f9817402b1469c21034ddee32d46342786ffe820f8f3c1c093f",
+      "review_sha256": "7564936fe5ed02158778aa9b4778812b6084b18d76c39096caa7dedda51bba63"
+    }
+  }
+}

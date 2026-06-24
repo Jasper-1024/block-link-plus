@@ -499,6 +499,10 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 			.setName(t.settings.blockLink.aliasLength.name)
 			.setDesc(t.settings.blockLink.aliasLength.desc);
 
+		this.addToggleSetting("escape_alias_pipe", undefined, rootEl)
+			.setName(t.settings.blockLink.escapeAliasPipe.name)
+			.setDesc(t.settings.blockLink.escapeAliasPipe.desc);
+
 		this.addToggleSetting("heading_id_newline", undefined, rootEl)
 			.setName(t.settings.blockLink.headingIdNewline.name)
 			.setDesc(t.settings.blockLink.headingIdNewline.desc);

@@ -10,6 +10,29 @@ function _gene_obsidian_url(app: App, file: TFile, blockId: string): string {
     return `obsidian://open?vault=${vault}&file=${filePath}${encodedBlockId}`;
 }
 
+export function escapeUnescapedAliasPipes(alias: string): string {
+    let escaped = "";
+
+    for (let i = 0; i < alias.length; i++) {
+        const ch = alias[i];
+
+        if (ch === "|") {
+            let slashCount = 0;
+            for (let j = i - 1; j >= 0 && alias[j] === "\\"; j--) {
+                slashCount++;
+            }
+
+            if (slashCount % 2 === 0) {
+                escaped += "\\";
+            }
+        }
+
+        escaped += ch;
+    }
+
+    return escaped;
+}
+
 export function copyToClipboard(
     app: App,
     settings: PluginSettings,
@@ -34,12 +57,17 @@ export function copyToClipboard(
             if (isEmbed) {
                 embedPrefix = "!";
             }
+
+            const rawAlias = aliasArray?.[index] ?? "";
+            const linkAlias = settings.escape_alias_pipe === false
+                ? rawAlias
+                : escapeUnescapedAliasPipes(rawAlias);
             
             return `${embedPrefix}${app.fileManager.generateMarkdownLink(
                 file,
                 "",
                 "#" + link,
-                aliasArray?.[index] ?? ""
+                linkAlias
             )}${addNewLine}`;
         })
         .join("");

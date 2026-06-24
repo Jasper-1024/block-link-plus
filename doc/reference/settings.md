@@ -26,6 +26,7 @@ Block Link Plus 的设置页提供 Tabs 分组与跨 Tab 搜索：
 - **enable_block_notification** - 复制块链接后显示通知
 - **alias_type** - 别名类型（0=无，1=前 X 字符，2=父标题，3=选中文本）
 - **alias_length** - 别名长度（1-100）
+- **escape_alias_pipe** - 在生成的 Markdown 链接别名中将 `|` 转义为 `\|`
 - **heading_id_newline** - 标题块 ID 换行（实验性）
 
 ### 嵌入链接（Embed Link）
@@ -107,6 +108,7 @@ Block Link Plus 的设置页提供 Tabs 分组与跨 Tab 搜索：
   "enable_right_click_embed": true,
   "enable_right_click_url": false,
   "alias_length": 20,
+  "escape_alias_pipe": true,
   "enable_prefix": false,
   "id_prefix": "",
   "id_length": 4,

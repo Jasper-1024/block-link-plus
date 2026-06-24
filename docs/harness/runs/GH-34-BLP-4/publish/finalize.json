@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-4",
+  "stage": "finalize",
+  "verdict": "completed",
+  "artifact": {
+    "path": "docs/harness/runs/GH-34-BLP-4/finalize.md",
+    "sha256": "90afe21597e8f64e4309499c2aea9f095358c335eeba3d454db36f986c2a33c8"
+  },
+  "comment": "Finalized BLP-4: committed accepted patch and fast-forward merged local master.",
+  "links": [
+    {
+      "title": "Finalize artifact",
+      "url": "repo:docs/harness/runs/GH-34-BLP-4/finalize.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "BLP-4 finalization completed after Ready to Merge approval: the accepted default-on alias pipe escaping patch passed focused validation, was committed on the issue branch, and was fast-forward merged into local master."
+  },
+  "outOfScope": []
+}
