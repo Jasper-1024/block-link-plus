@@ -1,5 +1,0 @@
-
-> block-link-plus@2.0.15 build-with-types C:\Users\stati\Documents\Codex\2026-06-13\hermes\outputs\plane-symphony-like-demo\workspaces\BLP-3
-> tsc -noEmit -skipLibCheck && node esbuild.config.mjs production
-
-Renaming main.css to styles.css

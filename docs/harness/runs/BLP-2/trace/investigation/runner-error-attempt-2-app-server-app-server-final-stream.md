@@ -1,1 +1,0 @@
-I’ll use the `obsidian-runtime-debug` skill because this is an Obsidian runtime investigation with a CDP-required surface. I’m going to read the repo contract and the issue snapshot first, then verify the behavior in the isolated runtime before writing the stage artifact.
