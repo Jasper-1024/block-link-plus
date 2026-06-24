@@ -11,6 +11,12 @@ BLP maps Matt-style triage roles onto Plane states and labels.
 Each task should have one category role. If a report contains multiple real
 bugs or mixes a bug with an enhancement, split it before AFK implementation.
 
+## Execution Labels
+
+- `agent-ready`: eligible for unattended runner pickup.
+- `afk`: executable child item or approved direct implementation scope.
+- `cdp-required`: Obsidian/CDP runtime evidence is required.
+
 ## State Roles
 
 - `needs-triage`: task has not been classified.
@@ -24,6 +30,8 @@ bugs or mixes a bug with an enhancement, split it before AFK implementation.
 - `ready-for-agent` maps to `Todo` or `In Progress` plus `agent-ready`.
 - Runtime-sensitive bugs should also carry `cdp-required`.
 - `ready-for-human` maps to `Human Review`.
+- Human approval or rejection of a non-final design gate maps to
+  `Review Approved` or `Review Rejected`.
 - Human approval for final merge maps to `Ready to Merge`.
 - Completed work maps to `Done`.
 

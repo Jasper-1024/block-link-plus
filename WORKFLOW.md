@@ -41,22 +41,23 @@ Non-bug lane:
 
 ```text
 enhancement|maintenance parent -> design-intake -> Human Review
--> CLI grill-with-docs -> to-prd -> to-issues
--> foreground plane-ops or runner publisher projects accepted artifacts
--> runner executes only AFK + agent-ready child items
+-> human moves item to Review Approved or Review Rejected
+-> implementation-routing
+-> same-task implementation OR AFK child tasks
+-> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
 ```
 
 Bug work follows `.codex/skills/diagnose/SKILL.md`. Feature, refactor, and
-unclear product work starts with `.codex/skills/grill-with-docs/SKILL.md`.
-Accepted design is synthesized with `.codex/skills/to-prd/SKILL.md`, broken
-into vertical slices with `.codex/skills/to-issues/SKILL.md`, and projected to
-Plane+ through a machine-readable Publish Plan or explicit foreground
-`plane-ops` operation. Implementation follows
-`.codex/skills/tdd/SKILL.md`. Periodic technical-debt review uses
+unclear product work starts with `design-intake`, then waits for an explicit
+human review state. `grill-with-docs`, `to-prd`, and `to-issues` are optional
+foreground tools for humans; they are not unattended runner stages.
+Implementation follows `.codex/skills/tdd/SKILL.md`. Periodic technical-debt
+review uses
 `.codex/skills/improve-codebase-architecture/SKILL.md`.
 
-`grill-with-docs`, `to-prd`, `to-issues`, and architecture grilling are
-foreground CLI/HITL workflows. They are not unattended runner stages.
+The runner never infers approval from natural-language comments. Comments and
+Project Pages are feedback inputs for the next agent; `Review Approved` and
+`Review Rejected` are the machine-readable gate states.
 
 ## Runtime Evidence
 
@@ -73,11 +74,16 @@ the exact failed command.
 Human Review means an agent stage has finished and a person must choose the next
 step. It is not proof that the issue is merged, released, or accepted.
 
-For feature/refactor parents, use Human Review as the handoff into CLI
-discussion. After a PRD or issue breakdown is accepted, publish one
-machine-readable Publish Plan JSON for runner projection, or use the global
-`plane-ops` skill for foreground updates. Do not copy/paste Plane updates
-through the UI unless the human explicitly chooses that manual fallback.
+For feature/refactor parents, use Human Review as the explicit approve/reject
+gate:
+
+- approve: move the item to `Review Approved`; optionally add a short comment
+- reject: add feedback in a comment or linked Project Page, then move the item
+  to `Review Rejected`
+- unresolved: keep the item in `Human Review`
+
+After approval, `implementation-routing` decides whether the same item can enter
+implementation or whether AFK child tasks should be created.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and

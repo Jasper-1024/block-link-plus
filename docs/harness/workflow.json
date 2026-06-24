@@ -20,16 +20,15 @@
     "docs/agents/issue-tracker.md",
     "docs/agents/triage-labels.md",
     ".codex/skills/setup-matt-pocock-skills/SKILL.md",
-    ".codex/skills/grill-with-docs/SKILL.md",
     ".codex/skills/diagnose/SKILL.md",
-    ".codex/skills/to-prd/SKILL.md",
-    ".codex/skills/to-issues/SKILL.md",
     ".codex/skills/tdd/SKILL.md",
     ".codex/skills/improve-codebase-architecture/SKILL.md"
   ],
   "states": {
-    "active": ["Todo", "In Progress", "Ready to Merge"],
+    "active": ["Todo", "In Progress", "Ready to Merge", "Review Approved", "Review Rejected"],
     "humanReview": "Human Review",
+    "reviewApproved": "Review Approved",
+    "reviewRejected": "Review Rejected",
     "readyToMerge": "Ready to Merge",
     "done": "Done",
     "runtimeBlocked": "Runtime Blocked"
@@ -49,6 +48,11 @@
       "labels": ["maintenance"],
       "entryStage": "design-intake",
       "automation": "intake"
+    },
+    "afk": {
+      "labels": ["afk"],
+      "entryStage": "implementation",
+      "automation": "afk"
     }
   },
   "loops": {
@@ -62,6 +66,12 @@
       "label": "design intake",
       "spec": "docs/harness/stages/design-intake.md",
       "artifact": "docs/harness/runs/{key}/design-intake.md"
+    },
+    {
+      "name": "implementation-routing",
+      "label": "implementation routing",
+      "spec": "docs/harness/stages/implementation-routing.md",
+      "artifact": "docs/harness/runs/{key}/implementation-routing.md"
     },
     {
       "name": "investigation",

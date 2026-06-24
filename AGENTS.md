@@ -9,11 +9,12 @@ For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.
 It links bug investigation, CDP validation, HITL Plane publishing, and
 handoff formats.
 
-BLP now uses Matt Pocock's small engineering skills as the first workflow layer.
-For new features, refactors, or unclear product direction, use
-`.codex/skills/grill-with-docs/SKILL.md` before implementation planning, then
-`.codex/skills/to-prd/SKILL.md` and `.codex/skills/to-issues/SKILL.md` once the
-discussion is ready to publish. For hard bugs, use
+BLP uses small engineering skills as references, not as mandatory unattended
+runner stages. For new features, refactors, or unclear product direction,
+`design-intake` prepares a Human Review gate; humans move the item to
+`Review Approved` or `Review Rejected`. `implementation-routing` decides
+whether to run implementation on the same item or create AFK child tasks. For
+hard bugs, use
 `.codex/skills/diagnose/SKILL.md`. For implementation, use
 `.codex/skills/tdd/SKILL.md` and work in vertical slices. For periodic technical
 debt and testability review, use

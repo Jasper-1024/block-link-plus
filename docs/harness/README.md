@@ -24,10 +24,7 @@ runs. Keep this file short: it is a map, not the manual.
 - [../agents/domain.md](../agents/domain.md): how skills consume domain docs.
 - [../agents/issue-tracker.md](../agents/issue-tracker.md): Plane/GitHub boundary.
 - [../agents/triage-labels.md](../agents/triage-labels.md): category and state labels.
-- [../../.codex/skills/grill-with-docs/SKILL.md](../../.codex/skills/grill-with-docs/SKILL.md): feature/refactor clarification.
 - [../../.codex/skills/diagnose/SKILL.md](../../.codex/skills/diagnose/SKILL.md): bug diagnosis loop.
-- [../../.codex/skills/to-prd/SKILL.md](../../.codex/skills/to-prd/SKILL.md): accepted discussion to PRD.
-- [../../.codex/skills/to-issues/SKILL.md](../../.codex/skills/to-issues/SKILL.md): PRD/plan to vertical-slice issues.
 - [../../.codex/skills/tdd/SKILL.md](../../.codex/skills/tdd/SKILL.md): vertical-slice implementation.
 - [../../.codex/skills/improve-codebase-architecture/SKILL.md](../../.codex/skills/improve-codebase-architecture/SKILL.md): technical-debt and testability review.
 
@@ -51,7 +48,8 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 
 For direct bugs, use `diagnose` and prove current behavior first. Every runner
 stage writes both the canonical Markdown artifact and the matching Publish Plan
-JSON. For new features, refactors, or unclear behavior changes, use foreground
-`grill-with-docs -> to-prd -> to-issues`; `plane-ops` is the foreground skill,
-while the unattended runner publishes accepted stage facts through its own
-Plane+ API publisher.
+JSON. For new features, refactors, or unclear behavior changes, `design-intake`
+waits in `Human Review` until a human moves the item to `Review Approved` or
+`Review Rejected`. Optional Matt-style
+foreground skills can inform human feedback, but they are not unattended runner
+stages.

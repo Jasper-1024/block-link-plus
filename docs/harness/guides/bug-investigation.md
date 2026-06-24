@@ -29,8 +29,8 @@ handoffs.
 
    Bug fixes that restore intended behavior can stay in the bug lane. If the
    report actually asks for new behavior, unclear product intent, or a broader
-   refactor, stop and route it to the foreground `grill-with-docs -> to-prd ->
-   to-issues` flow.
+   refactor, stop and route it to the non-bug `design-intake -> Human Review`
+   gate.
 
 5. Reproduce with the required runtime gate.
 

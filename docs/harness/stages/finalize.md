@@ -106,7 +106,7 @@ match its current contents.
 
 ## Gate Semantics
 
-Use `completed` only when the human-approved patch has been committed and merged
+Use `completed` only when the approved patch has been committed and merged
 or otherwise finalized according to the explicit repository target for this run.
 
 Use `merge-conflict` when the target branch cannot be merged cleanly without

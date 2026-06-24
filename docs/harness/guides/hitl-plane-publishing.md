@@ -18,22 +18,23 @@ Interactive design work happens in CLI, not in the background runner.
 
 ```text
 Plane parent item
--> CLI grill-with-docs discussion
--> repo-local PRD artifact
--> global plane-ops skill publishes PRD summary to Plane
--> CLI to-issues vertical-slice breakdown
--> global plane-ops skill creates/updates Plane child items
--> runner executes only AFK + agent-ready child items
+-> design-intake
+-> Human Review
+-> Review Approved or Review Rejected
+-> implementation-routing
+-> same-task implementation OR AFK + agent-ready child items
 ```
 
-`grill-with-docs`, `to-prd`, and `to-issues` are foreground tools. They may ask
-for human confirmation and must not be treated as unattended runner stages.
+`grill-with-docs`, `to-prd`, and `to-issues` are optional foreground tools. They
+may ask for human confirmation and must not be treated as unattended runner
+stages or required non-bug flow steps.
 
 ## Artifact Locations
 
-Use `docs/harness/runs/<archive-key>/prd.md` for accepted PRDs and
-`docs/harness/runs/<archive-key>/issue-breakdown.md` for approved vertical
-slices. When the runner should publish them, write a Publish Plan under
+Use `docs/harness/runs/<archive-key>/implementation-routing.md` for the accepted
+route from design to execution. Optional PRDs or issue breakdowns may still live
+under the same run archive when a human explicitly asks for them. When the
+runner should publish facts, write a Publish Plan under
 `docs/harness/runs/<archive-key>/publish/<stage>.json`. Keep Plane comments
 concise: summary, artifact path, artifact SHA-256, and child item status are
 enough.
@@ -46,8 +47,8 @@ enough.
 
 - Work item: active state, owner, short task contract, labels, and acceptance
   criteria.
-- Work item comments: timeline updates and concise projections of repo
-  artifacts. Do not paste full investigations here.
+- Work item comments: timeline updates, concise projections of repo artifacts,
+  and human feedback for the next gate. Do not paste full investigations here.
 - Work item links: canonical repo artifacts, GitHub source reports, validation
   traces, and Project Page dossiers.
 - Project Page dossier: runner-maintained review brief for the current human
@@ -73,6 +74,7 @@ route to human review. Do not automate session-auth web-app APIs.
 ## Publishing
 
 Use the global Codex skill `plane-ops` for foreground Plane comments, links,
-state changes, and child item creation. For unattended stages, the runner calls
-Plane+ directly from the validated Publish Plan. Keep long-form content in repo
-artifacts and Project Page dossiers; comments stay as timeline notes.
+state changes, and child item creation. For unattended stages, the
+runner calls Plane+ directly from the validated Publish Plan. Keep long-form
+content in repo artifacts and Project Page dossiers; comments stay as timeline
+notes or explicit human feedback.

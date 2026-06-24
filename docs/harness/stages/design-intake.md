@@ -3,8 +3,10 @@
 ## Purpose
 
 Use this stage for `enhancement` and `maintenance` Plane tasks before any
-implementation planning. It prepares a high-signal discussion brief for a human
-`grill-with-docs` session. It must not substitute for that interactive session.
+implementation routing. It prepares a high-signal brief for a human
+approve/reject gate. The runner must not infer approval from natural-language
+comments; the human gate is expressed with the `Review Approved` or
+`Review Rejected` Plane state.
 
 ## Read First
 
@@ -17,8 +19,8 @@ Read these before writing the artifact:
 - `docs/agents/issue-tracker.md`
 - `docs/agents/triage-labels.md`
 - `docs/harness/guides/publishing.md`
-- `.codex/skills/grill-with-docs/SKILL.md`
 - `docs/harness/runs/<key>/context/source-issue.md`
+- `docs/harness/runs/<key>/context/tracker-feedback.md`, if present
 - `docs/harness/runs/<key>/context/issue-context.json`
 
 ## Rules
@@ -83,7 +85,9 @@ Use this structure:
 ```
 
 `## Plane Reply` should be short enough to read in Plane and should not contain
-raw trace logs. Link-worthy detail belongs in the artifact body.
+raw trace logs. Tell the human to move the item to `Review Approved` or
+`Review Rejected` plus feedback. Link-worthy detail belongs in the artifact
+body.
 
 Also write the matching Publish Plan JSON:
 

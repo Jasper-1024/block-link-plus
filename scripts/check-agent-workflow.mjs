@@ -50,10 +50,7 @@ const baselineRequiredPaths = [
   "docs/agents/issue-tracker.md",
   "docs/agents/triage-labels.md",
   ".codex/skills/setup-matt-pocock-skills/SKILL.md",
-  ".codex/skills/grill-with-docs/SKILL.md",
   ".codex/skills/diagnose/SKILL.md",
-  ".codex/skills/to-prd/SKILL.md",
-  ".codex/skills/to-issues/SKILL.md",
   ".codex/skills/tdd/SKILL.md",
   ".codex/skills/improve-codebase-architecture/SKILL.md",
 ];
@@ -72,6 +69,22 @@ if (workflow.artifactPattern !== "docs/harness/runs/{key}/{stage}.md") {
 
 if (workflow.publishPlanPattern !== "docs/harness/runs/{key}/publish/{stage}.json") {
   fail("publishPlanPattern must be docs/harness/runs/{key}/publish/{stage}.json");
+}
+
+const states = workflow.states ?? {};
+for (const key of ["humanReview", "reviewApproved", "reviewRejected", "readyToMerge", "done", "runtimeBlocked"]) {
+  if (typeof states[key] !== "string" || states[key].trim() === "") {
+    fail(`workflow.json states.${key} must be a non-empty string`);
+  }
+}
+if (!Array.isArray(states.active) || states.active.length === 0) {
+  fail("workflow.json states.active must be a non-empty array");
+} else {
+  for (const key of ["reviewApproved", "reviewRejected", "readyToMerge"]) {
+    if (!states.active.includes(states[key])) {
+      fail(`workflow.json states.active must include states.${key}`);
+    }
+  }
 }
 
 if (!Array.isArray(workflow.requiredPaths) || workflow.requiredPaths.length === 0) {
@@ -129,7 +142,13 @@ if (!workflow.lanes || typeof workflow.lanes !== "object" || Array.isArray(workf
   fail("workflow.json lanes must be an object");
 }
 
-for (const laneName of ["bug", "enhancement", "maintenance"]) {
+for (const requiredStage of ["design-intake", "implementation-routing", "implementation", "code-review"]) {
+  if (!stageNames.has(requiredStage)) {
+    fail(`workflow.json stages must include: ${requiredStage}`);
+  }
+}
+
+for (const laneName of ["bug", "enhancement", "maintenance", "afk"]) {
   const lane = workflow.lanes?.[laneName];
   if (!lane || typeof lane !== "object" || Array.isArray(lane)) {
     fail(`workflow.json lanes.${laneName} must be an object`);
@@ -146,8 +165,8 @@ for (const laneName of ["bug", "enhancement", "maintenance"]) {
   if (typeof lane.entryStage !== "string" || !stageNames.has(lane.entryStage)) {
     fail(`workflow.json lanes.${laneName}.entryStage must reference an existing stage`);
   }
-  if (!["full", "intake"].includes(lane.automation)) {
-    fail(`workflow.json lanes.${laneName}.automation must be full or intake`);
+  if (!["full", "intake", "afk"].includes(lane.automation)) {
+    fail(`workflow.json lanes.${laneName}.automation must be full, intake, or afk`);
   }
 }
 

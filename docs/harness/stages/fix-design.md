@@ -37,9 +37,9 @@ Do:
 - include at least one rejected alternative and why it is worse
 - define targeted unit tests and Obsidian/CDP runtime validation
 - call out when the task is actually feature/refactor work that should go
-  through `grill-with-docs` instead of bug fix design
+  through non-bug `design-intake` instead of bug fix design
 - call out any intended behavior change before implementation; behavior-change
-  work should go through foreground PRD/issue breakdown before code
+  work should go through a Human Review gate before code
 
 For BLP inline-edit issues involving CodeMirror transactions, explicitly check
 whether the proposed path depends on `transactionFilter`. CodeMirror regular
@@ -122,4 +122,4 @@ missing.
 
 Use `human-review-required` when the design depends on a product or architecture
 decision that should not be delegated to agents, or when the accepted RCA shows
-the request is really new feature/refactor work that needs `grill-with-docs`.
+the request is really new feature/refactor work that needs non-bug intake.
