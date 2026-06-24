@@ -3,6 +3,11 @@
 Use this structure for middle-flow investigation handoffs and Human Review
 summaries. Keep it factual and scoped to the confirmed behavior.
 
+For runtime-gated claims, also follow
+[runtime-proof-package.md](runtime-proof-package.md). For any stage that routes
+to `Human Review`, make the control-plane text follow
+[human-review-brief.md](human-review-brief.md).
+
 ```markdown
 ## Status
 
@@ -22,6 +27,7 @@ summaries. Keep it factual and scoped to the confirmed behavior.
 - Issue claim:
 - Static evidence:
 - Runtime evidence:
+- Runtime proof package:
 - Commands run:
 - Files inspected:
 

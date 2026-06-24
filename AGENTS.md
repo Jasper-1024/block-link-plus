@@ -6,7 +6,8 @@ Runner-readable workflow metadata lives in
 [docs/harness/workflow.json](docs/harness/workflow.json).
 
 For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.md).
-It links bug investigation, CDP validation, HITL Plane publishing, and
+It links bug investigation, runtime proof packages, human review briefs,
+quality gates, doc gardening, CDP validation, HITL Plane publishing, and
 handoff formats.
 
 BLP stage specs are the workflow contract. For new features, refactors, or
@@ -49,6 +50,13 @@ Primary validation surfaces:
 - `corepack pnpm run obsidian:debug-env`
 - `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"`
 - `corepack pnpm run agent:workflow-check`
+
+Quality and review rules:
+
+- [docs/harness/guides/quality-gates.md](docs/harness/guides/quality-gates.md)
+- [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md)
+- [docs/harness/guides/human-review-brief.md](docs/harness/guides/human-review-brief.md)
+- [docs/harness/guides/doc-gardening.md](docs/harness/guides/doc-gardening.md)
 
 Runtime-first rule:
 

@@ -44,9 +44,15 @@ const baselineRequiredPaths = [
   "docs/harness/workflow.json",
   "docs/harness/guides/bug-investigation.md",
   "docs/harness/guides/cdp-runtime.md",
+  "docs/harness/guides/doc-gardening.md",
   "docs/harness/guides/evidence-format.md",
   "docs/harness/guides/hitl-plane-publishing.md",
+  "docs/harness/guides/human-review-brief.md",
   "docs/harness/guides/publishing.md",
+  "docs/harness/guides/quality-gates.md",
+  "docs/harness/guides/runtime-proof-package.md",
+  "docs/harness/plans/README.md",
+  "docs/harness/plans/debt.md",
   "docs/harness/stages/index.md",
   "docs/runtime/README.md",
   "docs/runtime/isolated-obsidian-cdp.md",
@@ -214,6 +220,52 @@ for (const file of ["WORKFLOW.md", "docs/harness/guides/cdp-runtime.md"]) {
   const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
   if (text.includes("```powershell\ncorepack pnpm run obsidian:debug-env -- -Port")) {
     fail(`${file} still uses the known-bad pnpm -- forwarding form as a command block`);
+  }
+}
+
+const runtimeProofStageSpecs = [
+  "docs/harness/stages/investigation.md",
+  "docs/harness/stages/rca-review.md",
+  "docs/harness/stages/fix-design.md",
+  "docs/harness/stages/fix-design-review.md",
+  "docs/harness/stages/implementation.md",
+  "docs/harness/stages/code-review.md",
+];
+for (const file of runtimeProofStageSpecs) {
+  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
+  if (!text.includes("docs/harness/guides/runtime-proof-package.md")) {
+    fail(`${file} must reference runtime-proof-package.md`);
+  }
+}
+
+const humanBriefFiles = [
+  "WORKFLOW.md",
+  "docs/harness/guides/evidence-format.md",
+  "docs/harness/guides/hitl-plane-publishing.md",
+  "docs/harness/guides/publishing.md",
+  "docs/harness/stages/design-intake.md",
+  "docs/harness/stages/implementation-routing.md",
+  "docs/harness/stages/fix-design.md",
+  "docs/harness/stages/fix-design-review.md",
+  "docs/harness/stages/code-review.md",
+  "docs/harness/stages/finalize.md",
+];
+for (const file of humanBriefFiles) {
+  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
+  if (!text.includes("human-review-brief.md")) {
+    fail(`${file} must reference human-review-brief.md`);
+  }
+}
+
+const publishingGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/publishing.md"), "utf8");
+if (!publishingGuideText.includes("page.summary") || !publishingGuideText.includes("human-readable")) {
+  fail("publishing guide must require a human-readable page.summary");
+}
+
+const qualityGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/quality-gates.md"), "utf8");
+for (const phrase of ["Repo-local truth", "Runtime before RCA", "Human gates are state gates"]) {
+  if (!qualityGuideText.includes(phrase)) {
+    fail(`quality-gates.md must include principle: ${phrase}`);
   }
 }
 

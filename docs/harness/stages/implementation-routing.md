@@ -21,7 +21,9 @@ Read these before writing the artifact:
 - `docs/agents/domain.md`
 - `docs/agents/issue-tracker.md`
 - `docs/agents/triage-labels.md`
+- `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
 - `docs/harness/runs/<key>/design-intake.md`
 - `docs/harness/runs/<key>/context/tracker-feedback.md`
 - `docs/harness/runs/<key>/context/issue-context.json`
@@ -38,6 +40,8 @@ Read these before writing the artifact:
 - Child tasks intended for unattended agents must be AFK and `agent-ready`.
 - Each child task body must include the accepted implementation contract, test
   expectations, and non-goals needed without chat context.
+- If routing returns to `Human Review`, the Plane brief must follow
+  `docs/harness/guides/human-review-brief.md`.
 
 ## Output
 

@@ -20,6 +20,11 @@ Every stage writes two outputs:
 
 The Publish Plan schema and Plane+ projection rules live in
 [../guides/publishing.md](../guides/publishing.md).
+Runtime-gated stages use
+[../guides/runtime-proof-package.md](../guides/runtime-proof-package.md).
+Stages that route to `Human Review` use
+[../guides/human-review-brief.md](../guides/human-review-brief.md). Cross-task
+quality rules live in [../guides/quality-gates.md](../guides/quality-gates.md).
 
 Stages:
 

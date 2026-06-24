@@ -18,7 +18,9 @@ Read these before writing the artifact:
 - `docs/agents/domain.md`
 - `docs/agents/issue-tracker.md`
 - `docs/agents/triage-labels.md`
+- `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
 - `docs/harness/runs/<key>/context/source-issue.md`
 - `docs/harness/runs/<key>/context/tracker-feedback.md`, if present
 - `docs/harness/runs/<key>/context/issue-context.json`
@@ -87,7 +89,8 @@ Use this structure:
 `## Plane Reply` should be short enough to read in Plane and should not contain
 raw trace logs. Tell the human to move the item to `Review Approved` or
 `Review Rejected` plus feedback. Link-worthy detail belongs in the artifact
-body.
+body. Follow `docs/harness/guides/human-review-brief.md`; the first screen must
+say what the human is deciding and what the agent recommends.
 
 Also write the matching Publish Plan JSON:
 

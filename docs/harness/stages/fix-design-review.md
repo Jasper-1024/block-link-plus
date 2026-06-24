@@ -18,7 +18,10 @@ Read these before reaching a verdict:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/runtime-proof-package.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -50,6 +53,8 @@ Do:
 - check that the design does not broaden a child sub-bug into the whole cluster
 - verify source ownership and framework claims against code or primary docs
 - examine whether the validation plan would prove the bug is fixed
+- examine whether the runtime proof package is concrete enough for the
+  implementation agent
 - propose narrow revision instructions when the verdict is `needs-revision`
 
 For CodeMirror-related designs, explicitly check:
@@ -66,6 +71,7 @@ Do not:
 - write the fix yourself
 - add a new workflow role to compensate for a vague review
 - accept a design that has no targeted regression and CDP validation plan
+- send `human-review-required` without a useful human-review brief
 - call Plane or other tracker APIs
 
 Avoid MCP/file tools that require interactive elicitation. If you need a small

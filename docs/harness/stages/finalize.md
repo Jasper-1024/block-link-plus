@@ -17,7 +17,9 @@ Read these before doing any merge or commit work:
 - `WORKFLOW.md`
 - `docs/harness/README.md`
 - `docs/harness/workflow.json`
+- `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`

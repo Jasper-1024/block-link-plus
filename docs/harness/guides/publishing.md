@@ -88,6 +88,9 @@ Required fields:
 - `verdict`: one verdict supported by that stage.
 - `artifact.path`: repo-relative path under `docs/harness/runs/<archive-key>/`.
 - `artifact.sha256`: SHA-256 of `artifact.path`.
+- `page.summary`: concise human-readable dossier summary. It must say what a
+  reviewer should understand or decide, not only repeat the stage name, artifact
+  path, or SHA.
 
 Optional fields may be empty but must keep their type:
 
@@ -96,7 +99,6 @@ Optional fields may be empty but must keep their type:
   item links. `repo:` links stay in the dossier when no web repo base is
   configured.
 - `children`: child work items to create or update under the scope item.
-- `page.summary`: the current dossier summary.
 - `outOfScope`: candidate findings that must not create a new parent item.
 
 Unknown stage/verdict combinations are invalid. `runtime-blocked` is accepted
@@ -144,6 +146,10 @@ The dossier contains:
 - Evidence Index
 - Current Summary
 - Out-of-Scope Candidates
+
+Use [human-review-brief.md](human-review-brief.md) for the first-screen review
+shape. Artifact path, SHA, stage, and verdict are supporting evidence; they are
+not a sufficient review brief by themselves.
 
 Do not promote single-task findings into Workspace Wiki in v1. Reusable
 cross-task rules can be promoted later by a human.

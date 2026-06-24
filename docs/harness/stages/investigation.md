@@ -20,6 +20,8 @@ Read these before making RCA claims:
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/runtime-proof-package.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/rca-review.md`, if it exists
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -49,7 +51,8 @@ fixed runtime cannot be reached or started, stop and mark the artifact Runtime
 Blocked. Do not promote static owner mapping into root cause.
 
 Use `docs/harness/guides/cdp-runtime.md` as the source of truth for launching and
-checking the disposable Obsidian runtime.
+checking the disposable Obsidian runtime. Use
+`docs/harness/guides/runtime-proof-package.md` as the required evidence shape.
 
 ## Investigation Discipline
 
@@ -89,7 +92,8 @@ docs/harness/runs/<key>/investigation.md
 
 Use `docs/harness/guides/evidence-format.md` as the base structure. Include concrete
 file paths, line references, commands, runtime facts, current-vs-unverified
-distinctions, and remaining risks.
+distinctions, and remaining risks. For runtime-gated bugs, include the runtime
+proof package fields.
 
 Also write the matching Publish Plan JSON:
 

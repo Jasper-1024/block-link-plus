@@ -57,6 +57,10 @@ enough.
   canonical repo artifact, not duplicated in the Publish Plan. The runner sends
   minimal HTML to Plane+ Pages because this self-hosted instance does not render
   API-written Markdown reliably.
+- Human Review brief: see
+  [human-review-brief.md](human-review-brief.md). The first screen must say
+  what the human should decide, what the agent recommends, and which evidence
+  supports the recommendation.
 - Repo artifact: canonical, reviewable evidence and accepted design text under
   `docs/harness/runs/<archive-key>/`.
 

@@ -14,9 +14,18 @@ runs. Keep this file short: it is a map, not the manual.
 
 - [guides/cdp-runtime.md](guides/cdp-runtime.md): isolated Obsidian/CDP runtime.
 - [guides/evidence-format.md](guides/evidence-format.md): investigation handoff shape.
+- [guides/runtime-proof-package.md](guides/runtime-proof-package.md): required runtime proof package.
+- [guides/human-review-brief.md](guides/human-review-brief.md): human-gate brief rules.
+- [guides/quality-gates.md](guides/quality-gates.md): BLP agent golden principles.
+- [guides/doc-gardening.md](guides/doc-gardening.md): recurring cleanup checks.
 - [guides/publishing.md](guides/publishing.md): Publish Plan JSON and Plane+ projection contract.
 - [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing boundary.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
+
+## Plans And Debt
+
+- [plans/README.md](plans/README.md): cross-task harness plans.
+- [plans/debt.md](plans/debt.md): known harness debt and deferrals.
 
 ## Runtime Knowledge
 

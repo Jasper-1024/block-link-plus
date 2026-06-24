@@ -21,6 +21,8 @@ Read these before editing:
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/runtime-proof-package.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/implementation-routing.md`, when this is a non-bug
   or AFK implementation item
@@ -46,6 +48,8 @@ Do:
   then the next behavior
 - prefer public interfaces and the highest stable behavior seam for tests
 - run the required validation from the accepted review
+- repeat the accepted runtime proof package after rebuilding or reloading the
+  plugin when runtime behavior is in scope
 - record exact commands, important output, and any validation that could not run
 - keep temporary probes under `.tmp/`
 
@@ -115,6 +119,9 @@ Use these sections:
 `## Plane Reply` should be concise and high signal. Say what changed, what was
 validated, what failed or was not run, and what the code-review stage should
 attack.
+
+For runtime-gated work, `## Runtime Evidence` must follow
+`docs/harness/guides/runtime-proof-package.md`.
 
 Also write the matching Publish Plan JSON:
 

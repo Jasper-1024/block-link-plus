@@ -24,8 +24,16 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
   runner contract.
 - [docs/harness/stages](docs/harness/stages/index.md): stage identities,
   required inputs, artifact sections, and gate semantics.
+- [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md):
+  required shape for runtime evidence packages.
+- [docs/harness/guides/human-review-brief.md](docs/harness/guides/human-review-brief.md):
+  control-plane review brief rules.
+- [docs/harness/guides/quality-gates.md](docs/harness/guides/quality-gates.md):
+  BLP agent quality principles and mechanical gates.
 - [docs/harness/guides/publishing.md](docs/harness/guides/publishing.md):
   Publish Plan JSON schema, idempotency, and Plane+ dossier rules.
+- [docs/harness/plans](docs/harness/plans/README.md): cross-task harness plans
+  and known process debt.
 
 ## Lanes
 
@@ -66,7 +74,8 @@ For `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror
 state, plugin lifecycle, focus, scroll, settings, or real editor behavior,
 runtime evidence is mandatory before RCA or fix-plan claims.
 
-Use [docs/harness/guides/cdp-runtime.md](docs/harness/guides/cdp-runtime.md).
+Use [docs/harness/guides/cdp-runtime.md](docs/harness/guides/cdp-runtime.md)
+and [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md).
 If the runtime cannot be started or reused, stop with Runtime Blocked and record
 the exact failed command.
 
@@ -74,6 +83,8 @@ the exact failed command.
 
 Human Review means an agent stage has finished and a person must choose the next
 step. It is not proof that the issue is merged, released, or accepted.
+Use [docs/harness/guides/human-review-brief.md](docs/harness/guides/human-review-brief.md)
+for the Project Page and comment shape.
 
 For feature/refactor parents, use Human Review as the explicit approve/reject
 gate:

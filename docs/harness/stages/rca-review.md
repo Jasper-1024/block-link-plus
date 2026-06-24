@@ -19,6 +19,8 @@ Read these before reaching a verdict:
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/runtime-proof-package.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
@@ -43,6 +45,8 @@ Do:
 
 - challenge whether each claim is an observed fact or an inference
 - verify runtime evidence when the challenge depends on runtime behavior
+- verify that runtime-gated investigations contain a usable runtime proof
+  package
 - use primary sources for external framework behavior when needed
 - preserve issue-cluster boundaries
 - give the next investigation run narrow, concrete evidence gaps

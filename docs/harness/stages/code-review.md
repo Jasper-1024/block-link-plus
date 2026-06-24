@@ -20,7 +20,10 @@ Read these before reaching a verdict:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
+- `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/runtime-proof-package.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -41,6 +44,8 @@ Do:
 - check whether the patch implements the accepted design and nothing broader
 - review correctness, regression risk, edge cases, and missing tests
 - verify that validation evidence matches the changed behavior
+- verify that runtime-gated work includes the accepted runtime proof package
+  before and after the fix when the symptom requires it
 - verify that the implementation used behavior-oriented vertical slices, or
   clearly justified why a different test seam was necessary
 - inspect source and test diffs directly instead of relying only on summaries
@@ -106,6 +111,9 @@ Use these sections:
 
 `## Plane Reply` should be concise and high signal. Say whether the patch is
 accepted, what blocks acceptance, and what the next stage should do.
+When the verdict is `accepted` or `human-review-required`, follow
+`docs/harness/guides/human-review-brief.md` so the Plane dossier tells the
+human what to decide.
 
 Also write the matching Publish Plan JSON:
 
