@@ -24,6 +24,7 @@ Read these before writing the artifact:
 - `docs/harness/guides/human-review-brief.md`
 - `docs/harness/guides/publishing.md`
 - `docs/harness/guides/quality-gates.md`
+- `docs/harness/guides/tdd.md`
 - `docs/harness/runs/<key>/design-intake.md`
 - `docs/harness/runs/<key>/context/tracker-feedback.md`
 - `docs/harness/runs/<key>/context/issue-context.json`
@@ -39,7 +40,9 @@ Read these before writing the artifact:
   split into independently verifiable vertical slices.
 - Child tasks intended for unattended agents must be AFK and `agent-ready`.
 - Each child task body must include the accepted implementation contract, test
-  expectations, and non-goals needed without chat context.
+  expectations, TDD slice plan, and non-goals needed without chat context.
+- Same-task implementation contracts must include the TDD slice plan the
+  implementation stage will execute.
 - If routing returns to `Human Review`, the Plane brief must follow
   `docs/harness/guides/human-review-brief.md`.
 
@@ -69,6 +72,8 @@ Use this structure:
 
 ## Implementation Contract
 
+## TDD Slice Plan
+
 ## Child Tasks
 
 ## Risks / Open Questions
@@ -85,6 +90,11 @@ docs/harness/runs/<key>/publish/implementation-routing.json
 Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
 must point to the implementation-routing Markdown artifact and the
 `artifact.sha256` must match its current contents.
+
+`## TDD Slice Plan` must follow `docs/harness/guides/tdd.md`. If the approved
+design cannot be reduced to executable behavior slices, do not route to
+implementation; use `human-review-required` and ask for the missing product or
+scope decision.
 
 ## Gate Semantics
 

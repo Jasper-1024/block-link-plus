@@ -12,6 +12,9 @@ reconstruct project taste from chat history.
   cause, fix design, or validation claims.
 - Bounded scope: solve the accepted issue slice. Split clusters before
   implementation.
+- TDD evidence is a gate: design or routing defines behavior slices,
+  implementation records Red/Green/Refactor evidence, and code review validates
+  that evidence.
 - Review loops stay intact: investigation, RCA review, fix design, design
   review, implementation, and code review are separate responsibilities.
 - Human gates are state gates: comments carry feedback; Plane state carries
@@ -33,6 +36,7 @@ reconstruct project taste from chat history.
   [runtime-proof-package.md](runtime-proof-package.md).
 - Human-review stages must follow
   [human-review-brief.md](human-review-brief.md).
+- TDD-gated implementation stages must follow [tdd.md](tdd.md).
 
 ## Escalation
 

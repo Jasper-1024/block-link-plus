@@ -22,6 +22,7 @@ Read these before reaching a verdict:
 - `docs/harness/guides/publishing.md`
 - `docs/harness/guides/quality-gates.md`
 - `docs/harness/guides/runtime-proof-package.md`
+- `docs/harness/guides/tdd.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -53,6 +54,8 @@ Do:
 - check that the design does not broaden a child sub-bug into the whole cluster
 - verify source ownership and framework claims against code or primary docs
 - examine whether the validation plan would prove the bug is fixed
+- examine whether the TDD slice plan can be executed as Red/Green/Refactor
+  without testing private implementation details
 - examine whether the runtime proof package is concrete enough for the
   implementation agent
 - propose narrow revision instructions when the verdict is `needs-revision`
@@ -71,6 +74,8 @@ Do not:
 - write the fix yourself
 - add a new workflow role to compensate for a vague review
 - accept a design that has no targeted regression and CDP validation plan
+- accept a design whose TDD slices cannot fail for the accepted symptom or
+  cannot prove the behavior through a stable seam
 - send `human-review-required` without a useful human-review brief
 - call Plane or other tracker APIs
 
@@ -103,6 +108,8 @@ Use these sections:
 
 ## Implementation Readiness
 
+## TDD Slice Review
+
 ## Validation Coverage
 
 ## Risks / Open Questions
@@ -126,8 +133,9 @@ must point to the fix design review Markdown artifact and the
 
 ## Gate Semantics
 
-If the verdict is `accepted`, state the smallest implementation scope and the
-validation that must run after implementation.
+If the verdict is `accepted`, state the smallest implementation scope, the TDD
+slices the implementation must execute, and the validation that must run after
+implementation.
 
 If the verdict is `needs-revision`, list concrete changes the next fix-design
 run must make.

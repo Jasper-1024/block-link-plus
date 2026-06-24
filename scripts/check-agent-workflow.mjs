@@ -51,6 +51,7 @@ const baselineRequiredPaths = [
   "docs/harness/guides/publishing.md",
   "docs/harness/guides/quality-gates.md",
   "docs/harness/guides/runtime-proof-package.md",
+  "docs/harness/guides/tdd.md",
   "docs/harness/plans/README.md",
   "docs/harness/plans/debt.md",
   "docs/harness/stages/index.md",
@@ -238,6 +239,21 @@ for (const file of runtimeProofStageSpecs) {
   }
 }
 
+const tddStageSpecs = [
+  "docs/harness/stages/fix-design.md",
+  "docs/harness/stages/fix-design-review.md",
+  "docs/harness/stages/implementation-routing.md",
+  "docs/harness/stages/implementation.md",
+  "docs/harness/stages/code-review.md",
+  "docs/harness/guides/quality-gates.md",
+];
+for (const file of tddStageSpecs) {
+  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
+  if (!text.includes("docs/harness/guides/tdd.md") && !text.includes("[tdd.md](tdd.md)")) {
+    fail(`${file} must reference tdd.md`);
+  }
+}
+
 const humanBriefFiles = [
   "WORKFLOW.md",
   "docs/harness/guides/evidence-format.md",
@@ -263,7 +279,7 @@ if (!publishingGuideText.includes("page.summary") || !publishingGuideText.includ
 }
 
 const qualityGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/quality-gates.md"), "utf8");
-for (const phrase of ["Repo-local truth", "Runtime before RCA", "Human gates are state gates"]) {
+for (const phrase of ["Repo-local truth", "Runtime before RCA", "TDD evidence is a gate", "Human gates are state gates"]) {
   if (!qualityGuideText.includes(phrase)) {
     fail(`quality-gates.md must include principle: ${phrase}`);
   }

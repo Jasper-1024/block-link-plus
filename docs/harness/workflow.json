@@ -19,6 +19,7 @@
     "docs/harness/guides/publishing.md",
     "docs/harness/guides/quality-gates.md",
     "docs/harness/guides/runtime-proof-package.md",
+    "docs/harness/guides/tdd.md",
     "docs/harness/plans/README.md",
     "docs/harness/plans/debt.md",
     "docs/harness/stages/archive-cleanup.md",

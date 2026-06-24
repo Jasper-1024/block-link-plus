@@ -25,20 +25,22 @@ Runtime-gated stages use
 Stages that route to `Human Review` use
 [../guides/human-review-brief.md](../guides/human-review-brief.md). Cross-task
 quality rules live in [../guides/quality-gates.md](../guides/quality-gates.md).
+Implementation design, execution, and review use
+[../guides/tdd.md](../guides/tdd.md).
 
 Stages:
 
 - [design-intake.md](design-intake.md): non-bug enhancement/maintenance parent
   intake that prepares a human approve/reject gate.
 - [implementation-routing.md](implementation-routing.md): approved non-bug
-  design to same-task implementation or AFK child-task creation.
+  design to same-task implementation or AFK child-task creation with TDD slices.
 - [investigation.md](investigation.md): runtime-first bug investigation and
   evidence completion.
 - [rca-review.md](rca-review.md): adversarial RCA review and loop gate.
 - [fix-design.md](fix-design.md): accepted-RCA to bounded implementation
-  design.
+  design and TDD slice plan.
 - [fix-design-review.md](fix-design-review.md): adversarial review of the fix
-  design before implementation.
+  design and TDD slice plan before implementation.
 - [implementation.md](implementation.md): execute an accepted design with
   vertical-slice TDD, regression tests, and runtime validation.
 - [code-review.md](code-review.md): adversarial review of the implementation

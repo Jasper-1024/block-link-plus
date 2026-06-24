@@ -30,6 +30,8 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
   control-plane review brief rules.
 - [docs/harness/guides/quality-gates.md](docs/harness/guides/quality-gates.md):
   BLP agent quality principles and mechanical gates.
+- [docs/harness/guides/tdd.md](docs/harness/guides/tdd.md): vertical-slice
+  TDD plan, execution evidence, and review checklist.
 - [docs/harness/guides/publishing.md](docs/harness/guides/publishing.md):
   Publish Plan JSON schema, idempotency, and Plane+ dossier rules.
 - [docs/harness/plans](docs/harness/plans/README.md): cross-task harness plans
@@ -55,8 +57,9 @@ enhancement|maintenance parent -> design-intake -> Human Review
 ```
 
 Bug work is an agent-to-agent loop by default: reproduce with runtime evidence,
-review the RCA, design the bounded fix, review the design, implement with tests,
-and review the patch before the final human gate. Feature, refactor, and unclear
+review the RCA, design the bounded fix as executable TDD behavior slices, review
+the design, implement the accepted slices with Red/Green/Refactor evidence, and
+review the patch before the final human gate. Feature, refactor, and unclear
 product work starts with `design-intake`, then waits for an explicit human
 review state before implementation routing.
 
@@ -95,7 +98,8 @@ gate:
 - unresolved: keep the item in `Human Review`
 
 After approval, `implementation-routing` decides whether the same item can enter
-implementation or whether AFK child tasks should be created.
+implementation or whether AFK child tasks should be created. The routing output
+must include the TDD slice plan each implementation agent will execute.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and

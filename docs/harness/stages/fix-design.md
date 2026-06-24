@@ -23,6 +23,7 @@ Read these before designing:
 - `docs/harness/guides/publishing.md`
 - `docs/harness/guides/quality-gates.md`
 - `docs/harness/guides/runtime-proof-package.md`
+- `docs/harness/guides/tdd.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -39,6 +40,8 @@ Do:
 - cite exact source files, functions, and framework behavior
 - include at least one rejected alternative and why it is worse
 - define targeted unit tests and Obsidian/CDP runtime validation
+- define executable TDD behavior slices using
+  `docs/harness/guides/tdd.md`
 - define the runtime proof package the implementation must repeat
 - call out when the task is actually feature/refactor work that should go
   through non-bug `design-intake` instead of bug fix design
@@ -93,6 +96,8 @@ Use these sections:
 
 ## Implementation Notes
 
+## TDD Slice Plan
+
 ## Validation Plan
 
 ## Behavior Change Gate
@@ -102,9 +107,15 @@ Use these sections:
 ## Decision
 ```
 
+`## TDD Slice Plan` must use the slice-plan table from
+`docs/harness/guides/tdd.md`. Each slice should name the behavior, public seam,
+expected RED failure, minimum GREEN target, refactor allowance, and required
+validation. Do not write the tests in this stage.
+
 `## Plane Reply` should be concise and high signal. Say what implementation
-shape you recommend, what it intentionally does not cover, and what the design
-reviewer should attack. If the verdict is `human-review-required`, follow
+shape you recommend, what it intentionally does not cover, and what TDD slice or
+validation risk the design reviewer should attack. If the verdict is
+`human-review-required`, follow
 `docs/harness/guides/human-review-brief.md`.
 
 Also write the matching Publish Plan JSON:

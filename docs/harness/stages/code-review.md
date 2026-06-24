@@ -24,6 +24,7 @@ Read these before reaching a verdict:
 - `docs/harness/guides/publishing.md`
 - `docs/harness/guides/quality-gates.md`
 - `docs/harness/guides/runtime-proof-package.md`
+- `docs/harness/guides/tdd.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -48,6 +49,8 @@ Do:
   before and after the fix when the symptom requires it
 - verify that the implementation used behavior-oriented vertical slices, or
   clearly justified why a different test seam was necessary
+- verify the implementation artifact's TDD execution evidence against
+  `docs/harness/guides/tdd.md`
 - inspect source and test diffs directly instead of relying only on summaries
 - call out exact files, functions, and validation gaps
 - propose narrow revision instructions when the verdict is `needs-revision`
@@ -69,6 +72,8 @@ Do not:
   missing without a documented non-blocking reason
 - accept tests that mostly assert private implementation details when a public
   behavior seam was available
+- accept missing RED evidence, GREEN evidence, or post-refactor validation for a
+  scoped TDD slice
 - call Plane or other tracker APIs
 
 Avoid MCP/file tools that require interactive elicitation. If you need a small
@@ -101,6 +106,15 @@ Use these sections:
 ## Test And Validation Review
 
 ## TDD Review
+
+Use this checklist:
+
+- Each implemented behavior maps to an accepted design or routing slice.
+- RED evidence fails for the expected behavior reason before the GREEN patch.
+- GREEN evidence shows the smallest source change needed for the slice.
+- REFACTOR evidence, when present, happens after GREEN and reruns validation.
+- Tests prove public behavior or justify the alternate seam.
+- Runtime-gated slices repeat the accepted runtime proof package.
 
 ## Required Revisions
 

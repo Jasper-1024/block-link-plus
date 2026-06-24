@@ -23,6 +23,7 @@ Read these before editing:
 - `docs/harness/guides/publishing.md`
 - `docs/harness/guides/quality-gates.md`
 - `docs/harness/guides/runtime-proof-package.md`
+- `docs/harness/guides/tdd.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/implementation-routing.md`, when this is a non-bug
   or AFK implementation item
@@ -46,6 +47,8 @@ Do:
 - make the smallest source patch that satisfies the accepted design
 - implement with vertical-slice TDD: one behavior test, smallest code to pass,
   then the next behavior
+- execute the accepted TDD slice plan from `fix-design.md`,
+  `fix-design-review.md`, `implementation-routing.md`, or the AFK child body
 - prefer public interfaces and the highest stable behavior seam for tests
 - run the required validation from the accepted review
 - repeat the accepted runtime proof package after rebuilding or reloading the
@@ -74,10 +77,15 @@ Do not:
 - mock BLP-owned internal collaborators when a real behavior seam exists
 - call Plane or other tracker APIs
 - hide failed validation by replacing it with static reasoning
+- silently replace a failed TDD slice plan with a broader or private-seam test
 
 If implementation evidence shows the accepted design is wrong or too narrow,
 stop with `blocked-design-mismatch`. Explain the contradictory evidence and the
 smallest design question that must be reopened.
+
+If a planned TDD slice cannot be executed because the test seam is wrong, record
+the mismatch in `## Risks / Open Questions` and use `blocked-design-mismatch`
+unless the accepted design already allows the alternate public seam.
 
 ## Required Artifact
 
@@ -104,6 +112,11 @@ Use these sections:
 ## Tests Added Or Updated
 
 ## TDD Slices
+
+Use the execution-evidence table from `docs/harness/guides/tdd.md`. For each
+accepted slice, record the behavior, public seam, RED command and expected
+failure, GREEN patch summary and passing command, REFACTOR command or `N/A`, and
+files touched.
 
 ## Validation
 
@@ -135,7 +148,8 @@ must match its current contents.
 
 ## Gate Semantics
 
-Use `ready-for-review` only when the implementation patch exists, the targeted
+Use `ready-for-review` only when the implementation patch exists, every scoped
+behavior has TDD execution evidence or a justified mismatch, the targeted
 behavior tests pass, required broader validation has either passed or is clearly
 reported with a non-blocking reason, and the artifact records the TDD slices
 actually executed. This exits to code review, not to merge or release.

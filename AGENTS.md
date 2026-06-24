@@ -14,7 +14,8 @@ BLP stage specs are the workflow contract. For new features, refactors, or
 unclear product direction, `design-intake` prepares a Human Review gate; humans
 move the item to `Review Approved` or `Review Rejected`.
 `implementation-routing` decides whether to run implementation on the same item
-or create AFK child tasks. For bug fixes, investigation, RCA review, fix design,
+or create AFK child tasks, and includes the TDD slice plan for the accepted
+implementation contract. For bug fixes, investigation, RCA review, fix design,
 implementation, and code review are agent-to-agent by default; final merge
 approval uses `Ready to Merge`.
 
@@ -54,6 +55,7 @@ Primary validation surfaces:
 Quality and review rules:
 
 - [docs/harness/guides/quality-gates.md](docs/harness/guides/quality-gates.md)
+- [docs/harness/guides/tdd.md](docs/harness/guides/tdd.md)
 - [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md)
 - [docs/harness/guides/human-review-brief.md](docs/harness/guides/human-review-brief.md)
 - [docs/harness/guides/doc-gardening.md](docs/harness/guides/doc-gardening.md)
