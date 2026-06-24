@@ -96,8 +96,9 @@ node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
 corepack pnpm run agent:workflow-check
 ```
 
-Run artifacts belong under `docs/harness/runs/<tracker-key>/`. Raw prompts,
-event streams, turn metadata, and runtime command logs belong under
-`docs/harness/runs/<tracker-key>/trace/<stage>/`.
-Publish Plan JSON files belong under
-`docs/harness/runs/<tracker-key>/publish/<stage>.json`.
+Run artifacts belong under `docs/harness/runs/<archive-key>/`. For GitHub
+backed Plane items the runner uses `GH-<issue>-<plane-key>` such as
+`GH-34-BLP-2`; Plane-only items use `PLANE-<plane-key>`. Raw prompts, event
+streams, turn metadata, and runtime command logs belong under
+`docs/harness/runs/<archive-key>/trace/<stage>/`. Publish Plan JSON files belong
+under `docs/harness/runs/<archive-key>/publish/<stage>.json`.

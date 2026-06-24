@@ -31,11 +31,16 @@ for human confirmation and must not be treated as unattended runner stages.
 
 ## Artifact Locations
 
-Use `docs/harness/runs/<key>/prd.md` for accepted PRDs and
-`docs/harness/runs/<key>/issue-breakdown.md` for approved vertical slices. When
-the runner should publish them, write a Publish Plan under
-`docs/harness/runs/<key>/publish/<stage>.json`. Keep Plane comments concise:
-summary, artifact path, artifact SHA-256, and child item status are enough.
+Use `docs/harness/runs/<archive-key>/prd.md` for accepted PRDs and
+`docs/harness/runs/<archive-key>/issue-breakdown.md` for approved vertical
+slices. When the runner should publish them, write a Publish Plan under
+`docs/harness/runs/<archive-key>/publish/<stage>.json`. Keep Plane comments
+concise: summary, artifact path, artifact SHA-256, and child item status are
+enough.
+
+`archive-key` is runner-owned storage identity. GitHub-backed Plane items use
+`GH-<issue>-<plane-key>` such as `GH-34-BLP-2`; Plane-only items use
+`PLANE-<plane-key>`. Publish Plan `scopeKey` stays as the Plane work item key.
 
 ## Information Layers
 
@@ -47,9 +52,10 @@ summary, artifact path, artifact SHA-256, and child item status are enough.
   traces, and Project Page dossiers.
 - Project Page dossier: runner-maintained long-form index for complex bug-fix
   work, especially when several comments, source reports, and validations need
-  one stable index.
+  one stable index. The runner sends minimal HTML to Plane+ Pages because this
+  self-hosted instance does not render API-written Markdown reliably.
 - Repo artifact: canonical, reviewable evidence and accepted design text under
-  `docs/harness/runs/<key>/`.
+  `docs/harness/runs/<archive-key>/`.
 
 ## Project Pages
 

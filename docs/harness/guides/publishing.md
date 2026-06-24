@@ -29,35 +29,40 @@ links such as a GitHub source report.
 Every stage run must write exactly one JSON Publish Plan:
 
 ```text
-docs/harness/runs/<key>/publish/<stage>.json
+docs/harness/runs/<archive-key>/publish/<stage>.json
 ```
 
 The plan points at the canonical stage artifact:
 
 ```text
-docs/harness/runs/<key>/<stage>.md
+docs/harness/runs/<archive-key>/<stage>.md
 ```
 
 Do not maintain a second Markdown copy of the publication data. The runner
 publishes only the JSON plan.
+
+`archive-key` is not the Plane key. GitHub-backed work uses
+`GH-<issue>-<plane-key>` such as `GH-34-BLP-2`; Plane-only work uses
+`PLANE-<plane-key>`. The Publish Plan `scopeKey` remains the Plane key because
+Plane comments, child items, and state transitions still target that work item.
 
 ## Schema
 
 ```json
 {
   "schemaVersion": 1,
-  "scopeKey": "BLP-36",
+  "scopeKey": "BLP-2",
   "stage": "rca-review",
   "verdict": "accepted",
   "artifact": {
-    "path": "docs/harness/runs/BLP-36/rca-review.md",
+    "path": "docs/harness/runs/GH-34-BLP-2/rca-review.md",
     "sha256": "<lowercase sha256>"
   },
   "comment": "RCA review accepted owner layer; split approved.",
   "links": [
     {
       "title": "RCA review",
-      "url": "repo:docs/harness/runs/BLP-36/rca-review.md"
+      "url": "repo:docs/harness/runs/GH-34-BLP-2/rca-review.md"
     }
   ],
   "children": [
@@ -81,7 +86,7 @@ Required fields:
 - `scopeKey`: Plane key for the parent or child being handled.
 - `stage`: one stage from `docs/harness/workflow.json`.
 - `verdict`: one verdict supported by that stage.
-- `artifact.path`: repo-relative path under `docs/harness/runs/<key>/`.
+- `artifact.path`: repo-relative path under `docs/harness/runs/<archive-key>/`.
 - `artifact.sha256`: SHA-256 of `artifact.path`.
 
 Optional fields may be empty but must keep their type:
