@@ -44,6 +44,7 @@ const baselineRequiredPaths = [
   "docs/harness/guides/cdp-runtime.md",
   "docs/harness/guides/evidence-format.md",
   "docs/harness/guides/hitl-plane-publishing.md",
+  "docs/harness/guides/publishing.md",
   "docs/harness/stages/index.md",
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",
@@ -67,6 +68,10 @@ if (workflow.workflow !== "blp") {
 
 if (workflow.artifactPattern !== "docs/harness/runs/{key}/{stage}.md") {
   fail("artifactPattern must be docs/harness/runs/{key}/{stage}.md");
+}
+
+if (workflow.publishPlanPattern !== "docs/harness/runs/{key}/publish/{stage}.json") {
+  fail("publishPlanPattern must be docs/harness/runs/{key}/publish/{stage}.json");
 }
 
 if (!Array.isArray(workflow.requiredPaths) || workflow.requiredPaths.length === 0) {

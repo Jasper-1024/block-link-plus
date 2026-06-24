@@ -14,7 +14,8 @@ runs. Keep this file short: it is a map, not the manual.
 
 - [guides/cdp-runtime.md](guides/cdp-runtime.md): isolated Obsidian/CDP runtime.
 - [guides/evidence-format.md](guides/evidence-format.md): investigation handoff shape.
-- [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing through `plane-ops`.
+- [guides/publishing.md](guides/publishing.md): Publish Plan JSON and Plane+ projection contract.
+- [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing boundary.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
 
 ## Matt Skill Context
@@ -46,8 +47,9 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 
 ## Quick Rule
 
-For direct bugs, use `diagnose` and prove current behavior first. For new
-features, refactors, or unclear behavior changes, use foreground
-`grill-with-docs -> to-prd -> to-issues`, then publish through the global
-`plane-ops` skill. The unattended runner should execute only published
-`AFK + agent-ready` child items.
+For direct bugs, use `diagnose` and prove current behavior first. Every runner
+stage writes both the canonical Markdown artifact and the matching Publish Plan
+JSON. For new features, refactors, or unclear behavior changes, use foreground
+`grill-with-docs -> to-prd -> to-issues`; `plane-ops` is the foreground skill,
+while the unattended runner publishes accepted stage facts through its own
+Plane+ API publisher.

@@ -19,6 +19,7 @@ Read these before designing:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/publishing.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -100,6 +101,16 @@ Use these sections:
 `## Plane Reply` should be concise and high signal. Say what implementation
 shape you recommend, what it intentionally does not cover, and what the design
 reviewer should attack.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/fix-design.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the fix design Markdown artifact and the `artifact.sha256` must
+match its current contents.
 
 ## Gate Semantics
 

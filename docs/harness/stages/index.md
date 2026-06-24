@@ -13,12 +13,21 @@ The machine-readable stage list and artifact paths are mirrored in
 [../workflow.json](../workflow.json). Keep this index, each stage spec, and the
 workflow manifest in sync.
 
+Every stage writes two outputs:
+
+- canonical artifact: `docs/harness/runs/<key>/<stage>.md`
+- Publish Plan: `docs/harness/runs/<key>/publish/<stage>.json`
+
+The Publish Plan schema and Plane+ projection rules live in
+[../guides/publishing.md](../guides/publishing.md).
+
 Stages:
 
 - [design-intake.md](design-intake.md): non-bug enhancement/maintenance parent
   intake that prepares a human `grill-with-docs` discussion brief. PRD and
-  issue breakdown publishing happen later through foreground CLI work and the
-  global `plane-ops` skill, not as unattended runner stages.
+  issue breakdown publishing happen later through foreground CLI work; the
+  global `plane-ops` skill is the foreground operation path, not runner
+  infrastructure.
 - [investigation.md](investigation.md): runtime-first bug investigation and
   evidence completion, following the repo-local `diagnose` skill.
 - [rca-review.md](rca-review.md): adversarial RCA review and loop gate.

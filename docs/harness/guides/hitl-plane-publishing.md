@@ -6,9 +6,10 @@ Interactive design work happens in CLI, not in the background runner.
 
 - BLP repo is the durable source of truth for PRDs, issue breakdowns, run
   artifacts, domain language, and validation evidence.
-- Plane is the control panel for state, comments, links, and AFK child tasks.
-- Plane updates are explicit foreground operations through the global
-  `plane-ops` skill.
+- Plane is the control panel for state, comments, links, Project Page pointers,
+  and AFK child tasks.
+- Foreground Plane updates use the global `plane-ops` skill. Unattended runner
+  stages publish through runner-owned Publish Plan JSON.
 - The BLP repo never stores Plane API credentials or runner-local paths.
 - Repo-local unattended stage workers must not embed Plane API calls in repo
   scripts or artifacts.
@@ -31,16 +32,40 @@ for human confirmation and must not be treated as unattended runner stages.
 ## Artifact Locations
 
 Use `docs/harness/runs/<key>/prd.md` for accepted PRDs and
-`docs/harness/runs/<key>/issue-breakdown.md` for approved vertical slices. Keep
-Plane comments concise: summary, artifact path, artifact SHA-256, and child item
-status are enough.
+`docs/harness/runs/<key>/issue-breakdown.md` for approved vertical slices. When
+the runner should publish them, write a Publish Plan under
+`docs/harness/runs/<key>/publish/<stage>.json`. Keep Plane comments concise:
+summary, artifact path, artifact SHA-256, and child item status are enough.
+
+## Information Layers
+
+- Work item: active state, owner, short task contract, labels, and acceptance
+  criteria.
+- Work item comments: timeline updates and concise projections of repo
+  artifacts. Do not paste full investigations here.
+- Work item links: canonical repo artifacts, GitHub source reports, validation
+  traces, and Project Page dossiers.
+- Project Page dossier: runner-maintained long-form index for complex bug-fix
+  work, especially when several comments, source reports, and validations need
+  one stable index.
+- Repo artifact: canonical, reviewable evidence and accepted design text under
+  `docs/harness/runs/<key>/`.
+
+## Project Pages
+
+This workflow targets Plane+, where project Page content is API-key writable.
+If the instance changes, verify capability with a read-only probe:
+
+```bash
+plane-ops --project-id <project-id> capability probe --json
+```
+
+If project pages are not API-key writable, stop the runner publishing path and
+route to human review. Do not automate session-auth web-app APIs.
 
 ## Publishing
 
-Use the global Codex skill `plane-ops` for Plane comments, links, state changes,
-and child item creation. Keep long-form content in repo artifacts and publish a
-concise Plane projection: summary, artifact path, artifact SHA-256 when useful,
-and the next human or AFK action.
-
-Do not reintroduce harness-local tracker adapters or control-plane dependencies
-for these HITL publishing steps.
+Use the global Codex skill `plane-ops` for foreground Plane comments, links,
+state changes, and child item creation. For unattended stages, the runner calls
+Plane+ directly from the validated Publish Plan. Keep long-form content in repo
+artifacts and Project Page dossiers; comments stay as timeline notes.

@@ -18,6 +18,7 @@ Read these before reaching a verdict:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/publishing.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
@@ -94,6 +95,16 @@ Use these sections:
 `## Plane Reply` should be a concise, high-signal reply to the previous
 investigator and the human operator. Do not fill it with template boilerplate.
 Say what you accept, what you reject or refine, and what the next agent must do.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/rca-review.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the RCA review Markdown artifact and the `artifact.sha256` must
+match its current contents.
 
 ## Gate Semantics
 

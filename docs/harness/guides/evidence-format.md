@@ -9,6 +9,7 @@ summaries. Keep it factual and scoped to the confirmed behavior.
 - State: Middle-flow / Human Review / Blocked
 - Task: <tracker id or issue title>
 - Workspace: <worktree path and branch>
+- Plane dossier: <work item / Project Page URL / none>
 
 ## Scope
 
@@ -48,6 +49,15 @@ summaries. Keep it factual and scoped to the confirmed behavior.
 ## Open Questions / Risks
 
 - <items needing human decision or runtime confirmation>
+
+## Publication Targets
+
+- Work item comment:
+- Work item links:
+- Project Page dossier:
+- Wiki/doc collection:
+- Repo artifact:
+- Publish Plan JSON:
 ```
 
 Rules:
@@ -60,3 +70,8 @@ Rules:
 - Cite file paths and line numbers when available.
 - Do not claim a fix is validated unless the validation command or CDP check ran.
 - If no code was changed, say so.
+- Keep tracker comments concise. Publish the full handoff as a repo artifact
+  and Project Page dossier, then link or index it from Plane.
+- For runner-managed stages, write
+  `docs/harness/runs/<key>/publish/<stage>.json` following
+  `docs/harness/guides/publishing.md`.

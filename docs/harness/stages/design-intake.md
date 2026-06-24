@@ -16,6 +16,7 @@ Read these before writing the artifact:
 - `docs/agents/domain.md`
 - `docs/agents/issue-tracker.md`
 - `docs/agents/triage-labels.md`
+- `docs/harness/guides/publishing.md`
 - `.codex/skills/grill-with-docs/SKILL.md`
 - `docs/harness/runs/<key>/context/source-issue.md`
 - `docs/harness/runs/<key>/context/issue-context.json`
@@ -83,3 +84,13 @@ Use this structure:
 
 `## Plane Reply` should be short enough to read in Plane and should not contain
 raw trace logs. Link-worthy detail belongs in the artifact body.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/design-intake.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the design intake Markdown artifact and the `artifact.sha256`
+must match its current contents.

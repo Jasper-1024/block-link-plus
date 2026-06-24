@@ -19,8 +19,9 @@ discussion is ready to publish. For hard bugs, use
 debt and testability review, use
 `.codex/skills/improve-codebase-architecture/SKILL.md`.
 
-Use the global Codex skill `plane-ops` to publish accepted PRDs, issue
-breakdowns, and human gate decisions to Plane. Keep Plane credentials and
+Use the global Codex skill `plane-ops` for foreground Plane+ operations. The
+unattended runner publishes accepted stage facts from repo-local Publish Plan
+JSON files through its own Plane+ API publisher. Keep Plane credentials and
 runner-local paths out of this repo.
 
 ## Agent skills
@@ -28,7 +29,8 @@ runner-local paths out of this repo.
 ### Issue tracker
 
 BLP work is coordinated in Plane; repo-local agents write artifacts and Plane
-updates happen through explicit `plane-ops` operations. See
+updates happen through either runner-owned Publish Plans or explicit foreground
+`plane-ops` operations. See
 [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ### Triage labels

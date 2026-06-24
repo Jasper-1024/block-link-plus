@@ -20,6 +20,7 @@ Read these before making RCA claims:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/publishing.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/rca-review.md`, if it exists
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
@@ -92,6 +93,18 @@ docs/harness/runs/<key>/investigation.md
 Use `docs/harness/guides/evidence-format.md` as the base structure. Include concrete
 file paths, line references, commands, runtime facts, current-vs-unverified
 distinctions, and remaining risks.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/investigation.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the investigation Markdown artifact and the `artifact.sha256`
+must match its current contents.
+Use Publish Plan `verdict: "handoff"` when the investigation is ready for RCA
+review, or `verdict: "runtime-blocked"` when the runtime gate failed.
 
 When this is a continuation after RCA review, add a short section that explicitly
 maps each reviewed gap to the new evidence or explains why it remains open.

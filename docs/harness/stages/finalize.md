@@ -17,6 +17,7 @@ Read these before doing any merge or commit work:
 - `WORKFLOW.md`
 - `docs/harness/README.md`
 - `docs/harness/workflow.json`
+- `docs/harness/guides/publishing.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -92,6 +93,16 @@ Use these sections:
 
 `## Plane Reply` should be concise and high signal. Say whether the patch was
 committed and merged, or exactly why finalization stopped.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/finalize.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the finalization Markdown artifact and the `artifact.sha256` must
+match its current contents.
 
 ## Gate Semantics
 

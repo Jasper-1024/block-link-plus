@@ -21,6 +21,7 @@ Read these before reaching a verdict:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/publishing.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
 - `docs/harness/runs/<key>/fix-design.md`
@@ -106,6 +107,16 @@ Use these sections:
 
 `## Plane Reply` should be concise and high signal. Say whether the patch is
 accepted, what blocks acceptance, and what the next stage should do.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/code-review.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the code review Markdown artifact and the `artifact.sha256` must
+match its current contents.
 
 ## Gate Semantics
 

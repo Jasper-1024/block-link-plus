@@ -20,6 +20,7 @@ Read these before editing:
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
+- `docs/harness/guides/publishing.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/investigation.md`
 - `docs/harness/runs/<key>/rca-review.md`
@@ -109,6 +110,16 @@ Use these sections:
 `## Plane Reply` should be concise and high signal. Say what changed, what was
 validated, what failed or was not run, and what the code-review stage should
 attack.
+
+Also write the matching Publish Plan JSON:
+
+```text
+docs/harness/runs/<key>/publish/implementation.json
+```
+
+Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
+must point to the implementation Markdown artifact and the `artifact.sha256`
+must match its current contents.
 
 ## Gate Semantics
 
