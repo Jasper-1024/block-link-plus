@@ -28,7 +28,7 @@ Stages:
 - [implementation-routing.md](implementation-routing.md): approved non-bug
   design to same-task implementation or AFK child-task creation.
 - [investigation.md](investigation.md): runtime-first bug investigation and
-  evidence completion, following the repo-local `diagnose` skill.
+  evidence completion.
 - [rca-review.md](rca-review.md): adversarial RCA review and loop gate.
 - [fix-design.md](fix-design.md): accepted-RCA to bounded implementation
   design.

@@ -9,16 +9,13 @@ For detailed harness guidance, use [docs/harness/README.md](docs/harness/README.
 It links bug investigation, CDP validation, HITL Plane publishing, and
 handoff formats.
 
-BLP uses small engineering skills as references, not as mandatory unattended
-runner stages. For new features, refactors, or unclear product direction,
-`design-intake` prepares a Human Review gate; humans move the item to
-`Review Approved` or `Review Rejected`. `implementation-routing` decides
-whether to run implementation on the same item or create AFK child tasks. For
-hard bugs, use
-`.codex/skills/diagnose/SKILL.md`. For implementation, use
-`.codex/skills/tdd/SKILL.md` and work in vertical slices. For periodic technical
-debt and testability review, use
-`.codex/skills/improve-codebase-architecture/SKILL.md`.
+BLP stage specs are the workflow contract. For new features, refactors, or
+unclear product direction, `design-intake` prepares a Human Review gate; humans
+move the item to `Review Approved` or `Review Rejected`.
+`implementation-routing` decides whether to run implementation on the same item
+or create AFK child tasks. For bug fixes, investigation, RCA review, fix design,
+implementation, and code review are agent-to-agent by default; final merge
+approval uses `Ready to Merge`.
 
 Use the global Codex skill `plane-ops` for foreground Plane+ operations. The
 unattended runner publishes accepted stage facts from repo-local Publish Plan
@@ -36,23 +33,13 @@ updates happen through either runner-owned Publish Plans or explicit foreground
 
 ### Triage labels
 
-Plane states and labels are mapped to Matt-style triage roles. See
+Plane states and labels are mapped to runner-readable task roles. See
 [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
 
 ### Domain docs
 
 BLP uses a single-context `CONTEXT.md` plus lightweight ADRs in `docs/adr/`.
 See [docs/agents/domain.md](docs/agents/domain.md).
-
-### Installed skills
-
-- `.codex/skills/setup-matt-pocock-skills/SKILL.md`
-- `.codex/skills/grill-with-docs/SKILL.md`
-- `.codex/skills/diagnose/SKILL.md`
-- `.codex/skills/to-prd/SKILL.md`
-- `.codex/skills/to-issues/SKILL.md`
-- `.codex/skills/tdd/SKILL.md`
-- `.codex/skills/improve-codebase-architecture/SKILL.md`
 
 Primary validation surfaces:
 

@@ -16,7 +16,6 @@ Read these before making RCA claims:
 - `AGENTS.md`
 - `WORKFLOW.md`
 - `CONTEXT.md`
-- `.codex/skills/diagnose/SKILL.md`
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`
@@ -52,9 +51,7 @@ Blocked. Do not promote static owner mapping into root cause.
 Use `docs/harness/guides/cdp-runtime.md` as the source of truth for launching and
 checking the disposable Obsidian runtime.
 
-## Diagnose Discipline
-
-Follow `.codex/skills/diagnose/SKILL.md`:
+## Investigation Discipline
 
 - build a fast enough feedback loop before claiming cause
 - reproduce the user's symptom, not a nearby failure

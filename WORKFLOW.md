@@ -18,9 +18,8 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
 ## Required Map
 
 - [AGENTS.md](AGENTS.md): top-level table of contents.
-- [CONTEXT.md](CONTEXT.md): Matt-style glossary only.
-- [docs/agents](docs/agents): Matt skill context for issue tracking, triage,
-  and domain docs.
+- [CONTEXT.md](CONTEXT.md): BLP domain vocabulary.
+- [docs/agents](docs/agents): issue tracking, task roles, and domain docs.
 - [docs/harness/workflow.json](docs/harness/workflow.json): machine-readable
   runner contract.
 - [docs/harness/stages](docs/harness/stages/index.md): stage identities,
@@ -47,13 +46,15 @@ enhancement|maintenance parent -> design-intake -> Human Review
 -> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
 ```
 
-Bug work follows `.codex/skills/diagnose/SKILL.md`. Feature, refactor, and
-unclear product work starts with `design-intake`, then waits for an explicit
-human review state. `grill-with-docs`, `to-prd`, and `to-issues` are optional
-foreground tools for humans; they are not unattended runner stages.
-Implementation follows `.codex/skills/tdd/SKILL.md`. Periodic technical-debt
-review uses
-`.codex/skills/improve-codebase-architecture/SKILL.md`.
+Bug work is an agent-to-agent loop by default: reproduce with runtime evidence,
+review the RCA, design the bounded fix, review the design, implement with tests,
+and review the patch before the final human gate. Feature, refactor, and unclear
+product work starts with `design-intake`, then waits for an explicit human
+review state before implementation routing.
+
+Do not route unattended workers through interactive CLI discussion workflows.
+If product judgment is required, write the question into the artifact and move
+the Plane item to `Human Review`.
 
 The runner never infers approval from natural-language comments. Comments and
 Project Pages are feedback inputs for the next agent; `Review Approved` and

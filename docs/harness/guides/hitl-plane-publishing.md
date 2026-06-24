@@ -1,6 +1,7 @@
 # HITL Plane Publishing
 
-Interactive design work happens in CLI, not in the background runner.
+Human-directed design feedback happens through Plane comments, states, and
+linked artifacts, not through the background runner's worker process.
 
 ## Boundary
 
@@ -25,9 +26,9 @@ Plane parent item
 -> same-task implementation OR AFK + agent-ready child items
 ```
 
-`grill-with-docs`, `to-prd`, and `to-issues` are optional foreground tools. They
-may ask for human confirmation and must not be treated as unattended runner
-stages or required non-bug flow steps.
+If design feedback is needed, the worker writes the question or rejected point
+into the repo artifact and Publish Plan. The human responds in Plane and moves
+the item to `Review Approved` or `Review Rejected`.
 
 ## Artifact Locations
 

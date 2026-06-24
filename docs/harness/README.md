@@ -18,15 +18,12 @@ runs. Keep this file short: it is a map, not the manual.
 - [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing boundary.
 - [guides/bug-investigation.md](guides/bug-investigation.md): legacy bug lane checklist.
 
-## Matt Skill Context
+## Harness Context
 
 - [../../CONTEXT.md](../../CONTEXT.md): BLP domain language.
-- [../agents/domain.md](../agents/domain.md): how skills consume domain docs.
+- [../agents/domain.md](../agents/domain.md): how agents consume domain docs.
 - [../agents/issue-tracker.md](../agents/issue-tracker.md): Plane/GitHub boundary.
 - [../agents/triage-labels.md](../agents/triage-labels.md): category and state labels.
-- [../../.codex/skills/diagnose/SKILL.md](../../.codex/skills/diagnose/SKILL.md): bug diagnosis loop.
-- [../../.codex/skills/tdd/SKILL.md](../../.codex/skills/tdd/SKILL.md): vertical-slice implementation.
-- [../../.codex/skills/improve-codebase-architecture/SKILL.md](../../.codex/skills/improve-codebase-architecture/SKILL.md): technical-debt and testability review.
 
 ## Run Archives
 
@@ -46,10 +43,8 @@ Use `rg --no-ignore` only when explicitly auditing historical traces.
 
 ## Quick Rule
 
-For direct bugs, use `diagnose` and prove current behavior first. Every runner
-stage writes both the canonical Markdown artifact and the matching Publish Plan
-JSON. For new features, refactors, or unclear behavior changes, `design-intake`
-waits in `Human Review` until a human moves the item to `Review Approved` or
-`Review Rejected`. Optional Matt-style
-foreground skills can inform human feedback, but they are not unattended runner
-stages.
+For direct bugs, prove current behavior with runtime evidence before making RCA
+or fix-plan claims. Every runner stage writes both the canonical Markdown
+artifact and the matching Publish Plan JSON. For new features, refactors, or
+unclear behavior changes, `design-intake` waits in `Human Review` until a human
+moves the item to `Review Approved` or `Review Rejected`.

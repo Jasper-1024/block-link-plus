@@ -17,7 +17,6 @@ Read these before editing:
 - `AGENTS.md`
 - `WORKFLOW.md`
 - `CONTEXT.md`
-- `.codex/skills/tdd/SKILL.md`
 - `docs/harness/README.md`
 - `docs/harness/guides/evidence-format.md`
 - `docs/harness/guides/cdp-runtime.md`

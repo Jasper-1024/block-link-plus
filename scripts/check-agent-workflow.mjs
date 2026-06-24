@@ -49,10 +49,7 @@ const baselineRequiredPaths = [
   "docs/agents/domain.md",
   "docs/agents/issue-tracker.md",
   "docs/agents/triage-labels.md",
-  ".codex/skills/setup-matt-pocock-skills/SKILL.md",
-  ".codex/skills/diagnose/SKILL.md",
-  ".codex/skills/tdd/SKILL.md",
-  ".codex/skills/improve-codebase-architecture/SKILL.md",
+  "docs/adr/0001-adopt-plane-backed-agent-harness.md",
 ];
 
 if (workflow.schemaVersion !== 1) {

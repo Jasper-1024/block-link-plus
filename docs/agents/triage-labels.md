@@ -1,6 +1,6 @@
 # Triage Labels And States
 
-BLP maps Matt-style triage roles onto Plane states and labels.
+BLP maps runner-readable task roles onto Plane states and labels.
 
 ## Categories
 

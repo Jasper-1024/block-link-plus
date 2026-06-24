@@ -9,9 +9,10 @@ Engineering agents should read:
   workflow, runtime validation, or hard-to-reverse boundaries.
 - Relevant existing specs or docs only when the active stage asks for them.
 
-Use the glossary vocabulary in issue titles, Plane replies, test names, PRDs,
-diagnosis artifacts, and implementation notes. If a needed concept is missing,
-resolve it with `grill-with-docs` before implementation.
+Use the glossary vocabulary in issue titles, Plane replies, test names, design
+artifacts, investigation artifacts, and implementation notes. If a needed
+concept is missing, record the smallest blocking question in the active stage
+artifact and route the item to `Human Review`.
 
 Do not use `CONTEXT.md` as a scratchpad, design note, or implementation spec.
 It is only the shared project language.

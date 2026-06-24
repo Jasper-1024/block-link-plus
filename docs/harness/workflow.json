@@ -19,10 +19,7 @@
     "docs/agents/domain.md",
     "docs/agents/issue-tracker.md",
     "docs/agents/triage-labels.md",
-    ".codex/skills/setup-matt-pocock-skills/SKILL.md",
-    ".codex/skills/diagnose/SKILL.md",
-    ".codex/skills/tdd/SKILL.md",
-    ".codex/skills/improve-codebase-architecture/SKILL.md"
+    "docs/adr/0001-adopt-plane-backed-agent-harness.md"
   ],
   "states": {
     "active": ["Todo", "In Progress", "Ready to Merge", "Review Approved", "Review Rejected"],
