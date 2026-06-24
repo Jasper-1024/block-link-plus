@@ -21,6 +21,7 @@
     "docs/harness/guides/runtime-proof-package.md",
     "docs/harness/plans/README.md",
     "docs/harness/plans/debt.md",
+    "docs/harness/stages/archive-cleanup.md",
     "docs/harness/stages/index.md",
     "docs/runtime/README.md",
     "docs/runtime/isolated-obsidian-cdp.md",
@@ -31,11 +32,19 @@
     "docs/adr/0001-adopt-plane-backed-agent-harness.md"
   ],
   "states": {
-    "active": ["Todo", "In Progress", "Ready to Merge", "Review Approved", "Review Rejected"],
+    "active": [
+      "Todo",
+      "In Progress",
+      "Ready to Merge",
+      "Review Approved",
+      "Review Rejected",
+      "Ready to Archive"
+    ],
     "humanReview": "Human Review",
     "reviewApproved": "Review Approved",
     "reviewRejected": "Review Rejected",
     "readyToMerge": "Ready to Merge",
+    "archiveRequested": "Ready to Archive",
     "done": "Done",
     "runtimeBlocked": "Runtime Blocked"
   },
@@ -124,6 +133,12 @@
       "spec": "docs/harness/stages/finalize.md",
       "artifact": "docs/harness/runs/{key}/finalize.md",
       "reviews": "code-review"
+    },
+    {
+      "name": "archive-cleanup",
+      "label": "archive cleanup",
+      "spec": "docs/harness/stages/archive-cleanup.md",
+      "artifact": "docs/harness/runs/{key}/archive-cleanup.md"
     }
   ]
 }

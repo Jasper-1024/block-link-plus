@@ -51,3 +51,6 @@ additional-changes.patch
 
 # Local memory-bank snapshots (keep the canonical files, drop backups)
 memory-bank/backups/
+
+# Local runner traces are preserved on disk during archive cleanup, not committed.
+docs/harness/runs/**/trace/

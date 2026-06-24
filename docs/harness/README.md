@@ -46,12 +46,17 @@ runs. Keep this file short: it is a map, not the manual.
 The runner derives the archive key from the source task: GitHub-backed Plane
 items use `GH-<issue>-<plane-key>` such as `GH-34-BLP-2`, while Plane-only
 items use `PLANE-<plane-key>`. Stage artifacts at that level are canonical
-inputs for later stages. `context/` stores tracker/source snapshots. `trace/`
-stores raw prompts, event streams, turn metadata, and runtime command logs.
+inputs for later stages. `context/` stores tracker/source snapshots.
+`trace/` is local-only raw execution evidence: prompts, event streams, turn
+metadata, and runtime command logs.
 
 Run archives are allowed on the main branch as process evidence, but they are
 not normal task context. Future agents should read them only when a stage spec,
-runner prompt, or human request explicitly names them.
+runner prompt, or human request explicitly names them. Raw `trace/` directories
+are ignored by git. When a human moves a finalized item to `Ready to Archive`,
+the runner copies any worker-local trace back into this ignored local path,
+removes the issue worktree, deletes the merged issue branch, and archives the
+Plane item.
 
 The repo `.rgignore` excludes run archives from normal ripgrep searches. Use
 `rg --no-ignore` only when explicitly auditing historical task evidence.

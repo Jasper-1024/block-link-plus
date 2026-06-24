@@ -45,3 +45,5 @@ Stages:
   patch before human merge/release review.
 - [finalize.md](finalize.md): mechanical commit/merge finalization after a
   human moves the tracker item to `Ready to Merge`.
+- [archive-cleanup.md](archive-cleanup.md): runner-owned local cleanup after a
+  human moves a finalized tracker item to `Ready to Archive`.
