@@ -158,7 +158,7 @@ node scripts\obsidian-cdp.js screenshot ".tmp\shot.png"
   - `package.json`（2.0.1 -> 2.0.2）
   - `versions.json`（新增 2.0.2 映射）
 - 更新日志：
-  - `docs/changelog.md` / `docs/en/changelog.md` / `docs/zh-TW/changelog.md`
+  - `doc/changelog.md` / `doc/en/changelog.md` / `doc/zh-TW/changelog.md`
 - What's New：
   - `src/ui/WhatsNewModal.ts`（增加 2.0.2 的简短条目，避免 2.0.x 走通用 v2 大版本说明）
 

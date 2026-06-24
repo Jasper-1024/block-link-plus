@@ -2,6 +2,7 @@ site_name: Block Link Plus
 site_description: "Documentation for Block Link Plus"
 site_author: Jasper
 site_url: "https://block-link-plus.jasper1024.com"
+docs_dir: doc
 
 repo_name: "obsidian-block-link-plus"
 repo_url: "https://github.com/Jasper-1024/obsidian-block-link-plus"

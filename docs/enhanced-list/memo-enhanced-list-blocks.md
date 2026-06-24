@@ -9,7 +9,7 @@
 
 ## 事实基础（已验证）
 
-- Obsidian 原生 block 引用支持 `[[file#^id]] / ![[...]]`；并且 `^id` 可以在 list item 内部单独成行，仍被识别为该 list item 的 block id（`_research/obsidian-docs/en/Linking notes and files/Internal links.md:116`）。
+- Obsidian 原生 block 引用支持 `[[file#^id]] / ![[...]]`；并且 `^id` 可以在 list item 内部单独成行，仍被识别为该 list item 的 block id（`_research/obsidian-doc/en/Linking notes and files/Internal links.md:116`）。
 - Dataview 的 `file.lists/file.tasks` 暴露 `blockId`，来源是 Obsidian `metadata.listItems[].id`；并把 list item 的 `link` 指向 `Link.block(path, id)`（`_research/obsidian-dataview/src/data-import/markdown-file.ts:221`、`_research/obsidian-dataview/src/data-import/markdown-file.ts:242`）。
 - Dataview 对 list item 的字段提取，稳定入口是 inline field：`[key:: value]` / `(key:: value)`；full-line `Key:: Value` 在 list item 场景不作为契约（`_research/obsidian-dataview/docs/docs/annotation/add-metadata.md:70`、`_research/obsidian-dataview/src/data-import/markdown-file.ts:259`）。
 - Dataview 的 inline field 值若要被解析为 DateTime，需要 `YYYY-MM-DDTHH:mm:ss`（`T` 分隔）；`YYYY-MM-DD HH:mm:ss`（空格分隔）会落为普通字符串（`_research/obsidian-dataview/src/expression/parse.ts:314`、`_research/obsidian-dataview/src/expression/parse.ts:325`）。

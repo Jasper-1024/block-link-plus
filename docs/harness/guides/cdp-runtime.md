@@ -79,14 +79,14 @@ title filter is not enough.
 ```powershell
 node scripts/obsidian-cdp.js eval "app.workspace.getActiveFile()?.path"
 node scripts/obsidian-cdp.js open-note "_debug/start.md"
-node scripts/obsidian-cdp.js set-editor "doc/debug/_blp-ai-workbench-baseline.md"
+node scripts/obsidian-cdp.js set-editor "docs/debug/_blp-ai-workbench-baseline.md"
 node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
 node scripts/obsidian-cdp.js screenshot ".tmp/cdp-shot.png"
 ```
 
 ## Choosing Snippets
 
-Use [../../doc/debug/cdp-script-inventory.md](../../doc/debug/cdp-script-inventory.md)
+Use [../../debug/cdp-script-inventory.md](../../debug/cdp-script-inventory.md)
 to choose snippets.
 
 - Prefer a current regression snippet for the affected feature.

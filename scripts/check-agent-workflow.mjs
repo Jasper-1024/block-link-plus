@@ -3,6 +3,8 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 const workflowPath = path.join(repoRoot, "docs", "harness", "workflow.json");
+const mkdocsPath = path.join(repoRoot, "mkdocs.yml");
+const docsWorkflowPath = path.join(repoRoot, ".github", "workflows", "deploy-docs.yml");
 
 function fail(message) {
   console.error(`agent workflow check failed: ${message}`);
@@ -51,6 +53,37 @@ const baselineRequiredPaths = [
   "docs/agents/triage-labels.md",
   "docs/adr/0001-adopt-plane-backed-agent-harness.md",
 ];
+const publicDocsRequiredPaths = [
+  "doc/index.md",
+  "doc/install.md",
+  "doc/api.md",
+  "doc/changelog.md",
+  "doc/CNAME",
+  "doc/en/index.md",
+  "doc/zh-TW/index.md",
+];
+
+for (const publicPath of publicDocsRequiredPaths) {
+  if (!exists(publicPath)) fail(`public docs path is missing: ${publicPath}`);
+}
+
+if (exists("openspec")) fail("openspec must stay archived under archive/openspec");
+if (exists("memory-bank")) fail("memory-bank must stay archived under archive/memory-bank");
+if (!exists("archive/openspec")) fail("archived OpenSpec directory is missing: archive/openspec");
+if (!exists("archive/memory-bank")) fail("archived memory-bank directory is missing: archive/memory-bank");
+
+const mkdocsText = fs.readFileSync(mkdocsPath, "utf8");
+if (!/^docs_dir:\s*doc\s*$/m.test(mkdocsText)) {
+  fail("mkdocs.yml must publish from docs_dir: doc");
+}
+
+const docsWorkflowText = fs.readFileSync(docsWorkflowPath, "utf8");
+if (!docsWorkflowText.includes("'doc/**'")) {
+  fail("deploy-docs workflow must listen to doc/**");
+}
+if (docsWorkflowText.includes("'docs/**'")) {
+  fail("deploy-docs workflow must not listen to docs/**");
+}
 
 if (workflow.schemaVersion !== 1) {
   fail("workflow.json schemaVersion must be 1");
@@ -176,21 +209,35 @@ for (const file of ["WORKFLOW.md", "docs/harness/guides/cdp-runtime.md"]) {
 
 const activeFiles = [
   "AGENTS.md",
+  "CLAUDE.md",
   "WORKFLOW.md",
   "CONTEXT.md",
   ".rgignore",
+  "mkdocs.yml",
+  ".github/workflows/deploy-docs.yml",
   "scripts/check-agent-workflow.mjs",
   ...walkFiles("docs/harness"),
   ...walkFiles("docs/agents"),
+  ...walkFiles("docs/adr"),
 ];
 const retiredForwardHarnessPath = ["docs", "agent", ""].join("/");
 const retiredWindowsHarnessPath = ["docs", "agent", ""].join("\\");
+const retiredInternalDocPath = ["doc", "debug", ""].join("/");
+const retiredInternalWindowsDocPath = ["doc", "debug", ""].join("\\");
+const retiredOpenSpecInstruction = ["@", "openspec"].join("/");
+const retiredOpenSpecMarker = ["OPENSPEC", "START"].join(":");
 
 for (const file of activeFiles) {
   if (!exists(file)) continue;
   const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
   if (text.includes(retiredForwardHarnessPath) || text.includes(retiredWindowsHarnessPath)) {
     fail(`${file} still references the retired harness path`);
+  }
+  if (text.includes(retiredInternalDocPath) || text.includes(retiredInternalWindowsDocPath)) {
+    fail(`${file} still references retired internal doc/debug path`);
+  }
+  if (text.includes(retiredOpenSpecInstruction) || text.includes(retiredOpenSpecMarker)) {
+    fail(`${file} still references active OpenSpec instructions`);
   }
 }
 

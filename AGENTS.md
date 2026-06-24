@@ -61,7 +61,7 @@ Runtime-first rule:
 
 CDP references:
 
-- [doc/debug/isolated-obsidian-cdp.md](doc/debug/isolated-obsidian-cdp.md)
-- [doc/debug/cdp-script-inventory.md](doc/debug/cdp-script-inventory.md)
+- [docs/debug/isolated-obsidian-cdp.md](docs/debug/isolated-obsidian-cdp.md)
+- [docs/debug/cdp-script-inventory.md](docs/debug/cdp-script-inventory.md)
 - `scripts/start-obsidian-debug-env.ps1`
 - `scripts/obsidian-cdp.js`

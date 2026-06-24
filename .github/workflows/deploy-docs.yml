@@ -4,7 +4,7 @@ on:
   push:
     branches: [master, main, feature-multline-block]
     paths:
-      - 'docs/**'
+      - 'doc/**'
       - '.github/workflows/deploy-docs.yml'
       - 'mkdocs.yml'
       - 'CNAME'
