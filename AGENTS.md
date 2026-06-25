@@ -27,6 +27,16 @@ unattended runner publishes accepted stage facts from repo-local Publish Plan
 JSON files through its own Plane+ API publisher, but it must not create child
 work items. Keep Plane credentials and runner-local paths out of this repo.
 
+Windows UTF-8 file reads:
+
+- Runner context files, Plane feedback exports, and repo docs are UTF-8. On
+  Windows PowerShell, do not read them with bare `Get-Content`; use
+  `Get-Content -LiteralPath <path> -Raw -Encoding UTF8`, or use Python
+  `Path(...).read_text(encoding="utf-8")`.
+- If human feedback or source context looks like mojibake, re-read it with an
+  explicit UTF-8 decoder before making workflow, RCA, split, or child-work
+  decisions.
+
 ## Agent skills
 
 ### Issue tracker
