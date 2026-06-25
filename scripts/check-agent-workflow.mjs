@@ -288,7 +288,14 @@ for (const phrase of [
 }
 
 const investigationStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/investigation.md"), "utf8");
-for (const phrase of ["split-recommended", "mitigation-child-recommended", "Child Scope", "Recommendation"]) {
+for (const phrase of [
+  "split-recommended",
+  "mitigation-child-recommended",
+  "Child Scope",
+  "Recommendation",
+  "Tracker Feedback Review",
+  "tracker-feedback.md",
+]) {
   if (!investigationStageText.includes(phrase)) {
     fail(`investigation.md must document child-scope recommendation: ${phrase}`);
   }
@@ -301,6 +308,8 @@ for (const phrase of [
   "split-recommended",
   "mitigation-child-recommended",
   "Created Child Items",
+  "Human Feedback Review",
+  "Tracker Feedback Review",
   "plane-ops",
 ]) {
   if (!rcaReviewStageText.includes(phrase)) {

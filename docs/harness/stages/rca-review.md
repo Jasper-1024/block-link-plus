@@ -22,6 +22,8 @@ Read these before reaching a verdict:
 - `docs/harness/guides/quality-gates.md`
 - `docs/harness/guides/runtime-proof-package.md`
 - `docs/harness/runs/<key>/investigation.md`
+- `docs/harness/runs/<key>/context/tracker-feedback.md`, if the runner wrote it
+- `docs/harness/runs/<key>/context/tracker-feedback.json`, if the runner wrote it
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Verdicts
@@ -57,6 +59,8 @@ Do:
 - use primary sources for external framework behavior when needed
 - preserve issue-cluster boundaries
 - give the next investigation run narrow, concrete evidence gaps
+- verify that the investigation reconciled human tracker feedback when such
+  feedback exists
 - when the prior investigation explicitly recommends child scope, decide whether
   to accept that recommendation and materialize only those child work items
 
@@ -75,6 +79,21 @@ Do not:
 Avoid MCP/file tools that require interactive elicitation. If you need a
 temporary runtime probe, keep it under the repo-local `.tmp/` directory and use
 normal shell or repo tools so a non-interactive runner can continue.
+
+## Human Feedback Review
+
+Human comments are review inputs, not automatic instructions. If
+`tracker-feedback.md` contains human feedback after a Human Review gate, verify
+that the investigation artifact has a `## Tracker Feedback Review` section and
+that it reasonably reconciles the feedback with prior RCA findings and current
+evidence.
+
+If the investigation ignored, misread, or flattened a specific human request
+such as "make this a mitigation child," do not create child items directly from
+RCA review. Return `needs_more_evidence` or `rejected` with a concrete
+`Required Investigation Follow-up` asking the next investigation to interpret
+that feedback and decide whether it supports `split-recommended`,
+`mitigation-child-recommended`, a narrower same-parent RCA, or deferral.
 
 ## Child Materialization
 

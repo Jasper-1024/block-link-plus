@@ -25,6 +25,7 @@ to `Human Review`, make the control-plane text follow
 ## Evidence
 
 - Issue claim:
+- Tracker feedback review:
 - Static evidence:
 - Runtime evidence:
 - Runtime proof package:
@@ -69,6 +70,10 @@ to `Human Review`, make the control-plane text follow
 Rules:
 
 - Separate observed facts from hypotheses.
+- When tracker feedback exists, summarize what the human asked for and state
+  whether the stage accepts, narrows, defers, rejects, or converts it into a
+  child-scope recommendation. Do not call readable feedback "not actionable"
+  without explaining why it does not change the stage decision.
 - For runtime-gated tasks, keep static orientation separate from confirmed
   evidence. If the CDP runtime check fails, use State: Runtime Blocked and
   leave Root Cause / Fix Plan as not established.

@@ -78,6 +78,12 @@ The runner never infers approval from natural-language comments. Comments and
 Project Pages are feedback inputs for the next agent; `Review Approved` and
 `Review Rejected` are the machine-readable gate states.
 
+When a task leaves Human Review, the next agent must reconcile readable human
+feedback with the prior artifacts before choosing a verdict. Feedback can
+change scope, narrow the next evidence request, justify a bounded child-scope
+recommendation, or be deferred/rejected with reasons; it is not automatically
+binding and must not be silently ignored.
+
 ## Runtime Evidence
 
 For `cdp-required` tasks, and for bugs involving Obsidian DOM, CodeMirror

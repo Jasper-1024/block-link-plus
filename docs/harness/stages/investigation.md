@@ -24,6 +24,8 @@ Read these before making RCA claims:
 - `docs/harness/guides/runtime-proof-package.md`
 - `docs/agents/domain.md`
 - `docs/harness/runs/<key>/rca-review.md`, if it exists
+- `docs/harness/runs/<key>/context/tracker-feedback.md`, if the runner wrote it
+- `docs/harness/runs/<key>/context/tracker-feedback.json`, if the runner wrote it
 - `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
 
 ## Loop Semantics
@@ -38,6 +40,28 @@ If `docs/harness/runs/<key>/rca-review.md` exists, do not restart broad triage.
 Treat the review's Challenges, Evidence Gaps, and Required Investigation
 Follow-up as your input. Update the same canonical investigation artifact with
 the missing evidence needed to close the RCA.
+
+When the Plane item was returned from Human Review, treat human comments and
+linked pages as feedback inputs for this investigation run. Do not infer machine
+approval from comments; the state already supplied the gate. Your job is to
+reconcile the feedback with the prior investigation, prior RCA review, and
+current evidence.
+
+If a human comment proposes a narrower mitigation, child task, or changed
+priority while the full RCA remains blocked, evaluate whether the proposal is
+specific and evidence-backed enough to become a bounded child-scope
+recommendation. This is not automatic. The valid outcomes include:
+
+- accept the feedback into the current investigation scope
+- partially accept it and narrow the proposed scope
+- defer it because required evidence or environment is still missing
+- reject it because it contradicts evidence or would create speculative work
+- convert it into `split-recommended` or `mitigation-child-recommended` with a
+  concrete child contract
+
+Do not write "no actionable feedback" unless you have summarized the relevant
+comments and explained why none of them changes scope, evidence gaps, verdict,
+or child-scope recommendation.
 
 ## Runtime-First Rule
 
@@ -73,6 +97,8 @@ Do:
 - separate hard facts from hypotheses
 - use `CONTEXT.md` vocabulary in the artifact
 - answer prior RCA review gaps narrowly when this is a loop continuation
+- explicitly reconcile human tracker feedback with the prior RCA review and
+  current evidence before choosing a verdict
 - recommend child scope only when evidence or human feedback shows the parent
   is not a single fix unit
 
@@ -117,6 +143,11 @@ blocked or unverified.
 
 When this is a continuation after RCA review, add a short section that explicitly
 maps each reviewed gap to the new evidence or explains why it remains open.
+When tracker feedback contains human comments or linked pages, include a
+`## Tracker Feedback Review` section. Summarize the actionable feedback in your
+own words, classify how it affects this run, and explain the evidence basis for
+accepting, narrowing, deferring, rejecting, or converting it into child-scope
+recommendation.
 If a split or mitigation child is recommended, include a `## Child Scope
 Recommendation` section with proposed child title, labels, parent boundary,
 acceptance criteria, non-goals, validation limits, and why the parent should not
