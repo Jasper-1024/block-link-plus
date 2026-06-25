@@ -19,6 +19,14 @@ function exists(relativePath) {
   return fs.existsSync(path.join(repoRoot, relativePath));
 }
 
+function isPlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeStatus(value) {
+  return String(value ?? "").trim().toLowerCase().replaceAll("_", "-");
+}
+
 function walkFiles(relativeDir) {
   const root = path.join(repoRoot, relativeDir);
   const results = [];
@@ -214,6 +222,129 @@ for (const laneName of ["bug", "enhancement", "maintenance", "afk"]) {
   }
   if (!["full", "intake", "afk"].includes(lane.automation)) {
     fail(`workflow.json lanes.${laneName}.automation must be full, intake, or afk`);
+  }
+}
+
+if (!isPlainObject(workflow.verdicts)) {
+  fail("workflow.json verdicts must be an object");
+}
+for (const stageName of stageNames) {
+  if (stageName === "archive-cleanup") continue;
+  const spec = workflow.verdicts?.[stageName];
+  if (!isPlainObject(spec)) {
+    fail(`workflow.json verdicts.${stageName} must be an object`);
+    continue;
+  }
+  if (typeof spec.default !== "string" || !spec.default.trim()) {
+    fail(`workflow.json verdicts.${stageName}.default must be a non-empty string`);
+  }
+  if (!Array.isArray(spec.allowed) || spec.allowed.length === 0) {
+    fail(`workflow.json verdicts.${stageName}.allowed must be a non-empty array`);
+    continue;
+  }
+  const allowed = new Set(spec.allowed.map(normalizeStatus));
+  if (allowed.size !== spec.allowed.length) {
+    fail(`workflow.json verdicts.${stageName}.allowed has duplicate normalized entries`);
+  }
+  if (!allowed.has(normalizeStatus(spec.default))) {
+    fail(`workflow.json verdicts.${stageName}.allowed must include its default verdict`);
+  }
+  if (!allowed.has("runtime-blocked")) {
+    fail(`workflow.json verdicts.${stageName}.allowed must include runtime-blocked`);
+  }
+  const stageText = fs.readFileSync(path.join(repoRoot, `docs/harness/stages/${stageName}.md`), "utf8");
+  const statusLine = stageText.match(/- Verdict:\s*([^\n]+)/);
+  if (statusLine) {
+    for (const value of statusLine[1].split("|").map(normalizeStatus).filter(Boolean)) {
+      if (!allowed.has(value)) {
+        fail(`${stageName}.md documents verdict ${value}, but workflow.json does not allow it`);
+      }
+    }
+  }
+}
+
+const routeTargets = new Set(["activeQueue", "humanReview", "runtimeBlocked", "done"]);
+function checkCompletionRoute(route, label) {
+  if (!isPlainObject(route)) {
+    fail(`${label} must be an object`);
+    return;
+  }
+  if (route.loopRetry) {
+    if (typeof route.loopRetry !== "string" || !workflow.loops?.[route.loopRetry]) {
+      fail(`${label}.loopRetry must reference a workflow loop`);
+    }
+  } else if (!routeTargets.has(route.target)) {
+    fail(`${label}.target must be one of ${Array.from(routeTargets).join(", ")}`);
+  }
+  if (route.loopReset && !workflow.loops?.[route.loopReset]) {
+    fail(`${label}.loopReset must reference a workflow loop`);
+  }
+  if (typeof route.reason !== "string" || !route.reason.trim()) {
+    fail(`${label}.reason must be a non-empty string`);
+  }
+}
+
+if (!isPlainObject(workflow.completionRoutes?.stages)) {
+  fail("workflow.json completionRoutes.stages must be an object");
+} else {
+  checkCompletionRoute(workflow.completionRoutes.runtimeBlocked, "workflow.json completionRoutes.runtimeBlocked");
+  checkCompletionRoute(workflow.completionRoutes.unknownStage, "workflow.json completionRoutes.unknownStage");
+  for (const stageName of Object.keys(workflow.verdicts ?? {})) {
+    const stageRoutes = workflow.completionRoutes.stages[stageName];
+    if (!isPlainObject(stageRoutes)) {
+      fail(`workflow.json completionRoutes.stages.${stageName} must be an object`);
+      continue;
+    }
+    if (stageRoutes.default) checkCompletionRoute(stageRoutes.default, `workflow.json completionRoutes.stages.${stageName}.default`);
+    if (stageRoutes.fallback) checkCompletionRoute(stageRoutes.fallback, `workflow.json completionRoutes.stages.${stageName}.fallback`);
+    const allowed = new Set((workflow.verdicts[stageName]?.allowed ?? []).map(normalizeStatus));
+    for (const [verdict, route] of Object.entries(stageRoutes.verdicts ?? {})) {
+      if (!allowed.has(normalizeStatus(verdict))) {
+        fail(`workflow.json completionRoutes.stages.${stageName}.${verdict} is not an allowed verdict`);
+      }
+      checkCompletionRoute(route, `workflow.json completionRoutes.stages.${stageName}.${verdict}`);
+    }
+  }
+}
+
+function checkStageRef(value, label) {
+  if (typeof value !== "string" || !stageNames.has(value)) {
+    fail(`${label} must reference a workflow stage`);
+  }
+}
+const autoRouting = workflow.autoRouting;
+if (!isPlainObject(autoRouting)) {
+  fail("workflow.json autoRouting must be an object");
+} else {
+  checkStageRef(autoRouting.archiveRequested?.stage, "workflow.json autoRouting.archiveRequested.stage");
+  checkStageRef(autoRouting.readyToMerge?.requiredStage, "workflow.json autoRouting.readyToMerge.requiredStage");
+  checkStageRef(autoRouting.readyToMerge?.stage, "workflow.json autoRouting.readyToMerge.stage");
+  for (const key of ["implementationStage", "codeReviewStage", "fixDesignStage"]) {
+    checkStageRef(autoRouting.implementationPath?.[key], `workflow.json autoRouting.implementationPath.${key}`);
+  }
+  checkStageRef(autoRouting.intake?.routingStage, "workflow.json autoRouting.intake.routingStage");
+  for (const key of ["investigationStage", "rcaReviewStage", "fixDesignStage", "fixDesignReviewStage"]) {
+    checkStageRef(autoRouting.bug?.[key], `workflow.json autoRouting.bug.${key}`);
+  }
+}
+
+if (!isPlainObject(workflow.dossierSections)) {
+  fail("workflow.json dossierSections must be an object");
+} else {
+  for (const [stageName, sections] of Object.entries(workflow.dossierSections)) {
+    if (!stageNames.has(stageName)) {
+      fail(`workflow.json dossierSections.${stageName} must reference a workflow stage`);
+      continue;
+    }
+    if (!Array.isArray(sections) || sections.length === 0) {
+      fail(`workflow.json dossierSections.${stageName} must be a non-empty array`);
+      continue;
+    }
+    for (const section of sections) {
+      if (typeof section !== "string" || !section.trim()) {
+        fail(`workflow.json dossierSections.${stageName} entries must be non-empty strings`);
+      }
+    }
   }
 }
 

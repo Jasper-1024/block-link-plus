@@ -76,6 +76,397 @@
     "fix-design": 2,
     "implementation": 2
   },
+  "verdicts": {
+    "design-intake": {
+      "default": "human-review-required",
+      "allowed": ["human-review-required", "runtime-blocked"]
+    },
+    "implementation-routing": {
+      "default": "same-task-ready",
+      "allowed": ["same-task-ready", "split-children", "human-review-required", "runtime-blocked"]
+    },
+    "investigation": {
+      "default": "handoff",
+      "allowed": [
+        "handoff",
+        "runtime-blocked",
+        "context-blocked",
+        "not-reproduced",
+        "split-recommended",
+        "mitigation-child-recommended"
+      ]
+    },
+    "rca-review": {
+      "default": "accepted",
+      "allowed": [
+        "accepted",
+        "accepted-with-refinement",
+        "needs-more-evidence",
+        "rejected",
+        "cluster-needs-human-review",
+        "partial-accepted",
+        "split-created",
+        "mitigation-child-created",
+        "runtime-blocked"
+      ]
+    },
+    "fix-design": {
+      "default": "ready-for-review",
+      "allowed": ["ready-for-review", "context-blocked", "human-review-required", "runtime-blocked"]
+    },
+    "fix-design-review": {
+      "default": "accepted",
+      "allowed": ["accepted", "needs-revision", "human-review-required", "rejected", "runtime-blocked"]
+    },
+    "implementation": {
+      "default": "ready-for-review",
+      "allowed": ["ready-for-review", "blocked-design-mismatch", "runtime-blocked", "validation-failed"]
+    },
+    "code-review": {
+      "default": "accepted",
+      "allowed": ["accepted", "needs-revision", "human-review-required", "rejected", "runtime-blocked"]
+    },
+    "finalize": {
+      "default": "completed",
+      "allowed": ["completed", "merge-conflict", "validation-failed", "unexpected-diff", "human-review-required", "runtime-blocked"]
+    }
+  },
+  "completionRoutes": {
+    "runtimeBlocked": {
+      "target": "runtimeBlocked",
+      "reason": "runtime/CDP gate blocked this stage"
+    },
+    "unknownStage": {
+      "target": "humanReview",
+      "reason": "unknown BLP stage {stage}"
+    },
+    "stages": {
+      "investigation": {
+        "default": {
+          "target": "activeQueue",
+          "reason": "investigation handoff is ready; continue to RCA review"
+        }
+      },
+      "design-intake": {
+        "default": {
+          "target": "humanReview",
+          "reason": "design intake completed; route to human review for an explicit approve/reject gate"
+        }
+      },
+      "implementation-routing": {
+        "verdicts": {
+          "same-task-ready": {
+            "target": "activeQueue",
+            "reason": "review-approved design can be implemented on the same work item"
+          },
+          "split-children": {
+            "target": "humanReview",
+            "reason": "implementation routing verdict {verdict} needs human review or child-task pickup"
+          },
+          "human-review-required": {
+            "target": "humanReview",
+            "reason": "implementation routing verdict {verdict} needs human review or child-task pickup"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "implementation routing verdict {verdict} is not routable"
+        }
+      },
+      "rca-review": {
+        "verdicts": {
+          "accepted": {
+            "target": "activeQueue",
+            "loopReset": "rca",
+            "reason": "RCA accepted; continue to fix design"
+          },
+          "cluster-needs-human-review": {
+            "target": "humanReview",
+            "reason": "RCA says the issue cluster needs human review/splitting"
+          },
+          "split-created": {
+            "target": "humanReview",
+            "reason": "RCA materialized child scope with verdict {verdict}; parent waits for child completion or human review"
+          },
+          "mitigation-child-created": {
+            "target": "humanReview",
+            "reason": "RCA materialized child scope with verdict {verdict}; parent waits for child completion or human review"
+          },
+          "accepted-with-refinement": {
+            "loopRetry": "rca",
+            "reason": "RCA verdict {verdict} routes back to investigation"
+          },
+          "needs-more-evidence": {
+            "loopRetry": "rca",
+            "reason": "RCA verdict {verdict} routes back to investigation"
+          },
+          "rejected": {
+            "loopRetry": "rca",
+            "reason": "RCA verdict {verdict} routes back to investigation"
+          },
+          "partial-accepted": {
+            "loopRetry": "rca",
+            "reason": "RCA verdict {verdict} routes back to investigation"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "RCA verdict {verdict} is not routable"
+        }
+      },
+      "fix-design": {
+        "verdicts": {
+          "ready-for-review": {
+            "target": "activeQueue",
+            "reason": "fix design is ready; continue to fix-design review"
+          },
+          "context-blocked": {
+            "target": "humanReview",
+            "reason": "fix design verdict {verdict} needs human review"
+          },
+          "human-review-required": {
+            "target": "humanReview",
+            "reason": "fix design verdict {verdict} needs human review"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "fix design verdict {verdict} is not routable"
+        }
+      },
+      "fix-design-review": {
+        "verdicts": {
+          "accepted": {
+            "target": "activeQueue",
+            "loopReset": "fix-design",
+            "reason": "fix design accepted; continue to implementation"
+          },
+          "needs-revision": {
+            "loopRetry": "fix-design",
+            "reason": "fix-design review requests revision"
+          },
+          "human-review-required": {
+            "target": "humanReview",
+            "reason": "fix-design review verdict {verdict} needs human review"
+          },
+          "rejected": {
+            "target": "humanReview",
+            "reason": "fix-design review verdict {verdict} needs human review"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "fix-design review verdict {verdict} is not routable"
+        }
+      },
+      "implementation": {
+        "verdicts": {
+          "ready-for-review": {
+            "target": "activeQueue",
+            "reason": "implementation is ready; continue to code review"
+          },
+          "blocked-design-mismatch": {
+            "loopRetry": "fix-design",
+            "reason": "implementation found a design mismatch and routes back to fix design"
+          },
+          "validation-failed": {
+            "loopRetry": "implementation",
+            "reason": "implementation validation failed and routes back to implementation"
+          },
+          "runtime-blocked": {
+            "target": "runtimeBlocked",
+            "reason": "implementation runtime gate blocked"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "implementation verdict {verdict} is not routable"
+        }
+      },
+      "code-review": {
+        "verdicts": {
+          "accepted": {
+            "target": "humanReview",
+            "loopReset": "implementation",
+            "reason": "code review accepted; route to human review for final merge/release decision"
+          },
+          "needs-revision": {
+            "loopRetry": "implementation",
+            "reason": "code review requests implementation revision"
+          },
+          "human-review-required": {
+            "target": "humanReview",
+            "reason": "code review verdict {verdict} needs human review"
+          },
+          "rejected": {
+            "target": "humanReview",
+            "reason": "code review verdict {verdict} needs human review"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "code review verdict {verdict} is not routable"
+        }
+      },
+      "finalize": {
+        "verdicts": {
+          "completed": {
+            "target": "done",
+            "reason": "finalization completed after human Ready to Merge approval"
+          },
+          "merge-conflict": {
+            "target": "humanReview",
+            "reason": "finalization verdict {verdict} needs human review"
+          },
+          "validation-failed": {
+            "target": "humanReview",
+            "reason": "finalization verdict {verdict} needs human review"
+          },
+          "unexpected-diff": {
+            "target": "humanReview",
+            "reason": "finalization verdict {verdict} needs human review"
+          },
+          "human-review-required": {
+            "target": "humanReview",
+            "reason": "finalization verdict {verdict} needs human review"
+          }
+        },
+        "fallback": {
+          "target": "humanReview",
+          "reason": "finalization verdict {verdict} is not routable"
+        }
+      }
+    }
+  },
+  "autoRouting": {
+    "archiveRequested": {
+      "stage": "archive-cleanup",
+      "reason": "human requested local archive cleanup and Plane work-item archive"
+    },
+    "readyToMerge": {
+      "requiredStage": "code-review",
+      "requiredVerdict": "accepted",
+      "stage": "finalize",
+      "completedVerdict": "completed",
+      "missingReason": "code review accepted and human moved item to Ready to Merge",
+      "staleReason": "code review was updated after finalization; rerun finalize",
+      "rerunReason": "finalization verdict {verdict} routes back to finalize after human approval"
+    },
+    "implementationPath": {
+      "implementationStage": "implementation",
+      "codeReviewStage": "code-review",
+      "fixDesignStage": "fix-design",
+      "implementationMissingReason": "accepted implementation scope and implementation is missing",
+      "implementationRetryVerdicts": ["runtime-blocked", "validation-failed"],
+      "implementationRetryReason": "implementation verdict {verdict} routes back to implementation",
+      "implementationDesignMismatchVerdict": "blocked-design-mismatch",
+      "implementationDesignMismatchReason": "implementation found a design mismatch and routes back to fix design",
+      "codeReviewMissingReason": "implementation exists and code review is missing",
+      "codeReviewStaleReason": "implementation was updated after code review; rerun code review",
+      "codeReviewRevisionVerdict": "needs-revision",
+      "codeReviewRevisionReason": "code review verdict {verdict} routes back to implementation",
+      "codeReviewWaitVerdicts": ["human-review-required", "rejected", "accepted"]
+    },
+    "intake": {
+      "routingStage": "implementation-routing",
+      "sameTaskVerdict": "same-task-ready",
+      "waitVerdicts": ["split-children", "human-review-required"],
+      "reviewRejectedReason": "{lane_reason}; human rejected prior design intake and requested revision",
+      "missingReason": "{lane_reason}; design intake is missing",
+      "approvedRoutingReason": "{lane_reason}; human approved design intake and implementation routing is needed"
+    },
+    "bug": {
+      "lane": "bug",
+      "investigationStage": "investigation",
+      "rcaReviewStage": "rca-review",
+      "fixDesignStage": "fix-design",
+      "fixDesignReviewStage": "fix-design-review",
+      "investigationMissingReason": "no investigation artifact exists",
+      "investigationBlockedReason": "prior investigation is {state} and the item is active again",
+      "rcaReviewMissingReason": "investigation exists and RCA review is missing",
+      "rcaCreatedChildVerdicts": ["split-created", "mitigation-child-created"],
+      "rcaStaleReason": "investigation was updated after RCA review; rerun RCA review",
+      "rcaRetryVerdicts": ["accepted-with-refinement", "needs-more-evidence", "rejected", "partial-accepted"],
+      "rcaRetryReason": "RCA review verdict {verdict} routes back to investigation",
+      "rcaHumanReviewVerdict": "cluster-needs-human-review",
+      "rcaAcceptedVerdict": "accepted",
+      "fixDesignMissingReason": "RCA review accepted and fix design is missing",
+      "fixDesignContextBlockedVerdict": "context-blocked",
+      "fixDesignContextBlockedReason": "fix design was context-blocked and the item is active again",
+      "fixDesignHumanReviewVerdict": "human-review-required",
+      "fixDesignReviewMissingReason": "fix design exists and fix-design review is missing",
+      "fixDesignReviewStaleReason": "fix design was updated after fix-design review; rerun fix-design review",
+      "fixDesignReviewRevisionVerdict": "needs-revision",
+      "fixDesignReviewRevisionReason": "fix-design review verdict {verdict} routes back to fix design",
+      "fixDesignReviewWaitVerdicts": ["human-review-required", "rejected"],
+      "fixDesignReviewAcceptedVerdict": "accepted"
+    }
+  },
+  "dossierSections": {
+    "design-intake": [
+      "Current Understanding",
+      "Repo Findings",
+      "Discussion Questions",
+      "Candidate Scope",
+      "Non-Goals"
+    ],
+    "implementation-routing": [
+      "Accepted Design",
+      "Human Feedback Considered",
+      "Routing Decision",
+      "Implementation Contract",
+      "Child Tasks",
+      "Decision"
+    ],
+    "investigation": ["Evidence", "Root Cause", "Fix Plan", "Open Questions / Risks"],
+    "rca-review": [
+      "Accepted Facts",
+      "Challenges",
+      "Evidence Gaps",
+      "Required Investigation Follow-up",
+      "Decision"
+    ],
+    "fix-design": [
+      "Problem Boundary",
+      "Proposed Fix",
+      "Implementation Notes",
+      "Validation Plan",
+      "Risks / Open Questions",
+      "Decision"
+    ],
+    "fix-design-review": [
+      "Accepted Design Points",
+      "Challenges",
+      "Required Revisions",
+      "Implementation Readiness",
+      "Decision"
+    ],
+    "implementation": [
+      "Scope",
+      "Changes Made",
+      "Tests Added Or Updated",
+      "Validation",
+      "Runtime Evidence",
+      "Risks / Open Questions",
+      "Decision"
+    ],
+    "code-review": [
+      "Review Summary",
+      "Findings",
+      "Design Compliance",
+      "Test And Validation Review",
+      "Required Revisions",
+      "Decision"
+    ],
+    "finalize": [
+      "Human Approval",
+      "Final Checks",
+      "Git Operations",
+      "Validation",
+      "Files Included",
+      "Decision"
+    ]
+  },
   "stages": [
     {
       "name": "design-intake",
