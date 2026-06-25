@@ -30,7 +30,8 @@ Read these before reaching a verdict:
 
 Use exactly one verdict in `## Status`:
 
-- `accepted`: the RCA is complete enough to leave the RCA loop.
+- `accepted`: the RCA is complete enough and fixable enough to leave the RCA
+  loop and continue to fix design on the parent item.
 - `accepted_with_refinement`: the owner layer or main finding is accepted, but
   blocking mechanism details still require investigation.
 - `needs_more_evidence`: the investigation is plausible but lacks required
@@ -42,11 +43,18 @@ Use exactly one verdict in `## Status`:
 - `mitigation_child_created`: the prior investigation explicitly recommended a
   bounded mitigation child, this review accepted it, and the reviewer created
   the child work item.
+- `cluster-needs-human-review`: the review agrees that the current parent item
+  cannot safely continue to fix design because the reported bug or issue
+  cluster is not currently reproduced, has no evidence-backed fixable RCA, and
+  has no specific child or mitigation scope that the reviewer can materialize.
 
-Only `accepted`, `split_created`, and `mitigation_child_created` exit the RCA
-loop. `accepted` continues to fix design on the parent item. Created-child
-verdicts leave the parent in Human Review while the new child item is picked up
-separately.
+Only `accepted`, `split_created`, `mitigation_child_created`, and
+`cluster-needs-human-review` exit the RCA loop. `accepted` continues to fix
+design on the parent item. Created-child verdicts leave the parent in Human
+Review while the new child item is picked up separately.
+`cluster-needs-human-review` leaves the parent in Human Review without starting
+fix design so a human can close as not reproduced, defer, provide exact
+environment evidence, or request a narrower follow-up.
 
 ## Scope
 
@@ -73,6 +81,9 @@ Do not:
 - edit product source, tests, package metadata, CDP snippets, generated files,
   or formal spec/history files
 - accept a broad issue cluster as one RCA without evidence
+- use `accepted` for current-runtime-not-reproduced or no-current-failure
+  cases; those need `cluster-needs-human-review` unless there is a specific
+  evidence-backed fix or child scope
 - treat `accepted_with_refinement` as permission to proceed to fix design
 - invent new child scope that the prior investigation did not recommend
 
@@ -123,7 +134,7 @@ Use these sections:
 ```markdown
 ## Status
 
-- Verdict: accepted|accepted_with_refinement|needs_more_evidence|rejected|split_created|mitigation_child_created
+- Verdict: accepted|accepted_with_refinement|needs_more_evidence|rejected|split_created|mitigation_child_created|cluster-needs-human-review
 
 ## Plane Reply
 
@@ -160,8 +171,8 @@ match its current contents.
 
 ## Gate Semantics
 
-If the verdict is `accepted`, state why the RCA is complete enough for a later
-fix-design stage.
+If the verdict is `accepted`, state why the RCA is complete, current, and
+specific enough for a later fix-design stage.
 
 If the verdict is `accepted_with_refinement`, `needs_more_evidence`, or
 `rejected`, state that the next run must return to investigation and list the
@@ -171,4 +182,8 @@ If the verdict is `split_created` or `mitigation_child_created`, list the create
 Plane child item keys in `## Created Child Items`, explain which investigation
 recommendation was accepted, and state why the parent must not proceed directly
 to fix design.
+
+If the verdict is `cluster-needs-human-review`, state the exact evidence boundary:
+what was not reproduced, why no parent fix design should start, why no child or
+mitigation item was created, and what human decision is needed next.
 

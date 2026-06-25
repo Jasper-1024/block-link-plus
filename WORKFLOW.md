@@ -44,14 +44,18 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
 Bug lane:
 
 ```text
-investigation -> rca-review -> fix-design -> fix-design-review
+investigation -> rca-review -> gate
+accepted RCA -> fix-design -> fix-design-review
 -> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
 ```
 
 When investigation proves that the parent bug is not a single fix unit, it may
 recommend `split-recommended` or `mitigation-child-recommended`. RCA review may
 materialize child work items only after accepting that recommendation; otherwise
-it must continue the RCA loop.
+it must continue the RCA loop. If RCA review agrees that the bug or cluster is
+not currently reproduced and has no evidence-backed fixable RCA or materialized
+child scope, it uses `cluster-needs-human-review` and leaves the parent in
+Human Review instead of starting fix design.
 
 Non-bug lane:
 
