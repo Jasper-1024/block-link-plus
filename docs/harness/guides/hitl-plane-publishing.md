@@ -10,10 +10,12 @@ linked artifacts, not through the background runner's worker process.
 - Plane is the control panel for state, comments, links, Project Page pointers,
   and AFK child tasks.
 - Foreground Plane updates use the global `plane-ops` skill. Unattended runner
-  stages publish through runner-owned Publish Plan JSON.
+  stages publish comments, links, dossier pages, and state through runner-owned
+  Publish Plan JSON.
 - The BLP repo never stores Plane API credentials or runner-local paths.
 - Repo-local unattended stage workers must not embed Plane API calls in repo
-  scripts or artifacts.
+  scripts or artifacts unless the current stage spec explicitly authorizes
+  BLP-owned child work-item creation.
 
 ## Feature / Refactor Flow
 
@@ -23,7 +25,7 @@ Plane parent item
 -> Human Review
 -> Review Approved or Review Rejected
 -> implementation-routing
--> same-task implementation OR AFK + agent-ready child items
+-> same-task implementation OR BLP-created AFK + agent-ready child items
 ```
 
 If design feedback is needed, the worker writes the question or rejected point
@@ -79,7 +81,9 @@ route to human review. Do not automate session-auth web-app APIs.
 ## Publishing
 
 Use the global Codex skill `plane-ops` for foreground Plane comments, links,
-state changes, and child item creation. For unattended stages, the
-runner calls Plane+ directly from the validated Publish Plan. Keep long-form
-content in repo artifacts and Project Page dossiers; comments stay as timeline
-notes or explicit human feedback.
+state changes, and child item creation. For unattended stages, the runner calls
+Plane+ directly from the validated Publish Plan only for comments, links,
+dossier pages, and state transitions. Child creation must come from foreground
+`plane-ops` or a stage spec that explicitly authorizes BLP-owned child creation.
+Keep long-form content in repo artifacts and Project Page dossiers; comments
+stay as timeline notes or explicit human feedback.

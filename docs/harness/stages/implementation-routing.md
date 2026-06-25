@@ -41,6 +41,8 @@ Read these before writing the artifact:
 - Child tasks intended for unattended agents must be AFK and `agent-ready`.
 - Each child task body must include the accepted implementation contract, test
   expectations, TDD slice plan, and non-goals needed without chat context.
+- Child tasks are created by this BLP stage through the authorized Plane
+  operation, not by non-empty Publish Plan `children`.
 - Same-task implementation contracts must include the TDD slice plan the
   implementation stage will execute.
 - If routing returns to `Human Review`, the Plane brief must follow
@@ -101,9 +103,10 @@ scope decision.
 Use `same-task-ready` when the approved design is small enough to run the normal
 `implementation -> code-review` loop on this Plane item.
 
-Use `split-children` when the Publish Plan creates child work items. Each child
-must use `mode: "AFK"` or explicit `afk` and `agent-ready` labels. The parent
-returns to `Human Review` after publication.
+Use `split-children` when this stage creates child work items. Each child must
+use explicit `afk` and `agent-ready` labels, and the artifact must list the
+created Plane child keys. The Publish Plan `children` array must remain empty.
+The parent returns to `Human Review` after publication.
 
 Use `human-review-required` when the approved design and human feedback conflict,
 or when the next routing choice requires human judgment.

@@ -16,13 +16,16 @@ move the item to `Review Approved` or `Review Rejected`.
 `implementation-routing` decides whether to run implementation on the same item
 or create AFK child tasks, and includes the TDD slice plan for the accepted
 implementation contract. For bug fixes, investigation, RCA review, fix design,
-implementation, and code review are agent-to-agent by default; final merge
-approval uses `Ready to Merge`.
+implementation, and code review are agent-to-agent by default. Bug-lane child
+scope must be proposed by `investigation` first; `rca-review` may materialize it
+only after accepting that prior recommendation. Final merge approval uses
+`Ready to Merge`.
 
-Use the global Codex skill `plane-ops` for foreground Plane+ operations. The
+Use the global Codex skill `plane-ops` for foreground Plane+ operations and for
+stage specs that explicitly authorize BLP-owned child work-item creation. The
 unattended runner publishes accepted stage facts from repo-local Publish Plan
-JSON files through its own Plane+ API publisher. Keep Plane credentials and
-runner-local paths out of this repo.
+JSON files through its own Plane+ API publisher, but it must not create child
+work items. Keep Plane credentials and runner-local paths out of this repo.
 
 ## Agent skills
 

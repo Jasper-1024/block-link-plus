@@ -4,19 +4,20 @@ This is the v1 contract between BLP stage workers, the external runner, and
 Plane+.
 
 The repo artifact is the source of truth. Plane+ is the control panel projection
-of accepted repo facts: state, concise comments, stable links, child tasks, and
-one Project Page dossier per parent work item.
+of accepted repo facts: state, concise comments, stable links, and one Project
+Page dossier per parent work item.
 
 ## Roles
 
 - Stage agent: writes the stage artifact and a machine-readable Publish Plan.
-  It does not call Plane.
+  It does not call Plane unless its stage spec explicitly authorizes BLP-owned
+  child work-item creation.
 - Reviewer agent: accepts, rejects, or routes the stage through the documented
   loop. It also writes a Publish Plan for its verdict.
 - Runner: chooses the stage, runs the worker, validates the artifact and Publish
   Plan, routes the verdict, and calls the Plane+ API directly.
 - Publisher: runner-owned code that applies the accepted Publish Plan to
-  Plane+. It does not make new judgments.
+  Plane+. It does not make new judgments and must not create child work items.
 - `plane-ops`: foreground skill for humans and agents doing explicit tracker
   operations outside an unattended stage run.
 
@@ -44,7 +45,8 @@ publishes only the JSON plan.
 `archive-key` is not the Plane key. GitHub-backed work uses
 `GH-<issue>-<plane-key>` such as `GH-34-BLP-2`; Plane-only work uses
 `PLANE-<plane-key>`. The Publish Plan `scopeKey` remains the Plane key because
-Plane comments, child items, and state transitions still target that work item.
+Plane comments, links, Project Page dossiers, and state transitions still target
+that work item.
 
 ## Schema
 
@@ -58,23 +60,16 @@ Plane comments, child items, and state transitions still target that work item.
     "path": "docs/harness/runs/GH-34-BLP-2/rca-review.md",
     "sha256": "<lowercase sha256>"
   },
-  "comment": "RCA review accepted owner layer; split approved.",
+  "comment": "RCA review accepted owner layer.",
   "links": [
     {
       "title": "RCA review",
       "url": "repo:docs/harness/runs/GH-34-BLP-2/rca-review.md"
     }
   ],
-  "children": [
-    {
-      "stableId": "inline-passive-scroll",
-      "title": "Fix passive inline embed mount scroll relocation",
-      "body": "Scope and acceptance criteria.",
-      "labels": ["bug", "agent-ready", "cdp-required"]
-    }
-  ],
+  "children": [],
   "page": {
-    "summary": "Accepted RCA and split into two bounded child tasks."
+    "summary": "Accepted RCA and identified the owner layer."
   },
   "outOfScope": []
 }
@@ -98,13 +93,15 @@ Optional fields may be empty but must keep their type:
 - `links`: stable references. `https://` and `http://` links become Plane work
   item links. `repo:` links stay in the dossier when no web repo base is
   configured.
-- `children`: child work items to create or update under the scope item.
+- `children`: must be an empty array. Child work-item creation is handled by
+  foreground `plane-ops` or by stage specs that explicitly authorize BLP-owned
+  child creation, not by the runner publisher.
 - `outOfScope`: candidate findings that must not create a new parent item.
 
 Unknown stage/verdict combinations are invalid. `runtime-blocked` is accepted
 for any stage because the runner can generate that verdict when a CDP command
 times out before the worker can complete normal stage output. A SHA mismatch is
-invalid. A child without `stableId` and `title` is invalid.
+invalid. A non-empty `children` array is invalid.
 
 ## Idempotency
 
@@ -115,21 +112,16 @@ scopeKey + stage + artifact.sha256 + action + stableId
 ```
 
 Same artifact hash means no duplicate comment or link. A new artifact hash may
-add one new concise timeline comment. Child items are upserted with:
+add one new concise timeline comment.
 
-```text
-external_source = "blp-harness"
-external_id = "<scopeKey>:<stableId>"
-```
-
-Partial publish failures are rerunnable. Already-applied actions skip or upsert;
+Partial publish failures are rerunnable. Already-applied actions skip or update;
 failed actions retry once.
 
 ## Project Page Dossier
 
 The publisher maintains one Project Page per parent work item. It rebuilds the
-whole Page body from the accepted publish log and current child items; it does
-not patch paragraphs in place.
+whole Page body from the accepted publish log and current Plane child items; it
+does not patch paragraphs in place.
 
 The dossier is a human review brief backed by the canonical artifact. The
 runner extracts the stage-specific review sections from `artifact.path`; the

@@ -73,10 +73,13 @@ Do:
 - separate hard facts from hypotheses
 - use `CONTEXT.md` vocabulary in the artifact
 - answer prior RCA review gaps narrowly when this is a loop continuation
+- recommend child scope only when evidence or human feedback shows the parent
+  is not a single fix unit
 
 Do not:
 
 - call Plane or other tracker APIs
+- create child work items
 - write an implementation-ready fix plan while RCA review still has blocking
   evidence gaps
 - implement code or tests
@@ -106,9 +109,18 @@ must point to the investigation Markdown artifact and the `artifact.sha256`
 must match its current contents.
 Use Publish Plan `verdict: "handoff"` when the investigation is ready for RCA
 review, or `verdict: "runtime-blocked"` when the runtime gate failed.
+Use `verdict: "split-recommended"` only when the investigation proves the parent
+contains multiple independently fixable sub-bugs and lists each proposed child
+contract. Use `verdict: "mitigation-child-recommended"` only when human feedback
+and repo evidence support a bounded mitigation child while the parent remains
+blocked or unverified.
 
 When this is a continuation after RCA review, add a short section that explicitly
 maps each reviewed gap to the new evidence or explains why it remains open.
+If a split or mitigation child is recommended, include a `## Child Scope
+Recommendation` section with proposed child title, labels, parent boundary,
+acceptance criteria, non-goals, validation limits, and why the parent should not
+enter `fix-design` directly.
 
 ## Exit Criteria
 
@@ -118,3 +130,4 @@ The investigation can exit to RCA review when it has one of these outcomes:
 - Runtime Blocked with exact failed runtime-check steps
 - evidence that the reported behavior is not reproduced, with commands and
   runtime state
+- a reviewed child-scope recommendation ready for RCA review

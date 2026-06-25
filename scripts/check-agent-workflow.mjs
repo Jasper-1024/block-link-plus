@@ -277,6 +277,43 @@ const publishingGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/gu
 if (!publishingGuideText.includes("page.summary") || !publishingGuideText.includes("human-readable")) {
   fail("publishing guide must require a human-readable page.summary");
 }
+for (const phrase of [
+  '"children": []',
+  "must be an empty array",
+  "must not create child work items",
+]) {
+  if (!publishingGuideText.includes(phrase)) {
+    fail(`publishing guide must preserve runner-owned child creation ban: ${phrase}`);
+  }
+}
+
+const investigationStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/investigation.md"), "utf8");
+for (const phrase of ["split-recommended", "mitigation-child-recommended", "Child Scope", "Recommendation"]) {
+  if (!investigationStageText.includes(phrase)) {
+    fail(`investigation.md must document child-scope recommendation: ${phrase}`);
+  }
+}
+
+const rcaReviewStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/rca-review.md"), "utf8");
+for (const phrase of [
+  "split_created",
+  "mitigation_child_created",
+  "split-recommended",
+  "mitigation-child-recommended",
+  "Created Child Items",
+  "plane-ops",
+]) {
+  if (!rcaReviewStageText.includes(phrase)) {
+    fail(`rca-review.md must document accepted prior child-scope materialization: ${phrase}`);
+  }
+}
+
+const implementationRoutingStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/implementation-routing.md"), "utf8");
+for (const phrase of ["split-children", "Publish Plan `children` array must remain empty"]) {
+  if (!implementationRoutingStageText.includes(phrase)) {
+    fail(`implementation-routing.md must document BLP-owned child creation path: ${phrase}`);
+  }
+}
 
 const qualityGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/quality-gates.md"), "utf8");
 for (const phrase of ["Repo-local truth", "Runtime before RCA", "TDD evidence is a gate", "Human gates are state gates"]) {

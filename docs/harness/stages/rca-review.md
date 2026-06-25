@@ -35,9 +35,16 @@ Use exactly one verdict in `## Status`:
   runtime, source, or test evidence.
 - `rejected`: the RCA is contradicted by evidence or rests on an invalid
   assumption.
+- `split_created`: the prior investigation explicitly recommended a split, this
+  review accepted it, and the reviewer created the child work items.
+- `mitigation_child_created`: the prior investigation explicitly recommended a
+  bounded mitigation child, this review accepted it, and the reviewer created
+  the child work item.
 
-Only `accepted` exits the RCA loop. All other verdicts route back to
-investigation.
+Only `accepted`, `split_created`, and `mitigation_child_created` exit the RCA
+loop. `accepted` continues to fix design on the parent item. Created-child
+verdicts leave the parent in Human Review while the new child item is picked up
+separately.
 
 ## Scope
 
@@ -50,19 +57,39 @@ Do:
 - use primary sources for external framework behavior when needed
 - preserve issue-cluster boundaries
 - give the next investigation run narrow, concrete evidence gaps
+- when the prior investigation explicitly recommends child scope, decide whether
+  to accept that recommendation and materialize only those child work items
 
 Do not:
 
-- call Plane or other tracker APIs
+- call Plane or other tracker APIs except for explicit child work-item creation
+  after accepting a prior `split-recommended` or
+  `mitigation-child-recommended` investigation verdict
 - write a fix plan
 - edit product source, tests, package metadata, CDP snippets, generated files,
   or formal spec/history files
 - accept a broad issue cluster as one RCA without evidence
 - treat `accepted_with_refinement` as permission to proceed to fix design
+- invent new child scope that the prior investigation did not recommend
 
 Avoid MCP/file tools that require interactive elicitation. If you need a
 temporary runtime probe, keep it under the repo-local `.tmp/` directory and use
 normal shell or repo tools so a non-interactive runner can continue.
+
+## Child Materialization
+
+Use the global `plane-ops` skill for child work-item creation when, and only
+when, all of these are true:
+
+- `docs/harness/runs/<key>/investigation.md` has verdict
+  `split-recommended` or `mitigation-child-recommended`
+- the proposed child contract is specific enough for unattended execution
+- the reviewer accepts the evidence boundary
+
+Created child items must include `agent-ready`, the appropriate BLP category
+label, parent linkage, acceptance criteria, non-goals, and validation limits. A
+mitigation child must state that it does not prove the original parent bug fixed
+in the missing runtime environment.
 
 ## Required Artifact
 
@@ -77,7 +104,7 @@ Use these sections:
 ```markdown
 ## Status
 
-- Verdict: accepted|accepted_with_refinement|needs_more_evidence|rejected
+- Verdict: accepted|accepted_with_refinement|needs_more_evidence|rejected|split_created|mitigation_child_created
 
 ## Plane Reply
 
@@ -88,6 +115,8 @@ Use these sections:
 ## Evidence Gaps
 
 ## Required Investigation Follow-up
+
+## Created Child Items
 
 ## Decision
 
@@ -118,4 +147,9 @@ fix-design stage.
 If the verdict is `accepted_with_refinement`, `needs_more_evidence`, or
 `rejected`, state that the next run must return to investigation and list the
 exact missing evidence.
+
+If the verdict is `split_created` or `mitigation_child_created`, list the created
+Plane child item keys in `## Created Child Items`, explain which investigation
+recommendation was accepted, and state why the parent must not proceed directly
+to fix design.
 

@@ -35,8 +35,10 @@ Stages:
 - [implementation-routing.md](implementation-routing.md): approved non-bug
   design to same-task implementation or AFK child-task creation with TDD slices.
 - [investigation.md](investigation.md): runtime-first bug investigation and
-  evidence completion.
-- [rca-review.md](rca-review.md): adversarial RCA review and loop gate.
+  evidence completion, including proposed child scope when the parent is not a
+  single fix unit.
+- [rca-review.md](rca-review.md): adversarial RCA review, loop gate, and the
+  only bug-lane stage that may materialize prior child-scope recommendations.
 - [fix-design.md](fix-design.md): accepted-RCA to bounded implementation
   design and TDD slice plan.
 - [fix-design-review.md](fix-design-review.md): adversarial review of the fix

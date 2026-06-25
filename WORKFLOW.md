@@ -10,8 +10,10 @@ agents. Detailed stage rules live under [docs/harness](docs/harness/README.md).
 - Plane supplies task identity, state, labels, and short task text.
 - The external runner chooses a stage, launches workers, and records repo
   artifacts.
-- Runner-managed Plane comments, links, child tasks, Project Page dossiers, and
-  state changes are projected from repo-local Publish Plan JSON files.
+- Runner-managed Plane comments, links, Project Page dossiers, and state
+  changes are projected from repo-local Publish Plan JSON files.
+- Child work items are created only by foreground `plane-ops` operations or by
+  BLP stage specs that explicitly authorize child creation.
 - Foreground Plane operations still use the global `plane-ops` skill.
 - Repo-local unattended workers do not embed Plane API calls.
 
@@ -45,6 +47,11 @@ Bug lane:
 investigation -> rca-review -> fix-design -> fix-design-review
 -> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
 ```
+
+When investigation proves that the parent bug is not a single fix unit, it may
+recommend `split-recommended` or `mitigation-child-recommended`. RCA review may
+materialize child work items only after accepting that recommendation; otherwise
+it must continue the RCA loop.
 
 Non-bug lane:
 
@@ -98,8 +105,9 @@ gate:
 - unresolved: keep the item in `Human Review`
 
 After approval, `implementation-routing` decides whether the same item can enter
-implementation or whether AFK child tasks should be created. The routing output
-must include the TDD slice plan each implementation agent will execute.
+implementation or whether AFK child tasks should be created through the
+stage-authorized BLP child-creation path. The routing output must include the
+TDD slice plan each implementation agent will execute.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and

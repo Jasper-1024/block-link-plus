@@ -3,9 +3,10 @@
 BLP work is coordinated in Plane.
 
 Plane supplies task identity, state, labels, and short task text. Repo-local
-unattended agents must not embed Plane API calls in repo scripts or artifacts.
-Tracker comments, links, child items, Project Page dossiers, and state
-transitions are projected by the runner from Publish Plan JSON.
+unattended agents must not embed Plane API calls in repo scripts or artifacts
+unless a stage spec explicitly authorizes BLP-owned child work-item creation.
+Tracker comments, links, Project Page dossiers, and state transitions are
+projected by the runner from Publish Plan JSON.
 
 Foreground CLI/HITL workflows publish to Plane through the global Codex skill
 `plane-ops`. The BLP repo never stores Plane API tokens or runner-local paths.
@@ -37,7 +38,8 @@ Agent-facing task contracts should be durable:
   comments should summarize and link to the canonical artifact.
 - For PRDs and issue breakdowns, write the repo artifact first, then publish a
   concise Plane projection through Publish Plan JSON or foreground `plane-ops`.
-  Plane is not the canonical source for long design text.
+  Child work-item creation is never a generic runner Publish Plan action. Plane
+  is not the canonical source for long design text.
 - Before relying on Project Page automation, run `plane-ops --project-id
   <project-id> capability probe --json` for the project. If Pages are
   session-auth only, stop the runner publishing path; do not automate web-app
