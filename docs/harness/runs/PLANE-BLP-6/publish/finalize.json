@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-6",
+  "stage": "finalize",
+  "verdict": "completed",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-6/finalize.md",
+    "sha256": "bd00aeded238029c874f7e46639d6ea3d33314dd52b865c294053a388da6e3af"
+  },
+  "comment": "Finalized BLP-6: committed and fast-forward merged to master; Android Mobile root cause remains unproved.",
+  "links": [
+    {
+      "title": "Finalization",
+      "url": "repo:docs/harness/runs/PLANE-BLP-6/finalize.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "BLP-6 finalization completed: the accepted file-embed mount-scroll regression was committed and merged to master, with Android Mobile root cause still explicitly out of scope."
+  },
+  "outOfScope": [
+    "Android Mobile root cause remains with the parent BLP-5 RCA.",
+    "Version bump, changelog, tags, and release publishing were not part of this finalization."
+  ]
+}

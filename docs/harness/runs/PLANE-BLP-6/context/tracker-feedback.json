@@ -1,0 +1,48 @@
+{
+  "comments": [
+    {
+      "id": "0fe29eb3-7353-4473-a88e-c28886365856",
+      "is_member": true,
+      "created_at": "2026-06-25T12:46:27.139459+08:00",
+      "updated_at": "2026-06-25T12:46:27.124546+08:00",
+      "deleted_at": null,
+      "comment_html": "<p>Code review accepted the BLP-6 file-embed mount-scroll regression; Android Mobile root cause remains unproved.</p><p><small>Artifact: <code>docs/harness/runs/PLANE-BLP-6/code-review.md</code>. State target: <strong>Human Review</strong>.</small></p><p><small>Runner routing: code review accepted; route to human review for final merge/release decision.</small></p>",
+      "attachments": [],
+      "access": "INTERNAL",
+      "external_source": "plane-harness-runner",
+      "external_id": "publish-plan-comment-81e848927e2187a11de26ffc4ed5fa6f",
+      "edited_at": null,
+      "created_by": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "updated_by": null,
+      "project": "9183959f-c689-4826-8ec8-fc7fe4bf33ff",
+      "workspace": "e95e639e-888c-48f6-81ed-4ddbaa61ed07",
+      "description": "2d4c8276-ec0c-4ff8-aecd-3e5ecb3d1a4c",
+      "issue": "d2539dc6-9958-4c3c-8a3c-fd9a15262024",
+      "actor": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "parent": null
+    },
+    {
+      "id": "23488d11-7f1e-4425-a00f-a862a2562256",
+      "is_member": true,
+      "created_at": "2026-06-25T12:40:47.879375+08:00",
+      "updated_at": "2026-06-25T12:40:47.866917+08:00",
+      "deleted_at": null,
+      "comment_html": "<p>Implementation ready for review: added file-embed passive mount scroll/focus regression; targeted tests, build, and fixed-port CDP smoke passed.</p><p><small>Artifact: <code>docs/harness/runs/PLANE-BLP-6/implementation.md</code>. State target: <strong>Todo</strong>.</small></p><p><small>Runner routing: implementation is ready; continue to code review.</small></p>",
+      "attachments": [],
+      "access": "INTERNAL",
+      "external_source": "plane-harness-runner",
+      "external_id": "publish-plan-comment-c136b0306bc22916b8a2b0bdffd27b01",
+      "edited_at": null,
+      "created_by": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "updated_by": null,
+      "project": "9183959f-c689-4826-8ec8-fc7fe4bf33ff",
+      "workspace": "e95e639e-888c-48f6-81ed-4ddbaa61ed07",
+      "description": "429ce840-10e6-452f-9032-92f49ea77608",
+      "issue": "d2539dc6-9958-4c3c-8a3c-fd9a15262024",
+      "actor": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "parent": null
+    }
+  ],
+  "links": [],
+  "pages": []
+}

@@ -12,13 +12,14 @@ beforeAll(() => {
 	};
 });
 
-function createPlugin() {
+function createPlugin(settings: Partial<any> = {}) {
 	return {
 		settings: {
 			inlineEditEnabled: true,
 			inlineEditFile: false,
 			inlineEditHeading: true,
 			inlineEditBlock: true,
+			...settings,
 		},
 		app: {
 			metadataCache: {
@@ -28,12 +29,13 @@ function createPlugin() {
 	} as any;
 }
 
-function createEmbedShell(livePreview: boolean) {
+function createEmbedShell(livePreview: boolean, src = "target#^block") {
 	const rootEl = document.createElement("div");
 	rootEl.className = livePreview ? "markdown-source-view is-live-preview" : "blp-file-outliner-view";
 
 	const embedEl = document.createElement("div");
 	embedEl.className = "internal-embed markdown-embed inline-embed is-loaded";
+	embedEl.setAttribute("src", src);
 
 	const contentEl = document.createElement("div");
 	contentEl.className = "markdown-embed-content";
@@ -58,10 +60,17 @@ function createFakeCm() {
 	return cm as any;
 }
 
-function installMountMocks(engine: InlineEditEngine) {
+function installMountMocks(engine: InlineEditEngine, options: { stubParse?: boolean } = {}) {
 	const viewContainerEl = document.createElement("div");
 	viewContainerEl.className = "markdown-source-view";
 	const editor = {
+		setCursor: jest.fn(),
+		scrollIntoView: jest.fn(),
+		focus: jest.fn(),
+	};
+	const hostRequestMeasure = jest.fn();
+	const hostEditor = {
+		cm: { requestMeasure: hostRequestMeasure },
 		setCursor: jest.fn(),
 		scrollIntoView: jest.fn(),
 		focus: jest.fn(),
@@ -78,22 +87,29 @@ function installMountMocks(engine: InlineEditEngine) {
 		},
 	};
 	const cm = createFakeCm();
-	const hostRequestMeasure = jest.fn();
 
 	jest.spyOn((engine as any).leaves, "isNestedWithinEmbed").mockReturnValue(false);
 	jest.spyOn((engine as any).leaves, "isLegacyDoubleBangEmbed").mockReturnValue(false);
-	jest.spyOn((engine as any).leaves, "createEmbedLeaf").mockResolvedValue(embed as any);
+	jest.spyOn((engine as any).leaves, "createEmbedLeaf").mockImplementation(async (args: any) => ({
+		...embed,
+		containerEl: args.containerEl,
+		file: args.file,
+		sourcePath: args.sourcePath,
+		subpath: args.subpath,
+	}) as any);
 	jest.spyOn((engine as any).leaves, "reparent").mockImplementation((hostEl: HTMLElement, containerEl: HTMLElement) => {
 		hostEl.replaceChildren(containerEl);
 	});
 	jest.spyOn((engine as any).leaves, "detach").mockImplementation(jest.fn());
-	jest.spyOn(engine as any, "parseInlineEmbed").mockReturnValue({
-		kind: "block",
-		file: { path: "target.md" },
-		subpath: "#^block",
-		visibleRange: [1, 4],
-		editableRange: [2, 4],
-	});
+	if (options.stubParse !== false) {
+		jest.spyOn(engine as any, "parseInlineEmbed").mockReturnValue({
+			kind: "block",
+			file: { path: "target.md" },
+			subpath: "#^block",
+			visibleRange: [1, 4],
+			editableRange: [2, 4],
+		});
+	}
 	jest.spyOn(engine as any, "waitForEditorView").mockResolvedValue(cm);
 	jest.spyOn(engine as any, "ensureEmbedEditorExtensions").mockImplementation(jest.fn());
 	jest.spyOn(engine as any, "resolveEmbedLineRanges").mockReturnValue({
@@ -105,7 +121,8 @@ function installMountMocks(engine: InlineEditEngine) {
 	return {
 		cm,
 		editor,
-		hostView: { editor: { cm: { requestMeasure: hostRequestMeasure } } } as any,
+		hostEditor,
+		hostView: { editor: hostEditor } as any,
 		hostRequestMeasure,
 	};
 }
@@ -116,6 +133,38 @@ afterEach(() => {
 });
 
 describe("InlineEditEngine mount scroll side effects", () => {
+	test("passive Live Preview file embed mount skips cursor, reveal, and synthetic focus APIs", async () => {
+		const plugin = createPlugin({ inlineEditFile: true, inlineEditHeading: false, inlineEditBlock: false });
+		plugin.app.metadataCache.getFirstLinkpathDest.mockReturnValue({ path: "MOC.md" });
+		const engine = new InlineEditEngine(plugin);
+		const { embedEl } = createEmbedShell(true, "MOC");
+		const { editor, hostEditor, hostView } = installMountMocks(engine, { stubParse: false });
+		const elementScrollIntoView = jest.fn();
+		const originalElementScrollIntoView = (HTMLElement.prototype as any).scrollIntoView;
+		const elementFocus = jest.spyOn(HTMLElement.prototype, "focus").mockImplementation(jest.fn());
+		(HTMLElement.prototype as any).scrollIntoView = elementScrollIntoView;
+
+		try {
+			await (engine as any).mountInlineEmbedCore(embedEl, { sourcePath: "host.md" }, {
+				requireLivePreview: true,
+				hostView,
+				origin: "live-preview",
+			});
+
+			expect(plugin.app.metadataCache.getFirstLinkpathDest).toHaveBeenCalledWith("MOC", "host.md");
+			expect(editor.setCursor).not.toHaveBeenCalled();
+			expect(editor.scrollIntoView).not.toHaveBeenCalled();
+			expect(editor.focus).not.toHaveBeenCalled();
+			expect(hostEditor.setCursor).not.toHaveBeenCalled();
+			expect(hostEditor.scrollIntoView).not.toHaveBeenCalled();
+			expect(hostEditor.focus).not.toHaveBeenCalled();
+			expect(elementScrollIntoView).not.toHaveBeenCalled();
+			expect(elementFocus).not.toHaveBeenCalled();
+		} finally {
+			(HTMLElement.prototype as any).scrollIntoView = originalElementScrollIntoView;
+		}
+	});
+
 	test("passive Live Preview mount skips embedded editor cursor and reveal calls", async () => {
 		const engine = new InlineEditEngine(createPlugin());
 		const { embedEl } = createEmbedShell(true);

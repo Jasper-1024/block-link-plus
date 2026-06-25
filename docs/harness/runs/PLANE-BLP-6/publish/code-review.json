@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-6",
+  "stage": "code-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-6/code-review.md",
+    "sha256": "4e3263b9fafca88f287306fd16535157647bb89f8d9f4abc4cb0bf7dce05b2ae"
+  },
+  "comment": "Code review accepted the BLP-6 file-embed mount-scroll regression; Android Mobile root cause remains unproved.",
+  "links": [
+    {
+      "title": "Code review",
+      "url": "repo:docs/harness/runs/PLANE-BLP-6/code-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Code review accepts the BLP-6 mitigation patch for Human Review: the file-embed Live Preview mount-scroll regression and targeted validation pass, with Android Mobile root cause still explicitly unproved."
+  },
+  "outOfScope": [
+    "Android Mobile root cause remains with the parent BLP-5 RCA.",
+    "Fresh CDP proof was not produced during code review because fixed port 19225 was not reachable."
+  ]
+}

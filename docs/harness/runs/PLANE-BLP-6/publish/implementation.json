@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-6",
+  "stage": "implementation",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-6/implementation.md",
+    "sha256": "6f871726c74137c89949f373ce8622280a16ecfd96c566557f094e4915f9bb0e"
+  },
+  "comment": "Implementation ready for review: added file-embed passive mount scroll/focus regression; targeted tests, build, and fixed-port CDP smoke passed.",
+  "links": [
+    {
+      "title": "Implementation handoff",
+      "url": "repo:docs/harness/runs/PLANE-BLP-6/implementation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Added the BLP-6 file-embed mount-scroll regression for Live Preview ![[MOC]] with inlineEditFile enabled, preserving non-passive outliner reveal behavior and leaving the parent Android Mobile root cause unproved."
+  },
+  "outOfScope": [
+    "Android Mobile root cause remains with the parent BLP-5 RCA.",
+    "No native Android/WebView workaround was added."
+  ]
+}

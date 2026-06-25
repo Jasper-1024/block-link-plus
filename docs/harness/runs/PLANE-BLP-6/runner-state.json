@@ -1,0 +1,33 @@
+{
+  "key": "PLANE-BLP-6",
+  "loops": {
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "last_stage": "code-review",
+  "last_verdict": "accepted",
+  "last_target_state": "Human Review",
+  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "artifacts": {
+    "implementation": {
+      "path": "docs/harness/runs/PLANE-BLP-6/implementation.md",
+      "sha256": "6f871726c74137c89949f373ce8622280a16ecfd96c566557f094e4915f9bb0e"
+    },
+    "code-review": {
+      "path": "docs/harness/runs/PLANE-BLP-6/code-review.md",
+      "sha256": "4e3263b9fafca88f287306fd16535157647bb89f8d9f4abc4cb0bf7dce05b2ae"
+    }
+  },
+  "updated_at": "2026-06-25T04:46:30Z",
+  "reviews": {
+    "code-review": {
+      "source_stage": "implementation",
+      "source_sha256": "6f871726c74137c89949f373ce8622280a16ecfd96c566557f094e4915f9bb0e",
+      "review_sha256": "4e3263b9fafca88f287306fd16535157647bb89f8d9f4abc4cb0bf7dce05b2ae"
+    }
+  }
+}
