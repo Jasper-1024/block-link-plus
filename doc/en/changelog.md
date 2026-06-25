@@ -4,7 +4,15 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.15 (Current)
+## v2.0.16 (Current)
+
+- Fix: block-link aliases now escape pipe characters (`|` -> `\|`) by default so copied links stay safe inside Markdown tables; disable with `escape_alias_pipe` if needed.
+- Fix: inline embed editing no longer triggers passive Live Preview scroll jumps, preserves the native jump affordance, and removes extra bottom padding.
+- Fix: inline-edit undo/redo keeps the embedded editor's visible range bounded so nearby note content does not leak into the embed.
+- Fix: Outliner source-line navigation/search now resolves the owning block more reliably for continuation lines, system tail lines, and files with frontmatter.
+- Docs: documentation deployment now uses the `doc/` site source and includes the related settings reference updates.
+
+## v2.0.15
 
 - Fix: Outliner structural edits (`Enter`, `Tab`, `Shift+Tab`) now preserve viewport position instead of jumping back to the top of the file.
 - Fix: Outliner focus restoration after structural edits now keeps long-outline editing stable near the bottom of the note.

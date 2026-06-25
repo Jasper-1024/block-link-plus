@@ -1,6 +1,6 @@
 # Block Link Plus
 
-[![Version](https://img.shields.io/badge/version-2.0.15-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.16-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
@@ -189,6 +189,12 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.16
+- 修复：块链接别名现在默认将竖线字符（`|` -> `\|`）转义，避免复制到 Markdown 表格时破坏表格
+- 修复：内联嵌入编辑避免 Live Preview 被动挂载滚动跳动，保留跳转入口，并移除额外底部留白
+- 修复：内联编辑的撤销/重做会保持嵌入编辑器范围，不再把邻近笔记内容泄露进嵌入
+- 修复：Outliner 源行导航/搜索现在能更可靠地定位到所属 block
 
 ### 2.0.15
 - 修复：Outliner 中的结构编辑（`Enter`、`Tab`、`Shift+Tab`）现在会保持当前视口位置，不再跳回文件开头

@@ -2,7 +2,7 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.15-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.16-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ## 🚀 Key Features
@@ -73,6 +73,12 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.16
+- Fix: block-link aliases now escape pipe characters (`|` -> `\|`) by default so copied links stay safe inside Markdown tables
+- Fix: inline embed editing avoids passive Live Preview scroll jumps, preserves the jump affordance, and removes extra bottom padding
+- Fix: inline-edit undo/redo keeps embedded editor ranges bounded so nearby note content does not leak into embeds
+- Fix: Outliner source-line navigation/search now resolves owning blocks more reliably
 
 ### 2.0.15
 - Fix: Outliner structural edits (`Enter`, `Tab`, `Shift+Tab`) now preserve viewport position instead of jumping back to the top of the file

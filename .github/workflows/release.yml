@@ -19,11 +19,14 @@ jobs:
         with:
           node-version: '18'
           
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: npm install
+        run: corepack pnpm install --frozen-lockfile
         
       - name: Build plugin
-        run: npm run build
+        run: corepack pnpm run build-with-types
         
       - name: Check required files
         run: |

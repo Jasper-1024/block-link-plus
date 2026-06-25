@@ -112,6 +112,24 @@ const WHATS_NEW_V2_0_15: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_16: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Block links: aliases now escape pipe characters by default so copied links stay safe inside Markdown tables.",
+		"Inline embeds: passive Live Preview mounts no longer jump scroll, the native jump affordance stays visible, and extra bottom padding is gone.",
+		"Outliner: source-line navigation and search now resolve the owning block more reliably.",
+	],
+	zh: [
+		"块链接：别名现在默认转义竖线字符，复制到 Markdown 表格时不再破坏表格。",
+		"内联嵌入：Live Preview 被动挂载不再触发滚动跳动，原生跳转入口会保留，并移除了额外底部留白。",
+		"Outliner：源行导航和搜索现在能更可靠地定位到所属 block。",
+	],
+	"zh-TW": [
+		"塊連結：別名現在預設跳脫直線字元，複製到 Markdown 表格時不再破壞表格。",
+		"內嵌編輯：Live Preview 被動掛載不再觸發捲動跳動，原生跳轉入口會保留，並移除了額外底部留白。",
+		"Outliner：來源行導航和搜尋現在能更可靠地定位到所屬 block。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -167,6 +185,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.16") {
+			return WHATS_NEW_V2_0_16[i18n.lang] ?? WHATS_NEW_V2_0_16.en;
 		}
 
 		if (this.currentVersion === "2.0.15") {
