@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "rca-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/rca-review.md",
+    "sha256": "dcdfb56bf16193bf207c7e28f95e09b19591f736d90064f1461b06e2918c9d54"
+  },
+  "comment": "RCA review accepted the File Outliner transaction selection mapping root cause.",
+  "links": [
+    {
+      "title": "RCA review",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/rca-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Accepted RCA: Obsidian requested the correct post-insert wiki-link caret, but the BLP File Outliner adapter mapped that selection against the old document and left the caret inside the link. Continue to fix design on the parent item."
+  },
+  "outOfScope": []
+}

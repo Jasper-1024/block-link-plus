@@ -3,6 +3,29 @@ import { EditorView } from "@codemirror/view";
 
 import { OutlinerSuggestEditor } from "../editor-suggest-bridge";
 
+function createSuggestEditor(doc: string): {
+	cm: EditorView;
+	editor: OutlinerSuggestEditor;
+	destroy: () => void;
+} {
+	const parent = document.createElement("div");
+	document.body.appendChild(parent);
+
+	const cm = new EditorView({
+		state: EditorState.create({ doc }),
+		parent,
+	});
+
+	return {
+		cm,
+		editor: new OutlinerSuggestEditor(cm),
+		destroy: () => {
+			cm.destroy();
+			parent.remove();
+		},
+	};
+}
+
 describe("editor-suggest-bridge", () => {
 	it("does not throw when containerEl.win is a read-only getter", () => {
 		const parent = document.createElement("div");
@@ -59,5 +82,58 @@ describe("editor-suggest-bridge", () => {
 		expect(cm.state.doc.toString()).toBe("hello");
 
 		cm.destroy();
+	});
+
+	it("maps transaction selection against the completed wiki link document", () => {
+		const { cm, editor, destroy } = createSuggestEditor("[[");
+
+		editor.transaction({
+			changes: [
+				{
+					from: { line: 0, ch: 0 },
+					to: { line: 0, ch: 2 },
+					text: "[[2026-6-27]]",
+				},
+			],
+			selection: {
+				from: { line: 0, ch: 13 },
+				to: { line: 0, ch: 13 },
+			},
+		} as any);
+
+		expect(cm.state.doc.toString()).toBe("[[2026-6-27]]");
+		expect(cm.state.selection.main.anchor).toBe(13);
+		expect(cm.state.selection.main.head).toBe(13);
+
+		destroy();
+	});
+
+	it("maps transaction selection through multi-line multi-change transactions", () => {
+		const { cm, editor, destroy } = createSuggestEditor("aa\n[[\nzz");
+
+		editor.transaction({
+			changes: [
+				{
+					from: { line: 0, ch: 0 },
+					to: { line: 0, ch: 2 },
+					text: "aaaa",
+				},
+				{
+					from: { line: 1, ch: 0 },
+					to: { line: 1, ch: 2 },
+					text: "[[2026-6-27]]",
+				},
+			],
+			selection: {
+				from: { line: 1, ch: 13 },
+				to: { line: 1, ch: 13 },
+			},
+		} as any);
+
+		expect(cm.state.doc.toString()).toBe("aaaa\n[[2026-6-27]]\nzz");
+		expect(cm.state.selection.main.anchor).toBe(18);
+		expect(cm.state.selection.main.head).toBe(18);
+
+		destroy();
 	});
 });

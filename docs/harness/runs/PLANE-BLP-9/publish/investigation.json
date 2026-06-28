@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "investigation",
+  "verdict": "handoff",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/investigation.md",
+    "sha256": "31f8a9a5f47766c7e508e9d59e1283303c2826034e00c24181e4db71ce066c5a"
+  },
+  "comment": "Runtime investigation confirmed BLP-9 and bounded the RCA to File Outliner transaction selection mapping.",
+  "links": [
+    {
+      "title": "Investigation",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/investigation.md"
+    },
+    {
+      "title": "Runtime trace",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/trace/investigation/wiki-link-suggest-selection-probe.json"
+    },
+    {
+      "title": "Runtime screenshot",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/trace/investigation/wiki-link-suggest-selection-open.png"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Confirmed the File Outliner wiki-link autocomplete bug in Obsidian/CDP. Obsidian provides the correct post-insert caret position, but BLP maps it against the old [[ document, leaving the caret at offset 2 and reopening suggestions."
+  },
+  "outOfScope": []
+}

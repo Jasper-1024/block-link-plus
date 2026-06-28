@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "code-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/code-review.md",
+    "sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd"
+  },
+  "comment": "Code review accepted the narrow File Outliner autocomplete fix for Human Review.",
+  "links": [
+    {
+      "title": "Code review",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/code-review.md"
+    },
+    {
+      "title": "Final CDP proof",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/trace/implementation/wiki-link-suggest-selection-proof-final.json"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Accepted for Human Review: the patch fixes BLP File Outliner wiki-link autocomplete caret mapping, keeps scope to the editor transaction adapter, passes targeted/full tests and build, and includes post-fix CDP proof that the popup closes with the caret after the completed link."
+  },
+  "outOfScope": []
+}

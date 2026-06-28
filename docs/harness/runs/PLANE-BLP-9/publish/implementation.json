@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "implementation",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/implementation.md",
+    "sha256": "ef53450f81458acecab41ae9b930d2e80d22c82e96a695b615726646c1c0bfd9"
+  },
+  "comment": "Implementation ready: fixed File Outliner transaction selection mapping; tests, build, workflow check, and CDP proof pass.",
+  "links": [
+    {
+      "title": "Implementation artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/implementation.md"
+    },
+    {
+      "title": "Runtime proof",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/trace/implementation/wiki-link-suggest-selection-proof-final.json"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Implemented the accepted File Outliner editor-suggest transaction fix, added focused regressions, and validated with unit tests, build, workflow check, and fixed-port CDP proof showing the caret after [[2026-6-27]] with no suggestion popup."
+  },
+  "outOfScope": []
+}

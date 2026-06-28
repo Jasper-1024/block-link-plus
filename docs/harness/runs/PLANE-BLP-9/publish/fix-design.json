@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "fix-design",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/fix-design.md",
+    "sha256": "5a2ef159b237b56eb4fa0102ae8fd876617d1a2acac68814d7c29970a741b776"
+  },
+  "comment": "Fix design ready: map autocomplete transaction selection against the post-change CM6 document.",
+  "links": [
+    {
+      "title": "Fix design",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/fix-design.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Ready for design review: keep the fix bounded to File Outliner transaction selection mapping, with focused unit slices and a required post-fix Obsidian/CDP proof."
+  },
+  "outOfScope": []
+}

@@ -1,0 +1,71 @@
+{
+  "key": "PLANE-BLP-9",
+  "loops": {
+    "rca": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "fix-design": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "last_stage": "code-review",
+  "last_verdict": "accepted",
+  "last_target_state": "Human Review",
+  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "artifacts": {
+    "investigation": {
+      "path": "docs/harness/runs/PLANE-BLP-9/investigation.md",
+      "sha256": "31f8a9a5f47766c7e508e9d59e1283303c2826034e00c24181e4db71ce066c5a"
+    },
+    "rca-review": {
+      "path": "docs/harness/runs/PLANE-BLP-9/rca-review.md",
+      "sha256": "dcdfb56bf16193bf207c7e28f95e09b19591f736d90064f1461b06e2918c9d54"
+    },
+    "fix-design": {
+      "path": "docs/harness/runs/PLANE-BLP-9/fix-design.md",
+      "sha256": "5a2ef159b237b56eb4fa0102ae8fd876617d1a2acac68814d7c29970a741b776"
+    },
+    "fix-design-review": {
+      "path": "docs/harness/runs/PLANE-BLP-9/fix-design-review.md",
+      "sha256": "3e082bcfa324a5e94e8993aa428be28ee0b6be73cbb18ac22bda2445db37a41c"
+    },
+    "implementation": {
+      "path": "docs/harness/runs/PLANE-BLP-9/implementation.md",
+      "sha256": "ef53450f81458acecab41ae9b930d2e80d22c82e96a695b615726646c1c0bfd9"
+    },
+    "code-review": {
+      "path": "docs/harness/runs/PLANE-BLP-9/code-review.md",
+      "sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd"
+    }
+  },
+  "updated_at": "2026-06-28T02:20:41Z",
+  "reviews": {
+    "rca-review": {
+      "source_stage": "investigation",
+      "source_sha256": "31f8a9a5f47766c7e508e9d59e1283303c2826034e00c24181e4db71ce066c5a",
+      "review_sha256": "dcdfb56bf16193bf207c7e28f95e09b19591f736d90064f1461b06e2918c9d54"
+    },
+    "fix-design-review": {
+      "source_stage": "fix-design",
+      "source_sha256": "5a2ef159b237b56eb4fa0102ae8fd876617d1a2acac68814d7c29970a741b776",
+      "review_sha256": "3e082bcfa324a5e94e8993aa428be28ee0b6be73cbb18ac22bda2445db37a41c"
+    },
+    "code-review": {
+      "source_stage": "implementation",
+      "source_sha256": "ef53450f81458acecab41ae9b930d2e80d22c82e96a695b615726646c1c0bfd9",
+      "review_sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd"
+    }
+  }
+}

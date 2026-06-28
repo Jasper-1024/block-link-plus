@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "fix-design-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/fix-design-review.md",
+    "sha256": "3e082bcfa324a5e94e8993aa428be28ee0b6be73cbb18ac22bda2445db37a41c"
+  },
+  "comment": "Fix design review accepted the narrow transaction selection mapping plan.",
+  "links": [
+    {
+      "title": "Fix design review",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/fix-design-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Accepted for implementation: fix only File Outliner transaction selection mapping, with focused adapter TDD and mandatory post-fix Obsidian/CDP proof."
+  },
+  "outOfScope": []
+}

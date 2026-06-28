@@ -354,15 +354,18 @@ export class OutlinerSuggestEditor extends Editor {
 			changes.push({ from: Math.min(a, b), to: Math.max(a, b), insert: String(c.text ?? "") });
 		}
 
-		let selection: { anchor: number; head?: number } | undefined;
-		if (tx.selection) {
-			const a = posToOffset(doc, tx.selection.from);
-			const h = tx.selection.to ? posToOffset(doc, tx.selection.to) : a;
-			selection = { anchor: a, head: h };
-		}
-
 		try {
-			this.cm.dispatch({ changes, selection });
+			const cmChanges = changes.length ? this.cm.state.changes(changes) : undefined;
+			const selectionDoc = cmChanges ? cmChanges.apply(doc) : doc;
+
+			let selection: { anchor: number; head?: number } | undefined;
+			if (tx.selection) {
+				const a = posToOffset(selectionDoc, tx.selection.from);
+				const h = tx.selection.to ? posToOffset(selectionDoc, tx.selection.to) : a;
+				selection = { anchor: a, head: h };
+			}
+
+			this.cm.dispatch({ changes: cmChanges, selection });
 		} catch {
 			// ignore
 		}
