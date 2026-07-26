@@ -203,6 +203,60 @@ describe("link-creation/gen_insert_blocklink_multiline_block", () => {
 		);
 	});
 
+	test("pushes the start marker to the true end of a merged paragraph when a lone '?' line precedes a list", () => {
+		// Regression test for a bug report: "Paragraph line one." + "?" merge into one
+		// paragraph section (no blank line breaks them apart), and the following list
+		// swallows "Final paragraph line." as a lazy-continuation of its last item.
+		// Section/listItem shapes below were captured from a real Obsidian metadataCache
+		// dump for this exact text, not hand-guessed.
+		jest.spyOn(Utils, "generateRandomId").mockReturnValue("abc123");
+
+		const editor = new TestEditor(
+			[
+				"Paragraph line one.",
+				"?",
+				"- Bullet point one.",
+				"- Bullet point two.",
+				"Final paragraph line.",
+			].join("\n"),
+			{ line: 0, ch: 0 },
+			{ line: 4, ch: 0 }
+		);
+
+		const fileCache: any = {
+			sections: [
+				{
+					type: "paragraph",
+					position: { start: { line: 0, col: 0 }, end: { line: 1, col: 1 } },
+				},
+				{
+					type: "list",
+					position: { start: { line: 2, col: 0 }, end: { line: 4, col: 22 } },
+				},
+			],
+			listItems: [
+				{ position: { start: { line: 2, col: 0 }, end: { line: 2, col: 19 } } },
+				{ position: { start: { line: 3, col: 0 }, end: { line: 4, col: 22 } } },
+			],
+		};
+
+		const result = gen_insert_blocklink_multiline_block(fileCache, editor as any, DEFAULT_SETTINGS);
+
+		expect(result).toEqual({ ok: true, link: "^abc123-abc123" });
+		// Start marker MUST land on the "?" line (the paragraph's real last line), not on
+		// "Paragraph line one." — Obsidian silently drops a block id that isn't at the
+		// true end of its enclosing block, which was the root cause of the bug.
+		expect(editor.getValue()).toBe(
+			[
+				"Paragraph line one.",
+				"? ^abc123",
+				"- Bullet point one.",
+				"- Bullet point two.",
+				"Final paragraph line. ^abc123-abc123",
+			].join("\n")
+		);
+	});
+
 	test("reuses an existing inline range marker without modifying the document", () => {
 		const spy = jest.spyOn(Utils, "generateRandomId");
 		spy.mockClear();
