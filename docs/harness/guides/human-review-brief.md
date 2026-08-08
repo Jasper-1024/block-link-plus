@@ -29,6 +29,9 @@ The runner never infers approval from comments.
   `Review Rejected`.
 - Accept final code-review for merge finalization: move the item to
   `Ready to Merge`.
+- Accept an `external-pr` review: perform the merge or close action manually on
+  the Git host, then move the Plane item directly to `Done`. Do not use `Ready
+  to Merge`, because the Runner must not finalize an external branch.
 - Leave unresolved questions in `Human Review`.
 
 Comments and linked Pages are context for the next agent run. Plane state is the

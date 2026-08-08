@@ -351,6 +351,31 @@
     }
   },
   "autoRouting": {
+    "externalPullRequest": {
+      "label": "external-pr",
+      "stage": "code-review",
+      "missingReason": "external pull request has no code review for its current head SHA",
+      "staleReason": "external pull request head changed after code review; rerun code review",
+      "waitVerdicts": ["accepted", "needs-revision", "human-review-required", "rejected"],
+      "completionRoutes": {
+        "accepted": {
+          "target": "humanReview",
+          "reason": "external pull request review accepted; route to human review for a manual repository decision"
+        },
+        "needs-revision": {
+          "target": "reviewRejected",
+          "reason": "external pull request review requests contributor revision"
+        },
+        "human-review-required": {
+          "target": "humanReview",
+          "reason": "external pull request review requires human judgment"
+        },
+        "rejected": {
+          "target": "reviewRejected",
+          "reason": "external pull request review rejected the current patch"
+        }
+      }
+    },
     "archiveRequested": {
       "stage": "archive-cleanup",
       "reason": "human requested local archive cleanup and Plane work-item archive"

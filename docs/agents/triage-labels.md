@@ -16,6 +16,8 @@ bugs or mixes a bug with an enhancement, split it before AFK implementation.
 - `agent-ready`: eligible for unattended runner pickup.
 - `afk`: executable child item or approved direct implementation scope.
 - `cdp-required`: Obsidian/CDP runtime evidence is required.
+- `external-pr`: an already-implemented external pull request that enters
+  read-only `code-review` directly and is merged or closed manually.
 
 ## State Roles
 
@@ -33,6 +35,8 @@ bugs or mixes a bug with an enhancement, split it before AFK implementation.
 - Human approval or rejection of a non-final design gate maps to
   `Review Approved` or `Review Rejected`.
 - Human approval for final merge maps to `Ready to Merge`.
+- Accepted external-PR review maps to `Human Review`; after the manual Git host
+  action, a person moves it directly to `Done`.
 - Completed work maps to `Done`.
 
 Plane updates happen through explicit `plane-ops` operations outside unattended

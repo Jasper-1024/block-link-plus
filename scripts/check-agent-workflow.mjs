@@ -374,7 +374,7 @@ if (!isPlainObject(runtimeGateConfig)) {
   }
 }
 
-const routeTargets = new Set(["activeQueue", "humanReview", "runtimeBlocked", "done"]);
+const routeTargets = new Set(["activeQueue", "humanReview", "reviewRejected", "runtimeBlocked", "done"]);
 function checkCompletionRoute(route, label) {
   if (!isPlainObject(route)) {
     fail(`${label} must be an object`);
@@ -427,6 +427,16 @@ const autoRouting = workflow.autoRouting;
 if (!isPlainObject(autoRouting)) {
   fail("workflow.json autoRouting must be an object");
 } else {
+  checkStageRef(autoRouting.externalPullRequest?.stage, "workflow.json autoRouting.externalPullRequest.stage");
+  if (typeof autoRouting.externalPullRequest?.label !== "string" || !autoRouting.externalPullRequest.label.trim()) {
+    fail("workflow.json autoRouting.externalPullRequest.label must be a non-empty string");
+  }
+  for (const [verdict, route] of Object.entries(autoRouting.externalPullRequest?.completionRoutes ?? {})) {
+    if (!(workflow.verdicts?.["code-review"]?.allowed ?? []).map(normalizeStatus).includes(normalizeStatus(verdict))) {
+      fail(`workflow.json autoRouting.externalPullRequest.completionRoutes.${verdict} is not a code-review verdict`);
+    }
+    checkCompletionRoute(route, `workflow.json autoRouting.externalPullRequest.completionRoutes.${verdict}`);
+  }
   checkStageRef(autoRouting.archiveRequested?.stage, "workflow.json autoRouting.archiveRequested.stage");
   checkStageRef(autoRouting.readyToMerge?.requiredStage, "workflow.json autoRouting.readyToMerge.requiredStage");
   checkStageRef(autoRouting.readyToMerge?.stage, "workflow.json autoRouting.readyToMerge.stage");

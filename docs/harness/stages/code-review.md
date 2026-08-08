@@ -11,7 +11,8 @@ the coordinator writes the code-review artifact and final Stage Result.
 
 ## Stage Context
 
-Use the context supplied by the Runner. Always inspect:
+Use the context supplied by the Runner. For a Runner-produced implementation,
+always inspect:
 
 - the source issue and implementation artifact;
 - the runner-generated review snapshot, including its base commit, review tree,
@@ -25,6 +26,19 @@ only when runtime behavior is in scope.
 If the implementation verdict is not `ready-for-review`, the snapshot is
 missing, or the snapshot cannot be reproduced, return a blocking verdict. Do
 not review a moving or incomplete patch as if it were ready.
+
+For an `external-pr` item, the pull request is the implementation artifact.
+Instead inspect:
+
+- the source issue snapshot containing the PR title, body, state, and exact
+  base/head SHAs;
+- the runner-generated version-2 review snapshot and its committed diff;
+- the exact source and test range identified by that snapshot.
+
+Use the PR body and any linked issue text as the claimed contract. Do not
+require `implementation.md`, fix design, implementation routing, or artificial
+TDD evidence from the external contributor. Do not edit, commit, or merge the
+external branch.
 
 ## Coordinator Protocol
 
@@ -105,8 +119,9 @@ and refactor slices require their mode-appropriate evidence instead. Never
 demand manufactured RED evidence for behavior that already passed before the
 change.
 
-After both reports are complete, confirm that the current worktree still
-matches the runner-pinned review tree. A stale snapshot blocks acceptance.
+After both reports are complete, confirm that the current worktree or committed
+PR head still matches the runner-pinned review tree. A stale snapshot blocks
+acceptance.
 
 ## Required Artifact
 
@@ -150,6 +165,11 @@ freshness, computes the artifact hash, and generates the Publish Plan.
 Use `accepted` only when both review axes pass, no blocking finding remains, and
 the reviewed snapshot is still current. The tracker remains at `Human Review`
 until a person moves it to `Ready to Merge`; finalization owns commit and merge.
+
+For `external-pr`, `accepted` routes to `Human Review` as a recommendation only.
+A person performs the Git-host action and closes the Plane item manually;
+`Ready to Merge` and Runner finalization are forbidden. `needs-revision` and
+`rejected` route to `Review Rejected` instead of an implementation loop.
 
 Use `needs-revision` for narrow code, test, or validation corrections. Use
 `human-review-required` when the remaining decision depends on product,

@@ -68,6 +68,22 @@ enhancement|maintenance parent -> design-intake -> Human Review
 -> implementation -> code-review -> Human Review -> Ready to Merge -> finalize
 ```
 
+External pull-request lane:
+
+```text
+Todo + external-pr + agent-ready -> code-review
+accepted|human-review-required -> Human Review
+needs-revision|rejected -> Review Rejected
+```
+
+An external pull request already contains its implementation. The Runner pins
+the GitHub base/head commits and sends that committed range directly through
+the existing two-axis code review. It never starts design intake or
+implementation for this lane. Review is read-only: after the review opinion is
+published, a person performs any repository merge or close action and moves
+the Plane item directly to `Done`. External pull requests do not use `Ready to
+Merge` or `finalize`.
+
 Bug work is an agent-to-agent loop by default: reproduce with runtime evidence,
 review the RCA, design the bounded fix as executable behavior slices, review
 the design, implement each accepted slice with mode-appropriate before/after
@@ -122,7 +138,8 @@ mode-aware slice plan each implementation agent will execute.
 
 For finalization, do not move `Human Review` back to `Todo` or `In Progress`.
 Move it to `Ready to Merge` only after accepting the code-review result and
-wanting the runner to perform mechanical commit/merge finalization.
+wanting the runner to perform mechanical commit/merge finalization. This rule
+applies only to Runner-produced implementations, not `external-pr` items.
 
 ## Validation
 
