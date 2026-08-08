@@ -9,26 +9,12 @@ a human has moved the tracker item to `Ready to Merge`.
 You are not the investigator, designer, implementer, or code reviewer. Do not
 reopen product scope, redesign the fix, or make speculative code changes.
 
-## Required Inputs
+## Stage Context
 
-Read these before doing any merge or commit work:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `docs/harness/README.md`
-- `docs/harness/workflow.json`
-- `docs/harness/guides/human-review-brief.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/runs/<key>/investigation.md`
-- `docs/harness/runs/<key>/rca-review.md`
-- `docs/harness/runs/<key>/fix-design.md`
-- `docs/harness/runs/<key>/fix-design-review.md`
-- `docs/harness/runs/<key>/implementation.md`
-- `docs/harness/runs/<key>/code-review.md`
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
-- current `git status --short`
-- current branch and merge target
+Use the accepted code-review artifact, current tracker context, current Git
+status, issue branch, and explicit merge target. Earlier investigation and
+design artifacts are not startup inputs; consult them only when the accepted
+review identifies a concrete scope discrepancy.
 
 If the code-review verdict is not `accepted`, stop with
 `human-review-required`. Do not finalize an unaccepted patch.
@@ -95,16 +81,6 @@ Use these sections:
 
 `## Plane Reply` should be concise and high signal. Say whether the patch was
 committed and merged, or exactly why finalization stopped.
-
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/finalize.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the finalization Markdown artifact and the `artifact.sha256` must
-match its current contents.
 
 ## Gate Semantics
 

@@ -16,8 +16,9 @@ A useful brief answers these questions in the first screen:
 - What should happen on approval, rejection, or a request for more evidence?
 
 Use the canonical artifact for details. The Plane Project Page dossier should
-extract the review sections from that artifact, and `page.summary` in the
-Publish Plan should be a concise human-readable summary.
+extract the review sections from that artifact. The worker's structured Stage
+Result summary must be concise and human-readable; the Runner carries it into
+the generated Publish Plan `page.summary`.
 
 ## State Semantics
 

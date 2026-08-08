@@ -17,7 +17,7 @@ runs. Keep this file short: it is a map, not the manual.
 - [guides/runtime-proof-package.md](guides/runtime-proof-package.md): required runtime proof package.
 - [guides/human-review-brief.md](guides/human-review-brief.md): human-gate brief rules.
 - [guides/quality-gates.md](guides/quality-gates.md): BLP agent golden principles.
-- [guides/tdd.md](guides/tdd.md): vertical-slice TDD plan and evidence rules.
+- [guides/tdd.md](guides/tdd.md): mode-aware implementation slice evidence.
 - [guides/doc-gardening.md](guides/doc-gardening.md): recurring cleanup checks.
 - [guides/publishing.md](guides/publishing.md): Publish Plan JSON and Plane+ projection contract.
 - [guides/hitl-plane-publishing.md](guides/hitl-plane-publishing.md): CLI/HITL Plane publishing boundary.
@@ -65,7 +65,8 @@ The repo `.rgignore` excludes run archives from normal ripgrep searches. Use
 ## Quick Rule
 
 For direct bugs, prove current behavior with runtime evidence before making RCA
-or fix-plan claims. Every runner stage writes both the canonical Markdown
-artifact and the matching Publish Plan JSON. For new features, refactors, or
+or fix-plan claims. A stage worker writes the canonical Markdown artifact and a
+structured Stage Result; the Runner validates both and generates the matching
+Publish Plan JSON. For new features, refactors, or
 unclear behavior changes, `design-intake` waits in `Human Review` until a human
 moves the item to `Review Approved` or `Review Rejected`.

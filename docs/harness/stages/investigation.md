@@ -9,24 +9,13 @@ You are not the implementation agent. Do not edit product source, tests,
 package metadata, CDP snippets, generated files, or formal spec/history files unless the
 runner or user explicitly asks for implementation.
 
-## Required Inputs
+## Stage Context
 
-Read these before making RCA claims:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `CONTEXT.md`
-- `docs/harness/README.md`
-- `docs/harness/guides/evidence-format.md`
-- `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/guides/runtime-proof-package.md`
-- `docs/agents/domain.md`
-- `docs/harness/runs/<key>/rca-review.md`, if it exists
-- `docs/harness/runs/<key>/context/tracker-feedback.md`, if the runner wrote it
-- `docs/harness/runs/<key>/context/tracker-feedback.json`, if the runner wrote it
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
+Start from the source issue and use `docs/harness/guides/evidence-format.md` for
+the canonical handoff. On an RCA-loop continuation, read the prior RCA review
+and answer only its concrete gaps. Read tracker feedback only when readable
+feedback exists. Load CDP and runtime-proof guidance only when real Obsidian
+behavior or a `cdp-required` task makes runtime evidence necessary.
 
 ## Loop Semantics
 
@@ -124,20 +113,11 @@ file paths, line references, commands, runtime facts, current-vs-unverified
 distinctions, and remaining risks. For runtime-gated bugs, include the runtime
 proof package fields.
 
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/investigation.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the investigation Markdown artifact and the `artifact.sha256`
-must match its current contents.
-Use Publish Plan `verdict: "handoff"` when the investigation is ready for RCA
-review, or `verdict: "runtime-blocked"` when the runtime gate failed.
-Use `verdict: "split-recommended"` only when the investigation proves the parent
+Use Stage Result verdict `handoff` when the investigation is ready for RCA
+review, or `runtime-blocked` when the runtime gate failed. Use
+`split-recommended` only when the investigation proves the parent
 contains multiple independently fixable sub-bugs and lists each proposed child
-contract. Use `verdict: "mitigation-child-recommended"` only when human feedback
+contract. Use `mitigation-child-recommended` only when human feedback
 and repo evidence support a bounded mitigation child while the parent remains
 blocked or unverified.
 

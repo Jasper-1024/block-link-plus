@@ -131,6 +131,18 @@
       "allowed": ["completed", "merge-conflict", "validation-failed", "unexpected-diff", "human-review-required", "runtime-blocked"]
     }
   },
+  "completionGateConfig": {
+    "runtime-if-required": {
+      "advancingVerdicts": {
+        "investigation": ["handoff", "not-reproduced", "split-recommended", "mitigation-child-recommended"],
+        "rca-review": ["accepted", "cluster-needs-human-review", "split-created", "mitigation-child-created"],
+        "fix-design": ["ready-for-review"],
+        "fix-design-review": ["accepted"],
+        "implementation": ["ready-for-review"],
+        "code-review": ["accepted"]
+      }
+    }
+  },
   "completionRoutes": {
     "runtimeBlocked": {
       "target": "runtimeBlocked",
@@ -472,65 +484,185 @@
       "name": "design-intake",
       "label": "design intake",
       "spec": "docs/harness/stages/design-intake.md",
-      "artifact": "docs/harness/runs/{key}/design-intake.md"
+      "artifact": "docs/harness/runs/{key}/design-intake.md",
+      "context": {
+        "always": ["docs/harness/runs/{key}/context/source-issue.md"],
+        "conditional": [
+          {"when": "human feedback exists", "paths": ["docs/harness/runs/{key}/context/tracker-feedback.md"]},
+          {"when": "domain terminology or durable architecture is material", "paths": ["CONTEXT.md", "docs/agents/domain.md"]},
+          {"when": "the verdict routes to Human Review", "paths": ["docs/harness/guides/human-review-brief.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result"],
+      "capabilities": []
     },
     {
       "name": "implementation-routing",
       "label": "implementation routing",
       "spec": "docs/harness/stages/implementation-routing.md",
-      "artifact": "docs/harness/runs/{key}/implementation-routing.md"
+      "artifact": "docs/harness/runs/{key}/implementation-routing.md",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/runs/{key}/design-intake.md",
+          "docs/harness/guides/tdd.md"
+        ],
+        "conditional": [
+          {"when": "human feedback exists", "paths": ["docs/harness/runs/{key}/context/tracker-feedback.md"]},
+          {"when": "the route returns to Human Review", "paths": ["docs/harness/guides/human-review-brief.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "accepted-design-current"],
+      "capabilities": ["create-child-work-items"]
     },
     {
       "name": "investigation",
       "label": "runtime investigation",
       "spec": "docs/harness/stages/investigation.md",
-      "artifact": "docs/harness/runs/{key}/investigation.md"
+      "artifact": "docs/harness/runs/{key}/investigation.md",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/guides/evidence-format.md"
+        ],
+        "conditional": [
+          {"when": "this is an RCA-loop continuation", "paths": ["docs/harness/runs/{key}/rca-review.md"]},
+          {"when": "human feedback exists", "paths": ["docs/harness/runs/{key}/context/tracker-feedback.md"]},
+          {"when": "runtime behavior is in scope", "paths": ["docs/harness/guides/cdp-runtime.md", "docs/harness/guides/runtime-proof-package.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "runtime-if-required"],
+      "capabilities": ["runtime-tools"]
     },
     {
       "name": "rca-review",
       "label": "adversarial RCA review",
       "spec": "docs/harness/stages/rca-review.md",
       "artifact": "docs/harness/runs/{key}/rca-review.md",
-      "reviews": "investigation"
+      "reviews": "investigation",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/runs/{key}/investigation.md"
+        ],
+        "conditional": [
+          {"when": "human feedback exists", "paths": ["docs/harness/runs/{key}/context/tracker-feedback.md"]},
+          {"when": "a challenge depends on runtime behavior", "paths": ["docs/harness/guides/cdp-runtime.md", "docs/harness/guides/runtime-proof-package.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "reviewed-source-current", "runtime-if-required"],
+      "capabilities": ["create-child-work-items", "runtime-tools"]
     },
     {
       "name": "fix-design",
       "label": "fix design",
       "spec": "docs/harness/stages/fix-design.md",
-      "artifact": "docs/harness/runs/{key}/fix-design.md"
+      "artifact": "docs/harness/runs/{key}/fix-design.md",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/runs/{key}/investigation.md",
+          "docs/harness/runs/{key}/rca-review.md",
+          "docs/harness/guides/tdd.md"
+        ],
+        "conditional": [
+          {"when": "runtime behavior is in scope", "paths": ["docs/harness/guides/runtime-proof-package.md"]},
+          {"when": "the design needs a human decision", "paths": ["docs/harness/guides/human-review-brief.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "accepted-rca-current", "runtime-if-required"],
+      "capabilities": []
     },
     {
       "name": "fix-design-review",
       "label": "adversarial fix design review",
       "spec": "docs/harness/stages/fix-design-review.md",
       "artifact": "docs/harness/runs/{key}/fix-design-review.md",
-      "reviews": "fix-design"
+      "reviews": "fix-design",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/runs/{key}/rca-review.md",
+          "docs/harness/runs/{key}/fix-design.md",
+          "docs/harness/guides/tdd.md"
+        ],
+        "conditional": [
+          {"when": "runtime behavior is in scope", "paths": ["docs/harness/guides/runtime-proof-package.md"]},
+          {"when": "the verdict routes to Human Review", "paths": ["docs/harness/guides/human-review-brief.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "reviewed-source-current", "runtime-if-required"],
+      "capabilities": []
     },
     {
       "name": "implementation",
       "label": "implementation",
       "spec": "docs/harness/stages/implementation.md",
-      "artifact": "docs/harness/runs/{key}/implementation.md"
+      "artifact": "docs/harness/runs/{key}/implementation.md",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/guides/tdd.md"
+        ],
+        "conditional": [
+          {"when": "this is a bug-lane item", "paths": ["docs/harness/runs/{key}/fix-design.md", "docs/harness/runs/{key}/fix-design-review.md"]},
+          {"when": "this is a non-bug or AFK item", "paths": ["docs/harness/runs/{key}/implementation-routing.md"]},
+          {"when": "human feedback exists", "paths": ["docs/harness/runs/{key}/context/tracker-feedback.md"]},
+          {"when": "runtime behavior is in scope", "paths": ["docs/harness/guides/cdp-runtime.md", "docs/harness/guides/runtime-proof-package.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "accepted-design-current", "implementation-diff", "validation-evidence", "runtime-if-required"],
+      "capabilities": ["modify-product", "runtime-tools"]
     },
     {
       "name": "code-review",
       "label": "adversarial code review",
       "spec": "docs/harness/stages/code-review.md",
       "artifact": "docs/harness/runs/{key}/code-review.md",
-      "reviews": "implementation"
+      "reviews": "implementation",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/context/source-issue.md",
+          "docs/harness/runs/{key}/implementation.md",
+          "docs/harness/runs/{key}/trace/code-review/review-snapshot.json"
+        ],
+        "conditional": [
+          {"when": "this is a bug-lane item", "paths": ["docs/harness/runs/{key}/fix-design.md", "docs/harness/runs/{key}/fix-design-review.md"]},
+          {"when": "this is a non-bug or AFK item", "paths": ["docs/harness/runs/{key}/implementation-routing.md"]},
+          {"when": "runtime behavior is in scope", "paths": ["docs/harness/guides/runtime-proof-package.md"]},
+          {"when": "the verdict routes to Human Review", "paths": ["docs/harness/guides/human-review-brief.md"]}
+        ]
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "reviewed-snapshot-current", "no-blocking-findings", "runtime-if-required"],
+      "capabilities": ["spawn-review-subagents"]
     },
     {
       "name": "finalize",
       "label": "final merge finalization",
       "spec": "docs/harness/stages/finalize.md",
       "artifact": "docs/harness/runs/{key}/finalize.md",
-      "reviews": "code-review"
+      "reviews": "code-review",
+      "context": {
+        "always": [
+          "docs/harness/runs/{key}/code-review.md",
+          "docs/harness/runs/{key}/context/issue-context.json"
+        ],
+        "conditional": []
+      },
+      "completionRequirements": ["artifact", "valid-stage-result", "current-human-approval", "expected-diff"],
+      "capabilities": ["commit", "merge"]
     },
     {
       "name": "archive-cleanup",
       "label": "archive cleanup",
       "spec": "docs/harness/stages/archive-cleanup.md",
-      "artifact": "docs/harness/runs/{key}/archive-cleanup.md"
+      "artifact": "docs/harness/runs/{key}/archive-cleanup.md",
+      "context": {
+        "always": ["docs/harness/runs/{key}/finalize.md"],
+        "conditional": []
+      },
+      "completionRequirements": ["artifact"],
+      "capabilities": ["archive-workspace"]
     }
   ]
 }

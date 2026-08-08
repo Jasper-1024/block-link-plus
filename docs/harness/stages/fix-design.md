@@ -9,24 +9,12 @@ You are not the implementation agent and not the reviewer. Do not edit product
 source, tests, package metadata, generated files, CDP snippets, or formal
 spec/history files in this stage.
 
-## Required Inputs
+## Stage Context
 
-Read these before designing:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `CONTEXT.md`
-- `docs/harness/README.md`
-- `docs/harness/guides/evidence-format.md`
-- `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/human-review-brief.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/guides/runtime-proof-package.md`
-- `docs/harness/guides/tdd.md`
-- `docs/harness/runs/<key>/investigation.md`
-- `docs/harness/runs/<key>/rca-review.md`
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
+Use the source issue, current investigation, and accepted RCA review as the
+design boundary. Use `docs/harness/guides/tdd.md` to define executable behavior
+slices. Load runtime-proof guidance only when runtime behavior is in scope, and
+load the human-review brief only when the design needs a human decision.
 
 If the RCA review verdict is not `accepted`, stop and produce a Context Blocked
 handoff. Do not design a fix from an open RCA loop.
@@ -109,24 +97,15 @@ Use these sections:
 
 `## TDD Slice Plan` must use the slice-plan table from
 `docs/harness/guides/tdd.md`. Each slice should name the behavior, public seam,
-expected RED failure, minimum GREEN target, refactor allowance, and required
-validation. Do not write the tests in this stage.
+evidence mode, before-state proof, minimum change, after-state proof, and
+refactor allowance. Do not write the tests in this stage or manufacture a RED
+state for already-working behavior.
 
 `## Plane Reply` should be concise and high signal. Say what implementation
 shape you recommend, what it intentionally does not cover, and what TDD slice or
 validation risk the design reviewer should attack. If the verdict is
 `human-review-required`, follow
 `docs/harness/guides/human-review-brief.md`.
-
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/fix-design.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the fix design Markdown artifact and the `artifact.sha256` must
-match its current contents.
 
 ## Gate Semantics
 

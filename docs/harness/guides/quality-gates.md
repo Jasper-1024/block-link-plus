@@ -12,9 +12,9 @@ reconstruct project taste from chat history.
   cause, fix design, or validation claims.
 - Bounded scope: solve the accepted issue slice. Split clusters before
   implementation.
-- TDD evidence is a gate: design or routing defines behavior slices,
-  implementation records Red/Green/Refactor evidence, and code review validates
-  that evidence.
+- Slice evidence is a gate: design or routing declares a TDD,
+  characterization, runtime-fix, or refactor mode; implementation records
+  honest before/after evidence; code review validates it independently.
 - Review loops stay intact: investigation, RCA review, fix design, design
   review, implementation, and code review are separate responsibilities.
 - Human gates are state gates: comments carry feedback; Plane state carries
@@ -30,13 +30,15 @@ reconstruct project taste from chat history.
 
 - `corepack pnpm run agent:workflow-check` validates doc boundaries, required
   harness paths, retired workflow paths, and workflow manifest structure.
-- Stage workers must write both the Markdown artifact and Publish Plan JSON.
-- Publish Plan artifact hashes must match the artifact content.
+- Stage workers write the Markdown artifact and a schema-valid Stage Result.
+- The Runner generates the Publish Plan and verifies its artifact hash.
+- Code review uses one pinned implementation snapshot and two independent
+  read-only review axes before aggregation.
 - Runtime-gated tasks must follow
   [runtime-proof-package.md](runtime-proof-package.md).
 - Human-review stages must follow
   [human-review-brief.md](human-review-brief.md).
-- TDD-gated implementation stages must follow [tdd.md](tdd.md).
+- Slice-evidence-gated implementation stages must follow [tdd.md](tdd.md).
 
 ## Escalation
 

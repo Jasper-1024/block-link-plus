@@ -1,73 +1,73 @@
-# TDD Slice Evidence
+# Implementation Slice Evidence
 
-BLP uses TDD as an implementation discipline inside the existing harness
-stages. It is not a runner stage, a Plane state, or a separate QA/developer
-agent split.
+BLP uses test-first reasoning inside the implementation stage. It is not a
+runner stage, Plane state, or separate QA/developer-agent loop. The evidence
+mode must match the kind of work instead of forcing ceremonial RED evidence.
+
+## Evidence Modes
+
+- `tdd`: introduce one observable failing behavior, make the smallest change
+  that passes it, then refactor while green.
+- `characterization`: lock down already-working or legacy behavior before a
+  change; sensitivity or mutation probes may strengthen the evidence but are
+  not labelled as genuine RED.
+- `runtime-fix`: reproduce a runtime symptom, apply the smallest correction,
+  rebuild or reload, and repeat the same proof package.
+- `refactor`: establish a green baseline, change structure without changing
+  behavior, and rerun the same validation.
 
 ## Principles
 
 - Test public behavior through the highest stable seam available.
-- Work in vertical slices: one behavior test, the smallest implementation that
-  passes it, then the next behavior.
+- Work in vertical slices with one independently reviewable claim at a time.
 - Do not write every test first and then all implementation.
 - Do not assert private implementation details when a behavior seam can prove
   the same claim.
-- Refactor only after the current slice is green.
+- Refactor only from a known-green baseline.
 - Keep source and test changes inside the accepted design or routing boundary.
 
 ## Slice Plan
 
-Fix design and implementation routing must define the slices that later
-implementation can execute without chat context.
-
-Use this shape:
+Fix design and implementation routing define slices that implementation can
+execute without chat context:
 
 ```markdown
-| Slice | Behavior | Public Seam | Expected RED Failure | Minimum GREEN Target | Refactor Allowance | Required Validation |
-| --- | --- | --- | --- | --- | --- | --- |
-| TDD-1 | <observable behavior> | <test/API/runtime seam> | <expected failing assertion or symptom> | <smallest passing change> | <allowed cleanup or N/A> | <commands/runtime proof> |
+| Slice | Mode | Behavior | Public Seam | Before Evidence | Minimum Change | After Evidence | Refactor Allowance |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S-1 | <tdd, characterization, runtime-fix, or refactor> | <observable claim> | <test/API/runtime seam> | <expected RED, baseline, or reproduction> | <smallest scoped change> | <commands/runtime proof> | <allowed cleanup or N/A> |
 ```
 
-Rules:
-
-- The behavior must be observable by a user, public API, stable helper, or
-  runtime proof path.
-- The expected RED failure must correspond to the accepted bug, design goal, or
-  child-task contract.
-- Runtime-gated work must name the runtime proof package that implementation
-  repeats after rebuild or reload.
-- A slice that cannot be tested before implementation must explain the blocker
-  and name the alternative proof.
+The planned before-state must correspond to the accepted claim. Runtime-gated
+work names the proof package to repeat after rebuild or reload. If a slice
+cannot be tested at a stable seam, record why and name the alternate proof.
 
 ## Execution Evidence
 
-Implementation must record what actually happened for every accepted slice:
+Implementation records what actually happened for every accepted slice:
 
 ```markdown
-| Slice | Behavior | Public Seam | RED Command / Result | GREEN Change | GREEN Command / Result | REFACTOR Command / Result | Files Touched |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| TDD-1 | <behavior> | <seam> | `<command>` -> failed for <expected reason> | <minimal patch> | `<command>` -> passed | `<command>` -> passed, or N/A | <files> |
+| Slice | Mode | Before Command / Result | Change | After Command / Result | Refactor / Revalidation | Files Touched |
+| --- | --- | --- | --- | --- | --- | --- |
+| S-1 | <mode> | `<command>` -> <result> | <minimal patch> | `<command>` -> <result> | <result or N/A> | <files> |
 ```
 
-Rules:
+Mode-specific requirements:
 
-- RED must fail for the expected reason before the GREEN patch is claimed.
-- GREEN must be the smallest change that satisfies the slice.
-- REFACTOR is optional, but if used it must happen after GREEN and rerun the
-  relevant validation.
-- If the planned test is wrong, stop and record a design or test mismatch
-  instead of silently broadening scope.
-- If implementation evidence contradicts the accepted design, stop with the
-  stage's mismatch verdict.
+- `tdd`: before evidence fails for the expected behavior reason; after evidence
+  passes the same public seam.
+- `characterization`: record the green baseline and what the test constrains;
+  do not rename an optional mutation check to RED.
+- `runtime-fix`: record the symptom before the change and repeat the same
+  runtime package after rebuild or reload.
+- `refactor`: record a green baseline and the unchanged post-refactor result.
+
+If the planned test is wrong or evidence contradicts the accepted contract,
+stop with the stage's mismatch verdict instead of silently broadening scope.
 
 ## Review Checklist
 
-Code review accepts TDD evidence only when:
-
-- every implemented behavior maps to an accepted slice or justified mismatch
-- RED evidence is present and fails for the right reason
-- GREEN evidence passes targeted validation
-- REFACTOR evidence, when present, follows GREEN
-- tests target public behavior rather than private structure
-- runtime proof matches the accepted runtime package when runtime behavior is in
-  scope
+Code review accepts slice evidence only when every implemented behavior maps to
+an accepted slice, the declared mode is honest, the before and after evidence
+use a stable behavior seam, any refactor follows a green baseline, and required
+runtime proof matches the accepted package. Implementation self-reports remain
+claims until the review or deterministic gates reproduce them.

@@ -13,19 +13,21 @@ The machine-readable stage list and artifact paths are mirrored in
 [../workflow.json](../workflow.json). Keep this index, each stage spec, and the
 workflow manifest in sync.
 
-Every stage writes two outputs:
+Every worker returns two semantic outputs:
 
 - canonical artifact: `docs/harness/runs/<key>/<stage>.md`
-- Publish Plan: `docs/harness/runs/<key>/publish/<stage>.json`
+- structured Stage Result through the Runner protocol
 
-The Publish Plan schema and Plane+ projection rules live in
+The Runner validates those outputs and generates
+`docs/harness/runs/<key>/publish/<stage>.json`. The Publish Plan schema and
+Plane+ projection rules live in
 [../guides/publishing.md](../guides/publishing.md).
 Runtime-gated stages use
 [../guides/runtime-proof-package.md](../guides/runtime-proof-package.md).
 Stages that route to `Human Review` use
 [../guides/human-review-brief.md](../guides/human-review-brief.md). Cross-task
 quality rules live in [../guides/quality-gates.md](../guides/quality-gates.md).
-Implementation design, execution, and review use
+Implementation design, execution, and review use the mode-aware slice rules in
 [../guides/tdd.md](../guides/tdd.md).
 
 Stages:
@@ -33,20 +35,20 @@ Stages:
 - [design-intake.md](design-intake.md): non-bug enhancement/maintenance parent
   intake that prepares a human approve/reject gate.
 - [implementation-routing.md](implementation-routing.md): approved non-bug
-  design to same-task implementation or AFK child-task creation with TDD slices.
+  design to same-task implementation or AFK child-task creation with mode-aware slices.
 - [investigation.md](investigation.md): runtime-first bug investigation and
   evidence completion, including proposed child scope when the parent is not a
   single fix unit.
 - [rca-review.md](rca-review.md): adversarial RCA review, loop gate, and the
   only bug-lane stage that may materialize prior child-scope recommendations.
 - [fix-design.md](fix-design.md): accepted-RCA to bounded implementation
-  design and TDD slice plan.
+  design and mode-aware slice plan.
 - [fix-design-review.md](fix-design-review.md): adversarial review of the fix
-  design and TDD slice plan before implementation.
+  design and slice evidence plan before implementation.
 - [implementation.md](implementation.md): execute an accepted design with
-  vertical-slice TDD, regression tests, and runtime validation.
-- [code-review.md](code-review.md): adversarial review of the implementation
-  patch before human merge/release review.
+  TDD, characterization, runtime-fix, or refactor slices plus validation.
+- [code-review.md](code-review.md): coordinates independent Contract/Spec and
+  Correctness/Standards reviews of one pinned snapshot.
 - [finalize.md](finalize.md): mechanical commit/merge finalization after a
   human moves the tracker item to `Ready to Merge`.
 - [archive-cleanup.md](archive-cleanup.md): runner-owned local cleanup after a

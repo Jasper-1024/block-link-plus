@@ -9,13 +9,14 @@ Page dossier per parent work item.
 
 ## Roles
 
-- Stage agent: writes the stage artifact and a machine-readable Publish Plan.
-  It does not call Plane unless its stage spec explicitly authorizes BLP-owned
-  child work-item creation.
+- Stage agent: writes the stage artifact and returns a schema-constrained Stage
+  Result. It does not calculate artifact hashes or call Plane unless its stage
+  spec explicitly authorizes BLP-owned child work-item creation.
 - Reviewer agent: accepts, rejects, or routes the stage through the documented
-  loop. It also writes a Publish Plan for its verdict.
-- Runner: chooses the stage, runs the worker, validates the artifact and Publish
-  Plan, routes the verdict, and calls the Plane+ API directly.
+  loop and returns its verdict through the same Stage Result protocol.
+- Runner: chooses the stage, runs the worker, validates the artifact and Stage
+  Result, generates and validates the Publish Plan, routes the verdict, and
+  calls the Plane+ API directly.
 - Publisher: runner-owned code that applies the accepted Publish Plan to
   Plane+. It does not make new judgments and must not create child work items.
 - `plane-ops`: foreground skill for humans and agents doing explicit tracker
@@ -27,7 +28,7 @@ links such as a GitHub source report.
 
 ## Publish Plan Path
 
-Every stage run must write exactly one JSON Publish Plan:
+For every valid stage run, the Runner writes exactly one JSON Publish Plan:
 
 ```text
 docs/harness/runs/<archive-key>/publish/<stage>.json
@@ -42,7 +43,7 @@ docs/harness/runs/<archive-key>/<stage>.md
 Do not maintain a second Markdown copy of the publication data. The runner
 publishes only the JSON plan.
 
-`archive-key` is not the Plane key. GitHub-backed work uses
+Workers do not hand-author this file. `archive-key` is not the Plane key. GitHub-backed work uses
 `GH-<issue>-<plane-key>` such as `GH-34-BLP-2`; Plane-only work uses
 `PLANE-<plane-key>`. The Publish Plan `scopeKey` remains the Plane key because
 Plane comments, links, Project Page dossiers, and state transitions still target

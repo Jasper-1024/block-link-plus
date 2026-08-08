@@ -9,22 +9,12 @@ the RCA can leave the RCA loop.
 You are not the implementation agent and not the fix-design agent. Do not
 design or implement a fix in this stage.
 
-## Required Inputs
+## Stage Context
 
-Read these before reaching a verdict:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `docs/harness/README.md`
-- `docs/harness/guides/evidence-format.md`
-- `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/guides/runtime-proof-package.md`
-- `docs/harness/runs/<key>/investigation.md`
-- `docs/harness/runs/<key>/context/tracker-feedback.md`, if the runner wrote it
-- `docs/harness/runs/<key>/context/tracker-feedback.json`, if the runner wrote it
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
+Review the current investigation and its source issue. Read tracker feedback
+only when readable human feedback exists. Consult CDP/runtime guidance only
+when a challenge depends on real Obsidian behavior; otherwise review the
+recorded runtime package rather than reopening setup instructions.
 
 ## Verdicts
 
@@ -158,16 +148,6 @@ Use these sections:
 `## Plane Reply` should be a concise, high-signal reply to the previous
 investigator and the human operator. Do not fill it with template boilerplate.
 Say what you accept, what you reject or refine, and what the next agent must do.
-
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/rca-review.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the RCA review Markdown artifact and the `artifact.sha256` must
-match its current contents.
 
 ## Gate Semantics
 

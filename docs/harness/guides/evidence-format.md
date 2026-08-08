@@ -12,6 +12,7 @@ to `Human Review`, make the control-plane text follow
 ## Status
 
 - State: Middle-flow / Human Review / Blocked
+- Verdict: handoff / not-reproduced / split-recommended / mitigation-child-recommended / runtime-blocked / context-blocked
 - Task: <tracker id or issue title>
 - Workspace: <worktree path and branch>
 - Plane dossier: <work item / Project Page URL / none>
@@ -64,7 +65,7 @@ to `Human Review`, make the control-plane text follow
 - Project Page dossier:
 - Wiki/doc collection:
 - Repo artifact:
-- Publish Plan JSON:
+- Runner-generated Publish Plan JSON: derived from the validated Stage Result
 ```
 
 Rules:

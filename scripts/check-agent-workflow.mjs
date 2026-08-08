@@ -44,33 +44,29 @@ function walkFiles(relativeDir) {
 }
 
 const workflow = readJson(workflowPath);
-const baselineRequiredPaths = [
-  "AGENTS.md",
-  "WORKFLOW.md",
-  "CONTEXT.md",
-  "docs/harness/README.md",
-  "docs/harness/workflow.json",
-  "docs/harness/guides/bug-investigation.md",
-  "docs/harness/guides/cdp-runtime.md",
-  "docs/harness/guides/doc-gardening.md",
-  "docs/harness/guides/evidence-format.md",
-  "docs/harness/guides/hitl-plane-publishing.md",
-  "docs/harness/guides/human-review-brief.md",
-  "docs/harness/guides/publishing.md",
-  "docs/harness/guides/quality-gates.md",
-  "docs/harness/guides/runtime-proof-package.md",
-  "docs/harness/guides/tdd.md",
-  "docs/harness/plans/README.md",
-  "docs/harness/plans/debt.md",
-  "docs/harness/stages/index.md",
-  "docs/runtime/README.md",
-  "docs/runtime/isolated-obsidian-cdp.md",
-  "docs/runtime/cdp-script-inventory.md",
-  "docs/agents/domain.md",
-  "docs/agents/issue-tracker.md",
-  "docs/agents/triage-labels.md",
-  "docs/adr/0001-adopt-plane-backed-agent-harness.md",
-];
+const supportedCompletionRequirements = new Set([
+  "artifact",
+  "valid-stage-result",
+  "reviewed-source-current",
+  "accepted-design-current",
+  "accepted-rca-current",
+  "runtime-if-required",
+  "implementation-diff",
+  "validation-evidence",
+  "reviewed-snapshot-current",
+  "no-blocking-findings",
+  "current-human-approval",
+  "expected-diff",
+]);
+const supportedCapabilities = new Set([
+  "create-child-work-items",
+  "runtime-tools",
+  "modify-product",
+  "spawn-review-subagents",
+  "commit",
+  "merge",
+  "archive-workspace",
+]);
 const publicDocsRequiredPaths = [
   "doc/index.md",
   "doc/install.md",
@@ -162,18 +158,41 @@ for (const requiredPath of workflow.requiredPaths ?? []) {
   if (!exists(requiredPath)) fail(`required harness path is missing: ${requiredPath}`);
 }
 
-for (const requiredPath of baselineRequiredPaths) {
-  if (!requiredPaths.has(requiredPath)) {
-    fail(`workflow.json requiredPaths must include: ${requiredPath}`);
-  }
-}
-
 const stages = workflow.stages ?? [];
 if (!Array.isArray(stages) || stages.length === 0) {
   fail("workflow.json stages must be a non-empty array");
 }
 
 const stageNames = new Set();
+const stagesByName = new Map();
+function checkRepoRelativePath(value, label, { allowTemplate = false } = {}) {
+  if (typeof value !== "string" || !value.trim()) {
+    fail(`${label} must be a non-empty string`);
+    return;
+  }
+  if (value.includes("\\") || path.isAbsolute(value)) {
+    fail(`${label} must be a repo-relative POSIX path: ${value}`);
+    return;
+  }
+  if (!allowTemplate || !value.includes("{key}")) {
+    if (!exists(value)) fail(`${label} does not exist: ${value}`);
+  }
+}
+
+function checkUniqueKnownValues(values, supported, label, { allowEmpty = false } = {}) {
+  if (!Array.isArray(values) || (!allowEmpty && values.length === 0)) {
+    fail(`${label} must be ${allowEmpty ? "an array" : "a non-empty array"}`);
+    return;
+  }
+  const seen = new Set();
+  for (const rawValue of values) {
+    const value = normalizeStatus(rawValue);
+    if (!value || !supported.has(value)) fail(`${label} contains unsupported value: ${rawValue}`);
+    if (seen.has(value)) fail(`${label} contains duplicate value: ${rawValue}`);
+    seen.add(value);
+  }
+}
+
 for (const stage of stages) {
   const stageName = stage.name ?? "<missing>";
   for (const key of ["name", "label", "spec", "artifact"]) {
@@ -191,7 +210,70 @@ for (const stage of stages) {
     fail(`duplicate stage in workflow.json: ${stage.name}`);
   }
   stageNames.add(stage.name);
+  stagesByName.set(stage.name, stage);
+
+  if (!isPlainObject(stage.context)) {
+    fail(`${stageName}.context must be an object`);
+  } else {
+    if (!Array.isArray(stage.context.always) || stage.context.always.length === 0) {
+      fail(`${stageName}.context.always must be a non-empty array`);
+    }
+    for (const [index, contextPath] of (stage.context.always ?? []).entries()) {
+      checkRepoRelativePath(contextPath, `${stageName}.context.always[${index}]`, { allowTemplate: true });
+    }
+    if (!Array.isArray(stage.context.conditional)) {
+      fail(`${stageName}.context.conditional must be an array`);
+    }
+    for (const [index, entry] of (stage.context.conditional ?? []).entries()) {
+      if (!isPlainObject(entry) || typeof entry.when !== "string" || !entry.when.trim()) {
+        fail(`${stageName}.context.conditional[${index}].when must be a non-empty string`);
+      }
+      if (!Array.isArray(entry?.paths) || entry.paths.length === 0) {
+        fail(`${stageName}.context.conditional[${index}].paths must be a non-empty array`);
+        continue;
+      }
+      for (const [pathIndex, contextPath] of entry.paths.entries()) {
+        checkRepoRelativePath(
+          contextPath,
+          `${stageName}.context.conditional[${index}].paths[${pathIndex}]`,
+          { allowTemplate: true },
+        );
+      }
+    }
+  }
+  checkUniqueKnownValues(
+    stage.completionRequirements,
+    supportedCompletionRequirements,
+    `${stageName}.completionRequirements`,
+  );
+  checkUniqueKnownValues(
+    stage.capabilities,
+    supportedCapabilities,
+    `${stageName}.capabilities`,
+    { allowEmpty: true },
+  );
 }
+
+function requireStageValues(stageName, field, values) {
+  const configured = new Set(stagesByName.get(stageName)?.[field] ?? []);
+  for (const value of values) {
+    if (!configured.has(value)) fail(`${stageName}.${field} must include ${value}`);
+  }
+}
+
+for (const stage of stages) {
+  if (stage.name !== "archive-cleanup") {
+    requireStageValues(stage.name, "completionRequirements", ["artifact", "valid-stage-result"]);
+  }
+}
+requireStageValues("implementation", "completionRequirements", ["implementation-diff", "validation-evidence"]);
+requireStageValues("implementation", "capabilities", ["modify-product"]);
+requireStageValues("code-review", "completionRequirements", ["reviewed-snapshot-current", "no-blocking-findings"]);
+requireStageValues("code-review", "capabilities", ["spawn-review-subagents"]);
+requireStageValues("implementation-routing", "capabilities", ["create-child-work-items"]);
+requireStageValues("rca-review", "capabilities", ["create-child-work-items"]);
+requireStageValues("finalize", "capabilities", ["commit", "merge"]);
+requireStageValues("archive-cleanup", "capabilities", ["archive-workspace"]);
 
 if (!workflow.lanes || typeof workflow.lanes !== "object" || Array.isArray(workflow.lanes)) {
   fail("workflow.json lanes must be an object");
@@ -258,6 +340,35 @@ for (const stageName of stageNames) {
     for (const value of statusLine[1].split("|").map(normalizeStatus).filter(Boolean)) {
       if (!allowed.has(value)) {
         fail(`${stageName}.md documents verdict ${value}, but workflow.json does not allow it`);
+      }
+    }
+  }
+}
+
+const runtimeGateConfig = workflow.completionGateConfig?.["runtime-if-required"]?.advancingVerdicts;
+if (!isPlainObject(runtimeGateConfig)) {
+  fail("workflow.json completionGateConfig.runtime-if-required.advancingVerdicts must be an object");
+} else {
+  const runtimeStages = new Set(
+    stages
+      .filter((stage) => (stage.completionRequirements ?? []).includes("runtime-if-required"))
+      .map((stage) => stage.name),
+  );
+  if (
+    Object.keys(runtimeGateConfig).some((stageName) => !runtimeStages.has(stageName)) ||
+    Array.from(runtimeStages).some((stageName) => !(stageName in runtimeGateConfig))
+  ) {
+    fail("runtime-if-required advancingVerdicts must match stages that declare the gate");
+  }
+  for (const [stageName, configuredVerdicts] of Object.entries(runtimeGateConfig)) {
+    if (!Array.isArray(configuredVerdicts) || configuredVerdicts.length === 0) {
+      fail(`runtime-if-required advancingVerdicts.${stageName} must be a non-empty array`);
+      continue;
+    }
+    const allowed = new Set((workflow.verdicts?.[stageName]?.allowed ?? []).map(normalizeStatus));
+    for (const verdict of configuredVerdicts) {
+      if (!allowed.has(normalizeStatus(verdict))) {
+        fail(`runtime-if-required advancingVerdicts.${stageName} contains unsupported verdict ${verdict}`);
       }
     }
   }
@@ -355,55 +466,6 @@ for (const file of ["WORKFLOW.md", "docs/harness/guides/cdp-runtime.md"]) {
   }
 }
 
-const runtimeProofStageSpecs = [
-  "docs/harness/stages/investigation.md",
-  "docs/harness/stages/rca-review.md",
-  "docs/harness/stages/fix-design.md",
-  "docs/harness/stages/fix-design-review.md",
-  "docs/harness/stages/implementation.md",
-  "docs/harness/stages/code-review.md",
-];
-for (const file of runtimeProofStageSpecs) {
-  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
-  if (!text.includes("docs/harness/guides/runtime-proof-package.md")) {
-    fail(`${file} must reference runtime-proof-package.md`);
-  }
-}
-
-const tddStageSpecs = [
-  "docs/harness/stages/fix-design.md",
-  "docs/harness/stages/fix-design-review.md",
-  "docs/harness/stages/implementation-routing.md",
-  "docs/harness/stages/implementation.md",
-  "docs/harness/stages/code-review.md",
-  "docs/harness/guides/quality-gates.md",
-];
-for (const file of tddStageSpecs) {
-  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
-  if (!text.includes("docs/harness/guides/tdd.md") && !text.includes("[tdd.md](tdd.md)")) {
-    fail(`${file} must reference tdd.md`);
-  }
-}
-
-const humanBriefFiles = [
-  "WORKFLOW.md",
-  "docs/harness/guides/evidence-format.md",
-  "docs/harness/guides/hitl-plane-publishing.md",
-  "docs/harness/guides/publishing.md",
-  "docs/harness/stages/design-intake.md",
-  "docs/harness/stages/implementation-routing.md",
-  "docs/harness/stages/fix-design.md",
-  "docs/harness/stages/fix-design-review.md",
-  "docs/harness/stages/code-review.md",
-  "docs/harness/stages/finalize.md",
-];
-for (const file of humanBriefFiles) {
-  const text = fs.readFileSync(path.join(repoRoot, file), "utf8");
-  if (!text.includes("human-review-brief.md")) {
-    fail(`${file} must reference human-review-brief.md`);
-  }
-}
-
 const publishingGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/publishing.md"), "utf8");
 if (!publishingGuideText.includes("page.summary") || !publishingGuideText.includes("human-readable")) {
   fail("publishing guide must require a human-readable page.summary");
@@ -415,50 +477,6 @@ for (const phrase of [
 ]) {
   if (!publishingGuideText.includes(phrase)) {
     fail(`publishing guide must preserve runner-owned child creation ban: ${phrase}`);
-  }
-}
-
-const investigationStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/investigation.md"), "utf8");
-for (const phrase of [
-  "split-recommended",
-  "mitigation-child-recommended",
-  "Child Scope",
-  "Recommendation",
-  "Tracker Feedback Review",
-  "tracker-feedback.md",
-]) {
-  if (!investigationStageText.includes(phrase)) {
-    fail(`investigation.md must document child-scope recommendation: ${phrase}`);
-  }
-}
-
-const rcaReviewStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/rca-review.md"), "utf8");
-for (const phrase of [
-  "split_created",
-  "mitigation_child_created",
-  "split-recommended",
-  "mitigation-child-recommended",
-  "Created Child Items",
-  "Human Feedback Review",
-  "Tracker Feedback Review",
-  "plane-ops",
-]) {
-  if (!rcaReviewStageText.includes(phrase)) {
-    fail(`rca-review.md must document accepted prior child-scope materialization: ${phrase}`);
-  }
-}
-
-const implementationRoutingStageText = fs.readFileSync(path.join(repoRoot, "docs/harness/stages/implementation-routing.md"), "utf8");
-for (const phrase of ["split-children", "Publish Plan `children` array must remain empty"]) {
-  if (!implementationRoutingStageText.includes(phrase)) {
-    fail(`implementation-routing.md must document BLP-owned child creation path: ${phrase}`);
-  }
-}
-
-const qualityGuideText = fs.readFileSync(path.join(repoRoot, "docs/harness/guides/quality-gates.md"), "utf8");
-for (const phrase of ["Repo-local truth", "Runtime before RCA", "TDD evidence is a gate", "Human gates are state gates"]) {
-  if (!qualityGuideText.includes(phrase)) {
-    fail(`quality-gates.md must include principle: ${phrase}`);
   }
 }
 

@@ -10,28 +10,14 @@ You are not the RCA investigator, fix designer, design reviewer, or
 implementation-routing agent. Do not reopen scope unless implementation
 evidence contradicts the accepted design.
 
-## Required Inputs
+## Stage Context
 
-Read these before editing:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `CONTEXT.md`
-- `docs/harness/README.md`
-- `docs/harness/guides/evidence-format.md`
-- `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/guides/runtime-proof-package.md`
-- `docs/harness/guides/tdd.md`
-- `docs/agents/domain.md`
-- `docs/harness/runs/<key>/implementation-routing.md`, when this is a non-bug
-  or AFK implementation item
-- `docs/harness/runs/<key>/investigation.md`, when this is a bug lane item
-- `docs/harness/runs/<key>/rca-review.md`, when this is a bug lane item
-- `docs/harness/runs/<key>/fix-design.md`, when this is a bug lane item
-- `docs/harness/runs/<key>/fix-design-review.md`, when this is a bug lane item
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
+Start from the source issue and `docs/harness/guides/tdd.md`. For bug-lane
+work, the current fix design and accepted fix-design review are the
+implementation contract. For non-bug or AFK work, use the accepted
+implementation-routing artifact or child contract. Read tracker feedback only
+when it changes that accepted contract. Load CDP/runtime guidance only when
+runtime behavior is in scope.
 
 For bug lane work, if the fix-design review verdict is not `accepted`, stop and
 produce a Context Blocked handoff. For non-bug or AFK work, if the
@@ -45,16 +31,28 @@ Do:
 
 - preserve the accepted child-issue boundary
 - make the smallest source patch that satisfies the accepted design
-- implement with vertical-slice TDD: one behavior test, smallest code to pass,
-  then the next behavior
-- execute the accepted TDD slice plan from `fix-design.md`,
+- execute the accepted vertical slice plan from `fix-design.md`,
   `fix-design-review.md`, `implementation-routing.md`, or the AFK child body
+- run each slice inside this one implementation attempt before moving to the
+  next slice
 - prefer public interfaces and the highest stable behavior seam for tests
 - run the required validation from the accepted review
 - repeat the accepted runtime proof package after rebuilding or reloading the
   plugin when runtime behavior is in scope
 - record exact commands, important output, and any validation that could not run
 - keep temporary probes under `.tmp/`
+
+Use the proof mode declared by each accepted slice:
+
+- `tdd`: establish a genuine behavior RED, then make the minimum GREEN change
+- `characterization`: record the existing baseline and add regression coverage;
+  an optional sensitivity or mutation check is not genuine RED
+- `runtime-fix`: reproduce the symptom, change the implementation, rebuild or
+  reload, and repeat the same runtime proof
+- `refactor`: establish behavior GREEN before and after a bounded,
+  behavior-preserving change
+
+Do not manufacture RED evidence for behavior that already works.
 
 For BLP inline-edit CodeMirror fixes:
 
@@ -68,6 +66,7 @@ For BLP inline-edit CodeMirror fixes:
 
 Do not:
 
+- commit or merge the implementation; finalization owns both after human approval
 - broaden a child item into the whole parent issue or GitHub issue cluster
 - change formal spec/history files unless the accepted design review explicitly
   requires it
@@ -111,12 +110,11 @@ Use these sections:
 
 ## Tests Added Or Updated
 
-## TDD Slices
+## Slice Evidence
 
 Use the execution-evidence table from `docs/harness/guides/tdd.md`. For each
-accepted slice, record the behavior, public seam, RED command and expected
-failure, GREEN patch summary and passing command, REFACTOR command or `N/A`, and
-files touched.
+accepted slice, record its proof mode, behavior, public seam, phase-specific
+commands/results, smallest change, and files touched.
 
 ## Validation
 
@@ -136,22 +134,12 @@ attack.
 For runtime-gated work, `## Runtime Evidence` must follow
 `docs/harness/guides/runtime-proof-package.md`.
 
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/implementation.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the implementation Markdown artifact and the `artifact.sha256`
-must match its current contents.
-
 ## Gate Semantics
 
 Use `ready-for-review` only when the implementation patch exists, every scoped
-behavior has TDD execution evidence or a justified mismatch, the targeted
+behavior has honest mode-appropriate execution evidence, the targeted
 behavior tests pass, required broader validation has either passed or is clearly
-reported with a non-blocking reason, and the artifact records the TDD slices
+reported with a non-blocking reason, and the artifact records the slices
 actually executed. This exits to code review, not to merge or release.
 
 Use `validation-failed` when the patch was made but a required test, build, or

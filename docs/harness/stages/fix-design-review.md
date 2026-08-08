@@ -9,24 +9,12 @@ You are not the implementation agent. Do not edit product source, tests,
 package metadata, generated files, CDP snippets, or formal spec/history files in this
 stage.
 
-## Required Inputs
+## Stage Context
 
-Read these before reaching a verdict:
-
-- `AGENTS.md`
-- `WORKFLOW.md`
-- `docs/harness/README.md`
-- `docs/harness/guides/evidence-format.md`
-- `docs/harness/guides/cdp-runtime.md`
-- `docs/harness/guides/human-review-brief.md`
-- `docs/harness/guides/publishing.md`
-- `docs/harness/guides/quality-gates.md`
-- `docs/harness/guides/runtime-proof-package.md`
-- `docs/harness/guides/tdd.md`
-- `docs/harness/runs/<key>/investigation.md`
-- `docs/harness/runs/<key>/rca-review.md`
-- `docs/harness/runs/<key>/fix-design.md`
-- `docs/harness/runs/<key>/context/issue-context.json`, if the runner wrote it
+Review the proposed fix design against the accepted RCA and source issue. Use
+`docs/harness/guides/tdd.md` when attacking the proposed seams and slice plan.
+Load runtime-proof guidance only when runtime validation is part of the design,
+and load the human-review brief only for a human-bound verdict.
 
 If the fix design verdict is not `ready-for-review`, stop and produce a Context
 Blocked review. Do not invent a design to review.
@@ -54,8 +42,8 @@ Do:
 - check that the design does not broaden a child sub-bug into the whole cluster
 - verify source ownership and framework claims against code or primary docs
 - examine whether the validation plan would prove the bug is fixed
-- examine whether the TDD slice plan can be executed as Red/Green/Refactor
-  without testing private implementation details
+- examine whether every slice declares the correct TDD, characterization,
+  runtime-fix, or refactor mode and uses a stable public seam
 - examine whether the runtime proof package is concrete enough for the
   implementation agent
 - propose narrow revision instructions when the verdict is `needs-revision`
@@ -74,8 +62,8 @@ Do not:
 - write the fix yourself
 - add a new workflow role to compensate for a vague review
 - accept a design that has no targeted regression and CDP validation plan
-- accept a design whose TDD slices cannot fail for the accepted symptom or
-  cannot prove the behavior through a stable seam
+- accept a design whose slices cannot prove their claimed before/after behavior
+  through a stable seam
 - send `human-review-required` without a useful human-review brief
 - call Plane or other tracker APIs
 
@@ -121,20 +109,10 @@ Use these sections:
 operator. Do not fill it with template boilerplate. Say exactly what is accepted,
 what blocks implementation, and what the next stage should do.
 
-Also write the matching Publish Plan JSON:
-
-```text
-docs/harness/runs/<key>/publish/fix-design-review.json
-```
-
-Use `docs/harness/guides/publishing.md` for the schema. The `artifact.path`
-must point to the fix design review Markdown artifact and the
-`artifact.sha256` must match its current contents.
-
 ## Gate Semantics
 
-If the verdict is `accepted`, state the smallest implementation scope, the TDD
-slices the implementation must execute, and the validation that must run after
+If the verdict is `accepted`, state the smallest implementation scope, the
+mode-aware slices the implementation must execute, and the validation that must run after
 implementation.
 
 If the verdict is `needs-revision`, list concrete changes the next fix-design
