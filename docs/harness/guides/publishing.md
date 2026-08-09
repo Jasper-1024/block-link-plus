@@ -9,9 +9,10 @@ Page dossier per parent work item.
 
 ## Roles
 
-- Stage agent: writes the stage artifact and returns a schema-constrained Stage
-  Result. It does not calculate artifact hashes or call Plane unless its stage
-  spec explicitly authorizes BLP-owned child work-item creation.
+- Stage root coordinator: writes the stage artifact, returns the single schema-
+  constrained Stage Result, and may report live task notes only through the
+  Runner-provided dossier tools. It never receives Plane credentials. Its
+  subagents do not publish to Plane.
 - Reviewer agent: accepts, rejects, or routes the stage through the documented
   loop and returns its verdict through the same Stage Result protocol.
 - Runner: chooses the stage, runs the worker, validates the artifact and Stage
@@ -22,9 +23,10 @@ Page dossier per parent work item.
 - `plane-ops`: foreground skill for humans and agents doing explicit tracker
   operations outside an unattended stage run.
 
-No persistent Plane+ fact write is allowed unless it is traceable to a checked
-repo artifact hash. The exceptions are pure status transitions and mechanical
-links such as a GitHub source report.
+No final workflow fact write is allowed unless it is traceable to a checked
+repo artifact hash. The exceptions are pure status transitions, mechanical
+links such as a GitHub source report, and explicitly labeled live session notes
+recorded in the runner trace before final publication.
 
 ## Publish Plan Path
 
@@ -135,6 +137,8 @@ The dossier contains:
 - Snapshot
 - Scope
 - Timeline
+- Live Session Timeline
+- Task Notes, when the root coordinator needs a durable discussion record
 - Child Tasks
 - Evidence Index
 - Current Summary
@@ -146,6 +150,21 @@ not a sufficient review brief by themselves.
 
 Do not promote single-task findings into Workspace Wiki in v1. Reusable
 cross-task rules can be promoted later by a human.
+
+During an App Server turn, only the root coordinator can call
+`report_progress` or `publish_task_document`. The Runner binds each call to the
+current work item, stage, and root thread, appends it to
+`trace/<stage>/control-plane-journal.jsonl`, and performs the Plane write with
+runner-owned credentials. A stable `documentKey` updates the existing note.
+`placement: dossier` folds it into the main page; `placement: child-page`
+creates or updates a child Project Page whose parent is the dossier. Raw
+subagent messages and topology remain trace data and are never projected as
+workflow results.
+
+When the work item is archived, archive cleanup also archives the parent
+dossier. Plane+ recursively archives its child pages. If later local cleanup
+fails, the Runner attempts to unarchive the dossier tree before returning the
+work item to Human Review.
 
 ## Failure Policy
 

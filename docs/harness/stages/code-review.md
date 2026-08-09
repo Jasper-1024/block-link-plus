@@ -42,16 +42,21 @@ external branch.
 
 ## Coordinator Protocol
 
-Use native Codex subagents to start exactly two read-only reviewers in parallel.
-Both reviewers must receive the same snapshot identity, exact diff command,
-changed-path list, accepted-contract paths and hashes, and relevant repository
-instructions. Use the Runner-selected model and reasoning defaults; do not
-silently substitute a different model or effort.
+The root Codex session is the review coordinator and the sole owner of the
+canonical artifact and final Stage Result. Cover both review axes below against
+the same runner-pinned snapshot.
 
-### Reviewer A: Contract / Spec
+Choose the review topology that best fits this patch. You may review both axes
+yourself or delegate bounded work to any useful number of native Codex
+subagents. The Runner does not inspect, count, or parse subagent conversations.
+If you delegate, give each subagent enough of the pinned snapshot, diff,
+contract, and repository instructions to make its findings reproducible. Use
+the Runner-selected model and reasoning defaults; do not silently substitute a
+different model or effort.
 
-Ask this reviewer to determine only whether the pinned patch implements the
-accepted contract:
+### Axis A: Contract / Spec
+
+Determine whether the pinned patch implements the accepted contract:
 
 - missing or partially implemented behavior;
 - behavior that appears implemented at the wrong layer;
@@ -59,59 +64,40 @@ accepted contract:
 - mismatches between tests, runtime claims, and the contract.
 
 Every material finding must cite both the contract location and the affected
-diff location. This reviewer does not make general style findings.
+diff location. Do not make general style findings on this axis.
 
-### Reviewer B: Correctness / Standards
+### Axis B: Correctness / Standards
 
-Ask this reviewer to inspect the pinned patch for:
+Inspect the pinned patch for:
 
 - correctness, regression risk, edge cases, and failure handling;
 - quality and independence of tests and validation evidence;
 - repository standards not already enforced mechanically;
 - runtime-proof quality when runtime behavior is in scope.
 
-The reviewer must distinguish hard repository rules from heuristic advice and
-must not re-run concerns already covered by deterministic gates. This reviewer
-does not decide whether product scope was desirable.
+Distinguish hard repository rules from heuristic advice and do not re-run
+concerns already covered by deterministic gates. This axis does not decide
+whether product scope was desirable.
 
 For inline-edit CodeMirror work, and only when the task or changed paths make it
 relevant, also check history undo/redo, `filter:false` transaction behavior,
 edit-rejection semantics, range-maintenance effects, and reload of the built
 plugin before runtime claims.
 
-### Reviewer Output Boundary
+### Delegation Boundary
 
-Each reviewer returns structured findings to this coordinator. A reviewer may
-not edit files, write the BLP review artifact, publish to Plane, or choose the
-final BLP verdict. Its response must separate:
-
-- blocking findings;
-- non-blocking risks;
-- validation limitations;
-- a pass/fail opinion for its own axis.
-
-Use this return shape for both reviewers:
-
-```json
-{
-  "axis": "contract-spec|correctness-standards",
-  "opinion": "pass|fail",
-  "blockingFindings": [
-    {"claim": "...", "contractRef": "...", "diffRef": "...", "evidence": "..."}
-  ],
-  "nonBlockingRisks": [],
-  "validationLimitations": []
-}
-```
-
-For Correctness / Standards findings, `contractRef` may name the applicable
-repository rule instead of a product contract. Empty arrays are explicit.
+Subagents are read-only evidence providers. They may use whatever concise
+return format the coordinator requests; they do not need to return Stage Result
+JSON or a Runner-defined schema. They may not edit files, write the BLP review
+artifact, publish to Plane, or choose the final BLP verdict. The coordinator
+must independently verify material delegated findings before adopting them.
 
 ## Aggregation
 
-Inspect both reviewer reports. Preserve their axes, deduplicate only genuinely
-identical findings, and verify every material finding against the pinned diff.
-Do not hide disagreement or upgrade a reviewer's confidence.
+Preserve both axes in the artifact, deduplicate only genuinely identical
+findings, and verify every material finding against the pinned diff. If
+delegated reports disagree, record the disagreement and resolve it explicitly;
+do not hide it or upgrade a subagent's confidence.
 
 Treat implementation self-reports as claims, not independent validation. TDD
 work requires genuine pre-change RED evidence; characterization, runtime-fix,
@@ -119,8 +105,8 @@ and refactor slices require their mode-appropriate evidence instead. Never
 demand manufactured RED evidence for behavior that already passed before the
 change.
 
-After both reports are complete, confirm that the current worktree or committed
-PR head still matches the runner-pinned review tree. A stale snapshot blocks
+After both axes are complete, confirm that the current worktree or committed PR
+head still matches the runner-pinned review tree. A stale snapshot blocks
 acceptance.
 
 ## Required Artifact

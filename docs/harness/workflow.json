@@ -659,7 +659,7 @@
         ]
       },
       "completionRequirements": ["artifact", "valid-stage-result", "reviewed-snapshot-current", "no-blocking-findings", "runtime-if-required"],
-      "capabilities": ["spawn-review-subagents"]
+      "capabilities": []
     },
     {
       "name": "finalize",

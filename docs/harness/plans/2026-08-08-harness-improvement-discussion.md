@@ -259,20 +259,22 @@ Do not create one large universal completion schema. Each stage and route
 should declare the minimum mechanical gates needed to make that particular
 transition safe.
 
-## 8. Let The Code-Review Worker Coordinate Its Own Subagents
+## 8. Let The Code-Review Worker Own Review Topology
 
-Decision: the external Plane Runner launches one code-review worker. That
-worker acts as the Review Coordinator and starts two isolated, read-only native
-Codex subagents in parallel:
+Decision: the external Plane Runner launches one code-review root session. That
+session is the Review Coordinator and must cover two independent axes:
 
 - a Contract/Spec reviewer that compares the pinned diff with the accepted
   implementation contract;
 - a Correctness/Standards reviewer that examines implementation risk, tests,
   evidence, and applicable repo standards independently of product scope.
 
-Both subagents use the configured `gpt-5.6-luna`/`max` defaults. They return
-structured findings to the coordinator and must not edit source, write the
-canonical review artifact, or choose the BLP workflow verdict.
+The coordinator chooses whether to do this work itself or delegate to any
+useful number of native subagents. Delegated work uses the configured
+`gpt-5.6-luna`/`max` defaults, is read-only, and may return in any coordinator-
+chosen format. Subagents must not write the canonical review artifact, publish
+to Plane, or choose the BLP workflow verdict. The Runner neither observes nor
+validates their number, lifecycle, or response schema.
 
 The coordinator validates material findings, preserves the two axes in the
 artifact, resolves duplicates, classifies blocking versus non-blocking issues,
@@ -293,10 +295,10 @@ tree; the accepted contracts and implementation handoff are pinned separately
 by path and hash. A temporary Git index/tree or an equivalent diff-plus-manifest
 hash may be used without moving a branch ref or changing the real index.
 
-Both review subagents receive the same base, review snapshot, diff command, and
-accepted-contract identity. Recheck the snapshot after aggregation. If the
-worktree or accepted contract changed, the review is stale and cannot publish
-an `accepted` verdict.
+Every delegated review slice receives the base, review snapshot, diff command,
+and accepted-contract identity it needs. The coordinator rechecks the snapshot
+after aggregation. If the worktree or accepted contract changed, the review is
+stale and cannot publish an `accepted` verdict.
 
 Do not copy Matt's committed-branch-only `git diff <fixed-point>...HEAD`
 command directly: it excludes the uncommitted implementation state used by

@@ -54,6 +54,8 @@ Manual no-op cleanup:
 
 Both cleanup modes:
 
+- archive the task's Agent Dossier Project Page; Plane+ archives its child
+  pages with it
 - removes the issue worktree
 - deletes the merged issue branch
 - comments on the Plane item
@@ -63,4 +65,6 @@ Both cleanup modes:
 
 If cleanup fails, the runner leaves the Plane item unarchived, moves it back to
 `Human Review`, and comments with the reason. It must not delete the worker
-worktree after a failed precondition.
+worktree after a failed precondition. If the dossier was already archived
+before a later local cleanup action failed, the runner attempts to unarchive
+the dossier tree before returning control to the operator.

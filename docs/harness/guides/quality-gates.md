@@ -32,8 +32,9 @@ reconstruct project taste from chat history.
   harness paths, retired workflow paths, and workflow manifest structure.
 - Stage workers write the Markdown artifact and a schema-valid Stage Result.
 - The Runner generates the Publish Plan and verifies its artifact hash.
-- Code review uses one pinned implementation snapshot and two independent
-  read-only review axes before aggregation.
+- Code review uses one pinned implementation snapshot and covers two
+  independent read-only review axes before aggregation. The coordinator may
+  review directly or delegate without exposing its topology to the Runner.
 - Runtime-gated tasks must follow
   [runtime-proof-package.md](runtime-proof-package.md).
 - Human-review stages must follow

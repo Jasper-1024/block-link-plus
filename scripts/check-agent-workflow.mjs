@@ -62,7 +62,6 @@ const supportedCapabilities = new Set([
   "create-child-work-items",
   "runtime-tools",
   "modify-product",
-  "spawn-review-subagents",
   "commit",
   "merge",
   "archive-workspace",
@@ -269,7 +268,7 @@ for (const stage of stages) {
 requireStageValues("implementation", "completionRequirements", ["implementation-diff", "validation-evidence"]);
 requireStageValues("implementation", "capabilities", ["modify-product"]);
 requireStageValues("code-review", "completionRequirements", ["reviewed-snapshot-current", "no-blocking-findings"]);
-requireStageValues("code-review", "capabilities", ["spawn-review-subagents"]);
+requireStageValues("code-review", "capabilities", []);
 requireStageValues("implementation-routing", "capabilities", ["create-child-work-items"]);
 requireStageValues("rca-review", "capabilities", ["create-child-work-items"]);
 requireStageValues("finalize", "capabilities", ["commit", "merge"]);
