@@ -35,6 +35,11 @@ Write the artifact to:
 docs/harness/runs/<key>/design-intake.md
 ```
 
+The runner publishes this as a separate Plane Design Approval Page under the
+Agent Dossier. The page—not this draft artifact—is the human-editable approval
+surface. Moving the item to `Review Approved` snapshots that page as
+`approved-design.md` plus hash metadata in `approved-design.json`.
+
 Use this structure:
 
 ```markdown

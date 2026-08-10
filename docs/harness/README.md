@@ -31,8 +31,7 @@ runs. Keep this file short: it is a map, not the manual.
 ## Runtime Knowledge
 
 - [../runtime/README.md](../runtime/README.md): current runtime evidence map.
-- [../runtime/isolated-obsidian-cdp.md](../runtime/isolated-obsidian-cdp.md): disposable Obsidian/CDP environment.
-- [../runtime/cdp-script-inventory.md](../runtime/cdp-script-inventory.md): reusable CDP snippet inventory.
+- [../runtime/obsidian-cdp.md](../runtime/obsidian-cdp.md): manual isolated runtime, CDP reliability contract, and snippet catalog.
 
 ## Harness Context
 

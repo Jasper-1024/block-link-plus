@@ -10,8 +10,7 @@ prints a JSON context object for follow-up CDP commands.
 #>
 [CmdletBinding()]
 param(
-	[int]$Port = 19225,
-	[int]$MinPort = 19225,
+	[Parameter(Mandatory = $true)][ValidateRange(1, 65535)][int]$Port,
 	[string]$VaultName = "blp",
 	[string]$Root = "",
 	[string]$ObsidianExe = $env:OBSIDIAN_EXE,
@@ -48,24 +47,6 @@ function Test-PortFree {
 			$Listener.Stop()
 		}
 	}
-}
-
-function Resolve-DebugPort {
-	param([int]$RequestedPort, [int]$StartPort)
-	if ($RequestedPort -gt 0) {
-		if (-not (Test-PortFree -Candidate $RequestedPort)) {
-			throw "Requested CDP port $RequestedPort is already in use."
-		}
-		return $RequestedPort
-	}
-
-	for ($Candidate = $StartPort; $Candidate -lt ($StartPort + 200); $Candidate++) {
-		if (Test-PortFree -Candidate $Candidate) {
-			return $Candidate
-		}
-	}
-
-	throw "No free CDP port found from $StartPort to $($StartPort + 199)."
 }
 
 function Resolve-ObsidianPath {
@@ -149,14 +130,14 @@ function Invoke-ObsidianCdp {
 	$OldUrl = $env:OB_CDP_URL_CONTAINS
 	$OldTitle = $env:OB_CDP_TITLE_CONTAINS
 	try {
-		$env:OB_CDP_PORT = [string]$script:Port
 		$env:OB_CDP_URL_CONTAINS = "app://obsidian.md/index.html"
 		$env:OB_CDP_TITLE_CONTAINS = ""
-		$Output = & node $script:CdpScript @Arguments 2>&1
+		$Output = & node $script:CdpScript --port $script:Port @Arguments 2>&1
 		if ($LASTEXITCODE -ne 0) {
 			throw "obsidian-cdp.js $($Arguments -join ' ') failed: $($Output -join "`n")"
 		}
-		return ($Output -join "`n")
+		$Payload = @($Output | ForEach-Object { [string]$_ } | Where-Object { -not $_.StartsWith("BLP_CDP_EVENT ") })
+		return ($Payload -join "`n")
 	} finally {
 		$env:OB_CDP_PORT = $OldPort
 		$env:OB_CDP_URL_CONTAINS = $OldUrl
@@ -358,7 +339,10 @@ function Enable-BlockLinkPlus {
 	return ($Text | ConvertFrom-Json)
 }
 
-$script:Port = Resolve-DebugPort -RequestedPort $Port -StartPort $MinPort
+if (-not (Test-PortFree -Candidate $Port)) {
+	throw "Requested CDP port $Port is already in use. The caller must allocate a unique port."
+}
+$script:Port = $Port
 $script:VaultName = $VaultName
 $ObsidianPath = Resolve-ObsidianPath -Preferred $ObsidianExe
 
@@ -439,7 +423,7 @@ $Result = [ordered]@{
 			OB_CDP_URL_CONTAINS = "app://obsidian.md/index.html"
 			OB_CDP_TITLE_CONTAINS = " - $VaultName - "
 		}
-		listCommand = "`$env:OB_CDP_PORT='$script:Port'; node scripts/obsidian-cdp.js list"
+		listCommand = "node scripts/obsidian-cdp.js --port $script:Port list"
 	}
 	runtime = $Runtime
 }

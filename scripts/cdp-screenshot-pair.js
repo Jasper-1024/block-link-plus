@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-// Capture screenshot pairs for visual convergence work (Obsidian 9222 vs Logseq 9221).
+// Capture screenshot pairs for visual convergence work using explicit ports.
 //
 // Usage:
 //   node scripts/cdp-screenshot-pair.js
@@ -21,9 +21,9 @@ const DEFAULT_OUTDIR = path.join(".tmp", "cdp-shots");
 function parseArgs(argv) {
   const out = {
     outDir: DEFAULT_OUTDIR,
-    obsidianPort: "9222",
+    obsidianPort: null,
     obsidianUrlContains: "app://obsidian.md/index.html",
-    logseqPort: "9221",
+    logseqPort: null,
     logseqUrlContains: "electron.html",
   };
 
@@ -82,6 +82,9 @@ function cropPng(png, width, height) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (!args.obsidianPort || !args.logseqPort) {
+    throw new Error("--obsidian-port and --logseq-port are required");
+  }
   ensureDir(args.outDir);
 
   const obsidianPng = path.join(args.outDir, "obsidian.png");

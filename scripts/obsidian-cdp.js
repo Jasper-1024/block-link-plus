@@ -1,504 +1,544 @@
 /* eslint-disable no-console */
-// Minimal CDP (Chrome DevTools Protocol) helper for driving a running Obsidian instance
-// that was started with `--remote-debugging-port=<port>`.
-//
-// Usage examples:
-//   node scripts/obsidian-cdp.js list
-//   node scripts/obsidian-cdp.js eval "location.href"
-//   node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/dump-state.js"
-//   node scripts/obsidian-cdp.js eval "(async()=>app.workspace.getActiveFile()?.path)()"
-//   node scripts/obsidian-cdp.js open-note "Review/_blp-ai-workbench.md"
-//   node scripts/obsidian-cdp.js set-editor "docs/runtime/fixtures/_blp-ai-workbench-baseline.md"
-//   node scripts/obsidian-cdp.js write-note "Review/_blp-ai-workbench.md" "docs/runtime/fixtures/_blp-ai-workbench-baseline.md"
-//   node scripts/obsidian-cdp.js key "ctrl+c"
-//   node scripts/obsidian-cdp.js screenshot out.png
-//
-// Keep this script dependency-light: it only requires the repo-declared `ws`
-// package for the CDP WebSocket connection.
+"use strict";
 
-const http = require("http");
+// The single supported CDP client for this repository. It intentionally has no
+// default port: callers must select the runtime instance they mean to inspect.
+
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
 const WebSocket = require("ws");
 
-const DEFAULT_HOST = "127.0.0.1";
-const DEFAULT_PORT = 9222;
-const DEFAULT_URL_CONTAINS = "app://obsidian.md/index.html";
+const DEFAULTS = Object.freeze({
+  host: "127.0.0.1",
+  targetType: "page",
+  urlContains: "app://obsidian.md/index.html",
+  discoveryTimeoutMs: 5_000,
+  connectTimeoutMs: 5_000,
+  slowMs: 30_000,
+  timeoutMs: 60_000,
+});
+const EVENT_PREFIX = "BLP_CDP_EVENT ";
+const CATALOG_PATH = path.join(__dirname, "cdp-snippets", "catalog.json");
 
-function die(msg) {
-  console.error(msg);
-  process.exit(1);
-}
-
-function httpJson(url) {
-  return new Promise((resolve, reject) => {
-    http
-      .get(url, (res) => {
-        const chunks = [];
-        res.on("data", (c) => chunks.push(c));
-        res.on("end", () => {
-          try {
-            const body = Buffer.concat(chunks).toString("utf8");
-            resolve(JSON.parse(body));
-          } catch (e) {
-            reject(e);
-          }
-        });
-      })
-      .on("error", reject);
-  });
-}
-
-async function listTargets({ host, port }) {
-  const url = `http://${host}:${port}/json/list`;
-  return httpJson(url);
-}
-
-function pickTarget(targets, { id, titleContains, urlContains }) {
-  if (!Array.isArray(targets) || targets.length === 0) return null;
-
-  if (id) {
-    const found = targets.find((t) => t && t.id === id);
-    if (found) return found;
-  }
-
-  const pageTargets = targets.filter((t) => t && t.type === "page");
-
-  const byUrl = urlContains
-    ? pageTargets.filter((t) => String(t.url || "").includes(urlContains))
-    : pageTargets;
-  const byTitle = titleContains
-    ? byUrl.filter((t) => String(t.title || "").includes(titleContains))
-    : byUrl;
-
-  // Prefer the main Obsidian app page.
-  const obsidian = byTitle.find((t) => String(t.url || "") === "app://obsidian.md/index.html");
-  return obsidian || byTitle[0] || pageTargets[0] || targets[0];
-}
-
-class CdpClient {
-  constructor(wsUrl) {
-    this.wsUrl = wsUrl;
-    this.ws = null;
-    this.nextId = 1;
-    this.pending = new Map();
-  }
-
-  async connect() {
-    const ws = new WebSocket(this.wsUrl);
-    this.ws = ws;
-
-    ws.on("message", (data) => {
-      let msg;
-      try {
-        msg = JSON.parse(String(data));
-      } catch {
-        return;
-      }
-
-      if (msg && typeof msg.id === "number") {
-        const p = this.pending.get(msg.id);
-        if (!p) return;
-        this.pending.delete(msg.id);
-        if (msg.error) {
-          const err = new Error(msg.error.message || "CDP error");
-          err.data = msg.error.data;
-          p.reject(err);
-        } else {
-          p.resolve(msg.result);
-        }
-      }
-    });
-
-    await new Promise((resolve, reject) => {
-      ws.once("open", resolve);
-      ws.once("error", reject);
-    });
-  }
-
-  close() {
-    try {
-      this.ws?.close();
-    } catch {
-      // ignore
-    }
-    this.ws = null;
-  }
-
-  send(method, params = {}) {
-    if (!this.ws) throw new Error("CDP WebSocket not connected");
-    const id = this.nextId++;
-    const payload = { id, method, params };
-
-    return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(JSON.stringify(payload), (err) => {
-        if (err) {
-          this.pending.delete(id);
-          reject(err);
-        }
-      });
-    });
+class CdpError extends Error {
+  constructor(message, { exitCode = 1, phase = "command", details = {} } = {}) {
+    super(message);
+    this.name = "CdpError";
+    this.exitCode = exitCode;
+    this.phase = phase;
+    this.details = details;
   }
 }
 
-async function tryBringToFront(client) {
-  try {
-    // CDP-driven runs can execute while the Obsidian window is unfocused; in that case
-    // `.focus()`/`.blur()` inside the app becomes unreliable. Bringing the page to front
-    // makes editor focus/blur deterministic for snippets.
-    await client.send("Page.bringToFront", {});
-  } catch {
-    // ignore
-  }
+function emit(type, context = {}) {
+  console.error(`${EVENT_PREFIX}${JSON.stringify({ type, at: new Date().toISOString(), ...context })}`);
 }
 
-function printTargets(targets) {
-  for (const t of targets) {
-    const line = [
-      t.type,
-      t.id,
-      JSON.stringify(t.title || ""),
-      JSON.stringify(t.url || ""),
-    ].join("\t");
-    console.log(line);
-  }
-}
-
-async function run() {
-  const args = process.argv.slice(2);
-  const cmd = args[0];
-  if (!cmd || ["-h", "--help"].includes(cmd)) {
-    console.log(`obsidian-cdp.js
+function usage(message) {
+  if (message) console.error(message);
+  console.error(`Usage: node scripts/obsidian-cdp.js --port <port> [options] <command>
 
 Commands:
   list
+  catalog [list|show <id>]
   call <Method> [JsonParams]
   eval <js>
   eval-file <localFile>
   mouse-click <x> <y> [--shift] [--ctrl] [--alt] [--meta]
-  key <combo>  (e.g. "ctrl+c", "shift+enter", "esc")
+  key <combo>
   open-note <vaultPath>
   set-editor <localFile>
   write-note <vaultPath> <localFile>
   screenshot <out.png>
 
-Env:
-  OB_CDP_HOST (default ${DEFAULT_HOST})
-  OB_CDP_PORT (default ${DEFAULT_PORT})
-  OB_CDP_TARGET_ID (optional; exact target id from /json/list)
-  OB_CDP_TITLE_CONTAINS (optional; substring match)
-  OB_CDP_URL_CONTAINS (optional; substring match; default "${DEFAULT_URL_CONTAINS}")
-`);
-    process.exit(0);
+Connection options:
+  --port <port>              Required, or set OB_CDP_PORT
+  --host <host>              Default: 127.0.0.1
+  --target-id <id>           Exact target id
+  --target-type <type>       Default: page
+  --title-contains <text>    Literal substring
+  --url-contains <text>      Default: app://obsidian.md/index.html
+
+Reliability options:
+  --slow-ms <ms>             Default: 30000
+  --timeout-ms <ms>          Overall command deadline, default: 60000
+  --connect-timeout-ms <ms>  Default: 5000
+  --discovery-timeout-ms <ms> Default: 5000
+
+Call options:
+  --params-file <jsonFile>   Read call params from JSON
+  --raw                      Print the complete CDP response
+
+Manual debugging commonly uses: --port 9222 (9222 is not a default).`);
+  process.exitCode = message ? 2 : 0;
+}
+
+const VALUE_OPTIONS = new Set([
+  "port", "host", "target-id", "target-type", "title-contains", "url-contains",
+  "slow-ms", "timeout-ms", "connect-timeout-ms", "discovery-timeout-ms", "params-file",
+]);
+const FLAG_OPTIONS = new Set(["raw"]);
+
+function parseArgs(argv) {
+  const options = {};
+  const positional = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (!token.startsWith("--")) {
+      positional.push(token);
+      continue;
+    }
+    const name = token.slice(2);
+    if (FLAG_OPTIONS.has(name)) {
+      options[name] = true;
+      continue;
+    }
+    if (!VALUE_OPTIONS.has(name)) {
+      // Command-specific modifier flags are positional and interpreted later.
+      if (["shift", "ctrl", "alt", "meta"].includes(name)) {
+        positional.push(token);
+        continue;
+      }
+      throw new CdpError(`Unknown option: ${token}`, { exitCode: 2, phase: "usage" });
+    }
+    const value = argv[index + 1];
+    if (value === undefined || value.startsWith("--")) {
+      throw new CdpError(`${token} requires a value`, { exitCode: 2, phase: "usage" });
+    }
+    options[name] = value;
+    index += 1;
   }
+  return { options, positional };
+}
 
-  const host = process.env.OB_CDP_HOST || DEFAULT_HOST;
-  const port = Number(process.env.OB_CDP_PORT || DEFAULT_PORT);
-
-  const targets = await listTargets({ host, port });
-  if (cmd === "list") {
-    printTargets(targets);
-    return;
+function integerOption(value, fallback, name, { min = 1, max = Number.MAX_SAFE_INTEGER } = {}) {
+  const selected = value === undefined ? fallback : Number(value);
+  if (!Number.isInteger(selected) || selected < min || selected > max) {
+    throw new CdpError(`Invalid --${name}: ${value}`, { exitCode: 2, phase: "usage" });
   }
+  return selected;
+}
 
-  const target = pickTarget(targets, {
-    id: process.env.OB_CDP_TARGET_ID,
-    titleContains: process.env.OB_CDP_TITLE_CONTAINS,
-    urlContains: process.env.OB_CDP_URL_CONTAINS || DEFAULT_URL_CONTAINS,
-  });
-  if (!target?.webSocketDebuggerUrl) {
-    die(`No CDP target found (is Obsidian running with --remote-debugging-port=${port}?)`);
+function configFrom(options) {
+  const portText = options.port ?? process.env.OB_CDP_PORT;
+  if (portText === undefined || portText === "") {
+    throw new CdpError("A CDP port is required: pass --port <port> or set OB_CDP_PORT", {
+      exitCode: 2,
+      phase: "usage",
+    });
   }
+  return {
+    host: options.host ?? process.env.OB_CDP_HOST ?? DEFAULTS.host,
+    port: integerOption(portText, undefined, "port", { max: 65535 }),
+    targetId: options["target-id"] ?? process.env.OB_CDP_TARGET_ID,
+    targetType: options["target-type"] ?? process.env.OB_CDP_TARGET_TYPE ?? DEFAULTS.targetType,
+    titleContains: options["title-contains"] ?? process.env.OB_CDP_TITLE_CONTAINS,
+    urlContains: options["url-contains"] ?? process.env.OB_CDP_URL_CONTAINS ?? DEFAULTS.urlContains,
+    slowMs: integerOption(options["slow-ms"], DEFAULTS.slowMs, "slow-ms"),
+    timeoutMs: integerOption(options["timeout-ms"], DEFAULTS.timeoutMs, "timeout-ms"),
+    connectTimeoutMs: integerOption(
+      options["connect-timeout-ms"], DEFAULTS.connectTimeoutMs, "connect-timeout-ms"
+    ),
+    discoveryTimeoutMs: integerOption(
+      options["discovery-timeout-ms"], DEFAULTS.discoveryTimeoutMs, "discovery-timeout-ms"
+    ),
+  };
+}
 
-  const client = new CdpClient(target.webSocketDebuggerUrl);
-  await client.connect();
-  try {
-    if (cmd === "call") {
-      const method = args[1];
-      if (!method) die("call requires a CDP method name, e.g. Runtime.evaluate");
-      const paramsText = args.slice(2).join(" ").trim();
-      let params = {};
-      if (paramsText) {
+function withTimeout(promise, timeoutMs, errorFactory) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(errorFactory()), timeoutMs);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+function httpJson(url, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const request = http.get(url, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new CdpError(`CDP discovery returned HTTP ${response.statusCode}`, { phase: "discovery" }));
+          return;
+        }
         try {
-          params = JSON.parse(paramsText);
-        } catch (e) {
-          die(`Invalid JSON params: ${e?.message || e}`);
+          resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+        } catch (error) {
+          reject(new CdpError(`Invalid CDP discovery JSON: ${error.message}`, { phase: "discovery" }));
         }
-      }
-      const res = await client.send(method, params);
-      console.log(JSON.stringify(res, null, 2));
-      return;
+      });
+    });
+    request.setTimeout(timeoutMs, () => {
+      request.destroy(new CdpError(`CDP discovery timed out after ${timeoutMs}ms`, { phase: "discovery" }));
+    });
+    request.on("error", reject);
+  });
+}
+
+function targetSummary(target) {
+  return {
+    id: target?.id ?? null,
+    type: target?.type ?? null,
+    title: target?.title ?? "",
+    url: target?.url ?? "",
+  };
+}
+
+function selectUniqueTarget(targets, config) {
+  const candidates = (Array.isArray(targets) ? targets : []).filter((target) => {
+    if (!target || target.type !== config.targetType) return false;
+    if (config.targetId && target.id !== config.targetId) return false;
+    if (config.titleContains && !String(target.title || "").includes(config.titleContains)) return false;
+    if (config.urlContains && !String(target.url || "").includes(config.urlContains)) return false;
+    return true;
+  });
+  if (candidates.length !== 1) {
+    throw new CdpError(
+      `Expected exactly one CDP target, found ${candidates.length}. Candidates: ${JSON.stringify(candidates.map(targetSummary))}`,
+      { phase: "target-selection", details: { candidates: candidates.map(targetSummary) } }
+    );
+  }
+  const target = candidates[0];
+  if (!target.webSocketDebuggerUrl) {
+    throw new CdpError("Selected CDP target has no webSocketDebuggerUrl", { phase: "target-selection" });
+  }
+  return target;
+}
+
+class CdpClient {
+  constructor(url) {
+    this.url = url;
+    this.socket = null;
+    this.nextId = 1;
+    this.pending = new Map();
+  }
+
+  rejectPending(error) {
+    for (const pending of this.pending.values()) pending.reject(error);
+    this.pending.clear();
+  }
+
+  async connect(timeoutMs) {
+    const socket = new WebSocket(this.url);
+    this.socket = socket;
+    socket.on("message", (data) => {
+      let message;
+      try { message = JSON.parse(String(data)); } catch { return; }
+      if (!Number.isInteger(message?.id)) return;
+      const pending = this.pending.get(message.id);
+      if (!pending) return;
+      this.pending.delete(message.id);
+      if (message.error) pending.reject(new CdpError(message.error.message || "CDP error", { phase: "protocol" }));
+      else pending.resolve(message.result);
+    });
+    socket.on("close", () => this.rejectPending(new CdpError("CDP WebSocket closed", { phase: "websocket" })));
+    socket.on("error", (error) => this.rejectPending(new CdpError(error.message, { phase: "websocket" })));
+    await withTimeout(
+      new Promise((resolve, reject) => {
+        socket.once("open", resolve);
+        socket.once("error", reject);
+      }),
+      timeoutMs,
+      () => new CdpError(`CDP WebSocket connect timed out after ${timeoutMs}ms`, { phase: "connect" })
+    );
+  }
+
+  send(method, params = {}) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      throw new CdpError("CDP WebSocket is not connected", { phase: "websocket" });
     }
-
-    if (cmd === "eval") {
-      const expr = args.slice(1).join(" ");
-      if (!expr) die("eval requires a JS expression");
-
-      await tryBringToFront(client);
-      const res = await client.send("Runtime.evaluate", {
-        expression: expr,
-        awaitPromise: true,
-        returnByValue: true,
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.socket.send(JSON.stringify({ id, method, params }), (error) => {
+        if (!error) return;
+        this.pending.delete(id);
+        reject(new CdpError(error.message, { phase: "websocket" }));
       });
-      if (res?.exceptionDetails) {
-        const desc =
-          res.exceptionDetails?.exception?.description ||
-          res.exceptionDetails?.exception?.value ||
-          res.exceptionDetails?.text ||
-          "Runtime.evaluate exception";
-        die(desc);
-      }
-      // When returnByValue is true, primitives/JSON-ish values appear in `value`.
-      if (res?.result && Object.prototype.hasOwnProperty.call(res.result, "value")) {
-        console.log(JSON.stringify(res.result.value, null, 2));
-      } else {
-        console.log(JSON.stringify(res, null, 2));
-      }
-      return;
+    });
+  }
+
+  close(reason = "CDP command ended") {
+    this.rejectPending(new CdpError(reason, { phase: "cleanup" }));
+    if (this.socket) {
+      try { this.socket.terminate(); } catch { /* best effort */ }
     }
-
-    if (cmd === "eval-file") {
-      const localFile = args.slice(1).join(" ").trim();
-      if (!localFile) die("eval-file requires a local file path");
-
-      const code = fs.readFileSync(path.resolve(localFile), "utf8");
-      await tryBringToFront(client);
-      const res = await client.send("Runtime.evaluate", {
-        expression: code,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-      if (res?.exceptionDetails) {
-        const desc =
-          res.exceptionDetails?.exception?.description ||
-          res.exceptionDetails?.exception?.value ||
-          res.exceptionDetails?.text ||
-          "Runtime.evaluate exception";
-        die(desc);
-      }
-      if (res?.result && Object.prototype.hasOwnProperty.call(res.result, "value")) {
-        console.log(JSON.stringify(res.result.value, null, 2));
-      } else {
-        console.log(JSON.stringify(res, null, 2));
-      }
-      return;
-    }
-
-    if (cmd === "mouse-click") {
-      const x = Number(args[1]);
-      const y = Number(args[2]);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        die("mouse-click requires numeric <x> <y>");
-      }
-
-      await tryBringToFront(client);
-      const flags = new Set(args.slice(3));
-      // Chrome DevTools Protocol modifier bitmask:
-      // Alt=1, Ctrl=2, Meta=4, Shift=8
-      let modifiers = 0;
-      if (flags.has("--alt")) modifiers |= 1;
-      if (flags.has("--ctrl")) modifiers |= 2;
-      if (flags.has("--meta")) modifiers |= 4;
-      if (flags.has("--shift")) modifiers |= 8;
-
-      await client.send("Input.dispatchMouseEvent", {
-        type: "mouseMoved",
-        x,
-        y,
-        modifiers,
-      });
-      await client.send("Input.dispatchMouseEvent", {
-        type: "mousePressed",
-        x,
-        y,
-        button: "left",
-        clickCount: 1,
-        modifiers,
-      });
-      await client.send("Input.dispatchMouseEvent", {
-        type: "mouseReleased",
-        x,
-        y,
-        button: "left",
-        clickCount: 1,
-        modifiers,
-      });
-
-      console.log("ok");
-      return;
-    }
-
-    if (cmd === "key") {
-      const combo = args.slice(1).join(" ").trim();
-      if (!combo) die('key requires a combo string, e.g. "ctrl+c"');
-
-      await tryBringToFront(client);
-      const parts = combo
-        .split("+")
-        .map((p) => String(p || "").trim().toLowerCase())
-        .filter(Boolean);
-
-      let modifiers = 0;
-      let keyPart = null;
-
-      for (const p of parts) {
-        if (p === "shift") modifiers |= 8;
-        else if (p === "ctrl" || p === "control") modifiers |= 2;
-        else if (p === "alt" || p === "option") modifiers |= 1;
-        else if (p === "meta" || p === "cmd" || p === "command") modifiers |= 4;
-        else keyPart = p;
-      }
-
-      if (!keyPart) die(`key combo missing a key: ${combo}`);
-
-      let key = keyPart;
-      let code = "";
-      let vk = 0;
-      let commands = undefined;
-
-      if (keyPart === "esc" || keyPart === "escape") {
-        key = "Escape";
-        code = "Escape";
-        vk = 27;
-      } else if (keyPart === "enter" || keyPart === "return") {
-        key = "Enter";
-        code = "Enter";
-        vk = 13;
-      } else if (keyPart.length === 1) {
-        const ch = keyPart;
-        const upper = ch.toUpperCase();
-        key = ch;
-
-        if (upper >= "A" && upper <= "Z") {
-          code = `Key${upper}`;
-          vk = upper.charCodeAt(0);
-          if ((modifiers & 2) === 2) {
-            if (upper === "C") commands = ["copy"];
-            if (upper === "X") commands = ["cut"];
-            if (upper === "V") commands = ["paste"];
-          }
-        } else if (ch >= "0" && ch <= "9") {
-          code = `Digit${ch}`;
-          vk = ch.charCodeAt(0);
-        } else {
-          die(`Unsupported key character: ${keyPart}`);
-        }
-      } else {
-        die(`Unsupported key combo: ${combo}`);
-      }
-
-      await client.send("Input.dispatchKeyEvent", {
-        type: "keyDown",
-        modifiers,
-        windowsVirtualKeyCode: vk,
-        nativeVirtualKeyCode: vk,
-        key,
-        code,
-        commands,
-      });
-      await client.send("Input.dispatchKeyEvent", {
-        type: "keyUp",
-        modifiers,
-        windowsVirtualKeyCode: vk,
-        nativeVirtualKeyCode: vk,
-        key,
-        code,
-      });
-
-      console.log("ok");
-      return;
-    }
-
-    if (cmd === "open-note") {
-      const vaultPath = args.slice(1).join(" ").trim();
-      if (!vaultPath) die("open-note requires a vault path, e.g. Review/foo.md");
-
-      const res = await client.send("Runtime.evaluate", {
-        expression: `(async()=>{
-          const p=${JSON.stringify(vaultPath)};
-          const f=app.vault.getAbstractFileByPath(p);
-          if(!f) throw new Error('File not found: '+p);
-          await app.workspace.getLeaf(false).openFile(f);
-          return app.workspace.getActiveFile()?.path ?? null;
-        })()`,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-
-      console.log(JSON.stringify(res?.result?.value ?? null, null, 2));
-      return;
-    }
-
-    if (cmd === "set-editor") {
-      const localFile = args.slice(1).join(" ").trim();
-      if (!localFile) die("set-editor requires a local file path");
-
-      const text = fs.readFileSync(path.resolve(localFile), "utf8");
-      const res = await client.send("Runtime.evaluate", {
-        expression: `(async()=>{
-          const v=app.workspace.activeLeaf?.view;
-          const ed=v?.editor;
-          if(!ed||typeof ed.setValue!=='function') throw new Error('No active editor');
-          ed.setValue(${JSON.stringify(text)});
-          return {path: app.workspace.getActiveFile?.()?.path ?? null, length: ed.getValue().length};
-        })()`,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-
-      console.log(JSON.stringify(res?.result?.value ?? null, null, 2));
-      return;
-    }
-
-    if (cmd === "write-note") {
-      const vaultPath = args[1];
-      const localFile = args.slice(2).join(" ").trim();
-      if (!vaultPath || !localFile) die("write-note requires: <vaultPath> <localFile>");
-
-      const text = fs.readFileSync(path.resolve(localFile), "utf8");
-      const res = await client.send("Runtime.evaluate", {
-        expression: `(async()=>{
-          const p=${JSON.stringify(vaultPath)};
-          const t=${JSON.stringify(text)};
-          let f=app.vault.getAbstractFileByPath(p);
-          if(!f){
-            f=await app.vault.create(p,t);
-          } else {
-            await app.vault.modify(f,t);
-          }
-          // If the note is already open with unsaved edits, vault.modify() may not
-          // immediately update the editor buffer. After opening, force the active
-          // editor to match the requested content for deterministic debugging.
-          await app.workspace.getLeaf(false).openFile(f);
-          const v=app.workspace.activeLeaf?.view;
-          if(v?.editor?.setValue) v.editor.setValue(t);
-          return {path: app.workspace.getActiveFile()?.path ?? null, length: t.length};
-        })()`,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-
-      console.log(JSON.stringify(res?.result?.value ?? null, null, 2));
-      return;
-    }
-
-    if (cmd === "screenshot") {
-      const outFile = args[1];
-      if (!outFile) die("screenshot requires an output file path, e.g. out.png");
-
-      await client.send("Page.enable");
-      const { data } = await client.send("Page.captureScreenshot", { format: "png" });
-      const abs = path.resolve(outFile);
-      fs.writeFileSync(abs, Buffer.from(data, "base64"));
-      console.log(abs);
-      return;
-    }
-
-    die(`Unknown command: ${cmd}`);
-  } finally {
-    client.close();
+    this.socket = null;
   }
 }
 
-run().catch((e) => die(e?.stack || String(e)));
+async function bringToFront(client) {
+  try { await client.send("Page.bringToFront", {}); } catch { /* optional */ }
+}
+
+function evaluate(client, expression) {
+  return client.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+}
+
+function evaluatedValue(response, raw) {
+  if (response?.exceptionDetails) {
+    const details = response.exceptionDetails;
+    throw new CdpError(
+      details?.exception?.description || details?.exception?.value || details?.text || "Runtime.evaluate exception",
+      { phase: "evaluate" }
+    );
+  }
+  if (raw) return response;
+  if (response?.result && Object.prototype.hasOwnProperty.call(response.result, "value")) {
+    return response.result.value;
+  }
+  return response;
+}
+
+function printJson(value) {
+  console.log(JSON.stringify(value, null, 2));
+}
+
+function loadCatalog() {
+  const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, "utf8"));
+  if (catalog?.schemaVersion !== 1 || !Array.isArray(catalog.entries)) {
+    throw new CdpError("Invalid CDP snippet catalog", { phase: "catalog" });
+  }
+  const ids = new Set();
+  const catalogPaths = new Set();
+  for (const entry of catalog.entries) {
+    if (!entry || typeof entry.id !== "string" || !entry.id || ids.has(entry.id)) {
+      throw new CdpError("CDP catalog entries require unique non-empty ids", { phase: "catalog" });
+    }
+    if (!["regression", "smoke", "probe", "archive"].includes(entry.kind)) {
+      throw new CdpError(`Invalid CDP catalog kind for ${entry.id}`, { phase: "catalog" });
+    }
+    if (typeof entry.area !== "string" || !entry.area || typeof entry.path !== "string" || !entry.path) {
+      throw new CdpError(`Catalog entry ${entry.id} requires area and path`, { phase: "catalog" });
+    }
+    const absolute = path.resolve(__dirname, "..", entry.path || "");
+    if (!fs.existsSync(absolute)) throw new CdpError(`Catalog path does not exist: ${entry.path}`, { phase: "catalog" });
+    if (catalogPaths.has(absolute)) throw new CdpError(`Duplicate CDP catalog path: ${entry.path}`, { phase: "catalog" });
+    ids.add(entry.id);
+    catalogPaths.add(absolute);
+  }
+  const activeRoots = ["regression", "smoke", "probes"];
+  const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((item) => {
+    const child = path.join(directory, item.name);
+    return item.isDirectory() ? walk(child) : item.name.endsWith(".js") ? [path.resolve(child)] : [];
+  });
+  const missing = activeRoots.flatMap((name) => walk(path.join(__dirname, "cdp-snippets", name)))
+    .filter((absolute) => !catalogPaths.has(absolute));
+  if (missing.length) throw new CdpError(`CDP catalog omits active snippets: ${missing.join(", ")}`, { phase: "catalog" });
+  return catalog;
+}
+
+function validateRegressionResult(value, source) {
+  const valid = value && value.kind === "regression" && typeof value.scenario === "string"
+    && ["passed", "failed"].includes(value.status) && value.evidence && typeof value.evidence === "object"
+    && value.cleanup && ["passed", "failed"].includes(value.cleanup.status)
+    && Array.isArray(value.cleanup.warnings);
+  if (!valid) throw new CdpError(`Regression snippet returned an invalid result contract: ${source}`, { phase: "result-contract" });
+  if (value.cleanup.status !== "passed") {
+    throw new CdpError(`Regression cleanup failed; runtime is tainted: ${source}`, {
+      phase: "cleanup",
+      details: { tainted: true, result: value },
+    });
+  }
+  if (value.status !== "passed") throw new CdpError(`Regression failed: ${value.scenario}`, { phase: "regression", details: { result: value } });
+}
+
+async function snapshotRegressionState(client) {
+  const response = await evaluate(client, `(()=>{
+    const plugin=app?.plugins?.plugins?.["block-link-plus"];
+    return {
+      activeFile: app?.workspace?.getActiveFile?.()?.path ?? null,
+      settings: JSON.stringify(plugin?.settings ?? null),
+      files: (app?.vault?.getFiles?.() ?? []).map(f=>f.path).sort()
+    };
+  })()`);
+  return evaluatedValue(response, false);
+}
+
+function regressionEntryForSource(source) {
+  if (!source) return null;
+  const absolute = path.resolve(source);
+  return loadCatalog().entries.find((entry) =>
+    entry.kind === "regression" && path.resolve(__dirname, "..", entry.path) === absolute
+  ) || null;
+}
+
+function normalizeRegressionResult(entry, value, before, after) {
+  const warnings = [];
+  if (before.settings !== after.settings) warnings.push("plugin settings were not restored");
+  if (before.activeFile !== after.activeFile) warnings.push("active file was not restored");
+  const beforeFiles = JSON.stringify(before.files);
+  const afterFiles = JSON.stringify(after.files);
+  if (beforeFiles !== afterFiles) warnings.push("vault file set was not restored");
+  if (value?.kind === "regression") {
+    value.cleanup = { status: warnings.length ? "failed" : value.cleanup?.status || "passed", warnings: [...(value.cleanup?.warnings || []), ...warnings] };
+    return value;
+  }
+  return {
+    kind: "regression",
+    scenario: entry.id,
+    status: value?.ok === true ? "passed" : "failed",
+    evidence: value && typeof value === "object" ? value : { value },
+    cleanup: { status: warnings.length ? "failed" : "passed", warnings },
+  };
+}
+
+async function executeCommand(client, command, args, options) {
+  if (command === "call") {
+    const method = args[0];
+    if (!method) throw new CdpError("call requires a CDP method", { exitCode: 2, phase: "usage" });
+    let params = {};
+    if (options["params-file"]) params = JSON.parse(fs.readFileSync(path.resolve(options["params-file"]), "utf8"));
+    else if (args.slice(1).join(" ").trim()) params = JSON.parse(args.slice(1).join(" "));
+    printJson(await client.send(method, params));
+    return;
+  }
+  if (command === "eval" || command === "eval-file") {
+    const source = command === "eval-file" ? args.join(" ").trim() : null;
+    const expression = source ? fs.readFileSync(path.resolve(source), "utf8") : args.join(" ");
+    if (!expression) throw new CdpError(`${command} requires ${source ? "a file" : "JavaScript"}`, { exitCode: 2, phase: "usage" });
+    await bringToFront(client);
+    const regressionEntry = regressionEntryForSource(source);
+    const before = regressionEntry ? await snapshotRegressionState(client) : null;
+    let value;
+    let evaluationError;
+    try {
+      value = evaluatedValue(await evaluate(client, expression), options.raw);
+    } catch (error) {
+      evaluationError = error;
+    }
+    if (regressionEntry) {
+      const after = await snapshotRegressionState(client);
+      value = normalizeRegressionResult(regressionEntry, value, before, after);
+      validateRegressionResult(value, source);
+    }
+    if (evaluationError) throw evaluationError;
+    printJson(value);
+    return;
+  }
+  if (command === "mouse-click") {
+    const [x, y] = args.slice(0, 2).map(Number);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) throw new CdpError("mouse-click requires numeric x y", { exitCode: 2, phase: "usage" });
+    let modifiers = 0;
+    const flags = new Set(args.slice(2));
+    if (flags.has("--alt")) modifiers |= 1;
+    if (flags.has("--ctrl")) modifiers |= 2;
+    if (flags.has("--meta")) modifiers |= 4;
+    if (flags.has("--shift")) modifiers |= 8;
+    await bringToFront(client);
+    for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) {
+      await client.send("Input.dispatchMouseEvent", { type, x, y, modifiers, ...(type === "mouseMoved" ? {} : { button: "left", clickCount: 1 }) });
+    }
+    console.log("ok");
+    return;
+  }
+  if (command === "key") {
+    const combo = args.join(" ").trim().toLowerCase();
+    if (!combo) throw new CdpError("key requires a combo", { exitCode: 2, phase: "usage" });
+    const parts = combo.split("+");
+    const keyPart = parts.find((part) => !["shift", "ctrl", "control", "alt", "meta", "cmd"].includes(part));
+    if (!keyPart) throw new CdpError("key combo is missing a key", { exitCode: 2, phase: "usage" });
+    let modifiers = 0;
+    if (parts.includes("alt")) modifiers |= 1;
+    if (parts.some((part) => ["ctrl", "control"].includes(part))) modifiers |= 2;
+    if (parts.some((part) => ["meta", "cmd"].includes(part))) modifiers |= 4;
+    if (parts.includes("shift")) modifiers |= 8;
+    const aliases = { esc: ["Escape", "Escape", 27], escape: ["Escape", "Escape", 27], enter: ["Enter", "Enter", 13], return: ["Enter", "Enter", 13] };
+    const mapped = aliases[keyPart] || (keyPart.length === 1 ? [keyPart, /^[a-z]$/i.test(keyPart) ? `Key${keyPart.toUpperCase()}` : `Digit${keyPart}`, keyPart.toUpperCase().charCodeAt(0)] : null);
+    if (!mapped) throw new CdpError(`Unsupported key: ${keyPart}`, { exitCode: 2, phase: "usage" });
+    await bringToFront(client);
+    for (const type of ["keyDown", "keyUp"]) await client.send("Input.dispatchKeyEvent", { type, modifiers, key: mapped[0], code: mapped[1], windowsVirtualKeyCode: mapped[2], nativeVirtualKeyCode: mapped[2] });
+    console.log("ok");
+    return;
+  }
+  if (["open-note", "set-editor", "write-note"].includes(command)) {
+    const vaultPath = args[0];
+    if (!vaultPath) throw new CdpError(`${command} requires a vault path or file`, { exitCode: 2, phase: "usage" });
+    let expression;
+    if (command === "open-note") expression = `(async()=>{const p=${JSON.stringify(vaultPath)};const f=app.vault.getAbstractFileByPath(p);if(!f)throw new Error('File not found: '+p);await app.workspace.getLeaf(false).openFile(f);return app.workspace.getActiveFile()?.path??null})()`;
+    if (command === "set-editor") {
+      const text = fs.readFileSync(path.resolve(args.join(" ")), "utf8");
+      expression = `(()=>{const ed=app.workspace.activeLeaf?.view?.editor;if(!ed?.setValue)throw new Error('No active editor');ed.setValue(${JSON.stringify(text)});return {path:app.workspace.getActiveFile?.()?.path??null,length:ed.getValue().length}})()`;
+    }
+    if (command === "write-note") {
+      const localFile = args.slice(1).join(" ");
+      if (!localFile) throw new CdpError("write-note requires vaultPath localFile", { exitCode: 2, phase: "usage" });
+      const text = fs.readFileSync(path.resolve(localFile), "utf8");
+      expression = `(async()=>{const p=${JSON.stringify(vaultPath)},t=${JSON.stringify(text)};let f=app.vault.getAbstractFileByPath(p);f=f?(await app.vault.modify(f,t),f):await app.vault.create(p,t);await app.workspace.getLeaf(false).openFile(f);const ed=app.workspace.activeLeaf?.view?.editor;if(ed?.setValue)ed.setValue(t);return {path:app.workspace.getActiveFile()?.path??null,length:t.length}})()`;
+    }
+    printJson(evaluatedValue(await evaluate(client, expression), false));
+    return;
+  }
+  if (command === "screenshot") {
+    if (!args[0]) throw new CdpError("screenshot requires an output file", { exitCode: 2, phase: "usage" });
+    await client.send("Page.enable");
+    const result = await client.send("Page.captureScreenshot", { format: "png" });
+    const output = path.resolve(args[0]);
+    fs.writeFileSync(output, Buffer.from(result.data, "base64"));
+    console.log(output);
+    return;
+  }
+  throw new CdpError(`Unknown command: ${command}`, { exitCode: 2, phase: "usage" });
+}
+
+async function main() {
+  const { options, positional } = parseArgs(process.argv.slice(2));
+  const command = positional[0];
+  if (!command || ["help", "-h", "--help"].includes(command)) return usage();
+  if (command === "catalog") {
+    const catalog = loadCatalog();
+    const action = positional[1] || "list";
+    if (action === "list") printJson(catalog.entries);
+    else if (action === "show") {
+      const entry = catalog.entries.find((candidate) => candidate.id === positional[2]);
+      if (!entry) throw new CdpError(`Unknown catalog id: ${positional[2]}`, { exitCode: 2, phase: "catalog" });
+      printJson(entry);
+    } else throw new CdpError(`Unknown catalog action: ${action}`, { exitCode: 2, phase: "catalog" });
+    return;
+  }
+
+  const config = configFrom(options);
+  const started = Date.now();
+  const context = { command, host: config.host, port: config.port };
+  emit("started", context);
+  const slowTimer = setTimeout(() => emit("slow", { ...context, elapsedMs: Date.now() - started }), config.slowMs);
+  let client;
+  try {
+    await withTimeout((async () => {
+      const targets = await httpJson(`http://${config.host}:${config.port}/json/list`, config.discoveryTimeoutMs);
+      if (command === "list") {
+        for (const target of targets) console.log([target.type, target.id, JSON.stringify(target.title || ""), JSON.stringify(target.url || "")].join("\t"));
+        return;
+      }
+      const target = selectUniqueTarget(targets, config);
+      client = new CdpClient(target.webSocketDebuggerUrl);
+      await client.connect(config.connectTimeoutMs);
+      await executeCommand(client, command, positional.slice(1), options);
+    })(), config.timeoutMs, () => new CdpError(`CDP command timed out after ${config.timeoutMs}ms`, {
+      exitCode: 124, phase: "overall", details: { timeoutMs: config.timeoutMs, tainted: true },
+    }));
+  } finally {
+    clearTimeout(slowTimer);
+    client?.close();
+  }
+}
+
+main().catch((error) => {
+  const value = error instanceof CdpError ? error : new CdpError(error?.stack || String(error));
+  if (value.phase === "usage") usage(value.message);
+  else {
+    emit(value.exitCode === 124 ? "timeout" : "error", {
+      phase: value.phase,
+      message: value.message,
+      exitCode: value.exitCode,
+      ...value.details,
+    });
+    console.error(value.message);
+    process.exitCode = value.exitCode;
+  }
+});

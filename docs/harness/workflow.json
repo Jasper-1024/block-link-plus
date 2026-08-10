@@ -25,8 +25,12 @@
     "docs/harness/stages/archive-cleanup.md",
     "docs/harness/stages/index.md",
     "docs/runtime/README.md",
-    "docs/runtime/isolated-obsidian-cdp.md",
-    "docs/runtime/cdp-script-inventory.md",
+    "docs/runtime/obsidian-cdp.md",
+    "scripts/obsidian-cdp.js",
+    "scripts/start-obsidian-debug-env.ps1",
+    "scripts/cdp-snippets/catalog.json",
+    ".agents/skills/blp-obsidian-runtime/SKILL.md",
+    ".agents/skills/blp-enhanced-list-ui-debug/SKILL.md",
     "docs/agents/domain.md",
     "docs/agents/issue-tracker.md",
     "docs/agents/triage-labels.md",
@@ -47,7 +51,8 @@
     "readyToMerge": "Ready to Merge",
     "archiveRequested": "Ready to Archive",
     "done": "Done",
-    "runtimeBlocked": "Runtime Blocked"
+    "runtimeBlocked": "Runtime Blocked",
+    "automationError": "Automation Error"
   },
   "lanes": {
     "bug": {
@@ -529,7 +534,8 @@
       "context": {
         "always": [
           "docs/harness/runs/{key}/context/source-issue.md",
-          "docs/harness/runs/{key}/design-intake.md",
+          "docs/harness/runs/{key}/approved-design.md",
+          "docs/harness/runs/{key}/approved-design.json",
           "docs/harness/guides/tdd.md"
         ],
         "conditional": [

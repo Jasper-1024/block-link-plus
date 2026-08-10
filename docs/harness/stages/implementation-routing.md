@@ -13,10 +13,11 @@ human feedback into a machine-readable implementation route:
 
 ## Stage Context
 
-Use the approved design-intake artifact and its source issue as the accepted
-contract. Read tracker feedback only when it contains the human decision or
-scope changes relevant to this route. Use `docs/harness/guides/tdd.md` to turn
-the accepted behavior into executable vertical slices.
+Use `approved-design.md` plus its `approved-design.json` page/hash binding and
+the source issue as the accepted contract. The original design-intake artifact
+is only a draft. Tracker comments are auxiliary and do not amend the approved
+design. Use `docs/harness/guides/tdd.md` to turn the accepted behavior into
+executable vertical slices.
 
 ## Rules
 
@@ -90,3 +91,6 @@ publication.
 
 Use `human-review-required` when the approved design and human feedback conflict,
 or when the next routing choice requires human judgment.
+The sole accepted design input is `docs/harness/runs/<key>/approved-design.md`,
+bound to the Plane Design Approval Page by `approved-design.json`. Tracker
+comments are auxiliary context and do not amend the approved design.

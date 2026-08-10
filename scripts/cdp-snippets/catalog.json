@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "archive-outliner-editor-investigation",
+      "kind": "archive",
+      "area": "historical",
+      "path": "scripts/cdp-snippets/archive/outliner-editor-investigation"
+    },
+    {
+      "id": "archive-tmp-imported",
+      "kind": "archive",
+      "area": "historical",
+      "path": "scripts/cdp-snippets/archive/tmp-imported"
+    },
+    {
+      "id": "debug-outliner-embed-dom",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/debug-outliner-embed-dom.js"
+    },
+    {
+      "id": "debug-outliner-newline-render",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/debug-outliner-newline-render.js"
+    },
+    {
+      "id": "file-outliner-drag-drop",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-drag-drop.js"
+    },
+    {
+      "id": "file-outliner-editor-command-bridge",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-editor-command-bridge.js"
+    },
+    {
+      "id": "file-outliner-editor-context-menu-bridge",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-editor-context-menu-bridge.js"
+    },
+    {
+      "id": "file-outliner-editor-suggest",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-editor-suggest.js"
+    },
+    {
+      "id": "file-outliner-feature-toggles",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-feature-toggles.js"
+    },
+    {
+      "id": "file-outliner-fence-systemline-repro",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-fence-systemline-repro.js"
+    },
+    {
+      "id": "file-outliner-lazy-display-render",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-lazy-display-render.js"
+    },
+    {
+      "id": "file-outliner-open-as-toggle",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-open-as-toggle.js"
+    },
+    {
+      "id": "file-outliner-open-source-view",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-open-source-view.js"
+    },
+    {
+      "id": "file-outliner-paste-and-task-shortcuts",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-paste-and-task-shortcuts.js"
+    },
+    {
+      "id": "file-outliner-reading-range-embed",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-reading-range-embed.js"
+    },
+    {
+      "id": "file-outliner-tasks-and-validation",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-tasks-and-validation.js"
+    },
+    {
+      "id": "file-outliner-ux-1234",
+      "kind": "probe",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/probes/file-outliner-ux-1234.js"
+    },
+    {
+      "id": "debug-inline-edit-system-line",
+      "kind": "probe",
+      "area": "inline-edit",
+      "path": "scripts/cdp-snippets/probes/debug-inline-edit-system-line.js"
+    },
+    {
+      "id": "inline-edit-embed-leaf-switch-remount",
+      "kind": "probe",
+      "area": "inline-edit",
+      "path": "scripts/cdp-snippets/probes/inline-edit-embed-leaf-switch-remount.js"
+    },
+    {
+      "id": "file-outliner-arrow-nav-e2e",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/arrow-nav-e2e.js"
+    },
+    {
+      "id": "file-outliner-arrow-nav-scope",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/arrow-nav-scope.js"
+    },
+    {
+      "id": "file-outliner-block-range-selection",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/block-range-selection.js"
+    },
+    {
+      "id": "file-outliner-block-range-selection-context-menu",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/block-range-selection-context-menu.js"
+    },
+    {
+      "id": "file-outliner-focus-and-scroll-regression",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/focus-and-scroll-regression.js"
+    },
+    {
+      "id": "file-outliner-inline-embed-hide-system-lines",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/inline-embed-hide-system-lines.js"
+    },
+    {
+      "id": "file-outliner-inline-embed-routing",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/inline-embed-routing.js"
+    },
+    {
+      "id": "file-outliner-search-line-jump",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/search-line-jump.js"
+    },
+    {
+      "id": "file-outliner-tab-shift-tab-order-regression",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/tab-shift-tab-order-regression.js"
+    },
+    {
+      "id": "file-outliner-task-commands-and-menu",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/task-commands-and-menu.js"
+    },
+    {
+      "id": "file-outliner-task-single-line",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/task-single-line.js"
+    },
+    {
+      "id": "file-outliner-view-embed-inline-edit",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/view-embed-inline-edit.js"
+    },
+    {
+      "id": "file-outliner-view-internal-link-navigation",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/view-internal-link-navigation.js"
+    },
+    {
+      "id": "inline-edit-embed-bottom-padding",
+      "kind": "regression",
+      "area": "inline-edit",
+      "path": "scripts/cdp-snippets/regression/inline-edit/embed-bottom-padding.js"
+    },
+    {
+      "id": "inline-edit-embed-jump-affordance",
+      "kind": "regression",
+      "area": "inline-edit",
+      "path": "scripts/cdp-snippets/regression/inline-edit/embed-jump-affordance.js"
+    },
+    {
+      "id": "journal-feed-mobile-embedded-layout",
+      "kind": "regression",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/regression/journal-feed/mobile-embedded-layout.js"
+    },
+    {
+      "id": "journal-feed-subfolder-smoke",
+      "kind": "regression",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/regression/journal-feed/subfolder-smoke.js"
+    },
+    {
+      "id": "journal-feed-systemline-hide-smoke",
+      "kind": "regression",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/regression/journal-feed/systemline-hide-smoke.js"
+    },
+    {
+      "id": "file-outliner-smoke",
+      "kind": "smoke",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/smoke/file-outliner-smoke.js"
+    },
+    {
+      "id": "journal-feed-view-proto-check",
+      "kind": "smoke",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/smoke/journal-feed-view-proto-check.js"
+    },
+    {
+      "id": "journal-feed-view-smoke",
+      "kind": "smoke",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/smoke/journal-feed-view-smoke.js"
+    }
+  ]
+}
