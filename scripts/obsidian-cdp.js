@@ -234,7 +234,7 @@ class CdpClient {
       if (!pending) return;
       this.pending.delete(message.id);
       if (message.error) pending.reject(new CdpError(message.error.message || "CDP error", { phase: "protocol" }));
-      else pending.resolve(message.result);
+      else pending.resolve(pending.raw ? message : message.result);
     });
     socket.on("close", () => this.rejectPending(new CdpError("CDP WebSocket closed", { phase: "websocket" })));
     socket.on("error", (error) => this.rejectPending(new CdpError(error.message, { phase: "websocket" })));
@@ -248,13 +248,13 @@ class CdpClient {
     );
   }
 
-  send(method, params = {}) {
+  send(method, params = {}, raw = false) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new CdpError("CDP WebSocket is not connected", { phase: "websocket" });
     }
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, { resolve, reject, raw });
       this.socket.send(JSON.stringify({ id, method, params }), (error) => {
         if (!error) return;
         this.pending.delete(id);
@@ -276,13 +276,14 @@ async function bringToFront(client) {
   try { await client.send("Page.bringToFront", {}); } catch { /* optional */ }
 }
 
-function evaluate(client, expression) {
-  return client.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+function evaluate(client, expression, raw = false) {
+  return client.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true }, raw);
 }
 
 function evaluatedValue(response, raw) {
-  if (response?.exceptionDetails) {
-    const details = response.exceptionDetails;
+  const evaluation = raw ? response?.result : response;
+  if (evaluation?.exceptionDetails) {
+    const details = evaluation.exceptionDetails;
     throw new CdpError(
       details?.exception?.description || details?.exception?.value || details?.text || "Runtime.evaluate exception",
       { phase: "evaluate" }
@@ -395,7 +396,7 @@ async function executeCommand(client, command, args, options) {
     let params = {};
     if (options["params-file"]) params = JSON.parse(fs.readFileSync(path.resolve(options["params-file"]), "utf8"));
     else if (args.slice(1).join(" ").trim()) params = JSON.parse(args.slice(1).join(" "));
-    printJson(await client.send(method, params));
+    printJson(await client.send(method, params, options.raw));
     return;
   }
   if (command === "eval" || command === "eval-file") {
@@ -408,7 +409,7 @@ async function executeCommand(client, command, args, options) {
     let value;
     let evaluationError;
     try {
-      value = evaluatedValue(await evaluate(client, expression), options.raw);
+      value = evaluatedValue(await evaluate(client, expression, options.raw), options.raw);
     } catch (error) {
       evaluationError = error;
     }

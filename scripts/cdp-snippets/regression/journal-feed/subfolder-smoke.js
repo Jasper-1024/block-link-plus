@@ -5,8 +5,8 @@
 // Run through `obsidian-cdp.js catalog`; use the inherited task port.
 //
 // Notes:
-// - This script creates temporary daily notes and an anchor note, then attempts
-//   best-effort cleanup at the end.
+// - This script creates temporary daily notes and an anchor note. Any cleanup
+//   failure is fatal because the shared task runtime is then tainted.
 
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -149,14 +149,14 @@
 
     return { ok: true, format, baseFolder, expected, got: paths };
   } finally {
+    const cleanupErrors = [];
     try {
       if (origGetFolder) inst.getFolder = origGetFolder;
       if (origGetFormat) inst.getFormat = origGetFormat;
-    } catch {
-      // ignore
+    } catch (error) {
+      cleanupErrors.push(`daily-note method restore failed: ${error?.message || error}`);
     }
 
-    // Best-effort cleanup (keep failures non-fatal).
     try {
       const del = async (p) => {
         const f = app.vault.getAbstractFileByPath(p);
@@ -166,9 +166,10 @@
       await del(day1Path);
       await del(day2Path);
       if (anchorFile) await del(anchorPath);
-    } catch {
-      // ignore
+    } catch (error) {
+      cleanupErrors.push(`temporary vault cleanup failed: ${error?.message || error}`);
     }
+    if (cleanupErrors.length) throw new Error(cleanupErrors.join("; "));
   }
 })();
 // Catalog class: stable regression (journal-feed).

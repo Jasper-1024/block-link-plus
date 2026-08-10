@@ -150,3 +150,32 @@ test("normalizes catalogued regressions and verifies cleanup state", async () =>
     await close(server);
   }
 });
+
+test("--raw preserves the complete CDP protocol envelope", async () => {
+  let port;
+  const server = http.createServer((_request, response) => {
+    response.setHeader("content-type", "application/json");
+    response.end(JSON.stringify([{
+      id: "only", type: "page", title: "blp-raw",
+      url: "app://obsidian.md/index.html",
+      webSocketDebuggerUrl: `ws://127.0.0.1:${port}`,
+    }]));
+  });
+  const sockets = new WebSocketServer({ server });
+  sockets.on("connection", (socket) => socket.on("message", (raw) => {
+    const message = JSON.parse(String(raw));
+    socket.send(JSON.stringify({ id: message.id, result: { answer: 42 } }));
+  }));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  port = server.address().port;
+  try {
+    const result = await runCliAsync([
+      "--port", String(port), "--title-contains", "blp-raw", "--raw", "call", "Test.method",
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), { id: 1, result: { answer: 42 } });
+  } finally {
+    sockets.close();
+    await close(server);
+  }
+});

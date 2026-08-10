@@ -113,8 +113,11 @@ runtime evidence is mandatory before RCA or fix-plan claims.
 
 Use [docs/harness/guides/cdp-runtime.md](docs/harness/guides/cdp-runtime.md)
 and [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md).
-If the runtime cannot be started or reused, stop with Runtime Blocked and record
-the exact failed command.
+If product/runtime evidence cannot be collected from an otherwise healthy
+task-owned instance, stop with Runtime Blocked and record the exact failed
+command. Runner protocol failures, task-identity violations, and a CDP timeout
+that taints the instance are retried once with a rebuilt runtime, then routed to
+Automation Error.
 
 ## Human Gates
 
@@ -149,8 +152,8 @@ Use the smallest validation that proves the claim, then broaden as risk grows:
 corepack pnpm install --frozen-lockfile
 corepack pnpm test
 corepack pnpm run build-with-types
-corepack pnpm run obsidian:debug-env
-node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <task-port>
+node scripts/obsidian-cdp.js --port <task-port> eval-file "scripts/cdp-snippets/<snippet>.js"
 corepack pnpm run agent:workflow-check
 ```
 

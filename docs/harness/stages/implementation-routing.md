@@ -24,7 +24,7 @@ executable vertical slices.
 - Do not edit product code, tests, package metadata, or generated files.
 - Do not reopen product scope unless human feedback explicitly rejects or
   changes the design. If that happens, route back to `human-review-required`.
-- Use the approved design-intake artifact as the source of truth.
+- Use `approved-design.md` and its JSON page/hash binding as the source of truth.
 - Treat `tracker-feedback.md` as human feedback, not as a stage artifact.
 - Create child tasks only when the accepted design is too large or naturally
   split into independently verifiable vertical slices.

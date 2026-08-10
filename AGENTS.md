@@ -61,8 +61,8 @@ Primary validation surfaces:
 - `corepack pnpm install --frozen-lockfile`
 - `corepack pnpm test`
 - `corepack pnpm run build-with-types`
-- `corepack pnpm run obsidian:debug-env`
-- `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"`
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <task-port>`
+- `node scripts/obsidian-cdp.js --port <task-port> eval-file "scripts/cdp-snippets/<snippet>.js"`
 - `corepack pnpm run agent:workflow-check`
 
 Quality and review rules:
@@ -79,13 +79,14 @@ Runtime-first rule:
   state, plugin lifecycle, focus, scroll, settings, or real editor behavior, run
   the isolated Obsidian/CDP runtime check before making a root-cause or fix-plan
   claim.
-- If the CDP runtime check fails, stop at a Runtime Blocked handoff. Do not promote
-  static owner mapping into root cause.
+- If product/runtime evidence cannot be collected from an otherwise healthy
+  task-owned instance, stop at a Runtime Blocked handoff. Runner protocol,
+  identity, or tainted-instance failures are retried once and then routed to
+  Automation Error. Do not promote static owner mapping into root cause.
 
 CDP references:
 
-- [docs/runtime/README.md](docs/runtime/README.md)
-- [docs/runtime/isolated-obsidian-cdp.md](docs/runtime/isolated-obsidian-cdp.md)
-- [docs/runtime/cdp-script-inventory.md](docs/runtime/cdp-script-inventory.md)
+- [docs/runtime/obsidian-cdp.md](docs/runtime/obsidian-cdp.md)
+- `scripts/cdp-snippets/catalog.json`
 - `scripts/start-obsidian-debug-env.ps1`
 - `scripts/obsidian-cdp.js`
