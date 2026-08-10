@@ -487,7 +487,9 @@ async function executeCommand(client, command, args, options) {
 }
 
 async function main() {
-  const { options, positional } = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (argv.includes("--help") || argv.includes("-h")) return usage();
+  const { options, positional } = parseArgs(argv);
   const command = positional[0];
   if (!command || ["help", "-h", "--help"].includes(command)) return usage();
   if (command === "catalog") {
