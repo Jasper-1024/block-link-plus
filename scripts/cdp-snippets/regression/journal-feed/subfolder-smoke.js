@@ -169,7 +169,7 @@
     } catch (error) {
       cleanupErrors.push(`temporary vault cleanup failed: ${error?.message || error}`);
     }
-    if (cleanupErrors.length) throw new Error(cleanupErrors.join("; "));
+    if (cleanupErrors.length) throw new Error(`BLP_CLEANUP_FAILED: ${cleanupErrors.join("; ")}`);
   }
 })();
 // Catalog class: stable regression (journal-feed).

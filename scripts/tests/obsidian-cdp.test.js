@@ -221,3 +221,46 @@ test("taints a regression when persisted settings or plugin state are not restor
     await close(server);
   }
 });
+
+test("taints an explicit cleanup exception even when snapshots match", async () => {
+  let port;
+  const server = http.createServer((_request, response) => {
+    response.setHeader("content-type", "application/json");
+    response.end(JSON.stringify([{
+      id: "only", type: "page", title: "blp-explicit-cleanup",
+      url: "app://obsidian.md/index.html",
+      webSocketDebuggerUrl: `ws://127.0.0.1:${port}`,
+    }]));
+  });
+  const sockets = new WebSocketServer({ server });
+  let evaluation = 0;
+  const snapshot = {
+    activeFile: "start.md", settings: "{}", persistedSettings: "{}",
+    pluginEnabled: true, pluginLoaded: true, workspaceLayout: "{}", files: ["start.md"],
+  };
+  sockets.on("connection", (socket) => socket.on("message", (raw) => {
+    const message = JSON.parse(String(raw));
+    let result = {};
+    if (message.method === "Runtime.evaluate") {
+      evaluation += 1;
+      result = evaluation === 2
+        ? { exceptionDetails: { text: "BLP_CLEANUP_FAILED: monkeypatch restore failed" } }
+        : { result: { value: snapshot } };
+    }
+    socket.send(JSON.stringify({ id: message.id, result }));
+  }));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  port = server.address().port;
+  try {
+    const result = await runCliAsync([
+      "--port", String(port), "--title-contains", "blp-explicit-cleanup",
+      "eval-file", "scripts/cdp-snippets/regression/journal-feed/subfolder-smoke.js",
+    ]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /runtime is tainted/);
+    assert.match(result.stderr, /"tainted":true/);
+  } finally {
+    sockets.close();
+    await close(server);
+  }
+});

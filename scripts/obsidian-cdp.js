@@ -431,6 +431,13 @@ async function executeCommand(client, command, args, options) {
     if (regressionEntry) {
       const after = await snapshotRegressionState(client);
       value = normalizeRegressionResult(regressionEntry, value, before, after);
+      if (evaluationError?.message?.includes("BLP_CLEANUP_FAILED:")) {
+        value.status = "failed";
+        value.cleanup = {
+          status: "failed",
+          warnings: [...(value.cleanup?.warnings || []), evaluationError.message],
+        };
+      }
       validateRegressionResult(value, source);
     }
     if (evaluationError) throw evaluationError;
