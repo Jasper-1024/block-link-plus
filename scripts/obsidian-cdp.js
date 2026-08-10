@@ -350,11 +350,22 @@ function validateRegressionResult(value, source) {
 }
 
 async function snapshotRegressionState(client) {
-  const response = await evaluate(client, `(()=>{
+  const response = await evaluate(client, `(async()=>{
     const plugin=app?.plugins?.plugins?.["block-link-plus"];
+    let persistedSettings=null;
+    try {
+      const configDir=app?.vault?.configDir??".obsidian";
+      persistedSettings=await app?.vault?.adapter?.read?.(
+        configDir+"/plugins/block-link-plus/data.json"
+      );
+    } catch { persistedSettings=null; }
     return {
       activeFile: app?.workspace?.getActiveFile?.()?.path ?? null,
       settings: JSON.stringify(plugin?.settings ?? null),
+      persistedSettings,
+      pluginEnabled: app?.plugins?.enabledPlugins?.has?.("block-link-plus") ?? false,
+      pluginLoaded: !!plugin,
+      workspaceLayout: JSON.stringify(app?.workspace?.getLayout?.() ?? null),
       files: (app?.vault?.getFiles?.() ?? []).map(f=>f.path).sort()
     };
   })()`);
@@ -372,6 +383,10 @@ function regressionEntryForSource(source) {
 function normalizeRegressionResult(entry, value, before, after) {
   const warnings = [];
   if (before.settings !== after.settings) warnings.push("plugin settings were not restored");
+  if (before.persistedSettings !== after.persistedSettings) warnings.push("persisted plugin settings were not restored");
+  if (before.pluginEnabled !== after.pluginEnabled) warnings.push("plugin enabled state was not restored");
+  if (before.pluginLoaded !== after.pluginLoaded) warnings.push("plugin loaded state was not restored");
+  if (before.workspaceLayout !== after.workspaceLayout) warnings.push("workspace layout was not restored");
   if (before.activeFile !== after.activeFile) warnings.push("active file was not restored");
   const beforeFiles = JSON.stringify(before.files);
   const afterFiles = JSON.stringify(after.files);
