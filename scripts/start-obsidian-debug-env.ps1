@@ -132,11 +132,21 @@ function Invoke-ObsidianCdp {
 	try {
 		$env:OB_CDP_URL_CONTAINS = "app://obsidian.md/index.html"
 		$env:OB_CDP_TITLE_CONTAINS = ""
-		$Output = & node $script:CdpScript --port $script:Port @Arguments 2>&1
-		if ($LASTEXITCODE -ne 0) {
+		$PreviousErrorActionPreference = $ErrorActionPreference
+		try {
+			# Windows PowerShell 5 promotes any native stderr line to an ErrorRecord
+			# when the script-wide preference is Stop. CDP lifecycle events are
+			# intentionally written to stderr, so capture them without aborting.
+			$ErrorActionPreference = "Continue"
+			$Output = & node $script:CdpScript --port $script:Port @Arguments 2>&1
+			$ExitCode = $LASTEXITCODE
+		} finally {
+			$ErrorActionPreference = $PreviousErrorActionPreference
+		}
+		if ($ExitCode -ne 0) {
 			throw "obsidian-cdp.js $($Arguments -join ' ') failed: $($Output -join "`n")"
 		}
-		$Payload = @($Output | ForEach-Object { [string]$_ } | Where-Object { -not $_.StartsWith("BLP_CDP_EVENT ") })
+		$Payload = @($Output | ForEach-Object { [string]$_ } | Where-Object { -not $_.Contains("BLP_CDP_EVENT ") })
 		return ($Payload -join "`n")
 	} finally {
 		$env:OB_CDP_PORT = $OldPort
