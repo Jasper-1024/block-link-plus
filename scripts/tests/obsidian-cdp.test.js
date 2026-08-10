@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawn, spawnSync } = require("node:child_process");
+const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
 const test = require("node:test");
@@ -7,6 +8,20 @@ const { WebSocketServer } = require("ws");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 const cli = path.join(repoRoot, "scripts", "obsidian-cdp.js");
+
+test("embed jump regression restores every CDP lifecycle boundary", () => {
+  const source = fs.readFileSync(path.join(
+    repoRoot,
+    "scripts/cdp-snippets/regression/inline-edit/embed-jump-affordance.js",
+  ), "utf8");
+
+  assert.match(source, /originalLayout/);
+  assert.match(source, /originalActivePath/);
+  assert.match(source, /originalSettings/);
+  assert.match(source, /app\.workspace\.changeLayout\(originalLayout\)/);
+  assert.match(source, /restoreFile\(sourcePath/);
+  assert.match(source, /restoreFile\(hostPath/);
+});
 
 function runCli(args, env = {}) {
   const childEnv = { ...process.env, ...env };

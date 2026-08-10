@@ -43,12 +43,37 @@
 		"",
 	].join("\n");
 	const hostContent = [`![[${sourcePath}#^i35target]]`, ""].join("\n");
+	const clone = (value) => JSON.parse(JSON.stringify(value));
+	const originalLayout = clone(app.workspace.getLayout());
+	const originalActivePath = app.workspace.getActiveFile?.()?.path ?? null;
+	const wasPluginEnabled = app.plugins.enabledPlugins?.has?.(pluginId) ?? Boolean(app.plugins.plugins[pluginId]);
+	const originalSettings = app.plugins.plugins[pluginId]
+		? clone(app.plugins.plugins[pluginId].settings ?? {})
+		: null;
+	const tmpFolderExisted = Boolean(app.vault.getAbstractFileByPath(tmpFolder));
+	const snapshotFile = async (filePath) => {
+		const file = app.vault.getAbstractFileByPath(filePath);
+		return file
+			? { existed: true, content: await withTimeout(app.vault.cachedRead(file), `read ${filePath}`) }
+			: { existed: false, content: null };
+	};
+	const originalSource = await snapshotFile(sourcePath);
+	const originalHost = await snapshotFile(hostPath);
 
 	const upsert = async (path, content) => {
 		let file = app.vault.getAbstractFileByPath(path);
 		if (!file) file = await withTimeout(app.vault.create(path, content), `create ${path}`);
 		else await withTimeout(app.vault.modify(file, content), `modify ${path}`);
 		return file;
+	};
+	const restoreFile = async (filePath, original) => {
+		const current = app.vault.getAbstractFileByPath(filePath);
+		if (original.existed) {
+			if (current) await withTimeout(app.vault.modify(current, original.content), `restore ${filePath}`);
+			else await withTimeout(app.vault.create(filePath, original.content), `recreate ${filePath}`);
+		} else if (current) {
+			await withTimeout(app.vault.delete(current, true), `delete ${filePath}`);
+		}
 	};
 
 	const openHost = async () => {
@@ -166,11 +191,53 @@
 			remount,
 		};
 	} finally {
+		const cleanupErrors = [];
 		try {
-			const plugin = app.plugins.plugins[pluginId];
-			if (!plugin) await withTimeout(app.plugins.enablePlugin(pluginId), "finally enable plugin");
-		} catch {
-			// ignore
+			let plugin = app.plugins.plugins[pluginId];
+			if (wasPluginEnabled && !plugin) {
+				await withTimeout(app.plugins.enablePlugin(pluginId), "restore enabled plugin");
+				await wait(300);
+				plugin = app.plugins.plugins[pluginId];
+			}
+			if (plugin && originalSettings) {
+				plugin.settings = clone(originalSettings);
+				await plugin.saveSettings?.();
+			}
+			if (!wasPluginEnabled && app.plugins.plugins[pluginId]) {
+				await withTimeout(app.plugins.disablePlugin(pluginId), "restore disabled plugin");
+			}
+		} catch (error) {
+			cleanupErrors.push(`plugin/settings: ${error?.message ?? error}`);
+		}
+
+		try {
+			await restoreFile(sourcePath, originalSource);
+			await restoreFile(hostPath, originalHost);
+			if (!tmpFolderExisted) {
+				const folder = app.vault.getAbstractFileByPath(tmpFolder);
+				if (folder?.children?.length === 0) {
+					await withTimeout(app.vault.delete(folder, true), `delete ${tmpFolder}`);
+				}
+			}
+		} catch (error) {
+			cleanupErrors.push(`vault files: ${error?.message ?? error}`);
+		}
+
+		try {
+			await withTimeout(app.workspace.changeLayout(originalLayout), "restore workspace layout");
+			await wait(300);
+			if (originalActivePath && app.workspace.getActiveFile?.()?.path !== originalActivePath) {
+				const originalFile = app.vault.getAbstractFileByPath(originalActivePath);
+				if (originalFile) {
+					await withTimeout(app.workspace.getLeaf(false).openFile(originalFile), "restore active file");
+				}
+			}
+		} catch (error) {
+			cleanupErrors.push(`workspace: ${error?.message ?? error}`);
+		}
+
+		if (cleanupErrors.length) {
+			throw new Error(`BLP_CLEANUP_FAILED: ${cleanupErrors.join("; ")}`);
 		}
 	}
 })();
