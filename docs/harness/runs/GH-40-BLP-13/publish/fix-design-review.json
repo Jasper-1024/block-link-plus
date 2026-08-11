@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "fix-design-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/fix-design-review.md",
+    "sha256": "4a04cb5e432e317e7ddc6d441f487ed2b854cc0da6c17e791510464ee8286843"
+  },
+  "comment": "Fix design accepted; artifact written to docs/harness/runs/GH-40-BLP-13/fix-design-review.md.",
+  "links": [
+    {
+      "title": "fix-design-review artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/fix-design-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Single-selector CSS fix is bounded, RCA-aligned, and ready for implementation. Tests, build, workflow check, and runtime probes passed."
+  },
+  "outOfScope": [
+    "Android-specific confirmation",
+    "Reporter’s exact fixture",
+    "Whole-file Preview behavior",
+    "Implementation and post-fix resolution proof"
+  ]
+}

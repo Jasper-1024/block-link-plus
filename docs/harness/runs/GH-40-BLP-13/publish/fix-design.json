@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "fix-design",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/fix-design.md",
+    "sha256": "e396179fdb85195e78504a04f7ab394472850c19e54b76956b4188c5d6293c0a"
+  },
+  "comment": "Fix design is complete; no product files changed. Baseline targeted tests and workflow check passed. Runtime evidence confirms the bounded CSS cause and candidate selector behavior; post-fix validation remains for implementation.",
+  "links": [
+    {
+      "title": "fix-design artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/fix-design.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Created docs/harness/runs/GH-40-BLP-13/fix-design.md recommending a direct-child CSS selector fix with TDD and repeatable CDP proof slices."
+  },
+  "outOfScope": [
+    "Android/device validation",
+    "Reporter’s exact Markdown fixture",
+    "Whole-file or Preview-only embed paths",
+    "Nested mount, parsing, reparenting, or editor-lifecycle changes"
+  ]
+}

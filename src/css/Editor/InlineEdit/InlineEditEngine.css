@@ -1,4 +1,4 @@
-.internal-embed.markdown-embed.blp-inline-edit-active .markdown-embed-content > :not(.blp-inline-edit-host) {
+.internal-embed.markdown-embed.blp-inline-edit-active > .markdown-embed-content > :not(.blp-inline-edit-host) {
 	display: none !important;
 }
 

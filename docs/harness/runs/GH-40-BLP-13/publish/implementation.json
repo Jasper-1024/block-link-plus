@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "implementation",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/implementation.md",
+    "sha256": "32804cd403a1a2b781a284b7320c5c21cc6cea5ee7701d34f549a0b300a11059"
+  },
+  "comment": "Implemented the scoped CSS selector fix and regression test. Targeted/full tests, build, runtime proof, maintained regression, cleanup, and workflow checks passed.",
+  "links": [
+    {
+      "title": "implementation artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/implementation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Artifact: docs/harness/runs/GH-40-BLP-13/implementation.md. Runtime evidence and screenshots are under trace/implementation/."
+  },
+  "outOfScope": [
+    "Android/device-specific validation",
+    "Reporter’s exact fixture",
+    "Whole-file Preview behavior",
+    "Mobile and broader embed-variant coverage"
+  ]
+}

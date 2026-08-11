@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "investigation",
+  "verdict": "handoff",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/investigation.md",
+    "sha256": "c4b81ed3ab97d565aada0d64f20d2f7d8de6af3ce9e1a7e3eaa588730937bf18"
+  },
+  "comment": "Confirmed BLP-only nested block-embed body collapse. Root cause is the broad CSS selector at InlineEditEngine.css:1-3. Artifact and runtime proof are written.",
+  "links": [
+    {
+      "title": "investigation artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/investigation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Ready for RCA review; runtime and targeted tests passed."
+  },
+  "outOfScope": [
+    "Android-specific validation",
+    "Implementation and exact reporter fixture"
+  ]
+}

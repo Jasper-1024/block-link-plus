@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "rca-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/rca-review.md",
+    "sha256": "38be14b5a8f7d64c6b9929a75e278e49cd90cdbefdc9a234053588c3b98b02d3"
+  },
+  "comment": "RCA accepted for the bounded block-embed/Live Preview path; artifact written and workflow check passed.",
+  "links": [
+    {
+      "title": "rca-review artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/rca-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "CDP reproduced the failure and isolated it to the outer active-embed CSS selector hiding nested preview content. No child item created."
+  },
+  "outOfScope": [
+    "Android/mobile validation",
+    "Reporter’s exact fixture and mode",
+    "Whole-file nested embeds in Preview",
+    "Implementation and post-change validation"
+  ]
+}

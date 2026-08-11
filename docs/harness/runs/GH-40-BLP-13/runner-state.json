@@ -1,0 +1,74 @@
+{
+  "key": "GH-40-BLP-13",
+  "loops": {
+    "rca": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "fix-design": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    },
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "controlPlane": {
+    "dossierPageId": "9f1249bc-abc4-4eef-8203-308f0abe729e"
+  },
+  "updated_at": "2026-08-11T00:16:27Z",
+  "last_stage": "code-review",
+  "last_verdict": "accepted",
+  "last_target_state": "Human Review",
+  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "artifacts": {
+    "investigation": {
+      "path": "docs/harness/runs/GH-40-BLP-13/investigation.md",
+      "sha256": "c4b81ed3ab97d565aada0d64f20d2f7d8de6af3ce9e1a7e3eaa588730937bf18"
+    },
+    "rca-review": {
+      "path": "docs/harness/runs/GH-40-BLP-13/rca-review.md",
+      "sha256": "38be14b5a8f7d64c6b9929a75e278e49cd90cdbefdc9a234053588c3b98b02d3"
+    },
+    "fix-design": {
+      "path": "docs/harness/runs/GH-40-BLP-13/fix-design.md",
+      "sha256": "e396179fdb85195e78504a04f7ab394472850c19e54b76956b4188c5d6293c0a"
+    },
+    "fix-design-review": {
+      "path": "docs/harness/runs/GH-40-BLP-13/fix-design-review.md",
+      "sha256": "4a04cb5e432e317e7ddc6d441f487ed2b854cc0da6c17e791510464ee8286843"
+    },
+    "implementation": {
+      "path": "docs/harness/runs/GH-40-BLP-13/implementation.md",
+      "sha256": "32804cd403a1a2b781a284b7320c5c21cc6cea5ee7701d34f549a0b300a11059"
+    },
+    "code-review": {
+      "path": "docs/harness/runs/GH-40-BLP-13/code-review.md",
+      "sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b"
+    }
+  },
+  "reviews": {
+    "rca-review": {
+      "source_stage": "investigation",
+      "source_sha256": "c4b81ed3ab97d565aada0d64f20d2f7d8de6af3ce9e1a7e3eaa588730937bf18",
+      "review_sha256": "38be14b5a8f7d64c6b9929a75e278e49cd90cdbefdc9a234053588c3b98b02d3"
+    },
+    "fix-design-review": {
+      "source_stage": "fix-design",
+      "source_sha256": "907dc54d3da5dcb2e978f27c28eba1df8c669d03623e740e529ed199e0ed6262",
+      "review_sha256": "4a04cb5e432e317e7ddc6d441f487ed2b854cc0da6c17e791510464ee8286843"
+    },
+    "code-review": {
+      "source_stage": "implementation",
+      "source_sha256": "32804cd403a1a2b781a284b7320c5c21cc6cea5ee7701d34f549a0b300a11059",
+      "review_sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b"
+    }
+  }
+}

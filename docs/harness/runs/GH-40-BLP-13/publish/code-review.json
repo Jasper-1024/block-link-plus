@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "code-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/code-review.md",
+    "sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b"
+  },
+  "comment": "Both review axes pass; no blocking findings remain.",
+  "links": [
+    {
+      "title": "code-review artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/code-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Canonical review written to docs/harness/runs/GH-40-BLP-13/code-review.md. Tests, build evidence, snapshot freshness, and live runtime proof passed."
+  },
+  "outOfScope": [
+    "Android/device-specific rendering",
+    "Reporter’s exact Markdown fixture and view mode",
+    "Whole-file Preview embeds",
+    "Broader mobile and variant coverage"
+  ]
+}
