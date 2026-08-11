@@ -4,10 +4,10 @@
 
 ## Plane Reply
 
-The accepted BLP-13 patch is finalization-ready. The issue branch will be
-committed and fast-forward merged into the maintained `master` target after
-the final artifact and workflow checks; no product scope or implementation
-changes were made during finalization.
+The accepted BLP-13 patch was committed as
+`d2bb26d1d600583bf66e76551748002e1b73587c` and fast-forward merged into the
+maintained `master` target. No product scope or implementation changes were
+made during finalization.
 
 ## Human Approval
 
@@ -29,20 +29,25 @@ changes were made during finalization.
   additional working-tree files; ignored trace and `.tmp/GH-40-BLP-13`
   evidence remain task-local as prescribed by repository policy.
 - Maintained target: `master` in
-  `C:\Users\stati\Git\blp\block-link-plus`, currently at the review base.
-  Its pre-existing unrelated `AGENTS.md` edit was inspected and will be
-  preserved.
+  `C:\Users\stati\Git\blp\block-link-plus`, which was at the review base
+  before the merge.
+- Target now points to `d2bb26d1d600583bf66e76551748002e1b73587c`; its
+  pre-existing unrelated `AGENTS.md` edit remains preserved.
 
 ## Git Operations
 
-- Commit: pending final commit and artifact amend.
+- Commit: `d2bb26d1d600583bf66e76551748002e1b73587c` from
+  `git commit -m "fix: show nested embeds in inline edit"`.
 - Merge target: `master`.
-- Planned merge command: `git -C C:\Users\stati\Git\blp\block-link-plus merge --ff-only symphony/GH-40-BLP-13`.
+- Merge command: `git merge --ff-only symphony/GH-40-BLP-13` run in
+  `C:\Users\stati\Git\blp\block-link-plus` — fast-forwarded `master` from
+  `8e8dce0e9bdd91d6c2b5147bb0e0b4493f87e145` to the commit above.
 
 ## Validation
 
 - `corepack pnpm test -- --runInBand src/features/inline-edit-engine/__tests__/inline-edit-layout-css.test.ts src/features/inline-edit-engine/__tests__/InlineEditEngine.embed-shell.test.ts` — passed, 2 suites / 6 tests.
 - `git diff --check` against the review base — passed; only existing LF/CRLF normalization warnings were emitted.
+- `corepack pnpm run agent:workflow-check` — passed.
 - `node scripts/obsidian-cdp.js eval "({title:document.title,activeFile:app.workspace.getActiveFile()?.path})"` — passed against the inherited task lease (`BLP-13`, `blp-BLP-13`, port `19225`).
 - `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/regression/inline-edit/embed-jump-affordance.js"` — passed, including cleanup with no warnings.
 - Prior accepted implementation/review evidence remains sufficient for the
@@ -69,5 +74,6 @@ changes were made during finalization.
 
 ## Decision
 
-`completed` — pending the recorded commit, artifact amend, fast-forward merge,
-and final workflow check.
+`completed` — the accepted patch was committed and fast-forward merged into
+the unambiguous `master` target with no conflict, the target's unrelated user
+edit was preserved, and the final workflow check passed.
