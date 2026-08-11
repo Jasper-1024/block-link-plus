@@ -5,9 +5,10 @@
 ## Plane Reply
 
 The accepted BLP-13 patch was committed as
-`d2bb26d1d600583bf66e76551748002e1b73587c` and fast-forward merged into the
-maintained `master` target. No product scope or implementation changes were
-made during finalization.
+`d2bb26d1d600583bf66e76551748002e1b73587c`, with the finalization record
+committed subsequently, and the complete result was fast-forward merged into
+the maintained `master` target. No product scope or implementation changes
+were made during finalization.
 
 ## Human Approval
 
@@ -31,17 +32,19 @@ made during finalization.
 - Maintained target: `master` in
   `C:\Users\stati\Git\blp\block-link-plus`, which was at the review base
   before the merge.
-- Target now points to `d2bb26d1d600583bf66e76551748002e1b73587c`; its
+- Target includes the implementation and finalization-record commits; its
   pre-existing unrelated `AGENTS.md` edit remains preserved.
 
 ## Git Operations
 
-- Commit: `d2bb26d1d600583bf66e76551748002e1b73587c` from
+- Implementation commit: `d2bb26d1d600583bf66e76551748002e1b73587c` from
   `git commit -m "fix: show nested embeds in inline edit"`.
+- Finalization-record commit: `3020e436007ef8a84e05c123b7cb0cef5f1c3d03` from
+  `git commit -m "chore: record BLP-13 finalization"`.
 - Merge target: `master`.
 - Merge command: `git merge --ff-only symphony/GH-40-BLP-13` run in
-  `C:\Users\stati\Git\blp\block-link-plus` — fast-forwarded `master` from
-  `8e8dce0e9bdd91d6c2b5147bb0e0b4493f87e145` to the commit above.
+  `C:\Users\stati\Git\blp\block-link-plus` after each commit — both merges
+  fast-forwarded cleanly, preserving the unrelated `AGENTS.md` edit.
 
 ## Validation
 
@@ -74,6 +77,7 @@ made during finalization.
 
 ## Decision
 
-`completed` — the accepted patch was committed and fast-forward merged into
-the unambiguous `master` target with no conflict, the target's unrelated user
-edit was preserved, and the final workflow check passed.
+`completed` — the accepted patch and canonical finalization artifact were
+committed and fast-forward merged into the unambiguous `master` target with no
+conflict; the target's unrelated user edit was preserved and the final
+workflow check passed.
