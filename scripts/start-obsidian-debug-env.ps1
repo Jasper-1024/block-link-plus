@@ -58,6 +58,14 @@ function Resolve-ObsidianPath {
 		throw "OBSIDIAN_EXE/ObsidianExe path does not exist: $Preferred"
 	}
 
+	# Scoop's command shim can point to obsidian.com, which is the CLI entry
+	# point and does not keep an isolated Electron/CDP runtime alive. Prefer the
+	# desktop executable explicitly when the standard Scoop install is present.
+	$ScoopPath = Join-Path $env:USERPROFILE "scoop\apps\obsidian\current\Obsidian.exe"
+	if (Test-Path -LiteralPath $ScoopPath) {
+		return (Resolve-Path -LiteralPath $ScoopPath).Path
+	}
+
 	$Command = Get-Command obsidian.exe -ErrorAction SilentlyContinue
 	if ($Command -and $Command.Path) {
 		$ShimPath = [System.IO.Path]::ChangeExtension($Command.Path, ".shim")
@@ -65,17 +73,18 @@ function Resolve-ObsidianPath {
 			$ShimText = Get-Content -LiteralPath $ShimPath -Raw
 			if ($ShimText -match 'path\s*=\s*"([^"]+)"') {
 				$Resolved = $Matches[1]
+				if ([System.IO.Path]::GetExtension($Resolved) -ieq ".com") {
+					$DesktopExecutable = Join-Path (Split-Path -Parent $Resolved) "Obsidian.exe"
+					if (Test-Path -LiteralPath $DesktopExecutable) {
+						return (Resolve-Path -LiteralPath $DesktopExecutable).Path
+					}
+				}
 				if (Test-Path -LiteralPath $Resolved) {
 					return (Resolve-Path -LiteralPath $Resolved).Path
 				}
 			}
 		}
 		return $Command.Path
-	}
-
-	$ScoopPath = Join-Path $env:USERPROFILE "scoop\apps\obsidian\current\obsidian.exe"
-	if (Test-Path -LiteralPath $ScoopPath) {
-		return (Resolve-Path -LiteralPath $ScoopPath).Path
 	}
 
 	throw "Could not find Obsidian. Set OBSIDIAN_EXE or pass -ObsidianExe."
@@ -266,8 +275,12 @@ function Dismiss-ObsidianTrustPrompts {
     }
 
     const buttons = Array.from(modal.querySelectorAll("button"));
+    const nonCancelButtons = buttons.filter((candidate) => !candidate.classList.contains("mod-cancel"));
     const button = buttons.find((candidate) => candidate.classList.contains("mod-cta"))
-      || buttons.find((candidate) => buttonPattern.test(candidate.innerText || candidate.textContent || ""));
+      || buttons.find((candidate) => buttonPattern.test(candidate.innerText || candidate.textContent || ""))
+      || (modal.classList.contains("mod-trust-folder") && nonCancelButtons.length === 1
+        ? nonCancelButtons[0]
+        : null);
     if (!button) {
       attempts.push({ attempt: i + 1, clicked: false, reason: "matching modal without safe button", modal: describeModal(modal) });
       break;
@@ -410,6 +423,9 @@ Wait-HttpJson -Uri "http://127.0.0.1:$script:Port/json/version" -TimeoutSec $Tim
 $PluginTrust = Set-ObsidianPluginTrust -VaultId $VaultId -TimeoutSec $TimeoutSec
 Wait-ObsidianApp -TimeoutSec $TimeoutSec | Out-Null
 $TrustPrompts = Dismiss-ObsidianTrustPrompts -VaultId $VaultId
+if (@($TrustPrompts.remainingTrustModals).Count -gt 0) {
+	throw "Obsidian trust/restricted-mode prompt could not be dismissed automatically."
+}
 $Runtime = Enable-BlockLinkPlus
 
 $Result = [ordered]@{
