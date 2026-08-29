@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-10",
+  "stage": "design-intake",
+  "verdict": "human-review-required",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-10/design-intake.md",
+    "sha256": "2134e17fe28b5c9834f926e9b46d5123e03574444ee3ba60a86ec78ecf4e3daf"
+  },
+  "comment": "Design artifact written; review the proposed scope and move BLP-10 to Review Approved or Review Rejected with feedback.",
+  "links": [
+    {
+      "title": "design-intake artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-10/design-intake.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Baseline runtime passed, focused tests passed (40/40), and the bounded File Outliner design is ready for human approval."
+  },
+  "outOfScope": [
+    "Native Markdown editor movement",
+    "Multi-block selection movement",
+    "Protocol/version/block-ID changes",
+    "Cross-file moves or drag/drop redesign",
+    "Per-file mode overrides and new global history architecture"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-9",
+  "stage": "finalize",
+  "verdict": "completed",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-9/finalize.md",
+    "sha256": "dfabdf0fdc30a9c6faa7ec1e086cdee2c8d5b536edfb729669d81c26efffb441"
+  },
+  "comment": "Finalized BLP-9: committed the accepted fix and fast-forwarded master.",
+  "links": [
+    {
+      "title": "Finalize",
+      "url": "repo:docs/harness/runs/PLANE-BLP-9/finalize.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Completed finalization: the accepted File Outliner autocomplete fix was committed on the issue branch, fast-forwarded cleanly into master, and checked with focused final validation."
+  },
+  "outOfScope": []
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-13",
+  "stage": "finalize",
+  "verdict": "completed",
+  "artifact": {
+    "path": "docs/harness/runs/GH-40-BLP-13/finalize.md",
+    "sha256": "8ea7adaa6b04d3eaa164dad94183fde901cf47587b4eca49c42e7ac336221abd"
+  },
+  "comment": "Finalization artifact written; patch committed and fast-forward merged into master. Unrelated target AGENTS.md edits were preserved.",
+  "links": [
+    {
+      "title": "finalize artifact",
+      "url": "repo:docs/harness/runs/GH-40-BLP-13/finalize.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Targeted tests, runtime regression, workflow checks, and prior build evidence passed."
+  },
+  "outOfScope": [
+    "Android/mobile rendering",
+    "Reporter’s exact fixture and broader variant coverage"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-10",
+  "stage": "code-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-10/code-review.md",
+    "sha256": "07c28380f034c7d3890758346527cc46716fb059516ec7e4eafe886289590338"
+  },
+  "comment": "Both review axes pass for the pinned snapshot; no blocking findings remain.",
+  "links": [
+    {
+      "title": "code-review artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-10/code-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Canonical artifact written to docs/harness/runs/PLANE-BLP-10/code-review.md. Focused/full tests, build, workflow check, snapshot freshness, and normal plus detached runtime validation passed."
+  },
+  "outOfScope": [
+    "Native Markdown",
+    "Inline Edit Embeds",
+    "multi-block selection",
+    "drag/drop semantics",
+    "cross-file movement",
+    "block-ID or serialization changes",
+    "per-file settings",
+    "Zoom/collapse changes",
+    "second CodeMirror movement keymap"
+  ]
+}

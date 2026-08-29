@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-10",
+  "stage": "implementation",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-10/implementation.md",
+    "sha256": "b08d67cba3f8b1b786ef90db0be3ba7c50f1522e81dbeb04ff260bc851e88215"
+  },
+  "comment": "Implemented and corrected BLP-10. The canonical artifact and fresh runtime traces are updated; no blockers remain.",
+  "links": [
+    {
+      "title": "implementation artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-10/implementation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Focused tests: 8 suites/62 tests; full suite: 45 suites/244 tests. Frozen install, typed build, workflow check, normal CDP proof, detached Journal Feed proof, viewport preservation, persistence, history, and save polling all passed."
+  },
+  "outOfScope": [
+    "Native Markdown, Inline Edit Embeds, multi-block/cross-file movement, and drag/drop semantics remain out of scope.",
+    "Commit/merge and downstream code review remain for later stages."
+  ]
+}

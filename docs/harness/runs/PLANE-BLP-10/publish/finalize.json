@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-10",
+  "stage": "finalize",
+  "verdict": "completed",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-10/finalize.md",
+    "sha256": "e474ad85b27c5d094a1ecbf68e43360bcc14e2a130a275ce52f30c5c2cd21ee2"
+  },
+  "comment": "Committed the accepted 13-path patch as dfac30c and merged it cleanly into master as cba1634. Finalization artifact written at docs/harness/runs/PLANE-BLP-10/finalize.md.",
+  "links": [
+    {
+      "title": "finalize artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-10/finalize.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Focused/full tests, build, workflow check, and fresh normal plus detached Obsidian/CDP proofs passed."
+  },
+  "outOfScope": [
+    "Supplemental broad smoke probe failed only on an unrelated newline-render assertion; cleanup completed.",
+    "Pre-existing target-worktree edits were preserved."
+  ]
+}

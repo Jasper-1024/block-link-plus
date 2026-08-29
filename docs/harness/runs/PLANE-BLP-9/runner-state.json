@@ -20,10 +20,10 @@
       "last_counted_verdict": null
     }
   },
-  "last_stage": "code-review",
-  "last_verdict": "accepted",
-  "last_target_state": "Human Review",
-  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "last_stage": "finalize",
+  "last_verdict": "completed",
+  "last_target_state": "Done",
+  "last_reason": "finalization completed after human Ready to Merge approval",
   "artifacts": {
     "investigation": {
       "path": "docs/harness/runs/PLANE-BLP-9/investigation.md",
@@ -48,9 +48,13 @@
     "code-review": {
       "path": "docs/harness/runs/PLANE-BLP-9/code-review.md",
       "sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd"
+    },
+    "finalize": {
+      "path": "docs/harness/runs/PLANE-BLP-9/finalize.md",
+      "sha256": "dfabdf0fdc30a9c6faa7ec1e086cdee2c8d5b536edfb729669d81c26efffb441"
     }
   },
-  "updated_at": "2026-06-28T02:20:41Z",
+  "updated_at": "2026-06-28T02:48:24Z",
   "reviews": {
     "rca-review": {
       "source_stage": "investigation",
@@ -66,6 +70,11 @@
       "source_stage": "implementation",
       "source_sha256": "ef53450f81458acecab41ae9b930d2e80d22c82e96a695b615726646c1c0bfd9",
       "review_sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd"
+    },
+    "finalize": {
+      "source_stage": "code-review",
+      "source_sha256": "439b770ac690029f1ce76bbac0bf7f7c52e94083b13290c4b2d18635b2df0fcd",
+      "review_sha256": "dfabdf0fdc30a9c6faa7ec1e086cdee2c8d5b536edfb729669d81c26efffb441"
     }
   }
 }

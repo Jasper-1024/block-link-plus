@@ -1,0 +1,59 @@
+{
+  "key": "PLANE-BLP-10",
+  "loops": {
+    "implementation": {
+      "attempts": 0,
+      "last_counted_digest": null,
+      "last_counted_stage": null,
+      "last_counted_verdict": null
+    }
+  },
+  "controlPlane": {
+    "dossierPageId": "33e7a49b-8c00-4da4-96eb-0fee908ff3e4"
+  },
+  "updated_at": "2026-08-29T01:24:47Z",
+  "last_stage": "finalize",
+  "last_verdict": "completed",
+  "last_target_state": "Done",
+  "last_reason": "finalization completed after human Ready to Merge approval",
+  "artifacts": {
+    "design-intake": {
+      "path": "docs/harness/runs/PLANE-BLP-10/design-intake.md",
+      "sha256": "2134e17fe28b5c9834f926e9b46d5123e03574444ee3ba60a86ec78ecf4e3daf"
+    },
+    "implementation-routing": {
+      "path": "docs/harness/runs/PLANE-BLP-10/implementation-routing.md",
+      "sha256": "a45727df484b707735b695b6ff3c3ae917b916f12d942218de389c93ff1afcfb"
+    },
+    "implementation": {
+      "path": "docs/harness/runs/PLANE-BLP-10/implementation.md",
+      "sha256": "b08d67cba3f8b1b786ef90db0be3ba7c50f1522e81dbeb04ff260bc851e88215"
+    },
+    "code-review": {
+      "path": "docs/harness/runs/PLANE-BLP-10/code-review.md",
+      "sha256": "07c28380f034c7d3890758346527cc46716fb059516ec7e4eafe886289590338"
+    },
+    "finalize": {
+      "path": "docs/harness/runs/PLANE-BLP-10/finalize.md",
+      "sha256": "e474ad85b27c5d094a1ecbf68e43360bcc14e2a130a275ce52f30c5c2cd21ee2"
+    }
+  },
+  "designApproval": {
+    "pageId": "f98a5ee2-5612-47c9-a47d-e70e93d023ea",
+    "sourceArtifactSha256": "2134e17fe28b5c9834f926e9b46d5123e03574444ee3ba60a86ec78ecf4e3daf",
+    "invalidatedHash": null,
+    "approvedContentSha256": "5d231b56738280261ef3ba4cbb3dcb711172b6217ee03c0a6300f717705e2292"
+  },
+  "reviews": {
+    "code-review": {
+      "source_stage": "implementation",
+      "source_sha256": "b08d67cba3f8b1b786ef90db0be3ba7c50f1522e81dbeb04ff260bc851e88215",
+      "review_sha256": "07c28380f034c7d3890758346527cc46716fb059516ec7e4eafe886289590338"
+    },
+    "finalize": {
+      "source_stage": "code-review",
+      "source_sha256": "07c28380f034c7d3890758346527cc46716fb059516ec7e4eafe886289590338",
+      "review_sha256": "e474ad85b27c5d094a1ecbf68e43360bcc14e2a130a275ce52f30c5c2cd21ee2"
+    }
+  }
+}

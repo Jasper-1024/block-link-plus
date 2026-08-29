@@ -23,11 +23,11 @@
   "controlPlane": {
     "dossierPageId": "9f1249bc-abc4-4eef-8203-308f0abe729e"
   },
-  "updated_at": "2026-08-11T00:16:27Z",
-  "last_stage": "code-review",
-  "last_verdict": "accepted",
-  "last_target_state": "Human Review",
-  "last_reason": "code review accepted; route to human review for final merge/release decision",
+  "updated_at": "2026-08-11T00:20:37Z",
+  "last_stage": "finalize",
+  "last_verdict": "completed",
+  "last_target_state": "Done",
+  "last_reason": "finalization completed after human Ready to Merge approval",
   "artifacts": {
     "investigation": {
       "path": "docs/harness/runs/GH-40-BLP-13/investigation.md",
@@ -52,6 +52,10 @@
     "code-review": {
       "path": "docs/harness/runs/GH-40-BLP-13/code-review.md",
       "sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b"
+    },
+    "finalize": {
+      "path": "docs/harness/runs/GH-40-BLP-13/finalize.md",
+      "sha256": "8ea7adaa6b04d3eaa164dad94183fde901cf47587b4eca49c42e7ac336221abd"
     }
   },
   "reviews": {
@@ -69,6 +73,11 @@
       "source_stage": "implementation",
       "source_sha256": "32804cd403a1a2b781a284b7320c5c21cc6cea5ee7701d34f549a0b300a11059",
       "review_sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b"
+    },
+    "finalize": {
+      "source_stage": "code-review",
+      "source_sha256": "02a1a87846c2b388af1872a7b8d2f904f5853cf6967a96e0f045cf930150e55b",
+      "review_sha256": "8ea7adaa6b04d3eaa164dad94183fde901cf47587b4eca49c42e7ac336221abd"
     }
   }
 }
