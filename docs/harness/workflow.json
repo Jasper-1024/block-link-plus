@@ -79,7 +79,7 @@
   "loops": {
     "rca": 2,
     "fix-design": 2,
-    "implementation": 2
+    "implementation": 5
   },
   "verdicts": {
     "design-intake": {

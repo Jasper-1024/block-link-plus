@@ -27,6 +27,19 @@ unattended runner publishes accepted stage facts from repo-local Publish Plan
 JSON files through its own Plane+ API publisher, but it must not create child
 work items. Keep Plane credentials and runner-local paths out of this repo.
 
+Plane project coordinates for all BLP operations:
+
+- Base URL: `http://192.168.4.22:2080`
+- Workspace slug: `work`
+- Project identifier: `BLP`
+- Project UUID: `9183959f-c689-4826-8ec8-fc7fe4bf33ff`
+
+The global `plane-ops` defaults may point at another project such as `WORK`.
+For BLP, always pass `--workspace work` and
+`--project-id 9183959f-c689-4826-8ec8-fc7fe4bf33ff`; do not rely on the global
+default project. Prefer UUIDs returned by `work-item list` for follow-up detail
+or comment requests when the global CLI cannot resolve a readable `BLP-<n>` key.
+
 Windows UTF-8 file reads:
 
 - Runner context files, Plane feedback exports, and repo docs are UTF-8. On
