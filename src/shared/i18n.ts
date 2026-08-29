@@ -290,6 +290,14 @@ class T {
               outdent: "Prefer outdent",
             },
           },
+          moveMode: {
+            name: "Block move mode",
+            desc: "Choose how Alt+Arrow moves the active block.",
+            options: {
+              sameLevel: "Same-level only",
+              crossLevelAlign: "Cross-level align",
+            },
+          },
           tasksHelp: {
             name: "Tasks",
             desc: 'Task blocks use Obsidian-native `- [ ]` / `- [x]` on disk. Commands: "${toggleTaskStatus}" (Mod+Enter) and "${toggleTaskMarker}" (Mod+Shift+Enter). Configure hotkeys in Settings -> Hotkeys.',
@@ -301,6 +309,8 @@ class T {
           commands: {
             toggleTaskStatus: "Outliner: Toggle task status",
             toggleTaskMarker: "Outliner: Toggle task marker",
+            moveActiveBlockUp: "Outliner: Move active block up",
+            moveActiveBlockDown: "Outliner: Move active block down",
           },
           contextMenu: {
             copyBlockReference: "Copy block reference",
@@ -850,6 +860,14 @@ class T {
               outdent: "优先 Outdent",
             },
           },
+          moveMode: {
+            name: "块移动模式",
+            desc: "选择 Alt+方向键移动当前块的方式。",
+            options: {
+              sameLevel: "仅同层级",
+              crossLevelAlign: "跨层级对齐",
+            },
+          },
           tasksHelp: {
             name: "任务",
             desc: "任务块在磁盘上使用 Obsidian 原生的 `- [ ]` / `- [x]` 语法。命令：\"${toggleTaskStatus}\"（Mod+Enter）与 \"${toggleTaskMarker}\"（Mod+Shift+Enter）。可在 设置 -> 快捷键 中配置。",
@@ -861,6 +879,8 @@ class T {
           commands: {
             toggleTaskStatus: "Outliner：切换任务状态",
             toggleTaskMarker: "Outliner：切换任务标记",
+            moveActiveBlockUp: "Outliner：向上移动当前块",
+            moveActiveBlockDown: "Outliner：向下移动当前块",
           },
           contextMenu: {
             copyBlockReference: "复制块引用",
@@ -1409,6 +1429,14 @@ class T {
               outdent: "優先 Outdent",
             },
           },
+          moveMode: {
+            name: "區塊移動模式",
+            desc: "選擇 Alt+方向鍵移動目前區塊的方式。",
+            options: {
+              sameLevel: "僅同層級",
+              crossLevelAlign: "跨層級對齊",
+            },
+          },
           tasksHelp: {
             name: "任務",
             desc: "任務區塊在磁碟上使用 Obsidian 原生的 `- [ ]` / `- [x]` 語法。命令：\"${toggleTaskStatus}\"（Mod+Enter）與 \"${toggleTaskMarker}\"（Mod+Shift+Enter）。可在 設定 -> 快捷鍵 中設定。",
@@ -1420,6 +1448,8 @@ class T {
           commands: {
             toggleTaskStatus: "Outliner：切換任務狀態",
             toggleTaskMarker: "Outliner：切換任務標記",
+            moveActiveBlockUp: "Outliner：向上移動目前區塊",
+            moveActiveBlockDown: "Outliner：向下移動目前區塊",
           },
           contextMenu: {
             copyBlockReference: "複製區塊引用",

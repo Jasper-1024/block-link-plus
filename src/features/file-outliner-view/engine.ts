@@ -1,4 +1,5 @@
 import type { OutlinerBlock, ParsedOutlinerFile } from "./protocol";
+import type { FileOutlinerMoveMode } from "../../types";
 
 export type OutlinerSelection = {
 	id: string;
@@ -26,6 +27,8 @@ export type OutlinerEngineResult = {
 
 export type OutlinerMoveWhere = "before" | "after" | "inside";
 
+export type OutlinerMoveDirection = "up" | "down";
+
 function cloneBlock(b: OutlinerBlock): OutlinerBlock {
 	return {
 		id: b.id,
@@ -34,10 +37,10 @@ function cloneBlock(b: OutlinerBlock): OutlinerBlock {
 		children: b.children.map(cloneBlock),
 		system: {
 			date: b.system.date,
-			updated: b.system.updated,
-			extra: { ...(b.system.extra ?? {}) },
-		},
-		_systemHasBlpMarker: b._systemHasBlpMarker,
+				updated: b.system.updated,
+				extra: { ...(b.system.extra ?? {}) },
+			},
+			_systemHasBlpMarker: b._systemHasBlpMarker,
 	};
 }
 
@@ -87,10 +90,10 @@ function cloneBlockShallow(b: OutlinerBlock): OutlinerBlock {
 		children: [],
 		system: {
 			date: b.system.date,
-			updated: b.system.updated,
-			extra: { ...(b.system.extra ?? {}) },
-		},
-		_systemHasBlpMarker: b._systemHasBlpMarker,
+				updated: b.system.updated,
+				extra: { ...(b.system.extra ?? {}) },
+			},
+			_systemHasBlpMarker: b._systemHasBlpMarker,
 	};
 }
 
@@ -124,6 +127,15 @@ function rebuildTreeFromLinear(linear: OutlinerBlock[]): OutlinerBlock[] {
 	}
 
 	return roots;
+}
+
+function clearSourceLineRanges(list: OutlinerBlock[]): void {
+	for (const block of list) {
+		// Source ranges describe the pre-move serialized order. The next resolver
+		// call must use the current tree until the file is reparsed after saving.
+		delete block._sourceLineRanges;
+		clearSourceLineRanges(block.children);
+	}
 }
 
 function findLinearIndexById(linear: OutlinerBlock[], id: string): number {
@@ -504,6 +516,217 @@ export function moveBlockSubtree(
 	if (destParent) dirtyIds.add(destParent.id);
 
 	return { file: next, selection: { id: sourceId, start: 0, end: 0 }, dirtyIds, didChange: true };
+}
+
+export type OutlinerDirectionalMoveOptions = {
+	/** The current zoom root; movement may not cross this block. */
+	zoomRootId?: string | null;
+	/** Block ids whose descendants are hidden from the current visible scope. */
+	collapsedIds?: ReadonlySet<string>;
+};
+
+function collectVisibleBlockIds(
+	blocks: OutlinerBlock[],
+	collapsedIds: ReadonlySet<string>,
+	out: string[] = []
+): string[] {
+	for (const block of blocks) {
+		if (!block?.id) continue;
+		out.push(block.id);
+		if (collapsedIds.has(block.id)) continue;
+		collectVisibleBlockIds(block.children ?? [], collapsedIds, out);
+	}
+	return out;
+}
+
+function findBlockById(list: OutlinerBlock[], id: string): OutlinerBlock | null {
+	for (const block of list) {
+		if (block.id === id) return block;
+		const child = findBlockById(block.children ?? [], id);
+		if (child) return child;
+	}
+	return null;
+}
+
+function subtreeContainsId(block: OutlinerBlock, id: string): boolean {
+	if (block.id === id) return true;
+	return (block.children ?? []).some((child) => subtreeContainsId(child, id));
+}
+
+type LinearBlockState = {
+	index: number;
+	depth: number;
+	parentId: string | null;
+};
+
+function linearBlockStates(linear: OutlinerBlock[]): Map<string, LinearBlockState> {
+	const states = new Map<string, LinearBlockState>();
+	for (let index = 0; index < linear.length; index++) {
+		const block = linear[index];
+		if (!block?.id) continue;
+		states.set(block.id, {
+			index,
+			depth: block.depth,
+			parentId: findLinearParentId(linear, index),
+		});
+	}
+	return states;
+}
+
+function collectChangedLinearIds(before: OutlinerBlock[], after: OutlinerBlock[]): Set<string> {
+	const beforeStates = linearBlockStates(before);
+	const afterStates = linearBlockStates(after);
+	const dirtyIds = new Set<string>();
+
+	for (const [id, beforeState] of beforeStates) {
+		const afterState = afterStates.get(id);
+		if (!afterState) continue;
+		if (
+			beforeState.index !== afterState.index ||
+			beforeState.depth !== afterState.depth ||
+			beforeState.parentId !== afterState.parentId
+		) {
+			dirtyIds.add(id);
+		}
+	}
+
+	return dirtyIds;
+}
+
+/**
+ * Move the block owning the active selection around an eligible neighboring block.
+ * The operation is pure: the input file is never mutated and no DOM/view state is required.
+ */
+export function moveBlockByDirection(
+	file: ParsedOutlinerFile,
+	sel: OutlinerSelection,
+	direction: OutlinerMoveDirection,
+	mode: FileOutlinerMoveMode,
+	opts: OutlinerDirectionalMoveOptions = {}
+): OutlinerEngineResult {
+	const noChange = (): OutlinerEngineResult => ({
+		file,
+		selection: sel,
+		dirtyIds: new Set<string>(),
+		didChange: false,
+	});
+
+	if (!sel?.id || (direction !== "up" && direction !== "down")) return noChange();
+	if (mode !== "same-level" && mode !== "cross-level-align") return noChange();
+
+	const zoomRootId = opts.zoomRootId ?? null;
+	const collapsedIds = opts.collapsedIds ?? new Set<string>();
+	let visibleScope = file.blocks ?? [];
+	if (zoomRootId) {
+		const zoomRoot = findBlockById(visibleScope, zoomRootId);
+		if (!zoomRoot) return noChange();
+		visibleScope = [zoomRoot];
+	}
+
+	const visibleIds = collectVisibleBlockIds(visibleScope, collapsedIds);
+	const sourceVisibleIndex = visibleIds.indexOf(sel.id);
+	if (sourceVisibleIndex < 0) return noChange();
+
+	const sourceLoc = findBlockLocation(file.blocks ?? [], sel.id, null);
+	if (!sourceLoc) return noChange();
+
+	const sourceIds = new Set<string>();
+	collectIds([sourceLoc.block], sourceIds);
+
+	let targetId: string | null = null;
+	if (mode === "same-level") {
+		// Same-level movement is based on the direct sibling list. The previous/next
+		// preorder item may be a descendant of that sibling and is not an eligible
+		// target for this mode.
+		const targetIndex = sourceLoc.index + (direction === "up" ? -1 : 1);
+		const sibling = sourceLoc.siblings[targetIndex];
+		targetId = sibling?.id ?? null;
+		// A sibling outside the current Zoom scope is a hard boundary.
+		if (targetId && !visibleIds.includes(targetId)) targetId = null;
+	} else if (direction === "up") {
+		for (let index = sourceVisibleIndex - 1; index >= 0; index--) {
+			const candidate = visibleIds[index];
+			if (!candidate || sourceIds.has(candidate)) continue;
+			const candidateBlock = findBlockById(file.blocks ?? [], candidate);
+			// The target must remain an atomic subtree. An ancestor of the source
+			// overlaps that subtree, so it cannot be a valid cross-level target.
+			if (!candidateBlock || subtreeContainsId(candidateBlock, sel.id)) continue;
+			targetId = candidate;
+			break;
+		}
+	} else {
+		for (let index = sourceVisibleIndex + 1; index < visibleIds.length; index++) {
+			const candidate = visibleIds[index];
+			if (!candidate || sourceIds.has(candidate)) continue;
+			const candidateBlock = findBlockById(file.blocks ?? [], candidate);
+			if (!candidateBlock || subtreeContainsId(candidateBlock, sel.id)) continue;
+			targetId = candidate;
+			break;
+		}
+	}
+
+	if (!targetId || targetId === zoomRootId) return noChange();
+	if (zoomRootId === sel.id) return noChange();
+
+	const targetLoc = findBlockLocation(file.blocks ?? [], targetId, null);
+	if (!targetLoc) return noChange();
+
+	if (mode === "same-level") {
+		const sourceParentId = sourceLoc.parent?.id ?? null;
+		const targetParentId = targetLoc.parent?.id ?? null;
+		if (sourceParentId !== targetParentId) return noChange();
+	}
+
+	const linear = linearizeBlocks(file.blocks ?? []);
+	const sourceStart = findLinearIndexById(linear, sel.id);
+	if (sourceStart < 0) return noChange();
+	const sourceEnd = findLinearDescendantEnd(linear, sourceStart);
+	const sourceSegment = linear.slice(sourceStart, sourceEnd);
+	if (sourceSegment.length === 0) return noChange();
+
+	const remaining = linear.filter((_, index) => index < sourceStart || index >= sourceEnd);
+	const targetIndex = findLinearIndexById(remaining, targetId);
+	if (targetIndex < 0) return noChange();
+
+	const targetDepth = remaining[targetIndex]?.depth;
+	const sourceDepth = sourceSegment[0]?.depth;
+	if (targetDepth === undefined || sourceDepth === undefined) return noChange();
+
+	const moveSegment = sourceSegment.map((block) => {
+		const relativeDepth = Math.max(0, block.depth - sourceDepth);
+		return {
+			...block,
+			depth: mode === "cross-level-align" ? targetDepth + relativeDepth : block.depth,
+			children: [],
+		};
+	});
+
+	const insertAt = direction === "up" ? targetIndex : findLinearDescendantEnd(remaining, targetIndex);
+	const resultLinear = [
+		...remaining.slice(0, insertAt),
+		...moveSegment,
+		...remaining.slice(insertAt),
+	];
+
+	if (!isValidLinearDepthSequence(resultLinear)) return noChange();
+
+	let resultBlocks: OutlinerBlock[];
+	try {
+		resultBlocks = rebuildTreeFromLinear(resultLinear);
+	} catch {
+		return noChange();
+	}
+	clearSourceLineRanges(resultBlocks);
+
+	const dirtyIds = collectChangedLinearIds(linear, resultLinear);
+	if (dirtyIds.size === 0) return noChange();
+
+	return {
+		file: { frontmatter: file.frontmatter, blocks: resultBlocks },
+		selection: sel,
+		dirtyIds,
+		didChange: true,
+	};
 }
 
 export function mergeWithPrevious(

@@ -14,6 +14,33 @@ export interface ManagedOutlinerEmbedLeaf {
 	restore?: () => void;
 }
 
+// Journal Feed embeds use detached WorkspaceLeaf instances. Obsidian does not
+// expose those leaves through workspace.activeLeaf, getLeavesOfType, or the
+// normal workspace leaf iterator, so keep a plugin-scoped registry for command
+// discovery while the embed is mounted.
+const activeOutlinerEmbedsByPlugin = new Map<BlockLinkPlus, Set<ManagedOutlinerEmbedLeaf>>();
+
+export function getActiveOutlinerEmbedViews(plugin: BlockLinkPlus): any[] {
+	return Array.from(activeOutlinerEmbedsByPlugin.get(plugin) ?? [], (embed) => embed.view).filter(Boolean);
+}
+
+function registerActiveOutlinerEmbed(plugin: BlockLinkPlus, embed: ManagedOutlinerEmbedLeaf): void {
+	let embeds = activeOutlinerEmbedsByPlugin.get(plugin);
+	if (!embeds) {
+		embeds = new Set<ManagedOutlinerEmbedLeaf>();
+		activeOutlinerEmbedsByPlugin.set(plugin, embeds);
+	}
+	embeds.add(embed);
+}
+
+function unregisterActiveOutlinerEmbed(plugin: BlockLinkPlus, embed: ManagedOutlinerEmbedLeaf): void {
+	const embeds = activeOutlinerEmbedsByPlugin.get(plugin);
+	if (!embeds) return;
+
+	embeds.delete(embed);
+	if (embeds.size === 0) activeOutlinerEmbedsByPlugin.delete(plugin);
+}
+
 export class OutlinerEmbedLeafManager {
 	private readonly plugin: BlockLinkPlus;
 	private readonly embedRegistry = new WeakMap<HTMLElement, ManagedOutlinerEmbedLeaf>();
@@ -73,10 +100,11 @@ export class OutlinerEmbedLeafManager {
 			throw new Error("JournalFeed: failed to load FileOutlinerView");
 		}
 
-		embed.view = view;
+	embed.view = view;
 
 		this.embedRegistry.set(args.containerEl, embed);
 		this.activeEmbeds.add(embed);
+		registerActiveOutlinerEmbed(this.plugin, embed);
 
 		return embed;
 	}
@@ -88,6 +116,7 @@ export class OutlinerEmbedLeafManager {
 	private detachLeafFromComponentUnload(embed: ManagedOutlinerEmbedLeaf): void {
 		this.embedRegistry.delete(embed.containerEl);
 		this.activeEmbeds.delete(embed);
+		unregisterActiveOutlinerEmbed(this.plugin, embed);
 
 		try {
 			embed.restore?.();
