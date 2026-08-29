@@ -546,6 +546,25 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 		}
 	}
 
+	private renderFileOutlinerMoveModeSetting(rootEl: HTMLElement): void {
+		const ui = t.settings.fileOutliner;
+		new Setting(rootEl)
+			.setName(ui.moveMode.name)
+			.setDesc(ui.moveMode.desc)
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("same-level", ui.moveMode.options.sameLevel)
+					.addOption("cross-level-align", ui.moveMode.options.crossLevelAlign)
+					.setValue(this.plugin.settings.fileOutlinerMoveMode ?? "same-level")
+					.setDisabled(!this.plugin.settings.fileOutlinerViewEnabled)
+					.onChange(async (value: any) => {
+						if (value !== "same-level" && value !== "cross-level-align") return;
+						this.plugin.settings.fileOutlinerMoveMode = value;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+
 	private renderFileOutlinerTab(rootEl: HTMLElement) {
 		const ui = t.settings.fileOutliner;
 		this.addHeading(ui.title, rootEl).setDesc(ui.desc);
@@ -652,7 +671,9 @@ export class BlockLinkPlusSettingsTab extends PluginSettingTab {
 						this.plugin.settings.fileOutlinerBackspaceWithChildren = value;
 						await this.plugin.saveSettings();
 					});
-			});
+				});
+
+		this.renderFileOutlinerMoveModeSetting(rootEl);
 
 		const cmdLabels = getFileOutlinerCommandLabels();
 		const tasksHelpDesc = String(ui.tasksHelp.desc ?? "")

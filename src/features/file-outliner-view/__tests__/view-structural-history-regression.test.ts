@@ -252,7 +252,7 @@ describe("file-outliner-view structural edit regression", () => {
 		);
 
 		expect(fake.pendingFocus).toEqual({ id: "a1", cursorStart: 3, cursorEnd: 3, scroll: false });
-		expect(fake.captureViewportRestore).toHaveBeenCalledWith("a1");
+		expect(fake.captureViewportRestore).toHaveBeenCalledWith("a1", { preservePosition: true });
 		expect(fake.pendingScrollToId).toBeNull();
 	});
 

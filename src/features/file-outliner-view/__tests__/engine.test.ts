@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 import {
 	backspaceAtStart,
 	deleteBlock,
@@ -6,6 +8,7 @@ import {
 	insertAtRootEnd,
 	insertAfter,
 	moveBlockSubtree,
+	moveBlockByDirection,
 	mergeWithNext,
 	mergeWithPrevious,
 	outdentBlock,
@@ -15,7 +18,8 @@ import {
 	type OutlinerEngineContext,
 } from "../engine";
 
-import type { ParsedOutlinerFile } from "../protocol";
+import { normalizeOutlinerFile, type ParsedOutlinerFile } from "../protocol";
+import { resolveOutlinerBlockIdForSourceLine } from "../source-line-navigation";
 
 function fileOf(blocks: ParsedOutlinerFile["blocks"]): ParsedOutlinerFile {
 	return { frontmatter: null, blocks };
@@ -271,6 +275,305 @@ describe("file-outliner-view/engine", () => {
 		const out = moveBlockSubtree(input, "a", "c", "after");
 		expect(out.didChange).toBe(false);
 		expect(out.file.blocks[0]?.children[0]?.children.map((b) => b.id)).toEqual(["c"]);
+	});
+
+	test("moveBlockByDirection moves a complete same-level subtree and preserves selection/input", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "a",
+				children: [{ id: "a1", depth: 1, text: "a1", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{
+				id: "b",
+				depth: 0,
+				text: "b",
+				children: [
+					{ id: "b1", depth: 1, text: "b1", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{ id: "b2", depth: 1, text: "b2", children: [], system: { date: "d", updated: "u", extra: {} } },
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{
+				id: "c",
+				depth: 0,
+				text: "c",
+				children: [{ id: "c1", depth: 1, text: "c1", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{ id: "d", depth: 0, text: "d", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+		const selection = { id: "b", start: 1, end: 1 };
+		const before = JSON.parse(JSON.stringify(input));
+
+		const up = moveBlockByDirection(input, selection, "up", "same-level");
+		expect(up.didChange).toBe(true);
+		expect(up.selection).toEqual(selection);
+		expect(up.file.blocks.map((block) => block.id)).toEqual(["b", "a", "c", "d"]);
+		expect(up.file.blocks[0]?.children.map((block) => block.id)).toEqual(["b1", "b2"]);
+		expect(up.file.blocks[0]?.children[0]?.depth).toBe(1);
+		expect(up.file.blocks[1]?.children.map((block) => block.id)).toEqual(["a1"]);
+		expect(Array.from(up.dirtyIds)).toEqual(expect.arrayContaining(["a", "b", "b1", "b2"]));
+		expect(input).toEqual(before);
+
+		const down = moveBlockByDirection(input, selection, "down", "same-level");
+		expect(down.didChange).toBe(true);
+		expect(down.selection).toEqual(selection);
+		expect(down.file.blocks.map((block) => block.id)).toEqual(["a", "c", "b", "d"]);
+		expect(down.file.blocks[2]?.children.map((block) => block.id)).toEqual(["b1", "b2"]);
+		expect(down.file.blocks[2]?.children[1]?.depth).toBe(1);
+	});
+
+	test("moveBlockByDirection keeps same-level moves inside the sibling boundary and no-ops at edges", () => {
+		const input = fileOf([
+			{
+				id: "a",
+				depth: 0,
+				text: "a",
+				children: [
+					{ id: "a1", depth: 1, text: "a1", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{ id: "a2", depth: 1, text: "a2", children: [], system: { date: "d", updated: "u", extra: {} } },
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{ id: "b", depth: 0, text: "b", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+
+		const topBoundary = moveBlockByDirection(input, { id: "a", start: 0, end: 0 }, "up", "same-level");
+		expect(topBoundary.didChange).toBe(false);
+		expect(topBoundary.file).toBe(input);
+		expect(topBoundary.dirtyIds).toEqual(new Set());
+
+		const bottomBoundary = moveBlockByDirection(input, { id: "b", start: 0, end: 0 }, "down", "same-level");
+		expect(bottomBoundary.didChange).toBe(false);
+		expect(bottomBoundary.file).toBe(input);
+
+		const parentBoundary = moveBlockByDirection(input, { id: "a1", start: 0, end: 0 }, "up", "same-level");
+		expect(parentBoundary.didChange).toBe(false);
+		expect(parentBoundary.file).toBe(input);
+	});
+
+	test("moveBlockByDirection cross-level-align moves complete subtrees and aligns both directions", () => {
+		const input = fileOf([
+			{
+				id: "r",
+				depth: 0,
+				text: "r",
+				children: [
+					{ id: "r1", depth: 1, text: "r1", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{
+						id: "r2",
+						depth: 1,
+						text: "r2",
+						children: [{ id: "r2c", depth: 2, text: "r2c", children: [], system: { date: "d", updated: "u", extra: {} } }],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{
+				id: "s",
+				depth: 0,
+				text: "s",
+				children: [{ id: "s1", depth: 1, text: "s1", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{ id: "t", depth: 0, text: "t", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+		const before = JSON.parse(JSON.stringify(input));
+
+		const up = moveBlockByDirection(input, { id: "s", start: 2, end: 2 }, "up", "cross-level-align");
+		expect(up.didChange).toBe(true);
+		expect(up.selection).toEqual({ id: "s", start: 2, end: 2 });
+		expect(up.file.blocks.map((block) => block.id)).toEqual(["r", "t"]);
+		expect(up.file.blocks[0]?.children.map((block) => block.id)).toEqual(["r1", "r2"]);
+		expect(up.file.blocks[0]?.children[1]?.children.map((block) => block.id)).toEqual(["s", "r2c"]);
+		expect(up.file.blocks[0]?.children[1]?.children[0]?.depth).toBe(2);
+		expect(up.file.blocks[0]?.children[1]?.children[0]?.children[0]?.id).toBe("s1");
+		expect(up.file.blocks[0]?.children[1]?.children[0]?.children[0]?.depth).toBe(3);
+		expect(Array.from(up.dirtyIds)).toEqual(expect.arrayContaining(["s", "s1", "r2c"]));
+
+		const down = moveBlockByDirection(input, { id: "r2", start: 0, end: 0 }, "down", "cross-level-align");
+		expect(down.didChange).toBe(true);
+		expect(down.file.blocks.map((block) => block.id)).toEqual(["r", "s", "r2", "t"]);
+		expect(down.file.blocks[1]?.children.map((block) => block.id)).toEqual(["s1"]);
+		expect(down.file.blocks[2]?.children.map((block) => block.id)).toEqual(["r2c"]);
+		expect(down.file.blocks[2]?.depth).toBe(0);
+		expect(down.file.blocks[2]?.children[0]?.depth).toBe(1);
+		expect(input).toEqual(before);
+	});
+
+	test("moveBlockByDirection does not split an ancestor target subtree", () => {
+		const input = fileOf([
+			{
+				id: "parent",
+				depth: 0,
+				text: "parent",
+				children: [{ id: "source", depth: 1, text: "source", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{ id: "next", depth: 0, text: "next", children: [], system: { date: "d", updated: "u", extra: {} } },
+		]);
+		const before = JSON.parse(JSON.stringify(input));
+
+		const up = moveBlockByDirection(input, { id: "source", start: 0, end: 0 }, "up", "cross-level-align");
+
+		expect(up.didChange).toBe(false);
+		expect(up.file).toBe(input);
+		expect(up.dirtyIds).toEqual(new Set());
+		expect(input).toEqual(before);
+	});
+
+	test("moveBlockByDirection keeps source-line navigation aligned after frontmatter/legacy moves", () => {
+		const source = [
+			"---",
+			"kind: outliner",
+			"---",
+			"- parent",
+			"  - child TARGET_NEEDLE",
+			"    [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^child",
+			"  [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^parent",
+			"- sibling",
+			"  [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^sibling",
+			"",
+		].join("\n");
+		const normalize = () =>
+			normalizeOutlinerFile(source, {
+				idPrefix: "",
+				idLength: 4,
+				now: DateTime.fromISO("2026-06-12T00:00:00"),
+				indentSize: 2,
+			}).file;
+
+		const assertCurrentSerializedLines = (file: ParsedOutlinerFile) => {
+			expect(resolveOutlinerBlockIdForSourceLine(file, 3)).toBe("sibling");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 5)).toBe("parent");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 6)).toBe("parent");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 7)).toBe("child");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 8)).toBe("child");
+		};
+
+		const movedDown = moveBlockByDirection(
+			normalize(),
+			{ id: "parent", start: 0, end: 0 },
+			"down",
+			"same-level"
+		);
+		const movedUp = moveBlockByDirection(
+			normalize(),
+			{ id: "sibling", start: 0, end: 0 },
+			"up",
+			"same-level"
+		);
+
+		expect(movedDown.didChange).toBe(true);
+		expect(movedUp.didChange).toBe(true);
+		expect(movedDown.file.blocks.map((block) => block.id)).toEqual(["sibling", "parent"]);
+		expect(movedUp.file.blocks.map((block) => block.id)).toEqual(["sibling", "parent"]);
+		assertCurrentSerializedLines(movedDown.file);
+		assertCurrentSerializedLines(movedUp.file);
+	});
+
+	test("moveBlockSubtree invalidates parser source-line ranges in both reorder directions", () => {
+		const source = [
+			"---",
+			"kind: outliner",
+			"---",
+			"- parent",
+			"  - child TARGET_NEEDLE",
+			"    [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^child",
+			"  [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^parent",
+			"- sibling",
+			"  [date:: 2026-06-12T00:00:00] [updated:: 2026-06-12T00:00:00] [blp_sys:: 1] [blp_ver:: 2] ^sibling",
+			"",
+		].join("\n");
+		const normalize = () =>
+			normalizeOutlinerFile(source, {
+				idPrefix: "",
+				idLength: 4,
+				now: DateTime.fromISO("2026-06-12T00:00:00"),
+				indentSize: 2,
+			}).file;
+		const assertCurrentSerializedLines = (file: ParsedOutlinerFile) => {
+			expect(resolveOutlinerBlockIdForSourceLine(file, 3)).toBe("sibling");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 5)).toBe("parent");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 6)).toBe("parent");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 7)).toBe("child");
+			expect(resolveOutlinerBlockIdForSourceLine(file, 8)).toBe("child");
+		};
+
+		const movedDown = moveBlockSubtree(normalize(), "parent", "sibling", "after");
+		const movedUp = moveBlockSubtree(normalize(), "sibling", "parent", "before");
+
+		expect(movedDown.didChange).toBe(true);
+		expect(movedUp.didChange).toBe(true);
+		expect(movedDown.file.blocks.map((block) => block.id)).toEqual(["sibling", "parent"]);
+		expect(movedUp.file.blocks.map((block) => block.id)).toEqual(["sibling", "parent"]);
+		assertCurrentSerializedLines(movedDown.file);
+		assertCurrentSerializedLines(movedUp.file);
+	});
+
+	test("moveBlockByDirection skips collapsed descendants and respects the Zoom root boundary", () => {
+		const input = fileOf([
+			{
+				id: "root",
+				depth: 0,
+				text: "root",
+				children: [
+					{ id: "first", depth: 1, text: "first", children: [], system: { date: "d", updated: "u", extra: {} } },
+					{
+						id: "source",
+						depth: 1,
+						text: "source",
+						children: [{ id: "hidden", depth: 2, text: "hidden", children: [], system: { date: "d", updated: "u", extra: {} } }],
+						system: { date: "d", updated: "u", extra: {} },
+					},
+				],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+			{
+				id: "target",
+				depth: 0,
+				text: "target",
+				children: [{ id: "target-child", depth: 1, text: "target-child", children: [], system: { date: "d", updated: "u", extra: {} } }],
+				system: { date: "d", updated: "u", extra: {} },
+			},
+		]);
+
+		const collapsedMove = moveBlockByDirection(
+			input,
+			{ id: "source", start: 0, end: 0 },
+			"down",
+			"cross-level-align",
+			{ collapsedIds: new Set(["source", "target"]) }
+		);
+		expect(collapsedMove.didChange).toBe(true);
+		expect(collapsedMove.file.blocks.map((block) => block.id)).toEqual(["root", "target", "source"]);
+		expect(collapsedMove.file.blocks[1]?.children.map((block) => block.id)).toEqual(["target-child"]);
+		expect(collapsedMove.file.blocks[2]?.children.map((block) => block.id)).toEqual(["hidden"]);
+		expect(Array.from(collapsedMove.dirtyIds)).toEqual(expect.arrayContaining(["source", "hidden", "target", "target-child"]));
+
+		const zoomBoundary = moveBlockByDirection(
+			input,
+			{ id: "first", start: 0, end: 0 },
+			"up",
+			"cross-level-align",
+			{ zoomRootId: "root" }
+		);
+		expect(zoomBoundary.didChange).toBe(false);
+		expect(zoomBoundary.file).toBe(input);
+
+		const hiddenSource = moveBlockByDirection(
+			input,
+			{ id: "hidden", start: 0, end: 0 },
+			"down",
+			"cross-level-align",
+			{ collapsedIds: new Set(["source"]) }
+		);
+		expect(hiddenSource.didChange).toBe(false);
+		expect(hiddenSource.file).toBe(input);
 	});
 
 	test("mergeWithPrevious concatenates text and moves children", () => {

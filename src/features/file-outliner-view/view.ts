@@ -16,6 +16,7 @@ import {
 	insertAtRootEnd,
 	insertAfter,
 	mergeWithNext,
+	moveBlockByDirection,
 	moveBlockSubtree,
 	outdentBlock,
 	outdentBlockPreservingOrder,
@@ -23,6 +24,7 @@ import {
 	splitAtSelection,
 	type OutlinerEngineContext,
 	type OutlinerEngineResult,
+	type OutlinerMoveDirection,
 	type OutlinerSelection,
 } from "./engine";
 import {
@@ -75,6 +77,7 @@ type PendingViewportRestore = {
 	scrollTop: number;
 	scrollLeft: number;
 	focusId: string;
+	preservePosition: boolean;
 };
 
 type BlockRangeSelection = {
@@ -321,6 +324,52 @@ export class FileOutlinerView extends TextFileView {
 	public toggleActiveTaskMarker(): boolean {
 		if (!this.editingId) return false;
 		return this.onEditorToggleTaskMarker();
+	}
+
+	public isActiveBlockEditorFocused(): boolean {
+		if (!this.editingId || !this.editorView || !this.editorHostEl) return false;
+		if (this.editorHostEl.style.display === "none") return false;
+
+		let editorHasFocus = false;
+		try {
+			const hasFocus = (this.editorView as any).hasFocus;
+			editorHasFocus = typeof hasFocus === "function" ? Boolean(hasFocus.call(this.editorView)) : Boolean(hasFocus);
+		} catch (err) {
+			this.debugLog("isActiveBlockEditorFocused/editor", err);
+		}
+
+		if (!editorHasFocus) {
+			try {
+				const active = document.activeElement as HTMLElement | null;
+				editorHasFocus = Boolean(active && this.editorHostEl.contains(active));
+			} catch (err) {
+				this.debugLog("isActiveBlockEditorFocused/activeElement", err);
+			}
+		}
+
+		return editorHasFocus && this.isLeafActiveOrFocused();
+	}
+
+	public moveActiveBlock(direction: OutlinerMoveDirection): boolean {
+		if (!this.isActiveBlockEditorFocused()) return false;
+		if (!this.outlinerFile) return false;
+
+		const selection = this.getActiveSelection();
+		if (!selection) return false;
+
+		const result = moveBlockByDirection(
+			this.outlinerFile,
+			selection,
+			direction,
+			this.plugin.settings.fileOutlinerMoveMode ?? "same-level",
+			{
+				zoomRootId: this.getZoomRootId(),
+				collapsedIds: this.collapsedIds,
+			}
+		);
+
+		if (!result.didChange) return false;
+		return this.applyStructuralEngineResult(result, selection, { preserveViewport: true });
 	}
 
 	private debugLog(scope: string, err: unknown): void {
@@ -589,11 +638,12 @@ export class FileOutlinerView extends TextFileView {
 		this.updateActiveEditorBridge();
 	}
 
-	private captureViewportRestore(focusId: string): void {
+	private captureViewportRestore(focusId: string, opts?: { preservePosition?: boolean }): void {
 		this.pendingViewportRestore = {
 			scrollTop: this.contentEl.scrollTop,
 			scrollLeft: this.contentEl.scrollLeft,
 			focusId,
+			preservePosition: opts?.preservePosition === true,
 		};
 	}
 
@@ -618,6 +668,7 @@ export class FileOutlinerView extends TextFileView {
 
 		this.contentEl.scrollTop = pending.scrollTop;
 		this.contentEl.scrollLeft = pending.scrollLeft;
+		if (pending.preservePosition) return;
 
 		const row = this.dom.getBlockEl(pending.focusId);
 		if (!row) return;
@@ -1925,7 +1976,7 @@ export class FileOutlinerView extends TextFileView {
 	private applyStructuralEngineResult(
 		result: OutlinerEngineResult,
 		beforeSelection: OutlinerSelection,
-		opts?: { focus?: boolean }
+		opts?: { focus?: boolean; preserveViewport?: boolean }
 	): boolean {
 		if (!this.outlinerFile || !result.didChange) return false;
 
@@ -1969,7 +2020,7 @@ export class FileOutlinerView extends TextFileView {
 			cursorEnd: nextSelection.end,
 			scroll: false,
 		};
-		this.captureViewportRestore(nextSelection.id);
+		this.captureViewportRestore(nextSelection.id, { preservePosition: true });
 		this.pendingScrollToId = null;
 		this.render();
 		this.markDirtyAndRequestSave();
@@ -1998,7 +2049,7 @@ export class FileOutlinerView extends TextFileView {
 			selection: OutlinerSelection;
 			dirtyIds: Set<string>;
 		},
-		opts?: { focus?: boolean; scroll?: boolean }
+		opts?: { focus?: boolean; scroll?: boolean; preserveViewport?: boolean }
 	): void {
 		if (!result.didChange) return;
 
@@ -2029,7 +2080,11 @@ export class FileOutlinerView extends TextFileView {
 				scroll: opts?.scroll === true,
 			};
 			if (opts?.scroll === true) this.clearPendingViewportRestore();
-			else this.captureViewportRestore(result.selection.id);
+			else if (opts?.preserveViewport === true) {
+				this.captureViewportRestore(result.selection.id, { preservePosition: true });
+			} else {
+				this.captureViewportRestore(result.selection.id);
+			}
 			this.pendingScrollToId = null;
 		} else {
 			this.pendingFocus = null;

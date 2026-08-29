@@ -3,6 +3,8 @@ import i18n from "shared/i18n";
 export type FileOutlinerCommandLabels = {
 	toggleTaskStatus: string;
 	toggleTaskMarker: string;
+	moveActiveBlockUp: string;
+	moveActiveBlockDown: string;
 };
 
 export type FileOutlinerContextMenuLabels = {
@@ -23,6 +25,8 @@ export type FileOutlinerContextMenuLabels = {
 const FALLBACK_COMMANDS: FileOutlinerCommandLabels = {
 	toggleTaskStatus: "Outliner: Toggle task status",
 	toggleTaskMarker: "Outliner: Toggle task marker",
+	moveActiveBlockUp: "Outliner: Move active block up",
+	moveActiveBlockDown: "Outliner: Move active block down",
 };
 
 const FALLBACK_CONTEXT_MENU: FileOutlinerContextMenuLabels = {
@@ -47,6 +51,8 @@ export function getFileOutlinerCommandLabels(): FileOutlinerCommandLabels {
 	return {
 		toggleTaskStatus: String(raw.toggleTaskStatus ?? FALLBACK_COMMANDS.toggleTaskStatus),
 		toggleTaskMarker: String(raw.toggleTaskMarker ?? FALLBACK_COMMANDS.toggleTaskMarker),
+		moveActiveBlockUp: String(raw.moveActiveBlockUp ?? FALLBACK_COMMANDS.moveActiveBlockUp),
+		moveActiveBlockDown: String(raw.moveActiveBlockDown ?? FALLBACK_COMMANDS.moveActiveBlockDown),
 	};
 }
 

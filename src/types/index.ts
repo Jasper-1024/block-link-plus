@@ -37,6 +37,8 @@ export const enum BlockLinkAliasType {
 	SelectedText // alias as selected text
 }
 
+export type FileOutlinerMoveMode = "same-level" | "cross-level-align";
+
 export type KeysOfType<Obj, Type> = {
 	[k in keyof Obj]: Obj[k] extends Type ? k : never;
 }[keyof Obj];
@@ -74,6 +76,7 @@ export interface PluginSettings {
 	fileOutlinerChildrenOnSplit: "keep" | "move";
 	fileOutlinerPasteMultiline: "split" | "multiline";
 	fileOutlinerBackspaceWithChildren: "merge" | "outdent";
+	fileOutlinerMoveMode: FileOutlinerMoveMode;
 	fileOutlinerEditorContextMenuEnabled: boolean;
 	fileOutlinerEditorContextMenuAllowedPlugins: string[];
 	fileOutlinerEditorCommandBridgeEnabled: boolean;
@@ -123,6 +126,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	fileOutlinerChildrenOnSplit: "keep",
 	fileOutlinerPasteMultiline: "split",
 	fileOutlinerBackspaceWithChildren: "merge",
+	fileOutlinerMoveMode: "same-level",
 	fileOutlinerEditorContextMenuEnabled: true,
 	fileOutlinerEditorContextMenuAllowedPlugins: [],
 	fileOutlinerEditorCommandBridgeEnabled: true,
