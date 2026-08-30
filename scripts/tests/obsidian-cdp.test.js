@@ -63,6 +63,27 @@ test("requires an explicit CDP port", () => {
   assert.doesNotMatch(result.stderr, /ECONNREFUSED/);
 });
 
+test("runner lease file overrides a stale inherited CDP port", async () => {
+  const server = await listen((_request, response) => {
+    response.setHeader("content-type", "application/json");
+    response.end("[]");
+  });
+  const leaseDir = fs.mkdtempSync(path.join(repoRoot, ".tmp-cdp-lease-"));
+  const leasePath = path.join(leaseDir, "BLP-10.json");
+  try {
+    const port = server.address().port;
+    fs.writeFileSync(leasePath, JSON.stringify({ taskKey: "BLP-10", port }), "utf8");
+    const result = await runCliAsync(["list"], {
+      OB_CDP_PORT: "1",
+      BLP_RUNTIME_LEASE_FILE: leasePath,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stderr, new RegExp(`"port":${port}`));
+  } finally {
+    fs.rmSync(leaseDir, { recursive: true, force: true });
+    await close(server);
+  }
+});
 test("CLI port takes precedence over OB_CDP_PORT", async () => {
   const server = await listen((_request, response) => {
     response.setHeader("content-type", "application/json");

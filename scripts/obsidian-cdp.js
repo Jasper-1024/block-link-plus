@@ -53,7 +53,7 @@ Commands:
   screenshot <out.png>
 
 Connection options:
-  --port <port>              Required, or set OB_CDP_PORT
+  --port <port>              Required, or use the task lease / set OB_CDP_PORT
   --host <host>              Default: 127.0.0.1
   --target-id <id>           Exact target id
   --target-type <type>       Default: page
@@ -120,10 +120,32 @@ function integerOption(value, fallback, name, { min = 1, max = Number.MAX_SAFE_I
   return selected;
 }
 
+function runnerLeasePort() {
+  const leasePath = process.env.BLP_RUNTIME_LEASE_FILE;
+  if (!leasePath) return undefined;
+
+  let lease;
+  try {
+    lease = JSON.parse(fs.readFileSync(leasePath, "utf8"));
+  } catch (error) {
+    throw new CdpError(`Unable to read BLP runtime lease ${leasePath}: ${error.message}`, {
+      exitCode: 2,
+      phase: "usage",
+    });
+  }
+  if (lease?.port === undefined || lease.port === null || lease.port === "") {
+    throw new CdpError(`BLP runtime lease ${leasePath} has no port`, {
+      exitCode: 2,
+      phase: "usage",
+    });
+  }
+  return String(lease.port);
+}
+
 function configFrom(options) {
-  const portText = options.port ?? process.env.OB_CDP_PORT;
+  const portText = options.port ?? runnerLeasePort() ?? process.env.OB_CDP_PORT;
   if (portText === undefined || portText === "") {
-    throw new CdpError("A CDP port is required: pass --port <port> or set OB_CDP_PORT", {
+    throw new CdpError("A CDP port is required: pass --port <port>, use the task lease, or set OB_CDP_PORT", {
       exitCode: 2,
       phase: "usage",
     });

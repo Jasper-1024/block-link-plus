@@ -6,15 +6,16 @@ description: Use the runner-owned isolated Obsidian/CDP runtime to reproduce, in
 # BLP Obsidian Runtime
 
 Use only the task runtime selected by the runner. Read `OB_CDP_PORT`,
-`OB_CDP_TITLE_CONTAINS`, `BLP_RUNTIME_TASK_KEY`, and `BLP_RUNTIME_ROOT` from the
-inherited environment. Never scan ports, choose 9222, or launch Obsidian
-directly. Only the root coordinator may call `ensure_runtime`.
+`OB_CDP_TITLE_CONTAINS`, `BLP_RUNTIME_TASK_KEY`, `BLP_RUNTIME_ROOT`, and
+`BLP_RUNTIME_LEASE_FILE` from the inherited environment. Never scan ports,
+choose 9222, or launch Obsidian directly. Only the root coordinator may call
+`ensure_runtime`.
 
-The inherited environment is the task runtime context at turn start. A successful
-root `ensure_runtime` response is authoritative for the rest of that turn: if it
-returns a different port/environment after recovering the same task runtime, the
-root must use that returned context and pass it explicitly to any child doing CDP
-work. Children never call `ensure_runtime` or choose a port themselves.
+`BLP_RUNTIME_LEASE_FILE` is the authoritative, persistent task context. The CDP
+client reads its current port automatically, so a same-task recovery/reallocation
+is visible to the root and all children even when their inherited `OB_CDP_PORT`
+is stale. Do not pass `--port` in normal runner work. Children never call
+`ensure_runtime` or choose a port themselves.
 
 Use `node scripts/obsidian-cdp.js catalog list` to choose a maintained snippet.
 Normally run the client without a port override:
@@ -25,9 +26,8 @@ node scripts/obsidian-cdp.js eval "app.workspace.getActiveFile()?.path"
 node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<path>.js"
 ```
 
-Only after `ensure_runtime` returns a replacement context may the root pass that
-returned port explicitly, for example `node scripts/obsidian-cdp.js --port
-<returned-port> list`.
+Use an explicit `--port` only for manual debugging outside the harness, or when deliberately overriding the task runtime.
+
 
 Treat `BLP_CDP_EVENT` `slow` as a progress signal. A cleanup failure means the
 **task-local** vault/layout/settings scene was changed; record that fact in the
