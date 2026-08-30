@@ -14,6 +14,7 @@ declare module "obsidian" {
   interface Vault {
     getConfig(config: string): any
     on(name: 'raw', callback: (path: string) => any, ctx?: any): EventRef;
+    on(name: 'config-changed', callback: (key: string) => any, ctx?: any): EventRef;
     config: {
       cssTheme: string;
     }

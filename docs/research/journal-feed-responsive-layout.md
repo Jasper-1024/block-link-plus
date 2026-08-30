@@ -1,8 +1,12 @@
 # Journal Feed: Responsive Same-Column Layout Research
 
-Status: adopted in `c3c3894` and follow-up review correction
+Status: superseded by `journal-feed-readable-line-length.md`
 Date: 2026-08-30
 
+> Historical note: the prior `max-width: none` decision was superseded because
+> it forced Journal Feed to ignore Obsidian's **Readable line length** user
+> preference. See `journal-feed-readable-line-length.md` for the adopted
+> preference-inheriting behavior.
 ## Question
 
 The Journal Feed date header occupies the Feed's full inline width, while a
@@ -41,7 +45,7 @@ height, percentage column, or a viewport breakpoint merely to align the two.
    copying a fixed pixel width from Logseq.
    [Logseq page component, journal/page structure](https://github.com/logseq/logseq/blob/master/src/main/frontend/components/page.cljs)
 
-## Adopted layout
+## Superseded layout (historical)
 
 Each `.blp-journal-feed-day` is the shared containing block for its date header
 and embedded content. Only the Feed-owned Markdown leaf neutralizes the
@@ -70,7 +74,7 @@ previous real embed only; no initial placeholder height is imposed. These are
 visual-flow adjustments, not replacements for the embedding, observer, focus,
 or outliner lifecycle.
 
-## Runtime validation record
+## Prior runtime validation record (historical)
 
 The acceptance run used only the task-owned Obsidian debug instance on port
 `9236`, started by `scripts/start-obsidian-debug-env.ps1`, with a disposable

@@ -83,14 +83,13 @@
 }
 
 /*
- * A Journal Feed owns one continuous day column. Embedded Markdown views carry
- * Obsidian's readable-line-width class, whose centered `.cm-sizer` otherwise
- * gives the body a different column from the day heading. Keep this override
- * local to the feed and let the available inline size determine both.
+ * The root mirrors Obsidian's live readable-line-length preference. Keep this
+ * state independent of virtualized embedded editors, then constrain Markdown
+ * days with the same user/theme-owned width while the preference is enabled.
  */
-.blp-journal-feed-day-editor .markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer {
-	max-width: none;
-	margin-inline: 0;
+.blp-journal-feed-root[data-blp-readable-line-length="true"] .blp-journal-feed-day[data-blp-journal-render-mode="markdown"] {
+	max-inline-size: var(--file-line-width);
+	margin-inline: auto;
 }
 
 .blp-journal-feed-placeholder {

@@ -55,6 +55,9 @@ export class JournalFeedView extends TextFileView {
 		this.embeds = new EmbedLeafManager(plugin);
 		this.outlinerEmbeds = new OutlinerEmbedLeafManager(plugin);
 		this.contentEl.addClass("blp-journal-feed-view");
+		this.registerEvent(this.app.vault.on("config-changed", (key) => {
+			if (key === "readableLineLength") this.syncReadableLineLength();
+		}));
 		this.installFocusBridge();
 	}
 
@@ -98,6 +101,11 @@ export class JournalFeedView extends TextFileView {
 		this.detachAllSections();
 	}
 
+	private syncReadableLineLength(): void {
+		if (!this.rootEl) return;
+		this.rootEl.dataset.blpReadableLineLength = this.app.vault.getConfig("readableLineLength") === true ? "true" : "false";
+	}
+
 	private scheduleRebuild(delayMs = 30): void {
 		if (this.rebuildTimer !== null) return;
 		this.rebuildTimer = window.setTimeout(() => {
@@ -109,8 +117,7 @@ export class JournalFeedView extends TextFileView {
 	private renderShell(): void {
 		this.contentEl.empty();
 		this.rootEl = this.contentEl.createDiv("blp-journal-feed-root");
-
-
+		this.syncReadableLineLength();
 		this.feedEl = this.rootEl.createDiv("blp-journal-feed-scroll");
 		this.loadMoreEl = this.feedEl.createDiv("blp-journal-feed-load-more");
 		this.loadMoreEl.setText("Load more…");
@@ -247,6 +254,7 @@ export class JournalFeedView extends TextFileView {
 		const renderMode = wantsOutliner ? "outliner" : "markdown";
 
 		const sectionEl = this.feedEl.createDiv("blp-journal-feed-day");
+		sectionEl.dataset.blpJournalRenderMode = renderMode;
 		const headerEl = sectionEl.createDiv("blp-journal-feed-day-header");
 
 		const dayLabel = getJournalDayLabel(src.ts, this.dateFormat);
