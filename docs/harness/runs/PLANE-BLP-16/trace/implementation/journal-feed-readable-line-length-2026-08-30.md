@@ -56,3 +56,23 @@ returned to its original enabled setting.
 This verifies Obsidian's default theme in the isolated runtime. Theme-specific
 presentation is intentionally not asserted, because the implementation reads
 the theme/host `--file-line-width` variable rather than overriding it.
+
+## Follow-up: native content-inset proof
+
+Before the generic card-inset rule was restricted to ordinary Inline Edit hosts, the same probe failed with:
+
+```text
+Feed/native content inline inset differ: 10px vs 0px.
+```
+
+The generic card-inset rule was narrowed to ordinary Inline Edit hosts, so
+Journal Feed no longer matches it and keeps the native/theme cascade. After
+rebuilding and reloading, the probe passed in both readable-line-length states
+with these additional fields:
+
+```json
+{"unrestricted":{"feedContentInlineInset":"0px","nativeContentInlineInset":"0px","feedContentBlockStart":0,"nativeContentBlockStart":0,"dateToContentGap":12,"declaredDateToContentGap":12},"constrained":{"feedContentInlineInset":"0px","nativeContentInlineInset":"0px","feedContentBlockStart":0,"nativeContentBlockStart":0,"dateToContentGap":12,"declaredDateToContentGap":12}}
+```
+
+The follow-up visual capture is
+[journal-feed-native-content-inset-2026-08-30.png](journal-feed-native-content-inset-2026-08-30.png).

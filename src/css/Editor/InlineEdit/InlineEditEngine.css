@@ -52,7 +52,7 @@
 	width: 100%;
 }
 
-.blp-inline-edit-root .cm-content {
+.blp-inline-edit-host.blp-inline-edit-root .cm-content {
 	background-color: transparent !important;
 	padding-bottom: 0 !important;
 	padding-left: 10px !important;

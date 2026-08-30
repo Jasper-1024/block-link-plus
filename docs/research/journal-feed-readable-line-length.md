@@ -99,3 +99,21 @@ afterward:
 
 The exact command, full output, and visual captures are stored in the
 [task runtime proof](../harness/runs/PLANE-BLP-16/trace/implementation/journal-feed-readable-line-length-2026-08-30.md).
+
+## Follow-up: native content inset
+
+A separate DOM comparison of the same daily note found that this remaining
+misalignment was not part of readable-line-length. Journal Feed's detached
+Markdown host carries `blp-inline-edit-root`, which is needed for the shared
+leaf lifecycle but also matches the generic Inline Edit rule that applies
+`padding-left: 10px !important` and `padding-right: 10px !important` to
+`.cm-content`. A normal Markdown note computes both values as `0px`.
+
+The generic card-inset selector is now scoped to
+`.blp-inline-edit-host.blp-inline-edit-root .cm-content`, a class pair only
+normal Inline Edit hosts carry. Journal Feed still uses the detached-leaf
+lifecycle class, but no longer matches the card-inset rule; it therefore
+participates in the same native/theme cascade as a normal note without a
+counter-offset. The Feed heading's `12px` block-end margin remains intentional
+date-to-body spacing; CodeMirror's content top padding is `0px` in both
+contexts.

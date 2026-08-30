@@ -34,10 +34,12 @@
   const header = section.sectionEl.querySelector(".blp-journal-feed-day-header");
   const source = section.sectionEl.querySelector(".markdown-source-view.mod-cm6");
   const sizer = source?.querySelector(".cm-sizer");
+  const content = source?.querySelector(".cm-content");
   const nativeSource = [...document.querySelectorAll(".markdown-source-view.mod-cm6")]
     .find((candidate) => !candidate.closest(".blp-journal-feed-root"));
   const nativeSizer = nativeSource?.querySelector(".cm-sizer");
-  assert(header && source && sizer && root && nativeSizer, "Mounted Journal Feed/native Markdown DOM is incomplete.");
+  const nativeContent = nativeSource?.querySelector(".cm-content");
+  assert(header && source && sizer && content && root && nativeSizer && nativeContent, "Mounted Journal Feed/native Markdown DOM is incomplete.");
 
   const originalReadableLineLength = app.vault.getConfig("readableLineLength");
   const fileLineWidth = getComputedStyle(document.body).getPropertyValue("--file-line-width").trim();
@@ -46,16 +48,34 @@
     await app.vault.setConfig("readableLineLength", enabled);
     await wait(350);
 
-    const feedSizerStyle = getComputedStyle(sizer);
-    const nativeSizerStyle = getComputedStyle(nativeSizer);
+    const currentSource = section.sectionEl.querySelector(".markdown-source-view.mod-cm6");
+    const currentSizer = currentSource?.querySelector(".cm-sizer");
+    const currentContent = currentSource?.querySelector(".cm-content");
+    const currentNativeSource = [...document.querySelectorAll(".markdown-source-view.mod-cm6")]
+      .find((candidate) => !candidate.closest(".blp-journal-feed-root"));
+    const currentNativeSizer = currentNativeSource?.querySelector(".cm-sizer");
+    const currentNativeContent = currentNativeSource?.querySelector(".cm-content");
+    assert(currentSource && currentSizer && currentContent && currentNativeSizer && currentNativeContent, "Mounted Journal Feed/native Markdown DOM is incomplete.");
+    const feedSizerStyle = getComputedStyle(currentSizer);
+    const nativeSizerStyle = getComputedStyle(currentNativeSizer);
+    const feedContentStyle = getComputedStyle(currentContent);
+    const nativeContentStyle = getComputedStyle(currentNativeContent);
+    const inlineStart = (style) => style.getPropertyValue("padding-inline-start") || style.getPropertyValue("padding-left");
+    const feedContentBlockStart = Math.round(currentContent.getBoundingClientRect().top - currentSizer.getBoundingClientRect().top);
+    const nativeContentBlockStart = Math.round(currentNativeContent.getBoundingClientRect().top - currentNativeSizer.getBoundingClientRect().top);
+    const dateToContentGap = Math.round(currentSource.getBoundingClientRect().top - header.getBoundingClientRect().bottom);
+    const declaredDateToContentGap = Math.round(parseFloat(getComputedStyle(header).marginBlockEnd));
     const dayStyle = getComputedStyle(section.sectionEl);
     const virtualDayStyle = getComputedStyle(virtualSection.sectionEl);
-    const headerOffset = Math.round(Math.abs(header.getBoundingClientRect().left - sizer.getBoundingClientRect().left));
+    const headerOffset = Math.round(Math.abs(header.getBoundingClientRect().left - currentSizer.getBoundingClientRect().left));
     const overflow = Math.max(0, root.scrollWidth - root.clientWidth);
 
     assert(root.dataset.blpReadableLineLength === String(enabled), `Root preference state did not update to ${enabled}.`);
-    assert(source.classList.contains("is-readable-line-width") === enabled, `Expected source readable-line-width=${enabled}.`);
+    assert(currentSource.classList.contains("is-readable-line-width") === enabled, `Expected source readable-line-width=${enabled}.`);
     assert(normalizeMaxWidth(feedSizerStyle.maxWidth) === normalizeMaxWidth(nativeSizerStyle.maxWidth), `Feed/native sizer max-width differ: ${feedSizerStyle.maxWidth} vs ${nativeSizerStyle.maxWidth}.`);
+    assert(inlineStart(feedContentStyle) === inlineStart(nativeContentStyle), `Feed/native content inline inset differ: ${inlineStart(feedContentStyle)} vs ${inlineStart(nativeContentStyle)}.`);
+    assert(feedContentBlockStart === nativeContentBlockStart, `Feed/native content block start differ: ${feedContentBlockStart}px vs ${nativeContentBlockStart}px.`);
+    assert(dateToContentGap === declaredDateToContentGap, `Journal date/content gap differs from the declared header margin: ${dateToContentGap}px vs ${declaredDateToContentGap}px.`);
     assert(dayStyle.maxInlineSize === virtualDayStyle.maxInlineSize, "Mounted and virtual Markdown days must share the same width constraint.");
     if (enabled) {
       assert(dayStyle.maxInlineSize === feedSizerStyle.maxWidth, `Day/sizer width differ: ${dayStyle.maxInlineSize} vs ${feedSizerStyle.maxWidth}.`);
@@ -69,6 +89,12 @@
       overflow,
       feedSizer: { maxWidth: feedSizerStyle.maxWidth, marginInlineStart: feedSizerStyle.marginInlineStart },
       nativeSizer: { maxWidth: nativeSizerStyle.maxWidth, marginInlineStart: nativeSizerStyle.marginInlineStart },
+      feedContentInlineInset: inlineStart(feedContentStyle),
+      nativeContentInlineInset: inlineStart(nativeContentStyle),
+      feedContentBlockStart,
+      nativeContentBlockStart,
+      dateToContentGap,
+      declaredDateToContentGap,
       dayMaxInlineSize: dayStyle.maxInlineSize,
       virtualDayMaxInlineSize: virtualDayStyle.maxInlineSize,
     };

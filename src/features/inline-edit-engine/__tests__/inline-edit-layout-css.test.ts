@@ -48,7 +48,7 @@ describe("InlineEditEngine layout CSS", () => {
 
 	test("does not force extra bottom padding inside the embedded editor content", () => {
 		const css = readFileSync(cssPath, "utf8");
-		const match = css.match(/\.blp-inline-edit-root\s+\.cm-content\s*\{([^}]+)\}/);
+		const match = css.match(/\.blp-inline-edit-host\.blp-inline-edit-root\s+\.cm-content\s*\{([^}]+)\}/);
 
 		expect(match).not.toBeNull();
 
