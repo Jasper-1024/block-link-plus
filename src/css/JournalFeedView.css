@@ -2,44 +2,6 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	position: relative;
-}
-
-.blp-journal-feed-header {
-	position: absolute;
-	inset-block-start: var(--size-4-2);
-	inset-inline-end: var(--size-4-3);
-	z-index: 1;
-	padding: 0;
-}
-
-.blp-journal-feed-title-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--size-4-2);
-}
-
-.blp-journal-feed-title {
-	display: none;
-}
-
-.blp-journal-feed-actions {
-	display: flex;
-	gap: var(--size-4-2);
-	flex-wrap: wrap;
-	opacity: 0.65;
-}
-
-@media (hover: hover) {
-	.blp-journal-feed-actions {
-		opacity: 0;
-	}
-
-	.blp-journal-feed-header:hover .blp-journal-feed-actions,
-	.blp-journal-feed-actions:focus-within {
-		opacity: 1;
-	}
 }
 
 .blp-journal-feed-scroll {
@@ -126,7 +88,7 @@
  * gives the body a different column from the day heading. Keep this override
  * local to the feed and let the available inline size determine both.
  */
-.blp-journal-feed-day-editor .markdown-source-view.is-readable-line-width .cm-sizer {
+.blp-journal-feed-day-editor .markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer {
 	max-width: none;
 	margin-inline: 0;
 }
@@ -138,6 +100,8 @@
 }
 
 .blp-journal-feed-error {
+	display: grid;
+	gap: var(--size-4-3);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 10px;
 	padding: 12px;

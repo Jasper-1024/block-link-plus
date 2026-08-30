@@ -1,6 +1,6 @@
 # Journal Feed: Responsive Same-Column Layout Research
 
-Status: research note; no product-code decision made here  
+Status: adopted in `c3c3894` and follow-up review correction
 Date: 2026-08-30
 
 ## Question
@@ -20,7 +20,7 @@ height, percentage column, or a viewport breakpoint merely to align the two.
    that case. Conversely, two automatic inline margins center a non-auto-width
    block. Therefore the observed gap is an expected result of a max-width plus
    auto margins, not a condition to repair with a new fixed-width wrapper.
-   [CSS 2.2, §§10.1 and 10.3.3](https://www.w3.org/TR/CSS22/visudet.html#blockwidth)
+   [CSS 2.2, 10.1 and 10.3.3](https://www.w3.org/TR/CSS22/visudet.html#blockwidth)
 
 2. `max-width: none` removes a maximum constraint. Applied only to the
    Journal Feed-owned embedded editor, it lets the editor retain its normal
@@ -36,20 +36,18 @@ height, percentage column, or a viewport breakpoint merely to align the two.
 4. The current Logseq source renders a journal as a page (`is-journals`) whose
    title and page blocks are siblings inside one `page-inner` container; the
    journal title is explicitly passed as `:journal-page?`, and the block list
-   is rendered beneath it. That is evidence for the structural reference we
-   want—title and blocks share one parent layout context—not evidence for
-   copying a fixed pixel width from Logseq. The examined source does not supply
-   a Journal-specific fixed content width to adopt.
+   is rendered beneath it. That supports the structural reference adopted here:
+   title and blocks share one parent layout context. It is not evidence for
+   copying a fixed pixel width from Logseq.
    [Logseq page component, journal/page structure](https://github.com/logseq/logseq/blob/master/src/main/frontend/components/page.cljs)
 
-## Minimal implementation principle
+## Adopted layout
 
-Keep each `.blp-journal-feed-day` as the sole shared containing block for its
-date header and embedded content. Locally neutralize only the readable-line
-length constraint that belongs to the embedded Markdown leaf:
+Each `.blp-journal-feed-day` is the shared containing block for its date header
+and embedded content. Only the Feed-owned Markdown leaf neutralizes the
+readable-line-length constraint:
 
 ```css
-/* Scope is deliberately limited to Journal Feed-owned embedded Markdown. */
 .blp-journal-feed-day-editor
   .markdown-source-view.mod-cm6.is-readable-line-width
   .cm-sizer {
@@ -58,23 +56,45 @@ length constraint that belongs to the embedded Markdown leaf:
 }
 ```
 
-This has no literal content width, `min-width`, `min-height`, percentage, or
-new media query. The header and editor will both respond to the Feed's existing
-available inline size, including narrow panes and mobile. `margin-inline` is
-used rather than physical left/right margins so the alignment follows writing
-direction.
+This contains no literal content width, artificial initial height, percentage
+column, or viewport breakpoint. The header and editor respond to the Feed's
+available inline size, including narrow panes. `margin-inline` preserves the
+rule for either writing direction.
 
-Do **not** set `width: 100%` unless a runtime measurement shows another
-descendant is shrink-to-fit: the normal block `auto` width is already the
-standards-defined responsive behavior. Do **not** alter the `EmbedLeafManager`,
-outliner lifecycle, observers, or placeholder sizing to solve a purely
-horizontal CSS alignment issue.
+The initial visual iteration's absolute Feed toolbar was removed after review:
+it could overlap the first date at a narrow width. `Refresh Journal Feed` and
+`Open Journal Feed source` are now native Obsidian view-header actions, not
+part of the journal flow. The terminal `Load more` message is cleared once all
+available days have been rendered. Retained editor height is measured from the
+previous real embed only; no initial placeholder height is imposed. These are
+visual-flow adjustments, not replacements for the embedding, observer, focus,
+or outliner lifecycle.
 
-## Validation required before adoption
+## Runtime validation record
 
-On the isolated task-owned Obsidian/CDP instance, assert for a mounted Markdown
-day that the day header and `.cm-sizer` have the same inline-start position;
-also verify the editor remains contained at a narrow pane width. Check a
-File-Outliner day separately, but do not apply Markdown-editor selectors to it
-without evidence. Existing lifecycle, focus, edit, and unload checks must stay
-unchanged.
+The acceptance run used only the task-owned Obsidian debug instance on port
+`9236`, started by `scripts/start-obsidian-debug-env.ps1`, with a disposable
+three-day Journal Feed fixture.
+
+- Before the local `.cm-sizer` rule, CDP measured a **296 px** inline-start
+  difference between the day label and Markdown content. After the change,
+  CDP measured **0 px** for a mounted Markdown day.
+- With `Emulation.setDeviceMetricsOverride` at **768 x 1000**, CDP reported
+  `headerOffset: 0` and `overflow: 0`; the Feed contained no custom toolbar
+  buttons. The native view header exposed the two actions above instead.
+- Wide and narrow `Page.captureScreenshot` captures were inspected after the
+  plugin reload. They show a continuous date-to-block flow, no card borders,
+  no blank centered Markdown column, and no content-overlay controls.
+- Validation commands passed after the final adjustment:
+
+  ```text
+  corepack pnpm run build-with-types
+  corepack pnpm test -- --runInBand
+  corepack pnpm run agent:workflow-check
+  git diff --check
+  ```
+
+The exact commands, raw assertion output, and screenshots are stored in [`PLANE-BLP-16 runtime proof`](../harness/runs/PLANE-BLP-16/trace/implementation/journal-feed-layout-flow-2026-08-30.md).
+
+File-Outliner content is deliberately outside this Markdown-specific selector;
+its existing lifecycle and rendering remain unchanged.

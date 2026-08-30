@@ -206,6 +206,11 @@
       "path": "scripts/cdp-snippets/regression/inline-edit/embed-jump-affordance.js"
     },
     {
+      "id": "journal-feed-layout-flow",
+      "kind": "probe",
+      "area": "journal-feed",
+      "path": "scripts/cdp-snippets/probes/journal-feed-layout-flow.js"
+    },    {
       "id": "journal-feed-mobile-embedded-layout",
       "kind": "regression",
       "area": "journal-feed",

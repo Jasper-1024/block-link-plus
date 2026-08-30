@@ -35,7 +35,7 @@ export class JournalFeedView extends TextFileView {
 	private nextIndex = 0;
 
 	private rootEl: HTMLElement | null = null;
-	private feedHeaderEl: HTMLElement | null = null;
+
 	private feedEl: HTMLElement | null = null;
 	private loadMoreEl: HTMLElement | null = null;
 
@@ -82,9 +82,15 @@ export class JournalFeedView extends TextFileView {
 		this.detachAllSections();
 		this.contentEl.empty();
 		this.rootEl = null;
-		this.feedHeaderEl = null;
+
 		this.feedEl = null;
 		this.loadMoreEl = null;
+	}
+
+	async onOpen(): Promise<void> {
+		await super.onOpen();
+		this.addAction("refresh-cw", "Refresh Journal Feed", () => this.scheduleRebuild(0));
+		this.addAction("file-text", "Open Journal Feed source", () => this.openAnchorInMarkdown());
 	}
 
 	onunload(): void {
@@ -104,7 +110,7 @@ export class JournalFeedView extends TextFileView {
 		this.contentEl.empty();
 		this.rootEl = this.contentEl.createDiv("blp-journal-feed-root");
 
-		this.feedHeaderEl = this.rootEl.createDiv("blp-journal-feed-header");
+
 		this.feedEl = this.rootEl.createDiv("blp-journal-feed-scroll");
 		this.loadMoreEl = this.feedEl.createDiv("blp-journal-feed-load-more");
 		this.loadMoreEl.setText("Load more…");
@@ -133,26 +139,12 @@ export class JournalFeedView extends TextFileView {
 		const startIndex = chooseStartIndex(this.sources);
 		this.nextIndex = startIndex;
 
-		this.renderHeader();
+
 		this.installObservers();
 
 		this.appendMore({ count: this.config.initialDays });
 	}
 
-	private renderHeader(): void {
-		if (!this.feedHeaderEl) return;
-		this.feedHeaderEl.empty();
-
-		const titleRow = this.feedHeaderEl.createDiv("blp-journal-feed-title-row");
-		titleRow.createDiv({ cls: "blp-journal-feed-title", text: "Journal Feed" });
-		const actions = titleRow.createDiv("blp-journal-feed-actions");
-
-		const refreshBtn = actions.createEl("button", { text: "Refresh" });
-		refreshBtn.addEventListener("click", () => this.scheduleRebuild(0));
-
-		const openAnchorBtn = actions.createEl("button", { text: "Open Anchor" });
-		openAnchorBtn.addEventListener("click", () => this.openAnchorInMarkdown());
-	}
 
 	private renderError(message: string): void {
 		if (!this.feedEl) return;
@@ -350,7 +342,7 @@ export class JournalFeedView extends TextFileView {
 
 		// Clear placeholder but preserve last known height to avoid scroll jumps.
 		try {
-			section.editorHostEl.style.minHeight = section.lastHeight > 0 ? `${section.lastHeight}px` : "";
+			this.applyRetainedEditorHeight(section);
 		} catch {
 			// ignore
 		}
@@ -438,6 +430,10 @@ export class JournalFeedView extends TextFileView {
 		}
 	}
 
+	private applyRetainedEditorHeight(section: DaySection): void {
+		section.editorHostEl.style.minHeight = section.lastHeight > 0 ? `${section.lastHeight}px` : "";
+	}
+
 	private ensureJournalFeedEditorExtensions(embed: ManagedEmbedLeaf): void {
 		const cm = (embed as any)?.view?.editor?.cm;
 		if (!cm?.state || typeof cm.dispatch !== "function") return;
@@ -504,7 +500,7 @@ export class JournalFeedView extends TextFileView {
 		try {
 			const h = section.editorHostEl.getBoundingClientRect().height;
 			if (Number.isFinite(h) && h > 0) section.lastHeight = Math.round(h);
-			section.editorHostEl.style.minHeight = section.lastHeight > 0 ? `${section.lastHeight}px` : "";
+			this.applyRetainedEditorHeight(section);
 		} catch {
 			// ignore
 		}
