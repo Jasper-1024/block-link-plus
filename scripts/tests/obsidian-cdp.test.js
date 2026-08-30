@@ -26,6 +26,7 @@ test("embed jump regression restores every CDP lifecycle boundary", () => {
 function runCli(args, env = {}) {
   const childEnv = { ...process.env, ...env };
   delete childEnv.OB_CDP_PORT;
+  delete childEnv.BLP_RUNTIME_LEASE_FILE;
   return spawnSync(process.execPath, [cli, ...args], {
     cwd: repoRoot,
     env: childEnv,
@@ -46,6 +47,7 @@ function runCliAsync(args, env = {}) {
   return new Promise((resolve) => {
     const childEnv = { ...process.env, ...env };
     if (!("OB_CDP_PORT" in env)) delete childEnv.OB_CDP_PORT;
+    if (!("BLP_RUNTIME_LEASE_FILE" in env)) delete childEnv.BLP_RUNTIME_LEASE_FILE;
     const child = spawn(process.execPath, [cli, ...args], { cwd: repoRoot, env: childEnv });
     let stdout = "";
     let stderr = "";

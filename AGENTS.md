@@ -74,8 +74,8 @@ Primary validation surfaces:
 - `corepack pnpm install --frozen-lockfile`
 - `corepack pnpm test`
 - `corepack pnpm run build-with-types`
-- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <task-port>`
-- `node scripts/obsidian-cdp.js --port <task-port> eval-file "scripts/cdp-snippets/<snippet>.js"`
+- Manual only: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <port>`
+- Runner task: `node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"` (reads its lease); manual use passes `--port <port>`.`
 - `corepack pnpm run agent:workflow-check`
 
 Quality and review rules:

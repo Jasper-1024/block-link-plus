@@ -1,8 +1,9 @@
 # Obsidian CDP
 
 `scripts/obsidian-cdp.js` is the only supported CDP client in this repository.
-It requires an explicit runtime port through `--port` or `OB_CDP_PORT`; it never
-defaults to 9222 and never chooses the first matching target.
+It uses an explicit `--port`, the runner task lease named by `BLP_RUNTIME_LEASE_FILE`, or
+`OB_CDP_PORT` (in that precedence order). It never defaults to 9222 and never chooses
+the first matching target.
 
 ## Manual runtime
 
@@ -52,5 +53,7 @@ Stable regression snippets return:
 }
 ```
 
-A failed/missing cleanup contract taints the runtime and invalidates the result.
+A failed/missing cleanup contract invalidates that regression result. In a runner-owned task
+runtime, the runner records the task-local scene mutation and reuses the same lease; it does
+not automatically rebuild the instance.
 Broad smoke checks and exploratory probes are evidence aids, not regressions.

@@ -115,9 +115,9 @@ Use [docs/harness/guides/cdp-runtime.md](docs/harness/guides/cdp-runtime.md)
 and [docs/harness/guides/runtime-proof-package.md](docs/harness/guides/runtime-proof-package.md).
 If product/runtime evidence cannot be collected from an otherwise healthy
 task-owned instance, stop with Runtime Blocked and record the exact failed
-command. Runner protocol failures, task-identity violations, and a CDP timeout
-that taints the instance are retried once with a rebuilt runtime, then routed to
-Automation Error.
+command. Runner protocol failures, task-identity violations, and CDP timeouts follow the
+runtime-failure route. Cleanup scene mutation is recorded as task-local state and
+does not automatically rebuild the runtime.
 
 ## Human Gates
 
@@ -152,8 +152,8 @@ Use the smallest validation that proves the claim, then broaden as risk grows:
 corepack pnpm install --frozen-lockfile
 corepack pnpm test
 corepack pnpm run build-with-types
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <task-port>
-node scripts/obsidian-cdp.js --port <task-port> eval-file "scripts/cdp-snippets/<snippet>.js"
+Manual only: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-obsidian-debug-env.ps1 -Port <port>
+node scripts/obsidian-cdp.js eval-file "scripts/cdp-snippets/<snippet>.js"  # runner task lease; manual use adds --port <port>
 corepack pnpm run agent:workflow-check
 ```
 
