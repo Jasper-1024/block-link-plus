@@ -26,8 +26,6 @@ type DaySection = {
 	lastHeight: number;
 };
 
-const MIN_JOURNAL_EDITOR_HEIGHT = 48;
-
 export class JournalFeedView extends TextFileView {
 	private readonly plugin: BlockLinkPlus;
 
@@ -228,7 +226,7 @@ export class JournalFeedView extends TextFileView {
 		const start = this.nextIndex;
 		const end = Math.min(this.sources.length, start + opts.count);
 		if (start >= end) {
-			this.loadMoreEl?.setText("No more days.");
+			this.loadMoreEl?.empty();
 			return;
 		}
 
@@ -295,7 +293,7 @@ export class JournalFeedView extends TextFileView {
 			embed: null,
 			mountPromise: null,
 			unloadTimer: null,
-			lastHeight: MIN_JOURNAL_EDITOR_HEIGHT,
+			lastHeight: 0,
 		};
 
 		this.sectionByHost.set(editorHostEl, section);
@@ -352,7 +350,7 @@ export class JournalFeedView extends TextFileView {
 
 		// Clear placeholder but preserve last known height to avoid scroll jumps.
 		try {
-			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, MIN_JOURNAL_EDITOR_HEIGHT)}px`;
+			section.editorHostEl.style.minHeight = section.lastHeight > 0 ? `${section.lastHeight}px` : "";
 		} catch {
 			// ignore
 		}
@@ -506,7 +504,7 @@ export class JournalFeedView extends TextFileView {
 		try {
 			const h = section.editorHostEl.getBoundingClientRect().height;
 			if (Number.isFinite(h) && h > 0) section.lastHeight = Math.round(h);
-			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, MIN_JOURNAL_EDITOR_HEIGHT)}px`;
+			section.editorHostEl.style.minHeight = section.lastHeight > 0 ? `${section.lastHeight}px` : "";
 		} catch {
 			// ignore
 		}

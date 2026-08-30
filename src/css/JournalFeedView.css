@@ -2,85 +2,99 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	position: relative;
 }
 
 .blp-journal-feed-header {
-	padding: 10px 18px;
-	border-bottom: 1px solid var(--background-modifier-border);
+	position: absolute;
+	inset-block-start: var(--size-4-2);
+	inset-inline-end: var(--size-4-3);
+	z-index: 1;
+	padding: 0;
 }
 
 .blp-journal-feed-title-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--size-4-2);
 }
 
 .blp-journal-feed-title {
-	font-size: 16px;
-	font-weight: 600;
+	display: none;
 }
-
 
 .blp-journal-feed-actions {
 	display: flex;
-	gap: 8px;
+	gap: var(--size-4-2);
 	flex-wrap: wrap;
+	opacity: 0.65;
+}
+
+@media (hover: hover) {
+	.blp-journal-feed-actions {
+		opacity: 0;
+	}
+
+	.blp-journal-feed-header:hover .blp-journal-feed-actions,
+	.blp-journal-feed-actions:focus-within {
+		opacity: 1;
+	}
 }
 
 .blp-journal-feed-scroll {
 	flex: 1;
 	overflow: auto;
-	padding: 4px 18px 24px;
+	padding: 0 var(--size-4-3) var(--size-4-5);
 }
 
 .blp-journal-feed-day {
-	margin: 0;
-	padding: 12px 0 20px;
-	border-bottom: 1px solid var(--background-modifier-border);
+	padding-block: var(--size-4-5);
 }
 
 .blp-journal-feed-day-header {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	padding: 7px 0;
-	margin-bottom: 4px;
-	background: var(--background-primary);
+	align-items: baseline;
+	justify-content: flex-start;
+	gap: var(--size-4-1);
+	margin-block-end: var(--size-4-3);
 }
 
 .blp-journal-feed-day-heading {
 	display: flex;
 	align-items: baseline;
-	gap: 8px;
+	gap: var(--size-4-2);
 	min-width: 0;
 }
 
 .blp-journal-feed-day-title {
-	font-size: 17px;
-	font-weight: 650;
-	letter-spacing: -0.01em;
+	font-size: var(--h1-size);
+	font-weight: var(--h1-weight);
+	color: var(--h1-color);
 }
 
 .blp-journal-feed-day-relative {
 	flex: 0 0 auto;
-	font-size: 12px;
-	font-weight: 500;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-normal);
 	color: var(--text-muted);
 }
 
 .blp-journal-feed-day-open {
 	flex: 0 0 auto;
-	opacity: 0.7;
+	margin-inline-start: var(--size-4-1);
+	opacity: 0.65;
 }
 
-.blp-journal-feed-day-header:hover .blp-journal-feed-day-open,
-.blp-journal-feed-day-open:focus-visible {
-	opacity: 1;
+@media (hover: hover) {
+	.blp-journal-feed-day-open {
+		opacity: 0;
+	}
+
+	.blp-journal-feed-day-header:hover .blp-journal-feed-day-open,
+	.blp-journal-feed-day-open:focus-visible {
+		opacity: 1;
+	}
 }
 
 .blp-journal-feed-day-editor {
@@ -106,6 +120,17 @@
 	overflow: visible;
 }
 
+/*
+ * A Journal Feed owns one continuous day column. Embedded Markdown views carry
+ * Obsidian's readable-line-width class, whose centered `.cm-sizer` otherwise
+ * gives the body a different column from the day heading. Keep this override
+ * local to the feed and let the available inline size determine both.
+ */
+.blp-journal-feed-day-editor .markdown-source-view.is-readable-line-width .cm-sizer {
+	max-width: none;
+	margin-inline: 0;
+}
+
 .blp-journal-feed-placeholder {
 	color: var(--text-muted);
 	font-size: 12px;
@@ -124,21 +149,4 @@
 	font-size: 12px;
 	text-align: center;
 	padding: 14px 0;
-}
-
-@media (max-width: 600px) {
-	.blp-journal-feed-header,
-	.blp-journal-feed-scroll {
-		padding-left: 12px;
-		padding-right: 12px;
-	}
-
-	.blp-journal-feed-day {
-		padding-top: 8px;
-		padding-bottom: 16px;
-	}
-
-	.blp-journal-feed-day-title {
-		font-size: 16px;
-	}
 }
