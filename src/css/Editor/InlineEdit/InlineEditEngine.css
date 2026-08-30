@@ -52,11 +52,13 @@
 	width: 100%;
 }
 
-.blp-inline-edit-host.blp-inline-edit-root .cm-content {
+.blp-inline-edit-root .cm-content {
 	background-color: transparent !important;
 	padding-bottom: 0 !important;
-	padding-left: 10px !important;
-	padding-right: 10px !important;
+}
+
+.blp-inline-edit-host.blp-inline-edit-root .cm-content {
+	padding-inline: 10px !important;
 }
 
 .blp-inline-edit-root .cm-sizer {

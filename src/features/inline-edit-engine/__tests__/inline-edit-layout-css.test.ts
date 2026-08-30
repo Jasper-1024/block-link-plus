@@ -48,7 +48,7 @@ describe("InlineEditEngine layout CSS", () => {
 
 	test("does not force extra bottom padding inside the embedded editor content", () => {
 		const css = readFileSync(cssPath, "utf8");
-		const match = css.match(/\.blp-inline-edit-host\.blp-inline-edit-root\s+\.cm-content\s*\{([^}]+)\}/);
+		const match = css.match(/\.blp-inline-edit-root\s+\.cm-content\s*\{([^}]+)\}/);
 
 		expect(match).not.toBeNull();
 
@@ -57,5 +57,13 @@ describe("InlineEditEngine layout CSS", () => {
 
 		expect(paddingBottom === undefined || paddingBottom === "0" || paddingBottom === "0px").toBe(true);
 		expect(declarations).not.toMatch(/padding-bottom\s*:\s*18px\b/);
+	});
+
+	test("reserves horizontal card inset for regular Inline Edit hosts", () => {
+		const css = readFileSync(cssPath, "utf8");
+		const match = css.match(/\.blp-inline-edit-host\.blp-inline-edit-root\s+\.cm-content\s*\{([^}]+)\}/);
+
+		expect(match).not.toBeNull();
+		expect(match?.[1]).toMatch(/padding-inline\s*:\s*10px\s*!important/);
 	});
 });

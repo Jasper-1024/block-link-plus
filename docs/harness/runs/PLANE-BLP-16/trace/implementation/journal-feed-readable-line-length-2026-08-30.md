@@ -76,3 +76,19 @@ with these additional fields:
 
 The follow-up visual capture is
 [journal-feed-native-content-inset-2026-08-30.png](journal-feed-native-content-inset-2026-08-30.png).
+
+## Follow-up: no detached-editor bottom filler
+
+The generic host split initially omitted `padding-bottom: 0` from Journal Feed.
+The red CDP assertion reported:
+
+```text
+Journal Feed content bottom padding must be 0px; got 106px.
+```
+
+The final CSS splits shared detached-editor behavior from card spacing:
+`blp-inline-edit-root` keeps the transparent background and zero bottom
+padding; only `blp-inline-edit-host.blp-inline-edit-root` receives the
+horizontal `10px` card inset. The final probe passed in both readable-line-
+length states with `feedContentBottomPadding: "0px"`; the follow-up capture is
+[journal-feed-no-bottom-padding-2026-08-31.png](journal-feed-no-bottom-padding-2026-08-31.png).

@@ -117,3 +117,17 @@ participates in the same native/theme cascade as a normal note without a
 counter-offset. The Feed heading's `12px` block-end margin remains intentional
 date-to-body spacing; CodeMirror's content top padding is `0px` in both
 contexts.
+
+## Follow-up: embedded content bottom padding
+
+The card-inset ownership change initially scoped `padding-bottom: 0` too
+narrowly. That declaration is not card spacing: detached CodeMirror editors
+otherwise add a dynamic bottom filler for scrolling, which appeared as large
+blank areas between Journal Feed days (`106px`, `79px`, and `53px` in the
+three-day fixture). The final split keeps the transparent background and
+`padding-bottom: 0` on every `blp-inline-edit-root`, while reserving only the
+horizontal `10px` card inset for `blp-inline-edit-host`.
+
+The CDP probe asserts that Feed content starts at its own sizer and has
+`padding-bottom: 0`. It reports a normal note's separate property-area offset
+as evidence only; Journal Feed intentionally hides that property area.

@@ -15,10 +15,12 @@
     if (!condition) throw new Error(message);
   };
 
-  let view = null;
+  const journalViews = [];
   app.workspace.iterateAllLeaves((leaf) => {
-    if (leaf.view?.containerEl?.querySelector?.(".blp-journal-feed-root")) view = leaf.view;
+    const root = leaf.view?.containerEl?.querySelector?.(".blp-journal-feed-root");
+    if (root) journalViews.push({ view: leaf.view, root });
   });
+  const view = journalViews.find(({ root }) => root.getBoundingClientRect().width > 0)?.view ?? journalViews[0]?.view;
 
   assert(view, "No open Journal Feed view found.");
   const section = view.sections?.find((candidate) => candidate.renderMode === "markdown");
@@ -36,7 +38,7 @@
   const sizer = source?.querySelector(".cm-sizer");
   const content = source?.querySelector(".cm-content");
   const nativeSource = [...document.querySelectorAll(".markdown-source-view.mod-cm6")]
-    .find((candidate) => !candidate.closest(".blp-journal-feed-root"));
+    .find((candidate) => !candidate.closest(".blp-journal-feed-root") && candidate.querySelector(".cm-content") && candidate.getBoundingClientRect().width > 0);
   const nativeSizer = nativeSource?.querySelector(".cm-sizer");
   const nativeContent = nativeSource?.querySelector(".cm-content");
   assert(header && source && sizer && content && root && nativeSizer && nativeContent, "Mounted Journal Feed/native Markdown DOM is incomplete.");
@@ -52,7 +54,7 @@
     const currentSizer = currentSource?.querySelector(".cm-sizer");
     const currentContent = currentSource?.querySelector(".cm-content");
     const currentNativeSource = [...document.querySelectorAll(".markdown-source-view.mod-cm6")]
-      .find((candidate) => !candidate.closest(".blp-journal-feed-root"));
+      .find((candidate) => !candidate.closest(".blp-journal-feed-root") && candidate.querySelector(".cm-content") && candidate.getBoundingClientRect().width > 0);
     const currentNativeSizer = currentNativeSource?.querySelector(".cm-sizer");
     const currentNativeContent = currentNativeSource?.querySelector(".cm-content");
     assert(currentSource && currentSizer && currentContent && currentNativeSizer && currentNativeContent, "Mounted Journal Feed/native Markdown DOM is incomplete.");
@@ -74,7 +76,8 @@
     assert(currentSource.classList.contains("is-readable-line-width") === enabled, `Expected source readable-line-width=${enabled}.`);
     assert(normalizeMaxWidth(feedSizerStyle.maxWidth) === normalizeMaxWidth(nativeSizerStyle.maxWidth), `Feed/native sizer max-width differ: ${feedSizerStyle.maxWidth} vs ${nativeSizerStyle.maxWidth}.`);
     assert(inlineStart(feedContentStyle) === inlineStart(nativeContentStyle), `Feed/native content inline inset differ: ${inlineStart(feedContentStyle)} vs ${inlineStart(nativeContentStyle)}.`);
-    assert(feedContentBlockStart === nativeContentBlockStart, `Feed/native content block start differ: ${feedContentBlockStart}px vs ${nativeContentBlockStart}px.`);
+    assert(feedContentBlockStart === 0, `Journal Feed content must start at its sizer; got ${feedContentBlockStart}px.`);
+    assert(feedContentStyle.paddingBottom === "0px", `Journal Feed content bottom padding must be 0px; got ${feedContentStyle.paddingBottom}.`);
     assert(dateToContentGap === declaredDateToContentGap, `Journal date/content gap differs from the declared header margin: ${dateToContentGap}px vs ${declaredDateToContentGap}px.`);
     assert(dayStyle.maxInlineSize === virtualDayStyle.maxInlineSize, "Mounted and virtual Markdown days must share the same width constraint.");
     if (enabled) {
@@ -93,6 +96,7 @@
       nativeContentInlineInset: inlineStart(nativeContentStyle),
       feedContentBlockStart,
       nativeContentBlockStart,
+      feedContentBottomPadding: feedContentStyle.paddingBottom,
       dateToContentGap,
       declaredDateToContentGap,
       dayMaxInlineSize: dayStyle.maxInlineSize,
