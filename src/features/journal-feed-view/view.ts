@@ -1,5 +1,4 @@
 import { TextFileView, TFile, WorkspaceLeaf } from "obsidian";
-import moment from "moment";
 import { StateEffect } from "@codemirror/state";
 
 import type BlockLinkPlus from "../../main";
@@ -8,6 +7,7 @@ import { isFileOutlinerEnabledFile } from "../file-outliner-view/enable-scope";
 import { getJournalFeedConfigFromText, type JournalFeedConfig } from "./anchor";
 import { JOURNAL_FEED_VIEW_TYPE } from "./constants";
 import { chooseStartIndex, resolveDailySources, type DailySource } from "./daily-sources";
+import { getJournalDayLabel } from "./journal-day-label";
 import { contentRange, editableRange, editBlockExtensions, hideLine } from "shared/utils/codemirror/selectiveEditor";
 import { OutlinerEmbedLeafManager, type ManagedOutlinerEmbedLeaf } from "./OutlinerEmbedLeafManager";
 
@@ -26,19 +26,12 @@ type DaySection = {
 	lastHeight: number;
 };
 
-function formatDay(ts: number, format: string): string {
-	try {
-		return moment(ts).format(format);
-	} catch {
-		return String(ts);
-	}
-}
+const MIN_JOURNAL_EDITOR_HEIGHT = 48;
 
 export class JournalFeedView extends TextFileView {
 	private readonly plugin: BlockLinkPlus;
 
 	private config: JournalFeedConfig = { initialDays: 3, pageSize: 7 };
-	private folderPath = "/";
 	private dateFormat = "YYYY-MM-DD";
 	private sources: DailySource[] = [];
 	private nextIndex = 0;
@@ -131,7 +124,6 @@ export class JournalFeedView extends TextFileView {
 			return;
 		}
 
-		this.folderPath = resolved.folderPath;
 		this.dateFormat = resolved.format;
 		this.sources = resolved.sources;
 
@@ -155,11 +147,7 @@ export class JournalFeedView extends TextFileView {
 
 		const titleRow = this.feedHeaderEl.createDiv("blp-journal-feed-title-row");
 		titleRow.createDiv({ cls: "blp-journal-feed-title", text: "Journal Feed" });
-
-		const meta = this.feedHeaderEl.createDiv("blp-journal-feed-meta");
-		meta.setText(`Daily Notes: folder=${this.folderPath || "/"} format=${this.dateFormat}`);
-
-		const actions = this.feedHeaderEl.createDiv("blp-journal-feed-actions");
+		const actions = titleRow.createDiv("blp-journal-feed-actions");
 
 		const refreshBtn = actions.createEl("button", { text: "Refresh" });
 		refreshBtn.addEventListener("click", () => this.scheduleRebuild(0));
@@ -271,10 +259,14 @@ export class JournalFeedView extends TextFileView {
 		const sectionEl = this.feedEl.createDiv("blp-journal-feed-day");
 		const headerEl = sectionEl.createDiv("blp-journal-feed-day-header");
 
-		const dateText = formatDay(src.ts, this.dateFormat);
-		headerEl.createDiv({ cls: "blp-journal-feed-day-title", text: dateText });
+		const dayLabel = getJournalDayLabel(src.ts, this.dateFormat);
+		const headingEl = headerEl.createDiv("blp-journal-feed-day-heading");
+		headingEl.createDiv({ cls: "blp-journal-feed-day-title", text: dayLabel.absolute });
+		if (dayLabel.relative) {
+			headingEl.createSpan({ cls: "blp-journal-feed-day-relative", text: dayLabel.relative });
+		}
 
-		const openBtn = headerEl.createEl("button", { text: "Open" });
+		const openBtn = headerEl.createEl("button", { cls: "blp-journal-feed-day-open", text: "Open" });
 		openBtn.addEventListener("click", () => {
 			try {
 				void this.app.workspace.getLeaf(true).openFile(src.file);
@@ -303,7 +295,7 @@ export class JournalFeedView extends TextFileView {
 			embed: null,
 			mountPromise: null,
 			unloadTimer: null,
-			lastHeight: 160,
+			lastHeight: MIN_JOURNAL_EDITOR_HEIGHT,
 		};
 
 		this.sectionByHost.set(editorHostEl, section);
@@ -360,7 +352,7 @@ export class JournalFeedView extends TextFileView {
 
 		// Clear placeholder but preserve last known height to avoid scroll jumps.
 		try {
-			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, 160)}px`;
+			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, MIN_JOURNAL_EDITOR_HEIGHT)}px`;
 		} catch {
 			// ignore
 		}
@@ -514,7 +506,7 @@ export class JournalFeedView extends TextFileView {
 		try {
 			const h = section.editorHostEl.getBoundingClientRect().height;
 			if (Number.isFinite(h) && h > 0) section.lastHeight = Math.round(h);
-			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, 160)}px`;
+			section.editorHostEl.style.minHeight = `${Math.max(section.lastHeight, MIN_JOURNAL_EDITOR_HEIGHT)}px`;
 		} catch {
 			// ignore
 		}
