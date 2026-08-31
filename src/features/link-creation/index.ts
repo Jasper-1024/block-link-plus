@@ -335,8 +335,40 @@ export function gen_insert_blocklink_multiline_block(
 	const startListItem = pickListItemForLine(startLine);
 	const endListItem = pickListItemForLine(endLine);
 
-	const startInsertLine = startListItem ? startListItem.end : startLine;
 	const endInsertLine = endListItem ? endListItem.end : endLine;
+
+	// Obsidian only indexes a block id if it sits on the true last line of its
+	// enclosing block. Consecutive non-blank lines merge into one "paragraph"
+	// section (e.g. a lone `?` line does not break the paragraph above it), so
+	// `startLine` may not be that section's real last line. Placing `^id` there
+	// is silently ignored by Obsidian's block cache.
+	//
+	// This is normally masked: when the end marker lands inside that same
+	// section, the range resolver (getLineRangeFromRef) falls back to that
+	// section's own position, which still starts at the right line. But once
+	// the end marker lands in a *different* section (e.g. a following list
+	// swallows the next paragraph as a lazy-continuation line), the fallback
+	// no longer covers the true start, and the range collapses to just the end
+	// block. Extend the start marker to its section's real last line in that
+	// case only, mirroring how wrapped list items already push the marker to
+	// `startListItem.end` above.
+	const startSection = !startListItem
+		? (fileCache.sections || []).find((section) => {
+				return section.position.start.line <= startLine && section.position.end.line >= startLine;
+			})
+		: undefined;
+
+	const startNeedsSectionExtension =
+		Boolean(startSection) &&
+		startSection!.type !== "list" &&
+		startSection!.position.end.line > startLine &&
+		endInsertLine > startSection!.position.end.line;
+
+	const startInsertLine = startListItem
+		? startListItem.end
+		: startNeedsSectionExtension
+			? startSection!.position.end.line
+			: startLine;
 
 	const startInsertText = editor.getLine(startInsertLine);
 	const endInsertText = editor.getLine(endInsertLine);
