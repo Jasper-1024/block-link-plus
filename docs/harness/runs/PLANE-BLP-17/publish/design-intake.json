@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-17",
+  "stage": "design-intake",
+  "verdict": "human-review-required",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-17/design-intake.md",
+    "sha256": "6d7da5f655fe1dd12af2fc1507c29301a3b92cacb189a76076bf86472f934fdd"
+  },
+  "comment": "Corrected the intake after tracker feedback: BLP-17 targets the current day-grouped `blp-view` `embed-list` timeline. The recommended live presentation redesign preserves all query, filter, group, sort, embed, and materialization semantics. Visual runtime evidence used a temporary Dataview shim; full integration remains for implementation validation.",
+  "links": [
+    {
+      "title": "design-intake artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-17/design-intake.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Wrote and validated the canonical design-intake artifact. Targeted tests (24) and workflow check passed; no product code was changed. Await Review Approved or Review Rejected feedback."
+  },
+  "outOfScope": [
+    "Journal Feed and retired `blp-timeline`; Journal Feed belongs to BLP-16.",
+    "Table rendering, non-timeline group modes, and materialized output format.",
+    "Changes to source resolution, query/filter/group/sort/hierarchy/limits, native embed behavior, or persistence."
+  ]
+}

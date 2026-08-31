@@ -101,6 +101,9 @@ interface BlpViewResolvedConfig {
 	render: { type: RenderType; mode?: RenderMode; columns: ColumnConfig[] };
 }
 
+export function isLiveDayGroupedEmbedList(config: BlpViewResolvedConfig): boolean {
+	return config.group.by === "day(date)" && config.render.type === "embed-list" && !config.render.mode;
+}
 function normalizeTag(tag: string): string {
 	const trimmed = tag.trim();
 	if (!trimmed) return "";
@@ -689,6 +692,31 @@ export function renderEmbedList(groups: BlpViewGroup[]): string {
 	return lines.join("\n").trim();
 }
 
+async function renderTimelineEmbedList(
+	groups: BlpViewGroup[],
+	el: HTMLElement,
+	ctx: MarkdownPostProcessorContext,
+	plugin: BlockLinkPlus
+): Promise<void> {
+	const timeline = el.createDiv({ cls: "blp-view-timeline" });
+	await MarkdownRenderer.renderMarkdown(renderEmbedList(groups), timeline, ctx.sourcePath, plugin);
+
+	const renderedNodes = Array.from(timeline.children);
+	let activeItems: HTMLElement | null = null;
+	for (const node of renderedNodes) {
+		if (node.matches("h3")) {
+			const group = timeline.createEl("section", { cls: "blp-view-timeline-group" });
+			const header = group.createDiv({ cls: "blp-view-timeline-group-header" });
+			const items = group.createDiv({ cls: "blp-view-timeline-items" });
+			node.addClass("blp-view-timeline-group-label");
+			header.appendChild(node);
+			activeItems = items;
+			continue;
+		}
+
+		activeItems?.appendChild(node);
+	}
+}
 function renderTable(
 	dv: DataviewApi,
 	groups: BlpViewGroup[],
@@ -1021,7 +1049,20 @@ export async function handleBlpView(
 			return;
 		}
 
-		await MarkdownRenderer.renderMarkdown(markdown, el, ctx.sourcePath, plugin);
+		if (isLiveDayGroupedEmbedList(config)) {
+			if (truncated) {
+				const notice = el.createDiv({ cls: "blp-view-timeline-notice" });
+				await MarkdownRenderer.renderMarkdown(
+					`> [!warning] blp-view output truncated\n> Showing ${limited.length} of ${totalMatches} items (settings max results = ${maxResults}).`,
+					notice,
+					ctx.sourcePath,
+					plugin
+				);
+			}
+			await renderTimelineEmbedList(groups, el, ctx, plugin);
+		} else {
+			await MarkdownRenderer.renderMarkdown(markdown, el, ctx.sourcePath, plugin);
+		}
 		if (showDiagnostics) {
 			el.createEl("pre", { text: diagnosticsText });
 		}

@@ -11,6 +11,7 @@ import {
 	matchesSectionFilter,
 	matchesTagFilter,
 	parseConfig,
+	isLiveDayGroupedEmbedList,
 	renderEmbedList,
 	resolveSourceFilesOrError,
 	resolveConfigDefaults,
@@ -217,6 +218,28 @@ describe("file-outliner-view/blp-view filtering", () => {
 	});
 });
 
+
+describe("file-outliner-view/blp-view timeline presentation boundary", () => {
+	test("uses the timeline presentation only for live day-grouped embed lists", () => {
+		expect(isLiveDayGroupedEmbedList({
+			group: { by: "day(date)", field: "" },
+			render: { type: "embed-list", mode: undefined, columns: [] },
+		} as any)).toBe(true);
+
+		expect(isLiveDayGroupedEmbedList({
+			group: { by: "day(date)", field: "" },
+			render: { type: "embed-list", mode: "materialize", columns: [] },
+		} as any)).toBe(false);
+		expect(isLiveDayGroupedEmbedList({
+			group: { by: "file", field: "" },
+			render: { type: "embed-list", mode: undefined, columns: [] },
+		} as any)).toBe(false);
+		expect(isLiveDayGroupedEmbedList({
+			group: { by: "day(date)", field: "" },
+			render: { type: "table", mode: undefined, columns: [] },
+		} as any)).toBe(false);
+	});
+});
 describe("file-outliner-view/blp-view render: embed-list headings", () => {
 	test("links day(date) group headings to the unique source file when possible", () => {
 		const groups = [

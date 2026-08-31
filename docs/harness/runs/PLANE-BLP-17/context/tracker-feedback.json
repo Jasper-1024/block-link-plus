@@ -1,0 +1,48 @@
+{
+  "comments": [
+    {
+      "id": "7d1b9cd4-7ee2-44de-8142-f45e6b29c615",
+      "is_member": true,
+      "created_at": "2026-08-30T20:17:31.748732+08:00",
+      "updated_at": "2026-08-30T20:17:31.733574+08:00",
+      "deleted_at": null,
+      "comment_html": "<p>Design rejected: this item is the current <code>blp-view</code> timeline preset shown in the issue screenshots, not the retired <code>blp-timeline</code> feature and not Journal Feed. Do not reuse or reframe the Journal Feed proposal. Re-run discovery against the actual timeline / <code>embed-list</code> rendering; preserve its query, filter, group, and sort semantics, then propose presentation improvements with evidence. BLP-16 remains the separate Journal Feed task.</p>",
+      "attachments": [],
+      "access": "INTERNAL",
+      "external_source": null,
+      "external_id": null,
+      "edited_at": null,
+      "created_by": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "updated_by": null,
+      "project": "9183959f-c689-4826-8ec8-fc7fe4bf33ff",
+      "workspace": "e95e639e-888c-48f6-81ed-4ddbaa61ed07",
+      "description": "544373c9-c432-49fc-99a3-4d0bc9275265",
+      "issue": "f142d4d7-69a4-40b1-9a66-fe6b9c406678",
+      "actor": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "parent": null
+    },
+    {
+      "id": "96c97e8c-344c-4fa9-837b-f85a7fd3ac23",
+      "is_member": true,
+      "created_at": "2026-08-29T13:00:22.737372+08:00",
+      "updated_at": "2026-08-29T13:00:22.724216+08:00",
+      "deleted_at": null,
+      "comment_html": "<p>Design intake written; human approval is needed to confirm Journal Feed as the target and approve the presentation-only scope.</p><p><small>Artifact: <code>docs/harness/runs/PLANE-BLP-17/design-intake.md</code>. State target: <strong>Human Review</strong>.</small></p><p><small>Runner routing: design intake completed; route to human review for an explicit approve/reject gate.</small></p>",
+      "attachments": [],
+      "access": "INTERNAL",
+      "external_source": "plane-harness-runner",
+      "external_id": "publish-plan-comment-ea9715bfd7341107ba1542db964ad736",
+      "edited_at": null,
+      "created_by": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "updated_by": null,
+      "project": "9183959f-c689-4826-8ec8-fc7fe4bf33ff",
+      "workspace": "e95e639e-888c-48f6-81ed-4ddbaa61ed07",
+      "description": "fb07c3b1-fe3d-4057-8ce5-0e8f4de8f780",
+      "issue": "f142d4d7-69a4-40b1-9a66-fe6b9c406678",
+      "actor": "de705fdc-c1ec-4e53-b30d-8509dc7f5bc6",
+      "parent": null
+    }
+  ],
+  "links": [],
+  "pages": []
+}

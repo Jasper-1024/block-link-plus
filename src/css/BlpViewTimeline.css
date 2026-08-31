@@ -1,0 +1,78 @@
+/* Day-grouped live `blp-view` results are a reading surface, not generic Markdown.
+ * Keep this scope narrow so query semantics and other renderers remain untouched.
+ */
+.blp-view-timeline {
+	--blp-view-timeline-rail: color-mix(in srgb, var(--interactive-accent) 28%, var(--background-modifier-border));
+	--blp-view-timeline-separator: var(--background-modifier-border);
+	display: grid;
+	gap: var(--size-4-6, 1.5rem);
+}
+
+.blp-view-timeline-group {
+	min-width: 0;
+}
+
+.blp-view-timeline-group + .blp-view-timeline-group {
+	border-top: 1px solid var(--blp-view-timeline-separator);
+	padding-top: var(--size-4-6, 1.5rem);
+}
+
+.blp-view-timeline-group-header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--size-4-2, 0.5rem);
+	margin: 0 0 var(--size-4-3, 0.75rem);
+}
+
+.blp-view-timeline-group-header > .el-h3,
+.blp-view-timeline-group-label {
+	margin: 0;
+}
+
+.blp-view-timeline-group-label {
+	font-size: var(--h3-size);
+	line-height: var(--h3-line-height);
+}
+
+.blp-view-timeline-group-label a.internal-link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.blp-view-timeline-group-label a.internal-link:hover {
+	color: var(--text-accent);
+	text-decoration: underline;
+}
+
+.blp-view-timeline-items {
+	border-inline-start: 2px solid var(--blp-view-timeline-rail);
+	display: grid;
+	gap: var(--size-4-3, 0.75rem);
+	padding-inline-start: var(--size-4-4, 1rem);
+}
+
+.blp-view-timeline-items > * {
+	margin: 0;
+	min-width: 0;
+}
+
+.blp-view-timeline-items .internal-embed.markdown-embed {
+	--embed-padding: 0px;
+	border-inline-start: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.blp-view-timeline-items .markdown-embed-content,
+.blp-view-timeline-items .markdown-preview-view {
+	padding: 0;
+}
+
+.blp-view-timeline-notice {
+	margin-bottom: var(--size-4-4, 1rem);
+}
+
+.blp-view-timeline-notice > .callout {
+	margin: 0;
+}

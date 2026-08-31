@@ -23,6 +23,7 @@ import "css/Obsidian/Mods.css";
 import "css/Obsidian/BlockMarker.css";
 import "css/Obsidian/SettingsTabs.css";
 import "css/JournalFeedView.css";
+import "css/BlpViewTimeline.css";
 import "css/custom-styles.css";
 
 import { BlockLinkPlusSettingsTab } from 'ui/SettingsTab';
