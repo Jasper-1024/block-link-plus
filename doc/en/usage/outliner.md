@@ -91,6 +91,7 @@ Related commands (see Reference → Commands):
 
 - Undo / redo: regular text edits inside one block continue to use the editor's native history first; structural actions such as split, multiline paste, indent / outdent, merge, and drag/drop can be undone with `Ctrl/Cmd+Z`, and redone with the common Windows shortcut `Ctrl+Y` or `Cmd/Ctrl+Shift+Z`
 - `Tab` / `Shift+Tab`: by default, Outliner tries to change only the current block's level while keeping the visible block order stable; it only repairs following depths when needed to keep the hierarchy valid
+- `Alt+ArrowUp` / `Alt+ArrowDown`: move the active block and its complete subtree. The default moves only among direct siblings; choose cross-level align in settings to move against an adjacent visible block and adopt its level. Both modes respect the current visible scope, including collapsed and Zoom boundaries.
 - `Esc`: closes an open suggest first; otherwise exits the current block edit, or clears the current block-range selection
 
 ### Editor shortcuts / plugin commands (advanced)

@@ -4,7 +4,15 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.16 (Current)
+## v2.0.17 (Current)
+
+- Improved: Outliner can move the active block subtree with `Alt+ArrowUp` / `Alt+ArrowDown`. Choose same-level only (default) or cross-level align in settings.
+- Fixed: completing a `[[` suggestion in Outliner now leaves the caret at the correct post-insert position.
+- Fixed: Inline Edit renders nested block embeds as their intended native block content rather than leaking the full source.
+- s’s readable line-width preference and native content inset, with compact date headings, Today/Yesterday context, and no artificial editor filler.
+- Improved: live `blp-view` results using `group.by: day(date)` plus `render.type: embed-list` render as a compact date-grouped timeline while preserving native embeds and query semantics.
+
+## v2.0.16
 
 - Fix: block-link aliases now escape pipe characters (`|` -> `\|`) by default so copied links stay safe inside Markdown tables; disable with `escape_alias_pipe` if needed.
 - Fix: inline embed editing no longer triggers passive Live Preview scroll jumps, preserves the native jump affordance, and removes extra bottom padding.

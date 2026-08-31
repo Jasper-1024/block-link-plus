@@ -153,6 +153,8 @@ render:
 
 Renders a list of embeds like `![[path#^blockId]]` and inserts headings based on `group`.
 
+For live results (without `render.mode: materialize`), `group.by: day(date)` with this render type uses a compact date-grouped timeline presentation. This changes only presentation: native embeds, query, grouping, sorting, and result semantics are unchanged.
+
 ### render.type = table
 
 Table rendering requires columns:

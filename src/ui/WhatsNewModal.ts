@@ -130,6 +130,30 @@ const WHATS_NEW_V2_0_16: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_17: Record<ObsidianLanguage, string[]> = {
+	en: [
+		"Outliner: move the active block subtree with Alt+ArrowUp / Alt+ArrowDown; choose same-level-only or cross-level alignment in settings.",
+		"Outliner: completing a `[[` suggestion now leaves the caret at the correct post-insert position.",
+		"Inline Edit: nested block embeds now render their intended native block content.",
+		"Journal Feed: fixed its continuous-feed layout to follow Obsidian's readable line width and native content inset.",
+		"blp-view: live day-grouped embed lists now display as a compact timeline.",
+	],
+	zh: [
+		"Outliner：支持用 Alt+↑ / Alt+↓ 移动当前 block 子树；可在设置中选择仅同层级或跨层级对齐。",
+		"Outliner：完成 `[[` 建议后，光标会正确停留在插入内容之后。",
+		"内嵌编辑：嵌套 block embed 现在只渲染目标 block 的原生内容。",
+		"Journal Feed：修复连续日记流布局，使其遵循 Obsidian 的可读行宽与原生内容内缩。",
+		"blp-view：实时按日分组的 embed 列表现在会以紧凑时间线呈现。",
+	],
+	"zh-TW": [
+		"Outliner：支援用 Alt+↑ / Alt+↓ 移動目前 block 子樹；可在設定中選擇僅同層級或跨層級對齊。",
+		"Outliner：完成 `[[` 建議後，游標會正確停留在插入內容之後。",
+		"內嵌編輯：巢狀 block embed 現在只渲染目標 block 的原生內容。",
+		"Journal Feed：修正連續日記流版面，使其遵循 Obsidian 的可讀行寬與原生內容內縮。",
+		"blp-view：即時按日分組的 embed 列表現在會以緊湊時間線呈現。",
+	],
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -185,6 +209,10 @@ export class WhatsNewModal extends Modal {
 	private getWhatsNewItems(): string[] {
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
+		}
+
+		if (this.currentVersion === "2.0.17") {
+			return WHATS_NEW_V2_0_17[i18n.lang] ?? WHATS_NEW_V2_0_17.en;
 		}
 
 		if (this.currentVersion === "2.0.16") {

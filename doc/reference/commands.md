@@ -38,6 +38,16 @@
 - **功能**: 在普通块 / 任务块之间切换（`- ...` ↔ `- [ ] ...`）
 - **默认快捷键**: `Mod+Shift+Enter`
 
+### Outliner：上移当前块
+- **ID**: `file-outliner-move-active-block-up`
+- **功能**: 向上移动当前 block 及其子树
+- **默认快捷键**: `Alt+↑`
+
+### Outliner：下移当前块
+- **ID**: `file-outliner-move-active-block-down`
+- **功能**: 向下移动当前 block 及其子树
+- **默认快捷键**: `Alt+↓`
+
 ## 使用方式
 
 ### 命令面板

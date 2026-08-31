@@ -76,6 +76,7 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
 - **fileOutlinerChildrenOnSplit** - When splitting a block on Enter: `keep` | `move`
 - **fileOutlinerPasteMultiline** - Pasting multi-line text: `split` | `multiline`
 - **fileOutlinerBackspaceWithChildren** - Backspace at line start (when the block has children): `merge` | `outdent`
+- **fileOutlinerMoveMode** - How `Alt+ArrowUp` / `Alt+ArrowDown` moves the active block: `same-level` (default, direct siblings only) | `cross-level-align` (use the adjacent visible block and align to its level)
 
 ### Editor context menu (advanced)
 
@@ -128,6 +129,7 @@ Block Link Plus settings are grouped into tabs and support cross-tab search:
   "fileOutlinerChildrenOnSplit": "keep",
   "fileOutlinerPasteMultiline": "split",
   "fileOutlinerBackspaceWithChildren": "merge",
+  "fileOutlinerMoveMode": "same-level",
   "fileOutlinerEditorContextMenuEnabled": true,
   "fileOutlinerEditorContextMenuAllowedPlugins": [],
   "fileOutlinerEditorCommandBridgeEnabled": true,

@@ -38,6 +38,16 @@
 - **功能**: 在普通塊 / 任務塊之間切換（`- ...` ↔ `- [ ] ...`）
 - **預設快速鍵**: `Mod+Shift+Enter`
 
+### Outliner：上移目前塊
+- **ID**: `file-outliner-move-active-block-up`
+- **功能**: 向上移動目前 block 及其子樹
+- **預設快速鍵**: `Alt+↑`
+
+### Outliner：下移目前塊
+- **ID**: `file-outliner-move-active-block-down`
+- **功能**: 向下移動目前 block 及其子樹
+- **預設快速鍵**: `Alt+↓`
+
 ## 使用方式
 
 ### 命令面板

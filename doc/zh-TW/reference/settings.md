@@ -76,6 +76,7 @@ Block Link Plus 的設定頁提供 Tabs 分組與跨 Tab 搜尋：
 - **fileOutlinerChildrenOnSplit** - Enter 拆分塊時子塊處理（`keep` | `move`）
 - **fileOutlinerPasteMultiline** - 貼上多行文字（`split` | `multiline`）
 - **fileOutlinerBackspaceWithChildren** - 行首 Backspace（且有子塊）（`merge` | `outdent`）
+- **fileOutlinerMoveMode** - `Alt+↑` / `Alt+↓` 移動目前塊的方式：`same-level`（預設，僅直接同層塊）| `cross-level-align`（使用相鄰可見塊，並對齊到其層級）
 
 ### 編輯器右鍵選單（進階）
 
@@ -128,6 +129,7 @@ Block Link Plus 的設定頁提供 Tabs 分組與跨 Tab 搜尋：
   "fileOutlinerChildrenOnSplit": "keep",
   "fileOutlinerPasteMultiline": "split",
   "fileOutlinerBackspaceWithChildren": "merge",
+  "fileOutlinerMoveMode": "same-level",
   "fileOutlinerEditorContextMenuEnabled": true,
   "fileOutlinerEditorContextMenuAllowedPlugins": [],
   "fileOutlinerEditorCommandBridgeEnabled": true,

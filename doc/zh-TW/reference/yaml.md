@@ -157,6 +157,8 @@ render:
 
 輸出形如 `![[path#^blockId]]` 的嵌入列表，並按 `group` 分組插入小標題。
 
+對於即時結果（未使用 `render.mode: materialize`），當 `group.by: day(date)` 與此渲染類型組合時，會以緊湊的按日時間線呈現。此變更只影響呈現：原生 embed、查詢、分組、排序和結果語義均不變。
+
 ### render.type = table
 
 表格渲染需要配置欄位：

@@ -1,6 +1,6 @@
 # Block Link Plus
 
-[![Version](https://img.shields.io/badge/version-2.0.16-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.17-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
@@ -189,6 +189,13 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.17
+- 改进：Outliner 支持 `Alt+↑` / `Alt+↓` 快速移动当前 block 子树；可在设置中选择“仅同层级”（默认）或“跨层级对齐”
+- 修复：Outliner 完成 `[[` 建议后，光标会正确停留在插入内容之后
+- 修复：内嵌编辑中的嵌套 block embed 只渲染目标 block 的原生内容，不再泄露整份源文本
+- 修复与改进：Journal Feed 遵循 Obsidian 的可读行宽与原生内容内缩，提供紧凑的日期上下文，并移除人为的编辑器空白
+- 改进：实时按日分组的 `blp-view` embed 列表会以紧凑时间线呈现，同时保留原生 embed 与查询语义
 
 ### 2.0.16
 - 修复：块链接别名现在默认将竖线字符（`|` -> `\|`）转义，避免复制到 Markdown 表格时破坏表格

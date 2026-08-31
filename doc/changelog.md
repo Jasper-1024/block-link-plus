@@ -4,7 +4,15 @@ Block Link Plus 的版本更新历史和新功能介绍。
 
 ## 未发布
 
-## v2.0.16 (当前版本)
+## v2.0.17（当前版本）
+
+- 改进：Outliner 支持 `Alt+↑` / `Alt+↓` 快速移动当前 block 子树；可在设置中选择“仅同层级”（默认）或“跨层级对齐”
+- 修复：Outliner 完成 `[[` 建议后，光标会正确停留在插入内容之后
+- 修复：内嵌编辑中的嵌套 block embed 只渲染目标 block 的原生内容，不再泄露整份源文本
+- 修复与改进：Journal Feed 现在遵循 Obsidian 的可读行宽与原生内容内缩，提供更紧凑的日期标题（含 Today/Yesterday 上下文），并移除人为的编辑器空白
+- 改进：实时 `blp-view` 的 `group.by: day(date)` + `render.type: embed-list` 现在会以紧凑的按日时间线呈现，同时保留原生 embed 与查询语义
+
+## v2.0.16
 
 - 修复：块链接别名现在默认将竖线字符（`|` -> `\|`）转义，避免复制到 Markdown 表格时破坏表格；可通过 `escape_alias_pipe` 关闭
 - 修复：内联嵌入编辑不再在 Live Preview 被动挂载时触发滚动跳动，同时保留原生跳转入口并移除额外底部留白

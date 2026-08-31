@@ -38,6 +38,16 @@ All available commands and what they do.
 - **Function**: Toggle between normal block and task block (`- ...` ↔ `- [ ] ...`)
 - **Default hotkey**: `Mod+Shift+Enter`
 
+### Outliner: Move active block up
+- **ID**: `file-outliner-move-active-block-up`
+- **Function**: Move the active block and its subtree up
+- **Default hotkey**: `Alt+ArrowUp`
+
+### Outliner: Move active block down
+- **ID**: `file-outliner-move-active-block-down`
+- **Function**: Move the active block and its subtree down
+- **Default hotkey**: `Alt+ArrowDown`
+
 ## How to use
 
 ### Command Palette
