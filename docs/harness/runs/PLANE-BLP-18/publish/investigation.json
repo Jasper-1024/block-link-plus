@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-18",
+  "stage": "investigation",
+  "verdict": "handoff",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-18/investigation.md",
+    "sha256": "9e099def36c4e3872091f2dfc971c6d7e8dc903ebc4deac4265176b03f570474"
+  },
+  "comment": "Investigation artifact updated at docs/harness/runs/PLANE-BLP-18/investigation.md; RCA follow-up is ready for review.",
+  "links": [
+    {
+      "title": "investigation artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-18/investigation.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Healthy Obsidian/CDP probes reproduced the stale selection-only suggestion and confirmed the existing manager path closes caret positions 0/1 while preserving valid positions 2/3. Root cause is the missing selection-only lifecycle callback in editor-state.ts. Focused tests and workflow checks passed; no product files changed."
+  },
+  "outOfScope": [
+    "Slash-command behavior",
+    "Implementation or regression-test edits",
+    "Package/build changes",
+    "Direct tracker operations"
+  ]
+}

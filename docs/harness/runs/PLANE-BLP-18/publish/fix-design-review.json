@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-18",
+  "stage": "fix-design-review",
+  "verdict": "accepted",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-18/fix-design-review.md",
+    "sha256": "9cc9cfe6bb17f1598e365084bdae7e663e8a0efab180aa0c590892f33378dbba"
+  },
+  "comment": "Fix design accepted; canonical review written. The long exploratory probe timed out and was discarded, while bounded runtime probes and final identity checks passed.",
+  "links": [
+    {
+      "title": "fix-design-review artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-18/fix-design-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Proceed to the two-file implementation slice and required post-build runtime proof."
+  },
+  "outOfScope": [
+    "Inline-edit range behavior, slash-command lifecycle, other suggestion providers, bridge fallback redesign, native Obsidian core, and broader malformed wiki-link syntax.",
+    "No product source or tests were modified in this review stage."
+  ]
+}

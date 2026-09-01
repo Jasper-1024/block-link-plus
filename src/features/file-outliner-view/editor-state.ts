@@ -120,6 +120,12 @@ export function createOutlinerEditorState(
 				if (update.docChanged) {
 					host.onDocChanged(update.state.doc.toString());
 					host.onMaybeTriggerSuggest();
+				} else if (
+					update.selectionSet &&
+					!host.isArrowNavDispatching() &&
+					!host.shouldPreserveArrowNavGoalOnce()
+				) {
+					host.onMaybeTriggerSuggest();
 				}
 
 				// Keep ArrowUp/Down "goal column" stable across real vertical navigation, but reset it
