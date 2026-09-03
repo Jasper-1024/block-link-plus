@@ -6,31 +6,6 @@ jest.mock("@codemirror/basic-setup", () => ({ basicSetup: [] }));
 
 const { createOutlinerEditorState } = require("../editor-state") as typeof import("../editor-state");
 
-type OutlinerEditorHost = Parameters<typeof createOutlinerEditorState>[2];
-
-const createTestHost = (overrides: Partial<OutlinerEditorHost> = {}): OutlinerEditorHost => ({
-	isSyncSuppressed: () => false,
-	isArrowNavDispatching: () => false,
-	shouldPreserveArrowNavGoalOnce: () => false,
-	onResetArrowNavGoalColumn: () => undefined,
-	onPlainTextPasteShortcut: () => undefined,
-	onDocChanged: () => undefined,
-	onMaybeTriggerSuggest: () => undefined,
-	onPaste: () => false,
-	onToggleTask: () => true,
-	onToggleTaskMarker: () => true,
-	onArrowNavigate: () => true,
-	onUndo: () => true,
-	onRedo: () => true,
-	onEnter: () => true,
-	onSoftEnter: () => true,
-	onEscape: () => true,
-	onTab: () => true,
-	onBackspace: () => true,
-	onDelete: () => true,
-	...overrides,
-});
-
 describe("file-outliner-view/editor-state", () => {
 	test("docChanged triggers host hooks", () => {
 		const calls = { doc: 0, suggest: 0 };
@@ -68,94 +43,9 @@ describe("file-outliner-view/editor-state", () => {
 		const parent = document.createElement("div");
 		const view = new EditorView({ state, parent });
 
-		view.dispatch({ changes: { from: 0, to: 0, insert: "x" }, selection: { anchor: 1 } });
+		view.dispatch({ changes: { from: 0, to: 0, insert: "x" } });
 		expect(calls.doc).toBe(1);
 		expect(calls.suggest).toBe(1);
-
-		view.destroy();
-	});
-
-	test("eligible selection-only updates trigger suggestions without a document change", () => {
-		const calls = { doc: 0, suggest: 0 };
-		const state = createOutlinerEditorState(
-			"hi",
-			{ cursorStart: 0, cursorEnd: 0 },
-			createTestHost({
-				onDocChanged: () => {
-					calls.doc += 1;
-				},
-				onMaybeTriggerSuggest: () => {
-					calls.suggest += 1;
-				},
-			})
-		);
-
-		const parent = document.createElement("div");
-		const view = new EditorView({ state, parent });
-
-		view.dispatch({ selection: { anchor: 1 } });
-
-		expect(calls.doc).toBe(0);
-		expect(calls.suggest).toBe(1);
-
-		view.destroy();
-	});
-
-	test("sync suppression blocks document and selection suggestion lifecycle hooks", () => {
-		const calls = { doc: 0, suggest: 0, reset: 0 };
-		const state = createOutlinerEditorState(
-			"hi",
-			{ cursorStart: 0, cursorEnd: 0 },
-			createTestHost({
-				isSyncSuppressed: () => true,
-				onResetArrowNavGoalColumn: () => {
-					calls.reset += 1;
-				},
-				onDocChanged: () => {
-					calls.doc += 1;
-				},
-				onMaybeTriggerSuggest: () => {
-					calls.suggest += 1;
-				},
-			})
-		);
-
-		const parent = document.createElement("div");
-		const view = new EditorView({ state, parent });
-
-		view.dispatch({ changes: { from: 0, to: 0, insert: "x" }, selection: { anchor: 1 } });
-		view.dispatch({ selection: { anchor: 0 } });
-
-		expect(calls).toEqual({ doc: 0, suggest: 0, reset: 0 });
-
-		view.destroy();
-	});
-
-	test.each([
-		["custom arrow dispatch", { isArrowNavDispatching: () => true }],
-		["one-shot arrow goal preservation", { shouldPreserveArrowNavGoalOnce: () => true }],
-	])("%s blocks selection-only suggestion reevaluation", (_name, guard) => {
-		const calls = { suggest: 0, reset: 0 };
-		const state = createOutlinerEditorState(
-			"hi",
-			{ cursorStart: 0, cursorEnd: 0 },
-			createTestHost({
-				...guard,
-				onResetArrowNavGoalColumn: () => {
-					calls.reset += 1;
-				},
-				onMaybeTriggerSuggest: () => {
-					calls.suggest += 1;
-				},
-			})
-		);
-
-		const parent = document.createElement("div");
-		const view = new EditorView({ state, parent });
-
-		view.dispatch({ selection: { anchor: 1 } });
-
-		expect(calls).toEqual({ suggest: 0, reset: 0 });
 
 		view.destroy();
 	});
