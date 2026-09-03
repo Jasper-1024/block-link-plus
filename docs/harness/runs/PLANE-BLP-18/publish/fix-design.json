@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-18",
+  "stage": "fix-design",
+  "verdict": "ready-for-review",
+  "artifact": {
+    "path": "docs/harness/runs/PLANE-BLP-18/fix-design.md",
+    "sha256": "74053a7bce6758965fc16fcb9332db36d293a72414ce6089dde153e204fd3d06"
+  },
+  "comment": "Wrote docs/harness/runs/PLANE-BLP-18/fix-design.md. Workflow check passes; no product code or tests changed.",
+  "links": [
+    {
+      "title": "fix-design artifact",
+      "url": "repo:docs/harness/runs/PLANE-BLP-18/fix-design.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Bounded two-file design: guarded selection-only suggestion reevaluation in editor-state.ts, host-hook TDD coverage, and post-rebuild Obsidian/CDP lifecycle validation preserving valid suggestions."
+  },
+  "outOfScope": [
+    "Slash commands",
+    "Bridge fallback redesign",
+    "Unconditional suggestion closing",
+    "Obsidian core changes",
+    "Implementation and test edits"
+  ]
+}
