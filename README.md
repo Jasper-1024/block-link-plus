@@ -2,7 +2,7 @@
 
 Block links + multi-line ranges + a Logseq-like outliner workflow for Obsidian: copy links/embeds/URIs to blocks & headings, create multi-line range blocks, and use `blp-view` (Dataview-backed) to query/render list blocks in scoped files.
 
-[![Version](https://img.shields.io/badge/version-2.0.18-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.19-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 ## 🚀 Key Features
@@ -73,6 +73,9 @@ https://github.com/user-attachments/assets/ea7f1d24-7845-4957-aa9c-7309af0a3514
 - Removed legacy Timeline / Time Section features
 
 ## 📋 Changelog
+
+### 2.0.19
+- Reverted: withdrew the Live Preview embedded-search feature and Outliner wiki-link suggestion dismissal introduced in 2.0.18 because of reported regressions; their task branches remain available for correction
 
 ### 2.0.18
 - Added: current-note search in Live Preview now includes BLP-managed inline block, heading, and file embeds, with native-panel navigation and visible-range matching

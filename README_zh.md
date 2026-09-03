@@ -1,6 +1,6 @@
 # Block Link Plus
 
-[![Version](https://img.shields.io/badge/version-2.0.18-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
+[![Version](https://img.shields.io/badge/version-2.0.19-blue.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 [![Downloads](https://img.shields.io/github/downloads/Jasper-1024/obsidian-block-link-plus/total.svg)](https://github.com/Jasper-1024/obsidian-block-link-plus/releases)
 
 [copy-block-link](https://github.com/mgmeyers/obsidian-copy-block-link/tree/main) 是我使用频率很高的插件，但它一直不支持“多行选区”的块引用，所以我写了 Block Link Plus：保留一键复制块链接的手感，同时补齐多行块、Block ID 自定义等能力。
@@ -189,6 +189,9 @@ https://block-link-plus.jasper1024.com/usage/outliner/
 - Telegram Chat：https://t.me/+QqmqUG-jSeY2ODNh
 
 ## 更新日志
+
+### 2.0.19
+- 回滚：因发现回归问题，撤回 2.0.18 中的 Live Preview 内嵌搜索与 Outliner wiki-link 建议关闭改动；对应任务分支仍保留，后续将在原实现上继续修复
 
 ### 2.0.18
 - 新增：Live Preview 当前笔记搜索现在可检索 BLP 管理的内嵌 block、heading 与文件嵌入，并保持原生面板导航和可见范围匹配
