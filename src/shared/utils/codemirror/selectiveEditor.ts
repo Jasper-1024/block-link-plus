@@ -90,17 +90,24 @@ const syncLineRangeForTransaction = (
   );
   const safeFromBefore = Math.max(0, posRange.from - 1);
 
+  const clampToNewDocument = (range: [number, number]): [number, number] => {
+    const maxLine = Math.max(1, tr.newDoc.lines);
+    const start = Math.min(Math.max(1, range[0]), maxLine);
+    const end = Math.min(Math.max(1, range[1]), maxLine);
+    return start <= end ? [start, end] : [end, start];
+  };
+
   if (tr.changes.touchesRange(0, safeFromBefore)) {
-    return [
+    return clampToNewDocument([
       targetRange[0] + numberNewLines,
       targetRange[1] + numberNewLines,
-    ];
+    ]);
   }
   if (tr.changes.touchesRange(safeFromBefore, posRange.to)) {
-    return [
+    return clampToNewDocument([
       targetRange[0],
       targetRange[1] + numberNewLines,
-    ];
+    ]);
   }
 
   return undefined;

@@ -130,6 +130,40 @@ describe("selectiveEditor: hide outliner v2 system tail lines", () => {
 		}
 	});
 
+	test("keeps partial ranges valid during a trusted full-document replacement", () => {
+		const parent = document.createElement("div");
+		document.body.appendChild(parent);
+
+		const view = new EditorView({
+			parent,
+			state: EditorState.create({
+				doc: ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"].join("\n"),
+				extensions: editBlockExtensions(),
+			}),
+		});
+
+		try {
+			view.dispatch({
+				annotations: [contentRange.of([8, 10]), editableRange.of([9, 10])],
+			});
+
+			expect(() =>
+				view.dispatch({
+					filter: false,
+					changes: { from: 0, to: view.state.doc.length, insert: "replacement\n" },
+					userEvent: "set",
+				})
+			).not.toThrow();
+
+			expect(view.state.doc.toString()).toBe("replacement\n");
+			expect(view.state.field(frontmatterFacet)).toEqual([1, 2]);
+			expect(view.state.field(selectiveLinesFacet)).toEqual([1, 2]);
+		} finally {
+			view.destroy();
+			parent.remove();
+		}
+	});
+
 	test("restores inline-edit visible range after Enter undo and redo", () => {
 		const parent = document.createElement("div");
 		document.body.appendChild(parent);

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-12",
+  "stage": "design-intake",
+  "verdict": "human-review-required",
+  "artifact": {
+    "path": "docs/harness/runs/GH-39-BLP-12/design-intake.md",
+    "sha256": "d1c5a684823a71aed8ba5ed5e39c7702b82bc21c197b21beafdb043178fd8065"
+  },
+  "comment": "Artifact written to docs/harness/runs/GH-39-BLP-12/design-intake.md. Human review should approve or reject the proposed Live Preview-only, BLP-owned search scope.",
+  "links": [
+    {
+      "title": "design-intake artifact",
+      "url": "repo:docs/harness/runs/GH-39-BLP-12/design-intake.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Recommends aggregating current-note search across visible BLP inline-edit embeds while leaving Global Search and Reading View unchanged."
+  },
+  "outOfScope": [
+    "Global Search indexing",
+    "Reading View changes",
+    "Native preview embeds not owned by BLP",
+    "Custom BLP views and search-and-replace"
+  ]
+}
