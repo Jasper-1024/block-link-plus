@@ -108,4 +108,29 @@ describe("InlineEditEngine Live Preview observer lifecycle", () => {
 		expect(rescannedEntry.pendingEmbeds.has(embedEl)).toBe(true);
 		expect(scheduleObserverEntry).toHaveBeenCalledTimes(1);
 	});
+
+	test("settings changes rescan an existing observer for a newly enabled embed kind", () => {
+		const { view, embedEl } = createView(true);
+		const plugin = createPlugin(view);
+		plugin.settings.inlineEditBlock = false;
+		const engine = new InlineEditEngine(plugin);
+		jest.spyOn((engine as any).leaves, "isNestedWithinEmbed").mockReturnValue(false);
+		const scheduleObserverEntry = jest.fn();
+		(engine as any).scheduleObserverEntry = scheduleObserverEntry;
+		(engine as any).loaded = true;
+
+		(engine as any).refreshLivePreviewObservers(false);
+		const firstEntry = (engine as any).livePreviewObservers.get(view);
+		firstEntry.pendingEmbeds.clear();
+		scheduleObserverEntry.mockClear();
+
+		plugin.settings.inlineEditBlock = true;
+		engine.onSettingsChanged();
+
+		const rescannedEntry = (engine as any).livePreviewObservers.get(view);
+		expect(rescannedEntry).not.toBe(firstEntry);
+		expect(rescannedEntry.pendingEmbeds.has(embedEl)).toBe(true);
+		expect(scheduleObserverEntry).toHaveBeenCalledTimes(1);
+		engine.unload();
+	});
 });

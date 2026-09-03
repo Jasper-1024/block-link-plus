@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scopeKey": "BLP-12",
+  "stage": "code-review",
+  "verdict": "human-review-required",
+  "artifact": {
+    "path": "docs/harness/runs/GH-39-BLP-12/code-review.md",
+    "sha256": "763fe366ed35048631dfadfcb59352c57cdad9839dfaee8afe0938e5b2546517"
+  },
+  "comment": "Automated gates and recovered runtime checks pass, but proof is on Obsidian 1.13.7 while the accepted route requires 1.13.6; private API compatibility remains unverified.",
+  "links": [
+    {
+      "title": "code-review artifact",
+      "url": "repo:docs/harness/runs/GH-39-BLP-12/code-review.md"
+    }
+  ],
+  "children": [],
+  "page": {
+    "summary": "Canonical artifact written at docs/harness/runs/GH-39-BLP-12/code-review.md. The pinned review tree is fresh; nested/global concerns were resolved as non-blocking, with mode-cleanup timing recorded as a release risk."
+  },
+  "outOfScope": [
+    "Global Search indexing",
+    "Reading View content-search semantics",
+    "native preview embed ownership",
+    "File Outliner, Journal Feed, and other BLP surfaces",
+    "nested embed search/recursion",
+    "search-and-replace across detached editors",
+    "Unicode case-folding and word-boundary parity"
+  ]
+}
