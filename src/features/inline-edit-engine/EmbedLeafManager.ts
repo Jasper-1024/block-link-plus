@@ -3,14 +3,10 @@ import type BlockLinkPlus from "../../main";
 import { markLeafAsDetached } from "../../shared/utils/workspaceLeafFlags";
 
 export interface ManagedEmbedLeaf {
-	id?: string;
 	containerEl: HTMLElement;
 	file: TFile;
 	subpath?: string;
-	kind?: "block" | "heading" | "range" | "file";
-	readOnly?: boolean;
 	sourcePath: string;
-	hostView?: MarkdownView;
 	component: MarkdownRenderChild;
 	leaf: WorkspaceLeaf;
 	view: MarkdownView;
@@ -23,7 +19,6 @@ export class EmbedLeafManager {
 	private readonly plugin: BlockLinkPlus;
 	private readonly embedRegistry = new WeakMap<HTMLElement, ManagedEmbedLeaf>();
 	private readonly activeEmbeds = new Set<ManagedEmbedLeaf>();
-	private nextEmbedId = 0;
 
 	constructor(plugin: BlockLinkPlus) {
 		this.plugin = plugin;
@@ -88,22 +83,15 @@ export class EmbedLeafManager {
 		file: TFile;
 		sourcePath: string;
 		subpath?: string;
-		kind?: "block" | "heading" | "range" | "file";
-		readOnly?: boolean;
-		hostView?: MarkdownView;
 	}): Promise<ManagedEmbedLeaf> {
 		const leaf = new (WorkspaceLeaf as any)(this.plugin.app) as WorkspaceLeaf;
 		markLeafAsDetached(leaf);
 
 		const embed: ManagedEmbedLeaf = {
-			id: `inline-embed-${++this.nextEmbedId}`,
 			containerEl: args.containerEl,
 			file: args.file,
 			subpath: args.subpath,
-			kind: args.kind,
-			readOnly: args.readOnly,
 			sourcePath: args.sourcePath,
-			hostView: args.hostView,
 			component: undefined as unknown as MarkdownRenderChild,
 			leaf,
 			view: undefined as unknown as MarkdownView,

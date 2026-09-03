@@ -1,5 +1,5 @@
 import type BlockLinkPlus from "../../main";
-import { EditorState, StateEffect } from "@codemirror/state";
+import { StateEffect } from "@codemirror/state";
 import {
 	MarkdownPostProcessorContext,
 	MarkdownRenderChild,
@@ -18,13 +18,8 @@ import {
 	selectiveLinesFacet,
 } from "shared/utils/codemirror/selectiveEditor";
 import { getLineRangeFromRef } from "shared/utils/obsidian";
-import { EmbedLeafManager, type ManagedEmbedLeaf } from "./EmbedLeafManager";
+import { EmbedLeafManager } from "./EmbedLeafManager";
 import { FocusTracker } from "./FocusTracker";
-import type { InlineEditSearchMatch } from "./InlineEditSearchCoordinator";
-import {
-	InlineEditSearchBridge,
-	type InlineEditSearchRuntimeParticipant,
-} from "./InlineEditSearchAdapter";
 
 const INLINE_EDIT_ACTIVE_CLASS = "blp-inline-edit-active";
 const INLINE_EDIT_HOST_CLASS = "blp-inline-edit-host";
@@ -33,150 +28,6 @@ const READING_RANGE_ACTIVE_CLASS = "blp-reading-range-active";
 const LIVE_PREVIEW_RANGE_ACTIVE_CLASS = "blp-live-preview-range-active";
 const READING_RANGE_HOST_CLASS = "blp-reading-range-host";
 const LIVE_PREVIEW_RANGE_HOST_CLASS = "blp-live-preview-range-host";
-
-const isCompleteLineRange = (value: unknown): value is [number, number] =>
-	Array.isArray(value) &&
-	value.length >= 2 &&
-	typeof value[0] === "number" &&
-	typeof value[1] === "number";
-
-const rejectReadOnlyEmbedChanges = EditorState.transactionFilter.of((transaction) => {
-	if (!transaction.docChanged) return transaction;
-	// Obsidian synchronizes a detached MarkdownView with a `set` transaction when
-	// its source file changes. That update is trusted source state, not an edit
-	// originating from the detached editor, and must reach a read-only heading
-	// participant so search never runs against stale text.
-	if (transaction.isUserEvent("set")) return transaction;
-	if (transaction.startState.facet(EditorState.readOnly)) return [];
-
-	const visibleRange = transaction.startState.field(frontmatterFacet, false);
-	const editableRange = transaction.startState.field(selectiveLinesFacet, false);
-	if (!isCompleteLineRange(visibleRange) || !isCompleteLineRange(editableRange)) return transaction;
-	if (editableRange[0] <= visibleRange[0] && editableRange[1] >= visibleRange[1]) return transaction;
-
-	const doc = transaction.startState.doc;
-	const editableStart = doc.line(Math.min(Math.max(1, editableRange[0]), doc.lines)).from;
-	const editableEndLine = Math.min(Math.max(1, editableRange[1]), doc.lines);
-	const editableEnd = doc.line(Math.max(1, editableEndLine)).to;
-	let staysEditable = true;
-	transaction.changes.iterChangedRanges((from, to) => {
-		if (from < editableStart || to > editableEnd) staysEditable = false;
-	});
-
-	if (!staysEditable) return [];
-	return transaction;
-});
-
-const READ_ONLY_EMBED_EXTENSIONS = [EditorState.readOnly.of(true), rejectReadOnlyEmbedChanges];
-const READ_ONLY_RANGE_EXTENSIONS = [rejectReadOnlyEmbedChanges];
-
-type CmTransactionLike = {
-	startState?: {
-		doc?: {
-			lines: number;
-			line: (lineNumber: number) => { from: number; to: number };
-		};
-	};
-	docChanged?: boolean;
-	isUserEvent?: (event: string) => boolean;
-	changes?: {
-		iterChangedRanges: (callback: (from: number, to: number) => void) => void;
-	};
-};
-
-const isTrustedSourceSyncTransaction = (transaction: CmTransactionLike): boolean => {
-	try {
-		return transaction.docChanged === true && transaction.isUserEvent?.("set") === true;
-	} catch {
-		return false;
-	}
-};
-
-const isCmTransaction = (value: unknown): value is CmTransactionLike => {
-	if (!value || typeof value !== "object") return false;
-	const transaction = value as CmTransactionLike;
-	return Boolean(
-		transaction.startState?.doc &&
-		transaction.changes &&
-		typeof transaction.changes.iterChangedRanges === "function"
-	);
-};
-
-const getDispatchedTransactions = (
-	cm: any,
-	args: readonly unknown[]
-): readonly CmTransactionLike[] | null => {
-	if (args.length === 1 && Array.isArray(args[0])) {
-		return args[0].every(isCmTransaction) ? args[0] : null;
-	}
-	if (args.length === 1 && isCmTransaction(args[0])) return [args[0]];
-
-	try {
-		const transaction = cm?.state?.update?.(...(args as any[]));
-		return isCmTransaction(transaction) ? [transaction] : null;
-	} catch {
-		return null;
-	}
-};
-
-const getEditableLineRange = (
-	cm: any,
-	fallback: [number, number]
-): [number, number] | null => {
-	try {
-		const range = cm?.state?.field?.(selectiveLinesFacet, false);
-		if (isCompleteLineRange(range)) return [range[0], range[1]];
-	} catch {
-		// Fall through to the mount-time range during editor teardown or in tests.
-	}
-
-	const resolvedRange = cm?.__blpInlineEditResolvedEditableRange;
-	if (isCompleteLineRange(resolvedRange)) return [resolvedRange[0], resolvedRange[1]];
-	return isCompleteLineRange(fallback) ? fallback : null;
-};
-
-const changesStayInsideEditableLines = (
-	transaction: CmTransactionLike,
-	editableRange: [number, number]
-): boolean => {
-	const doc = transaction.startState?.doc;
-	if (!doc || typeof doc.line !== "function" || typeof doc.lines !== "number") return false;
-
-	const startLine = Math.min(Math.max(1, editableRange[0]), doc.lines);
-	const endLine = Math.min(Math.max(1, editableRange[1]), doc.lines);
-	const editableStart = doc.line(Math.min(startLine, endLine)).from;
-	const editableEnd = doc.line(Math.max(startLine, endLine)).to;
-	let staysEditable = true;
-	try {
-		transaction.changes?.iterChangedRanges((from, to) => {
-			if (from < editableStart || to > editableEnd) staysEditable = false;
-		});
-	} catch {
-		return false;
-	}
-	return staysEditable;
-};
-
-const shouldRejectReadOnlyDispatch = (
-	cm: any,
-	args: readonly unknown[],
-	readOnly: boolean,
-	fallbackEditableRange: [number, number]
-): boolean => {
-	const transactions = getDispatchedTransactions(cm, args);
-	if (!transactions) return true;
-
-	return transactions.some((transaction) => {
-		if (!transaction.docChanged) return false;
-		// Source-file synchronization is trusted even when Obsidian dispatches it
-		// with filter:false. The dispatch wrapper must not turn that bypass flag
-		// into a stale partial editor; it only bypasses CM transaction filters.
-		if (isTrustedSourceSyncTransaction(transaction)) return false;
-		if (readOnly) return true;
-		const editableRange = getEditableLineRange(cm, fallbackEditableRange);
-		return !editableRange || !changesStayInsideEditableLines(transaction, editableRange);
-	});
-};
 
 export function syncRangeEmbedWrapperPadding(embedEl: HTMLElement, wrapper: HTMLElement): void {
 	// Reading-range wrappers are created outside `.markdown-embed-content`, so they don't naturally
@@ -220,7 +71,6 @@ type ParsedInlineEmbed = {
 	subpath: string;
 	visibleRange: [number, number];
 	editableRange: [number, number];
-	readOnly?: boolean;
 };
 
 export class InlineEditEngine {
@@ -228,14 +78,9 @@ export class InlineEditEngine {
 	readonly leaves: EmbedLeafManager;
 	readonly focus: FocusTracker;
 	private loaded = false;
-	// Refreshes validate the actual host, DOM, mode, and settings after awaits;
-	// this generation changes only across unload/reload so eligible mounts survive
-	// a concurrent Live Preview rescan and unrelated File Outliner refresh.
-	private lifecycleGeneration = 0;
 	private didInitialMetadataResolve = false;
 	private commandRoutingDepth = 0;
 	private readonly commandRoutingUninstallers: Array<() => void> = [];
-	private readonly searchBridges = new Map<MarkdownView, InlineEditSearchBridge>();
 	private readonly readingRangeEmbedsByPath = new Map<string, Set<ReadingRangeEmbedChild>>();
 	private readonly livePreviewRangeEmbedsByPath = new Map<string, Set<LivePreviewRangeEmbedChild>>();
 	private readonly readingRangeDebounceTimers = new Map<string, number>();
@@ -243,7 +88,6 @@ export class InlineEditEngine {
 	private readonly readingRangeChildren = new Set<ReadingRangeEmbedChild>();
 	private readonly livePreviewRangeChildByEmbed = new WeakMap<HTMLElement, LivePreviewRangeEmbedChild>();
 	private readonly livePreviewRangeChildren = new Set<LivePreviewRangeEmbedChild>();
-	private hiddenEmbedCleanupTimer: number | null = null;
 	private readingRangeObserver: MutationObserver | null = null;
 	private readonly pendingEmbeds = new WeakSet<HTMLElement>();
 	private readonly livePreviewObservers = new Map<MarkdownView, LivePreviewObserverEntry>();
@@ -295,18 +139,8 @@ export class InlineEditEngine {
 	}
 
 	unload(): void {
-		this.lifecycleGeneration += 1;
 		if (!this.loaded) return;
 		this.loaded = false;
-		if (this.hiddenEmbedCleanupTimer !== null) {
-			try {
-				window.clearTimeout(this.hiddenEmbedCleanupTimer);
-			} catch {
-				// ignore
-			}
-			this.hiddenEmbedCleanupTimer = null;
-		}
-		this.cleanupSearchBridges();
 		this.disconnectAllObservers();
 		this.uninstallCommandRouting();
 		this.cleanupReadingRangeRendering();
@@ -423,28 +257,6 @@ export class InlineEditEngine {
 		}
 	}
 
-	private installReadOnlyEditorGuard(
-		cm: any,
-		readOnly: boolean,
-		editableRange: [number, number]
-	): (() => void) | null {
-		if (typeof cm?.dispatch !== "function") return null;
-
-		try {
-			const uninstall = around(cm, {
-				dispatch: (old: any) => {
-					return function (this: any, ...args: unknown[]) {
-						if (shouldRejectReadOnlyDispatch(cm, args, readOnly, editableRange)) return;
-						return old.apply(this, args);
-					};
-				},
-			});
-			return typeof uninstall === "function" ? uninstall : null;
-		} catch {
-			return null;
-		}
-	}
-
 	private isInlineEditActive(): boolean {
 		const { inlineEditEnabled, inlineEditFile, inlineEditHeading, inlineEditBlock } = this.plugin.settings;
 		return inlineEditEnabled && (inlineEditFile || inlineEditHeading || inlineEditBlock);
@@ -456,17 +268,12 @@ export class InlineEditEngine {
 			this.disconnectAllObservers();
 			this.leaves.cleanup();
 			this.focus.cleanup();
-			this.refreshSearchBridges();
-			this.cleanupSearchBridges();
 			return;
 		}
 
 		window.setTimeout(() => {
 			this.refreshLivePreviewObservers();
-			this.cleanupInvalidLivePreviewEmbeds();
 			this.cleanupHiddenEmbeds();
-			this.cleanupSearchBridgesForInvalidHosts();
-			this.refreshSearchBridges();
 		}, 50);
 	}
 
@@ -477,15 +284,10 @@ export class InlineEditEngine {
 			this.disconnectAllObservers();
 			this.leaves.cleanup();
 			this.focus.cleanup();
-			this.refreshSearchBridges();
-			this.cleanupSearchBridges();
 			return;
 		}
 
-		this.cleanupInvalidLivePreviewEmbeds();
-		this.refreshLivePreviewObservers(true);
-		this.cleanupSearchBridgesForInvalidHosts();
-		this.refreshSearchBridges();
+		this.refreshLivePreviewObservers();
 	}
 
 	private installFocusTracking(): void {
@@ -594,9 +396,7 @@ export class InlineEditEngine {
 		if (!root) return;
 
 		const observer = new MutationObserver((mutations) => {
-			let hasRemovedNodes = false;
 			for (const mutation of mutations) {
-				if (mutation.removedNodes.length > 0) hasRemovedNodes = true;
 				for (const removed of Array.from(mutation.removedNodes)) {
 					if (!(removed instanceof HTMLElement)) continue;
 					this.cleanupReadingRangeChildrenInNode(removed);
@@ -607,7 +407,6 @@ export class InlineEditEngine {
 					this.scanReadingRangeEmbedsInNode(added, null, "mutation");
 				}
 			}
-			if (hasRemovedNodes) this.scheduleHiddenEmbedCleanup();
 		});
 
 		try {
@@ -950,25 +749,7 @@ export class InlineEditEngine {
 							}
 						}
 
-						const searchHost =
-							command?.id === "editor:open-search" ? engine.getActiveLivePreviewHostView() : null;
-						const searchBridge = searchHost ? engine.installSearchBridge(searchHost) : null;
-
-						try {
-							const result = old.call(this, command, ...args);
-							if (searchHost && searchBridge) {
-								const search = engine.getDocumentSearch(searchHost);
-								if (!searchBridge.attachSearch(search)) {
-									searchBridge.dispose();
-									engine.searchBridges.delete(searchHost);
-								}
-							}
-							return result;
-						} catch (error) {
-							searchBridge?.dispose();
-							if (searchHost) engine.searchBridges.delete(searchHost);
-							throw error;
-						}
+						return old.call(this, command, ...args);
 					};
 				},
 			});
@@ -1009,317 +790,6 @@ export class InlineEditEngine {
 
 		if (uninstallers.length > 0) {
 			this.commandRoutingUninstallers.push(...uninstallers);
-		}
-	}
-
-	private getActiveLivePreviewHostView(): MarkdownView | null {
-		const view = (this.plugin.app.workspace as any).activeLeaf?.view;
-		return view instanceof MarkdownView && this.isLivePreviewHostView(view) ? view : null;
-	}
-
-	private getDocumentSearch(view: MarkdownView): any | null {
-		try {
-			const currentMode = (view as any).currentMode;
-			if (currentMode && typeof currentMode === "object" && currentMode.search) return currentMode.search;
-
-			// Obsidian 1.13 keeps the document-search component on the source
-			// CodeMirror editor. This fallback also handles a transient string
-			// currentMode while a MarkdownView is switching modes.
-			return (view as any).sourceMode?.cmEditor?.editorComponent?.search ?? null;
-		} catch {
-			return null;
-		}
-	}
-
-	private isLivePreviewHostView(view: MarkdownView | null | undefined): view is MarkdownView {
-		try {
-			if (!view?.containerEl?.isConnected) return false;
-			if (view.getMode() === "preview") return false;
-			if (view.containerEl.closest(`.${EmbedLeafManager.INLINE_EDIT_ROOT_CLASS}`)) return false;
-
-			const rootEl = view.containerEl.querySelector<HTMLElement>(".markdown-source-view");
-			return Boolean(rootEl?.classList.contains("is-live-preview"));
-		} catch {
-			return false;
-		}
-	}
-
-	private installSearchBridge(hostView: MarkdownView): InlineEditSearchBridge | null {
-		this.searchBridges.get(hostView)?.dispose();
-		this.searchBridges.delete(hostView);
-
-		try {
-			const bridge = new InlineEditSearchBridge({
-				editor: hostView.editor as any,
-				getParticipants: () => this.getSearchParticipants(hostView),
-				navigate: (match) => this.navigateSearchMatch(hostView, match),
-				onDispose: () => {
-					if (this.searchBridges.get(hostView) === bridge) this.searchBridges.delete(hostView);
-				},
-			});
-			if (!bridge.install()) {
-				bridge.dispose();
-				return null;
-			}
-
-			this.searchBridges.set(hostView, bridge);
-			return bridge;
-		} catch {
-			return null;
-		}
-	}
-
-	private cleanupSearchBridges(): void {
-		for (const bridge of this.searchBridges.values()) {
-			bridge.dispose();
-		}
-		this.searchBridges.clear();
-	}
-
-	private cleanupSearchBridgesForInvalidHosts(): void {
-		for (const [view, bridge] of this.searchBridges) {
-			if (this.isLivePreviewHostView(view)) continue;
-			bridge.dispose();
-			this.searchBridges.delete(view);
-		}
-	}
-
-	private refreshSearchBridges(): void {
-		for (const bridge of this.searchBridges.values()) {
-			bridge.refreshActiveSearch();
-		}
-	}
-
-	private getSearchParticipants(hostView: MarkdownView): InlineEditSearchRuntimeParticipant[] {
-		const hostEditor = hostView.editor as any;
-		const hostDoc = hostEditor?.cm?.state?.doc;
-		if (!hostDoc) return [];
-
-		const participants: InlineEditSearchRuntimeParticipant[] = [
-			{ id: "host", doc: hostDoc, editor: hostEditor },
-		];
-		const embeds = this.leaves
-			.getActiveEmbeds()
-			.filter((embed) => this.isOwnedLivePreviewEmbed(hostView, embed))
-			.sort((left, right) => this.compareEmbedDocumentOrder(left.containerEl, right.containerEl));
-
-		for (const embed of embeds) {
-			// A connected, owned embed is a visible participant even while its
-			// detached editor is still settling. Omitting it beside other embeds
-			// would silently produce incomplete counts, so the whole aggregate must
-			// fail open until every participant is safe to search.
-			if (!embed.id || !embed.kind) return [];
-			const editor = embed.view?.editor as any;
-			const cm = editor?.cm;
-			const doc = cm?.state?.doc;
-			if (!editor || !cm || !doc) return [];
-
-			const visibleRange = this.getSearchVisibleRange(cm);
-			// A partial editor without its resolved visible range is not safe to
-			// search: its CodeMirror document still contains hidden source lines.
-			// Full-note participants intentionally have no range and expose the
-			// complete note document.
-			if (embed.kind !== "file" && !visibleRange) return [];
-
-			const editorContainer = embed.view?.containerEl;
-			if (
-				!editorContainer ||
-				!hostView.containerEl.contains(editorContainer) ||
-				!this.isElementShown(editorContainer)
-			) {
-				return [];
-			}
-
-			const renderedOrder = this.getEmbedHostOffset(hostView, embed.containerEl);
-			if (renderedOrder === null) {
-				// A participant without a stable host anchor cannot be ordered safely
-				// with the native host matches. Fail open for the whole aggregate so a
-				// visible occurrence is never silently omitted.
-				return [];
-			}
-
-			participants.push({
-				id: embed.id,
-				doc,
-				visibleRange,
-				renderedOrder,
-				editor,
-			});
-		}
-
-		return participants;
-	}
-
-	private isEmbedKindEnabled(kind: ManagedEmbedLeaf["kind"]): boolean {
-		if (!this.plugin.settings.inlineEditEnabled) return false;
-
-		switch (kind) {
-			case "block":
-			case "range":
-				return this.plugin.settings.inlineEditBlock;
-			case "heading":
-				return this.plugin.settings.inlineEditHeading;
-			case "file":
-				return this.plugin.settings.inlineEditFile;
-			default:
-				return false;
-		}
-	}
-
-	private isElementShown(element: HTMLElement | null | undefined): boolean {
-		if (!element?.isConnected) return false;
-
-		const isShown = (element as HTMLElement & { isShown?: () => boolean }).isShown;
-		if (typeof isShown !== "function") return true;
-
-		try {
-			return isShown.call(element);
-		} catch {
-			return false;
-		}
-	}
-
-	private isOwnedLivePreviewEmbed(hostView: MarkdownView, embed: ManagedEmbedLeaf): boolean {
-		if (!this.isLivePreviewHostView(hostView)) return false;
-		if (!embed || embed.hostView !== hostView) return false;
-		// A known disabled kind is being torn down and must not enter the
-		// aggregate. An absent kind is treated as unresolved by
-		// getSearchParticipants and therefore fails open when its shell is live.
-		if (embed.kind !== undefined && !this.isEmbedKindEnabled(embed.kind)) return false;
-		if (!embed.containerEl?.isConnected || !hostView.containerEl.contains(embed.containerEl)) return false;
-		if (!this.isElementShown(embed.containerEl)) return false;
-		return true;
-	}
-
-	private isSearchableEmbed(hostView: MarkdownView, embed: ManagedEmbedLeaf): boolean {
-		if (!this.isOwnedLivePreviewEmbed(hostView, embed)) return false;
-		if (!embed?.id || !embed.kind) return false;
-		if (embed.kind !== "file" && !this.getSearchVisibleRange(embed.view?.editor?.cm)) return false;
-
-		const editorContainer = embed.view?.containerEl;
-		return Boolean(
-			editorContainer &&
-			hostView.containerEl.contains(editorContainer) &&
-			this.isElementShown(editorContainer)
-		);
-	}
-
-	private cleanupInvalidLivePreviewEmbeds(): void {
-		for (const embed of this.leaves.getActiveEmbeds()) {
-			if (!embed.hostView) continue;
-
-			const valid =
-				this.isEmbedKindEnabled(embed.kind) &&
-				this.isLivePreviewHostView(embed.hostView) &&
-				embed.hostView.containerEl.contains(embed.containerEl) &&
-				this.isElementShown(embed.containerEl) &&
-				(!embed.view?.containerEl ||
-					(embed.hostView.containerEl.contains(embed.view.containerEl) &&
-						this.isElementShown(embed.view.containerEl)));
-			if (valid) continue;
-
-			if (this.focus.getFocused() === embed) {
-				this.focus.setFocused(null);
-			}
-			this.leaves.detach(embed);
-		}
-	}
-
-	private getSearchVisibleRange(cm: any): [number, number] | undefined {
-		try {
-			const contentRange = cm?.state?.field?.(frontmatterFacet, false);
-			if (this.isLineRange(contentRange)) return [contentRange[0], contentRange[1]];
-		} catch {
-			// Detached editors may not expose the selective-editor field during teardown.
-		}
-
-		const directRange = cm?.__blpInlineEditResolvedVisibleRange;
-		if (this.isLineRange(directRange)) return [directRange[0], directRange[1]];
-
-		return undefined;
-	}
-
-	private isLineRange(value: unknown): value is [number, number] {
-		return Boolean(
-			Array.isArray(value) &&
-			value.length >= 2 &&
-			typeof value[0] === "number" &&
-			typeof value[1] === "number"
-		);
-	}
-
-	private compareEmbedDocumentOrder(left: HTMLElement, right: HTMLElement): number {
-		const leftEmbed = left.closest(".internal-embed.markdown-embed");
-		const rightEmbed = right.closest(".internal-embed.markdown-embed");
-		if (!leftEmbed || !rightEmbed || leftEmbed === rightEmbed) return 0;
-
-		const position = leftEmbed.compareDocumentPosition(rightEmbed);
-		if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
-		if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
-		return 0;
-	}
-
-	private getEmbedHostOffset(hostView: MarkdownView, embedContainer: HTMLElement): number | null {
-		const cm = hostView.editor?.cm as any;
-		if (!cm || typeof cm.posAtDOM !== "function") return null;
-
-		const candidates = [
-			embedContainer,
-			embedContainer.closest<HTMLElement>(".internal-embed.markdown-embed"),
-		];
-		for (const candidate of candidates) {
-			if (!candidate) continue;
-			try {
-				const offset = cm.posAtDOM(candidate, -1);
-				if (typeof offset === "number" && Number.isFinite(offset)) return offset;
-			} catch {
-				// A widget can be removed between participant collection and lookup.
-			}
-		}
-
-		return null;
-	}
-
-	private navigateSearchMatch(hostView: MarkdownView, match: InlineEditSearchMatch): boolean {
-		if (match.participantId === "host") return false;
-		const embed = this.leaves
-			.getActiveEmbeds()
-			.find((candidate) => candidate.id === match.participantId && this.isSearchableEmbed(hostView, candidate));
-		if (!embed) return false;
-
-		const editor = embed.view?.editor as any;
-		const doc = editor?.cm?.state?.doc;
-		if (!editor || !doc) return false;
-
-		const from = this.getSearchPosition(editor, doc, match.from);
-		const to = this.getSearchPosition(editor, doc, match.to);
-		if (!from || !to) return false;
-
-		this.focus.setFocused(embed);
-		try {
-			editor.focus?.();
-			editor.setSelection?.(from, to);
-			editor.scrollIntoView?.({ from, to }, true);
-			return true;
-		} catch {
-			// A detached editor can disappear between match collection and navigation.
-			return false;
-		}
-	}
-
-	private getSearchPosition(editor: any, doc: any, offset: number): any | null {
-		const clamped = Math.min(Math.max(0, offset), doc.length);
-		try {
-			if (typeof editor.offsetToPos === "function") return editor.offsetToPos(clamped);
-		} catch {
-			// Fall back to the CodeMirror document line model.
-		}
-
-		try {
-			const line = doc.lineAt(clamped);
-			return { line: line.number - 1, ch: clamped - line.from };
-		} catch {
-			return null;
 		}
 	}
 
@@ -1412,34 +882,13 @@ export class InlineEditEngine {
 	private cleanupHiddenEmbeds(): void {
 		const embeds = this.leaves.getActiveEmbeds();
 		for (const embed of embeds) {
-			const editorContainer = embed.view?.containerEl;
-			const hostIsStale = Boolean(
-				embed.hostView &&
-				(!this.isLivePreviewHostView(embed.hostView) ||
-					!embed.hostView.containerEl.contains(embed.containerEl) ||
-					(editorContainer &&
-						(!embed.hostView.containerEl.contains(editorContainer) ||
-							!this.isElementShown(editorContainer))))
-			);
-			if (!this.isElementShown(embed.containerEl) || hostIsStale) {
+			if (!embed.containerEl.isConnected || !embed.containerEl.isShown()) {
 				if (this.focus.getFocused() === embed) {
 					this.focus.setFocused(null);
 				}
 				this.leaves.detach(embed);
 			}
 		}
-	}
-
-	private scheduleHiddenEmbedCleanup(): void {
-		if (!this.loaded || this.hiddenEmbedCleanupTimer !== null) return;
-
-		this.hiddenEmbedCleanupTimer = window.setTimeout(() => {
-			this.hiddenEmbedCleanupTimer = null;
-			if (this.loaded) {
-				this.cleanupHiddenEmbeds();
-				this.refreshSearchBridges();
-			}
-		}, 0);
 	}
 
 	private disconnectObserverEntry(entry: LivePreviewObserverEntry): void {
@@ -1660,7 +1109,6 @@ export class InlineEditEngine {
 			}
 
 			this.cleanupHiddenEmbeds();
-			this.refreshSearchBridges();
 		} finally {
 			entry.processing = false;
 			if (entry.pendingEmbeds.size > 0) {
@@ -1793,11 +1241,7 @@ export class InlineEditEngine {
 		return { file, subpath, range: [start, end], isRange };
 	}
 
-	private parseHeadingEmbed(
-		embedEl: HTMLElement,
-		ctx: MarkdownPostProcessorContext,
-		allowReadOnlyHeading = false
-	): ParsedInlineEmbed | null {
+	private parseHeadingEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
 		const embedLink = this.getInternalEmbedLink(embedEl);
 		if (!embedLink) return null;
 
@@ -1825,20 +1269,7 @@ export class InlineEditEngine {
 		if (!start || !end) return null;
 
 		const editableStart = start + 1;
-		if (editableStart > end) {
-			if (!allowReadOnlyHeading) return null;
-
-			return {
-				kind: "heading",
-				file,
-				subpath,
-				visibleRange: [start, end],
-				// Keep the range valid for the existing selective-editor facets;
-				// the readOnly flag makes a heading-only participant non-editable.
-				editableRange: [start, end],
-				readOnly: true,
-			};
-		}
+		if (editableStart > end) return null;
 
 		return {
 			kind: "heading",
@@ -1877,11 +1308,7 @@ export class InlineEditEngine {
 		};
 	}
 
-	private parseInlineEmbed(
-		embedEl: HTMLElement,
-		ctx: MarkdownPostProcessorContext,
-		allowReadOnlyHeading = false
-	): ParsedInlineEmbed | null {
+	private parseInlineEmbed(embedEl: HTMLElement, ctx: MarkdownPostProcessorContext): ParsedInlineEmbed | null {
 		if (!this.plugin.settings.inlineEditEnabled) return null;
 
 		if (this.plugin.settings.inlineEditBlock) {
@@ -1898,7 +1325,7 @@ export class InlineEditEngine {
 		}
 
 		if (this.plugin.settings.inlineEditHeading) {
-			const parsedHeading = this.parseHeadingEmbed(embedEl, ctx, allowReadOnlyHeading);
+			const parsedHeading = this.parseHeadingEmbed(embedEl, ctx);
 			if (parsedHeading) return parsedHeading;
 		}
 
@@ -2236,7 +1663,6 @@ export class InlineEditEngine {
 		ctx: MarkdownPostProcessorContext,
 		opts: { requireLivePreview: boolean; hostView?: MarkdownView; origin: string }
 	): Promise<void> {
-		if (!this.loaded) return;
 		if (opts.requireLivePreview && !this.isInLivePreview(embedEl)) {
 			this.debugSkip(embedEl, "skip:not-live-preview", { origin: opts.origin });
 			return;
@@ -2262,11 +1688,7 @@ export class InlineEditEngine {
 		}
 
 		const passiveLivePreviewMount = this.isPassiveLivePreviewMount(opts);
-		// Layout/settings refreshes invalidate only Live Preview mounts. File
-		// Outliner owns its own lifecycle and must not be stranded by a concurrent
-		// host-view refresh.
-		const mountGeneration = opts.requireLivePreview ? this.lifecycleGeneration : null;
-		const parsed = this.parseInlineEmbed(embedEl, ctx, passiveLivePreviewMount);
+		const parsed = this.parseInlineEmbed(embedEl, ctx);
 		if (!parsed) {
 			this.debugSkip(embedEl, "skip:parse-failed", {
 				origin: opts.origin,
@@ -2274,10 +1696,6 @@ export class InlineEditEngine {
 				alt: embedEl.getAttribute("alt"),
 				ctxSourcePath: ctx.sourcePath,
 			});
-			return;
-		}
-		if (!this.isMountStillValid(embedEl, opts, parsed, mountGeneration)) {
-			this.debugSkip(embedEl, "skip:stale-mount", { origin: opts.origin });
 			return;
 		}
 
@@ -2294,9 +1712,6 @@ export class InlineEditEngine {
 		this.pendingEmbeds.add(embedEl);
 
 		const { hostEl, cleanup } = this.prepareEmbedShell(embedEl);
-		let stopReadOnlyGuard = () => {};
-
-		let mountedEmbed: ManagedEmbedLeaf | null = null;
 
 		try {
 			this.debugLog("mount:start", {
@@ -2314,16 +1729,7 @@ export class InlineEditEngine {
 				file: parsed.file,
 				sourcePath: ctx.sourcePath,
 				subpath: parsed.subpath,
-				kind: parsed.kind,
-				readOnly: parsed.readOnly,
-				hostView: opts.hostView,
 			});
-			mountedEmbed = embed;
-
-			if (!this.isMountStillValid(embedEl, opts, parsed, mountGeneration)) {
-				this.detachMountedEmbed(embed, cleanup);
-				return;
-			}
 
 			const stopPropagation = (event: Event) => {
 				event.stopPropagation();
@@ -2340,12 +1746,6 @@ export class InlineEditEngine {
 			const stopRemeasure = this.attachHostRemeasure(hostEl, opts.hostView);
 
 			embed.restore = () => {
-				try {
-					stopReadOnlyGuard();
-				} catch {
-					// ignore
-				}
-
 				try {
 					stopRemeasure();
 				} catch {
@@ -2372,17 +1772,13 @@ export class InlineEditEngine {
 			};
 
 			if (!hostEl.isConnected) {
-				this.detachMountedEmbed(embed, cleanup);
+				this.leaves.detach(embed);
 				return;
 			}
 
 			this.leaves.reparent(hostEl, embed.view.containerEl);
 
 			const cm = (await this.waitForEditorView(embed.view)) as any;
-			if (!this.isMountStillValid(embedEl, opts, parsed, mountGeneration)) {
-				this.detachMountedEmbed(embed, cleanup);
-				return;
-			}
 			if (cm) {
 				try {
 					cm.contentDOM.contentEditable = "true";
@@ -2398,52 +1794,12 @@ export class InlineEditEngine {
 
 				this.ensureEmbedEditorExtensions(cm);
 
-				if (passiveLivePreviewMount && parsed.readOnly) {
-					try {
-						if (cm.contentDOM) cm.contentDOM.contentEditable = "false";
-					} catch {
-						// ignore
-					}
-				}
-
 				const resolvedRanges = this.resolveEmbedLineRanges(parsed, cm);
 				try {
 					(cm as any).__blpInlineEditResolvedVisibleRange = resolvedRanges.visibleRange;
 					(cm as any).__blpInlineEditResolvedEditableRange = resolvedRanges.editableRange;
 				} catch {
 					// ignore
-				}
-
-				const needsReadOnlyGuard =
-					passiveLivePreviewMount &&
-					(parsed.readOnly ||
-						resolvedRanges.visibleRange[0] !== resolvedRanges.editableRange[0] ||
-						resolvedRanges.visibleRange[1] !== resolvedRanges.editableRange[1]);
-
-				if (needsReadOnlyGuard) {
-					const guard = this.installReadOnlyEditorGuard(
-						cm,
-						Boolean(parsed.readOnly),
-						resolvedRanges.editableRange
-					);
-					if (!guard) {
-						this.detachMountedEmbed(embed, cleanup);
-						return;
-					}
-					stopReadOnlyGuard = guard;
-				}
-
-				if (passiveLivePreviewMount) {
-					try {
-						cm.dispatch({
-							filter: false,
-							effects: StateEffect.appendConfig.of(
-								parsed.readOnly ? READ_ONLY_EMBED_EXTENSIONS : READ_ONLY_RANGE_EXTENSIONS
-							),
-						});
-					} catch {
-						// The dispatch guard above still protects the read-only boundary.
-					}
 				}
 
 				const prevState = cm.state;
@@ -2498,8 +1854,7 @@ export class InlineEditEngine {
 
 			this.debugLog("mount:done", embedEl.getAttribute("src"));
 		} catch (error) {
-			if (mountedEmbed) this.detachMountedEmbed(mountedEmbed, cleanup);
-			else cleanup();
+			cleanup();
 			try {
 				(window as any).__blpInlineEditLastError = String((error as any)?.message ?? error);
 				(window as any).__blpInlineEditLastErrorStack = String((error as any)?.stack ?? "");
@@ -2509,39 +1864,6 @@ export class InlineEditEngine {
 			console.error("InlineEditEngine: failed to mount embed editor", error);
 		} finally {
 			this.pendingEmbeds.delete(embedEl);
-		}
-	}
-
-	private isMountStillValid(
-		embedEl: HTMLElement,
-		opts: { requireLivePreview: boolean; hostView?: MarkdownView; origin: string },
-		parsed: ParsedInlineEmbed,
-		generation: number | null
-	): boolean {
-		if (!this.loaded) return false;
-		if (opts.requireLivePreview && generation !== this.lifecycleGeneration) return false;
-		if (!embedEl?.isConnected || !this.isEmbedKindEnabled(parsed.kind)) return false;
-
-		if (opts.requireLivePreview) {
-			if (!this.isInLivePreview(embedEl)) return false;
-			if (!opts.hostView?.containerEl) return true;
-			return this.isLivePreviewHostView(opts.hostView) && opts.hostView.containerEl.contains(embedEl);
-		}
-
-		return Boolean(embedEl.closest(".blp-file-outliner-view"));
-	}
-
-	private detachMountedEmbed(embed: ManagedEmbedLeaf, cleanup: () => void): void {
-		try {
-			this.leaves.detach(embed);
-		} catch {
-			// Continue with shell cleanup when a detached leaf is already tearing down.
-		} finally {
-			try {
-				cleanup();
-			} catch {
-				// ignore
-			}
 		}
 	}
 }
