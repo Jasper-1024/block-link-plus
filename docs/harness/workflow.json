@@ -407,6 +407,8 @@
       "codeReviewStaleReason": "implementation was updated after code review; rerun code review",
       "codeReviewRevisionVerdict": "needs-revision",
       "codeReviewRevisionReason": "code review verdict {verdict} routes back to implementation",
+      "codeReviewRuntimeBlockedVerdict": "runtime-blocked",
+      "codeReviewRuntimeBlockedReason": "code review runtime was recovered; rerun code review",
       "codeReviewWaitVerdicts": ["human-review-required", "rejected", "accepted"]
     },
     "intake": {
