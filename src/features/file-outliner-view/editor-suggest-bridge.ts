@@ -445,5 +445,15 @@ export function triggerEditorSuggest(
 		}
 	}
 
+	// The core manager can throw while an old suggestion is open (for example, when
+	// its context has already been cleared). If no fallback suggest accepts the
+	// current editor state, explicitly clear that stale UI instead of leaving it
+	// visible until the user presses Escape.
+	try {
+		mgr.close?.();
+	} catch {
+		// ignore
+	}
+
 	return { triggered: false };
 }

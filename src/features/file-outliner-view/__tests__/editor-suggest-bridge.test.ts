@@ -1,7 +1,7 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
-import { OutlinerSuggestEditor } from "../editor-suggest-bridge";
+import { OutlinerSuggestEditor, triggerEditorSuggest } from "../editor-suggest-bridge";
 
 function createSuggestEditor(doc: string): {
 	cm: EditorView;
@@ -135,5 +135,23 @@ describe("editor-suggest-bridge", () => {
 		expect(cm.state.selection.main.head).toBe(18);
 
 		destroy();
+	});
+
+	it("closes a stale suggestion when core triggering fails and no fallback accepts it", () => {
+		const fallback = { trigger: jest.fn(() => false) };
+		const manager = {
+			trigger: jest.fn(() => {
+				throw new Error("stale suggestion context");
+			}),
+			suggests: [fallback],
+			setCurrentSuggest: jest.fn(),
+			close: jest.fn(),
+		};
+
+		const result = triggerEditorSuggest(manager, {} as OutlinerSuggestEditor, null);
+
+		expect(result).toEqual({ triggered: false });
+		expect(fallback.trigger).toHaveBeenCalledTimes(1);
+		expect(manager.close).toHaveBeenCalledTimes(1);
 	});
 });
