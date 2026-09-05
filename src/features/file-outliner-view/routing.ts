@@ -5,6 +5,7 @@ import type BlockLinkPlus from "../../main";
 import { isDetachedLeaf } from "../../shared/utils/workspaceLeafFlags";
 import { isFileOutlinerEnabledFile } from "./enable-scope";
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+import { extractZeroBasedLineFromEphemeralState } from "./source-line-navigation";
 
 export function registerFileOutlinerRouting(plugin: BlockLinkPlus): void {
 	plugin.register(
@@ -27,7 +28,8 @@ export function registerFileOutlinerRouting(plugin: BlockLinkPlus): void {
 
 								const viewState: ViewState = {
 									type: FILE_OUTLINER_VIEW_TYPE,
-									state: { file: file.path },
+									state: { file: file.path, outlinerTarget:
+										openState?.eState?.subpath || extractZeroBasedLineFromEphemeralState(openState?.eState) },
 									active: openState?.active,
 								};
 

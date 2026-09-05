@@ -11,6 +11,7 @@
 	const search = app.internalPlugins.plugins["global-search"]?.instance;
 	assert(search, "Core Search must be enabled");
 	const originalFile = app.workspace.getActiveFile();
+	const originalSearchLeaves = new Set(app.workspace.getLeavesOfType("search"));
 	const originalSearch = app.workspace.getLeavesOfType("search")[0]?.view.getState()?.query ?? "";
 	const needle = `BLP_GLOBAL_JUMP_${Date.now()}`;
 	const filePath = `${needle}.md`;
@@ -52,6 +53,7 @@
 		return { kind: "regression", scenario: "global-search-result-jump", status: "passed", evidence: { clicks }, cleanup: { status: "passed", warnings: [] } };
 	} finally {
 		search.openGlobalSearch(originalSearch);
+		for (const leaf of app.workspace.getLeavesOfType("search")) if (!originalSearchLeaves.has(leaf)) leaf.detach();
 		if (originalFile && app.vault.getAbstractFileByPath(originalFile.path)) await app.workspace.getLeaf(false).openFile(originalFile);
 		for (const leaf of app.workspace.getLeavesOfType("blp-file-outliner-view")) if (leaf.view.file?.path === filePath) leaf.detach();
 		if (file) await app.vault.delete(file);

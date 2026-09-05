@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "entries": [
     {
+      "id": "file-outliner-navigation-history",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/navigation-history.js"
+    },
+    {
       "id": "archive-outliner-editor-investigation",
       "kind": "archive",
       "area": "historical",

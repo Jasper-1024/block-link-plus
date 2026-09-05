@@ -1,4 +1,4 @@
-import { Component, Menu, TextFileView, WorkspaceLeaf } from "obsidian";
+import { Component, Menu, TextFileView, WorkspaceLeaf, type ViewStateResult } from "obsidian";
 import { DateTime } from "luxon";
 
 import { EditorSelection } from "@codemirror/state";
@@ -175,6 +175,8 @@ export class FileOutlinerView extends TextFileView {
 
 	private collapsedIds = new Set<string>();
 	private zoomStack: string[] = [];
+	private navigationTarget: string | number | null = null;
+	private historyRestoreFrame: number | null = null;
 
 	private visibleNavCache: VisibleBlockNav | null = null;
 
@@ -466,6 +468,9 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	clear(): void {
+		if (this.historyRestoreFrame !== null) cancelAnimationFrame(this.historyRestoreFrame);
+		this.historyRestoreFrame = null;
+		this.navigationTarget = null;
 		this.uninstallActiveEditorBridge();
 		this.outlinerFile = null;
 		this.blockById.clear();
@@ -682,8 +687,67 @@ export class FileOutlinerView extends TextFileView {
 		}
 	}
 
+	getState(): Record<string, unknown> {
+		return { ...super.getState(), outlinerZoom: this.getZoomRootId(), outlinerTarget: this.navigationTarget };
+	}
+
+	async setState(state: any, result: ViewStateResult): Promise<void> {
+		const oldZoom = this.getZoomRootId();
+		const oldTarget = this.navigationTarget;
+		await super.setState(state, result);
+		const zoom = this.plugin.settings.fileOutlinerZoomEnabled !== false &&
+			typeof state?.outlinerZoom === "string" && this.blockById.has(state.outlinerZoom)
+			? state.outlinerZoom : null;
+		const target = typeof state?.outlinerTarget === "string" ||
+			(typeof state?.outlinerTarget === "number" && Number.isFinite(state.outlinerTarget))
+			? state.outlinerTarget : null;
+		this.navigationTarget = target;
+		if (zoom !== this.getZoomRootId()) {
+			if (this.editingId) this.exitEditMode(this.editingId);
+			this.zoomStack = this.getAncestorPath(zoom);
+			this.visibleNavCache = null;
+			this.render({ forceRebuild: true });
+		}
+		if (oldZoom !== zoom || oldTarget !== target) result.history = true;
+	}
+
+	getEphemeralState(): Record<string, unknown> {
+		return { ...super.getEphemeralState(), outlinerView: {
+			file: this.file?.path,
+			collapsed: Array.from(this.collapsedIds),
+			scrollTop: this.contentEl.scrollTop,
+			selection: this.getActiveSelection(),
+		} };
+	}
+
 	setEphemeralState(state: any): void {
+		if (this.historyRestoreFrame !== null) cancelAnimationFrame(this.historyRestoreFrame);
+		this.historyRestoreFrame = null;
 		super.setEphemeralState(state);
+		const scene = state?.outlinerView;
+		if (scene && scene.file === this.file?.path) {
+			if (this.editingId) this.exitEditMode(this.editingId);
+			this.collapsedIds = new Set(Array.isArray(scene.collapsed)
+				? scene.collapsed.filter((id: unknown) => typeof id === "string" && this.blockById.has(id)) : []);
+			this.visibleNavCache = null;
+			this.pendingFocus = null;
+			this.pendingScrollToId = null;
+			this.render({ forceRebuild: true });
+			const selection = scene.selection;
+			if (selection && this.blockById.has(selection.id) &&
+				Number.isFinite(selection.start) && Number.isFinite(selection.end)) {
+				this.enterEditMode(selection.id, { cursorStart: selection.start, cursorEnd: selection.end, scroll: false });
+			} else this.focusOutlinerRoot();
+			if (typeof scene.revealId === "string") this.scrollToBlockId(scene.revealId);
+			else if (typeof scene.scrollTop === "number" && Number.isFinite(scene.scrollTop)) {
+				this.contentEl.scrollTop = Math.max(0, scene.scrollTop);
+				this.historyRestoreFrame = requestAnimationFrame(() => {
+					this.historyRestoreFrame = null;
+					this.contentEl.scrollTop = Math.max(0, scene.scrollTop);
+				});
+			}
+			return;
+		}
 		const id = extractCaretIdFromSubpath(state?.subpath);
 		if (id) {
 			this.pendingScrollToId = id;
@@ -1463,16 +1527,7 @@ export class FileOutlinerView extends TextFileView {
 		addCrumb({
 			text: fileCrumbText,
 			onClick: () => {
-				const focusId = this.getZoomRootId();
-				if (this.editingId) this.exitEditMode(this.editingId);
-				this.zoomStack = [];
-				this.visibleNavCache = null;
-				if (focusId && this.blockById.has(focusId)) {
-					const end = String(this.blockById.get(focusId)?.text ?? "").length;
-					this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
-					this.pendingScrollToId = focusId;
-				}
-				this.render({ forceRebuild: true });
+				this.navigateToZoom(null, this.getZoomRootId());
 			},
 		});
 
@@ -1491,16 +1546,7 @@ export class FileOutlinerView extends TextFileView {
 				onClick: isCurrent
 					? undefined
 					: () => {
-							if (this.editingId) this.exitEditMode(this.editingId);
-							this.zoomStack = this.zoomStack.slice(0, i + 1);
-							this.visibleNavCache = null;
-							const focusId = this.getZoomRootId();
-							if (focusId && this.blockById.has(focusId)) {
-								const end = String(this.blockById.get(focusId)?.text ?? "").length;
-								this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
-								this.pendingScrollToId = focusId;
-							}
-							this.render({ forceRebuild: true });
+							this.navigateToZoom(id, id);
 						},
 			});
 		}
@@ -1545,15 +1591,12 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	private zoomInto(id: string): void {
-		const current = this.getZoomRootId();
-		if (current === id) return;
-		if (!this.blockById.has(id)) return;
+		if (this.getZoomRootId() === id || !this.blockById.has(id)) return;
+		this.navigateToZoom(id, id);
+	}
 
-		this.clearBlockRangeSelection();
-		if (this.editingId) this.exitEditMode(this.editingId);
-
-		// Zoom stack is a path (root -> ... -> id), not a navigation history.
-		// This makes breadcrumbs stable even when the user zooms directly into a deep child.
+	private getAncestorPath(id: string | null): string[] {
+		// Structural ancestry is distinct from Obsidian's visit history.
 		const nextStack: string[] = [];
 		const visited = new Set<string>();
 		let cur: string | null = id;
@@ -1563,29 +1606,22 @@ export class FileOutlinerView extends TextFileView {
 			cur = this.parentById.get(cur) ?? null;
 		}
 		nextStack.reverse();
-		this.zoomStack = nextStack;
-		this.visibleNavCache = null;
-		const end = String(this.blockById.get(id)?.text ?? "").length;
-		this.pendingFocus = { id, cursorStart: end, cursorEnd: end, scroll: false };
-		this.render({ forceRebuild: true });
+		return nextStack;
+	}
+
+	private navigateToZoom(id: string | null, focusId: string | null): void {
+		const scene = this.getEphemeralState() as any;
+		const end = focusId ? String(this.blockById.get(focusId)?.text ?? "").length : 0;
+		scene.outlinerView.selection = focusId ? { id: focusId, start: end, end } : null;
+		scene.outlinerView.revealId = focusId;
+		void this.leaf.setViewState({ type: FILE_OUTLINER_VIEW_TYPE,
+			state: { ...super.getState(), outlinerZoom: id, outlinerTarget: null } }, scene);
 	}
 
 	private zoomOut(): void {
 		if (this.zoomStack.length === 0) return;
-
-		this.clearBlockRangeSelection();
-		if (this.editingId) this.exitEditMode(this.editingId);
-
-		const popped = this.zoomStack.pop();
-		this.visibleNavCache = null;
-		const focusId = this.getZoomRootId() ?? popped ?? null;
-		if (focusId) {
-			const end = String(this.blockById.get(focusId)?.text ?? "").length;
-			this.pendingFocus = { id: focusId, cursorStart: end, cursorEnd: end, scroll: false };
-			this.pendingScrollToId = focusId;
-		}
-
-		this.render({ forceRebuild: true });
+		const parent = this.zoomStack[this.zoomStack.length - 2] ?? null;
+		this.navigateToZoom(parent, parent ?? this.getZoomRootId());
 	}
 
 	private insertAfterBlock(id: string): void {
