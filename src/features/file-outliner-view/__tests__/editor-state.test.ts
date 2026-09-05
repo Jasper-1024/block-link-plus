@@ -32,6 +32,23 @@ const createTestHost = (overrides: Partial<OutlinerEditorHost> = {}): OutlinerEd
 });
 
 describe("file-outliner-view/editor-state", () => {
+	test("Enter uses a block-local newline inside a fence and the host outside it", () => {
+		const onEnter = jest.fn(() => true);
+		const host = createTestHost({ onEnter });
+		const view = new EditorView({
+			state: createOutlinerEditorState("```js\n```", { cursorStart: 5, cursorEnd: 5 }, host),
+			parent: document.createElement("div"),
+		});
+		try {
+			view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+			expect(view.state.doc.toString()).toBe("```js\n\n```");
+			expect(onEnter).not.toHaveBeenCalled();
+			view.dispatch({ selection: { anchor: view.state.doc.length } });
+			view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+			expect(onEnter).toHaveBeenCalledTimes(1);
+		} finally { view.destroy(); }
+	});
+
 	test("docChanged triggers host hooks", () => {
 		const calls = { doc: 0, suggest: 0 };
 

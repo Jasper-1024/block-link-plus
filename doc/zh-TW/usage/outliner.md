@@ -39,6 +39,15 @@ Outliner 預設不對任何檔案生效。你可以透過以下方式啟用：
 - 在普通 Markdown 視圖：右上角面板選單（More options）會出現「開啟為 Outliner / 在新分頁開啟為 Outliner」（僅對啟用檔案顯示）
 - 在 Outliner 視圖：同一個選單提供「開啟為 Markdown / 在新分頁開啟為 Markdown」
 
+## 輸入配對與程式碼區塊
+
+Outliner 遵循 Obsidian 的括號與 Markdown 自動配對設定，不需另設 BLP 開關。變更設定後，後續輸入立即生效。
+
+- 支援反引號、星號、底線配對，以及選取文字後以 Markdown 標記包裹。
+- 在 block 內獨立一行輸入三個反引號，會補上結束圍欄；可繼續輸入語言名稱，再按 Enter 寫程式碼。
+- 在圍欄內部（包含結束圍欄之前）按 Enter 或 Shift+Enter，會在目前 block 內換行。移到結束圍欄末尾之後，Enter 恢復為拆分 block。
+- 圍欄外的 Enter、Tab 與一般任務操作維持原有行為。批次插入文字不會按逐字輸入重複補圍欄。
+
 ## 協議尾行（System Tail Line）
 
 Outliner 會為每個列表塊維護一條尾行，用 Dataview inline fields + `^id` 表達：
@@ -105,4 +114,3 @@ Outliner 的區塊編輯器採用「最小橋接」模式（獨立的 CM6 Editor
 
 - `fileOutlinerEditorCommandBridgeEnabled` - 是否啟用橋接
 - `fileOutlinerEditorCommandAllowedPlugins` - 嚴格白名單（保留 `core` 以啟用 Ctrl+B 等核心格式化快捷鍵）
-

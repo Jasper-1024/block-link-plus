@@ -39,6 +39,15 @@ Outliner 默认不对任何文件生效。你可以通过以下方式启用：
 - 在普通 Markdown 视图：右上角面板菜单（More options）会出现“打开为 Outliner / 在新标签页打开为 Outliner”（仅对启用文件显示）
 - 在 Outliner 视图：同样的菜单提供“打开为 Markdown / 在新标签页打开为 Markdown”
 
+## 输入配对与代码块
+
+Outliner 遵循 Obsidian 的自动配对括号、自动配对 Markdown 设置，无需另设 BLP 开关。修改设置后，后续输入立即生效。
+
+- 支持反引号、星号、下划线的配对，以及选中文字后用 Markdown 标记包裹。
+- 在 block 内独立一行输入三个反引号，会补出结束围栏；可以继续输入语言名称，再按 Enter 写代码。
+- 在代码围栏内部（包括结束围栏之前）按 Enter 或 Shift+Enter，会在当前 block 内换行。移到结束围栏末尾之后，Enter 恢复为拆分 block。
+- 围栏之外的 Enter、Tab 和任务操作保持原有行为。批量插入文本不会按逐字符输入重复补围栏。
+
 ## 协议尾行（System Tail Line）
 
 Outliner 会为每个列表块维护一条尾行，用 Dataview inline fields + `^id` 表达：

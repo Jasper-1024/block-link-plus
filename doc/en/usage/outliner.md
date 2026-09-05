@@ -39,6 +39,15 @@ After it’s enabled, the plugin does two things:
 - In the normal Markdown view: the pane menu (More options) shows “Open as Outliner / Open as Outliner in new tab” (for enabled files only)
 - In the Outliner view: the same menu shows “Open as Markdown / Open as Markdown in new tab”
 
+## Input pairing and fenced code
+
+Outliner follows Obsidian's bracket and Markdown auto-pair settings; no separate BLP switch is needed. Changes apply to subsequent input immediately.
+
+- Backticks, asterisks, and underscores pair automatically; typing Markdown delimiters around selected text wraps the selection.
+- Type three backticks on their own line inside a block to add a closing fence. You can then type a language name and press Enter to start the code.
+- Enter or Shift+Enter inside the fence, including immediately before its closing delimiter, inserts a newline in the same block. After the closing delimiter, Enter resumes structural block splitting.
+- Enter outside code, Tab, and ordinary task operations retain their existing behavior. Bulk text insertion does not repeatedly complete fences character by character.
+
 ## System tail line
 
 Outliner maintains a tail line for every list block using Dataview inline fields + `^id`:
@@ -105,4 +114,3 @@ Settings (Settings → Outliner):
 
 - `fileOutlinerEditorCommandBridgeEnabled` - enable/disable the bridge
 - `fileOutlinerEditorCommandAllowedPlugins` - strict allowlist (keep `core` for core formatting shortcuts like Ctrl+B)
-

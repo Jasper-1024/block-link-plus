@@ -1053,6 +1053,10 @@ export class FileOutlinerView extends TextFileView {
 
 	private createEditorState(doc: string, sel: { cursorStart: number; cursorEnd: number }) {
 		return createOutlinerEditorState(doc, sel, {
+			getPairingSettings: () => ({
+				brackets: (this.app.vault as any).getConfig?.("autoPairBrackets") !== false,
+				markdown: (this.app.vault as any).getConfig?.("autoPairMarkdown") !== false,
+			}),
 			isSyncSuppressed: () => this.suppressEditorSync,
 			isArrowNavDispatching: () => this.arrowNavDispatching,
 			shouldPreserveArrowNavGoalOnce: () => this.preserveArrowNavGoalOnce,

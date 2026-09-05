@@ -4,8 +4,10 @@ import { basicSetup } from "@codemirror/basic-setup";
 
 import { isPlainTextPasteShortcut } from "./editor-shortcuts";
 import type { ArrowNavDirection } from "./arrow-navigation";
+import { markdownInputExtensions, insertMarkdownNewline, type MarkdownPairingSettings } from "./markdown-input";
 
 export type OutlinerEditorStateHost = {
+	getPairingSettings?: () => MarkdownPairingSettings;
 	isSyncSuppressed: () => boolean;
 	isArrowNavDispatching: () => boolean;
 	shouldPreserveArrowNavGoalOnce: () => boolean;
@@ -44,6 +46,7 @@ export function createOutlinerEditorState(
 		selection: { anchor, head },
 		extensions: [
 			basicSetup,
+			markdownInputExtensions(host.getPairingSettings ?? (() => ({ brackets: true, markdown: true }))),
 			EditorView.lineWrapping,
 			EditorView.theme({
 				"&": {
@@ -86,11 +89,11 @@ export function createOutlinerEditorState(
 					},
 					{
 						key: "Shift-Enter",
-						run: (view) => host.onSoftEnter(view),
+						run: (view) => insertMarkdownNewline(view) || host.onSoftEnter(view),
 					},
 					{
 						key: "Enter",
-						run: () => host.onEnter(),
+						run: (view) => insertMarkdownNewline(view) || host.onEnter(),
 					},
 					{
 						key: "Escape",
