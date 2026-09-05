@@ -172,6 +172,27 @@ const WHATS_NEW_V2_0_20: Record<ObsidianLanguage, string[]> = {
 	]
 };
 
+const WHATS_NEW_V2_0_21: Record<ObsidianLanguage, string[]> = {
+	"zh": [
+		"Outliner：支持 Markdown 自动配对和代码围栏补全，代码块内换行不会打断当前 block 的编辑。",
+		"Outliner：点击全局搜索结果可定位到具体 block，不再只跳到文件开头。",
+		"Outliner：支持 Obsidian 原生前进／返回，恢复之前的 Zoom、折叠状态和滚动位置。",
+		"Outliner：新增 Ctrl/Cmd+F 页面内搜索，包含嵌入块；切换结果只滚动和高亮，不进入编辑状态。"
+	],
+	"en": [
+		"Outliner: Markdown auto-pairing and code-fence completion keep code editing within the current block.",
+		"Outliner: global search results now navigate to the matching block instead of the file start.",
+		"Outliner: native Back/Forward restores Zoom, folded blocks, and scroll position.",
+		"Outliner: Ctrl/Cmd+F Find searches the current outline, including embedded blocks; navigation scrolls and highlights without entering edit mode."
+	],
+	"zh-TW": [
+		"Outliner：支援 Markdown 自動配對與程式碼圍欄補全，程式碼區塊內換行不會打斷目前 block 的編輯。",
+		"Outliner：點擊全域搜尋結果可定位到具體 block，不再只跳到檔案開頭。",
+		"Outliner：支援 Obsidian 原生前進／返回，恢復先前的 Zoom、摺疊狀態與捲動位置。",
+		"Outliner：新增 Ctrl/Cmd+F 頁面內搜尋，包含內嵌區塊；切換結果只捲動和高亮，不進入編輯狀態。"
+	]
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -225,6 +246,10 @@ export class WhatsNewModal extends Modal {
 	}
 
 	private getWhatsNewItems(): string[] {
+		if (this.currentVersion === "2.0.21") {
+			return WHATS_NEW_V2_0_21[i18n.lang] ?? WHATS_NEW_V2_0_21.en;
+		}
+
 		if (this.currentVersion === "2.0.20") {
 			return WHATS_NEW_V2_0_20[i18n.lang] ?? WHATS_NEW_V2_0_20.en;
 		}

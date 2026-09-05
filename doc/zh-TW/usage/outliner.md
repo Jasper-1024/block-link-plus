@@ -48,6 +48,14 @@ Outliner 遵循 Obsidian 的括號與 Markdown 自動配對設定，不需另設
 - 在圍欄內部（包含結束圍欄之前）按 Enter 或 Shift+Enter，會在目前 block 內換行。移到結束圍欄末尾之後，Enter 恢復為拆分 block。
 - 圍欄外的 Enter、Tab 與一般任務操作維持原有行為。批次插入文字不會按逐字輸入重複補圍欄。
 
+## 搜尋與導航
+
+全域搜尋結果可直接定位到匹配的 block。Obsidian 原生前進／返回會恢復先前的檔案、Zoom、摺疊狀態與捲動位置；麵包屑仍用於返回祖先層級，不等同於瀏覽歷史。
+
+按 Ctrl+F（macOS：Cmd+F）搜尋目前大綱的顯示內容，包含內嵌區塊、摺疊區塊與目前 Zoom 範圍外的區塊。Enter / Shift+Enter 或箭頭按鈕切換結果，不進入編輯狀態，也不修改來源檔案。
+
+Esc 或關閉按鈕恢復搜尋前的場景；點擊正文則退出搜尋並留在目前位置。重複內嵌分別計數，區塊引用只搜尋其顯示範圍。目前提供不區分大小寫的文字查找，不提供替換。
+
 ## 協議尾行（System Tail Line）
 
 Outliner 會為每個列表塊維護一條尾行，用 Dataview inline fields + `^id` 表達：

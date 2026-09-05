@@ -48,6 +48,14 @@ Outliner follows Obsidian's bracket and Markdown auto-pair settings; no separate
 - Enter or Shift+Enter inside the fence, including immediately before its closing delimiter, inserts a newline in the same block. After the closing delimiter, Enter resumes structural block splitting.
 - Enter outside code, Tab, and ordinary task operations retain their existing behavior. Bulk text insertion does not repeatedly complete fences character by character.
 
+## Search and navigation
+
+Global search results open the matching block. Native Obsidian Back/Forward restores the previous file, Zoom, folded blocks, and scroll position; breadcrumbs still navigate ancestors rather than browsing history.
+
+Press Ctrl+F (macOS: Cmd+F) to search the current outline's displayed content, including embedded blocks, folded blocks, and blocks outside the current Zoom. Enter / Shift+Enter or the arrow buttons navigate without entering edit mode or modifying source files.
+
+Escape or Close restores the previous scene. Clicking content exits search at the current location. Repeated embeds count separately; a block reference searches only its displayed range. Find is case-insensitive and does not offer replacement.
+
 ## System tail line
 
 Outliner maintains a tail line for every list block using Dataview inline fields + `^id`:

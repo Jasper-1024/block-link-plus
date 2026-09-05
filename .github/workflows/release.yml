@@ -52,6 +52,7 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
+          body_path: docs/releases/${{ github.ref_name }}.md
           files: |
             main.js
             manifest.json

@@ -4,7 +4,14 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.20 (Current)
+## v2.0.21 (Current)
+
+- Outliner: Markdown auto-pairing and code-fence completion keep code editing within the current block.
+- Outliner: global search results now navigate to the matching block instead of the file start.
+- Outliner: native Back/Forward restores Zoom, folded blocks, and scroll position.
+- Outliner: Ctrl/Cmd+F Find searches the current outline, including embedded blocks; navigation scrolls and highlights without entering edit mode.
+
+## v2.0.20
 
 - Live Preview: Find now includes content in Inline Edit embeds. Next/previous results scroll and highlight without entering edit mode.
 - Outliner: completion popups now close when the cursor leaves the link or its opening brackets are removed, including with other suggestion plugins enabled.
