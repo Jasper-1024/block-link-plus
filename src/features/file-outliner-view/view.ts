@@ -36,6 +36,7 @@ import {
 } from "./protocol";
 
 import { FILE_OUTLINER_VIEW_TYPE } from "./constants";
+import { OutlinerPageSearch } from "./page-search";
 import { getFileOutlinerPaneMenuLabels } from "./pane-menu-labels";
 import { OutlinerDisplayController } from "./display-controller";
 import { OutlinerSuggestEditor, triggerEditorSuggest } from "./editor-suggest-bridge";
@@ -177,6 +178,8 @@ export class FileOutlinerView extends TextFileView {
 	private zoomStack: string[] = [];
 	private navigationTarget: string | number | null = null;
 	private historyRestoreFrame: number | null = null;
+	private pageSearch: OutlinerPageSearch | null = null;
+	private searchScene: { zoom: string | null; ephemeral: Record<string, unknown> } | null = null;
 
 	private visibleNavCache: VisibleBlockNav | null = null;
 
@@ -250,6 +253,7 @@ export class FileOutlinerView extends TextFileView {
 			debugLog: (scope, err) => this.debugLog(scope, err),
 		});
 		this.contentEl.addClass("blp-file-outliner-view");
+		this.register(() => this.closeSearch(false));
 		this.syncFeatureToggles();
 		this.registerDomEvent(this.contentEl, "scroll", () => this.display.scheduleVisibleBlockRefresh());
 		// Keep the editor-command bridge scoped to the active leaf.
@@ -468,6 +472,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	clear(): void {
+		this.closeSearch(false);
 		if (this.historyRestoreFrame !== null) cancelAnimationFrame(this.historyRestoreFrame);
 		this.historyRestoreFrame = null;
 		this.navigationTarget = null;
@@ -687,11 +692,58 @@ export class FileOutlinerView extends TextFileView {
 		}
 	}
 
+	/** Native Obsidian Find command detects this view-local search entry point. */
+	showSearch(_replace = false): void {
+		if (!this.outlinerFile) return;
+		if (this.pageSearch) { this.pageSearch.focus(); return; }
+		this.searchScene = { zoom: this.getZoomRootId(), ephemeral: this.getEphemeralState() };
+		if (this.editingId) this.exitEditMode(this.editingId);
+		this.clearBlockRangeSelection();
+		// Search the whole file, while retaining the prior zoom in searchScene.
+		this.zoomStack = [];
+		this.visibleNavCache = null;
+		this.render({ forceRebuild: true });
+		this.pageSearch = new OutlinerPageSearch({
+			container: this.contentEl,
+			getBlockIds: () => Array.from(this.blockById.keys()),
+			prepareBlock: id => this.display.renderBlockDisplay(id),
+			getDisplay: id => this.dom.getDisplayEl(id),
+			getRow: id => this.dom.getBlockEl(id),
+			reveal: id => {
+				for (const ancestor of this.getAncestorPath(id).slice(0, -1)) this.setCollapsed(ancestor, false);
+				const zoom = this.getZoomRootId();
+				if (zoom && !this.isDescendantOrSelf(id, zoom)) {
+					this.zoomStack = [];
+					this.visibleNavCache = null;
+					this.render({ forceRebuild: true });
+				}
+				this.dom.getBlockEl(id)?.scrollIntoView({ block: "center" });
+				this.display.scheduleVisibleBlockRefresh();
+			},
+			close: () => this.closeSearch(true),
+		});
+		this.pageSearch.focus();
+	}
+
+	private closeSearch(restore: boolean): void {
+		if (!this.pageSearch) return;
+		this.pageSearch.destroy();
+		this.pageSearch = null;
+		const scene = this.searchScene;
+		this.searchScene = null;
+		if (restore && scene) {
+			this.zoomStack = this.getAncestorPath(scene.zoom);
+			this.visibleNavCache = null;
+			this.setEphemeralState(scene.ephemeral);
+		}
+	}
+
 	getState(): Record<string, unknown> {
-		return { ...super.getState(), outlinerZoom: this.getZoomRootId(), outlinerTarget: this.navigationTarget };
+		return { ...super.getState(), outlinerZoom: this.searchScene ? this.searchScene.zoom : this.getZoomRootId(), outlinerTarget: this.navigationTarget };
 	}
 
 	async setState(state: any, result: ViewStateResult): Promise<void> {
+		this.closeSearch(false);
 		const oldZoom = this.getZoomRootId();
 		const oldTarget = this.navigationTarget;
 		await super.setState(state, result);
@@ -712,6 +764,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	getEphemeralState(): Record<string, unknown> {
+		if (this.searchScene) return this.searchScene.ephemeral;
 		return { ...super.getEphemeralState(), outlinerView: {
 			file: this.file?.path,
 			collapsed: Array.from(this.collapsedIds),
@@ -766,6 +819,7 @@ export class FileOutlinerView extends TextFileView {
 	}
 
 	setViewData(data: string, clear: boolean): void {
+		this.closeSearch(false);
 		if (clear) this.clear();
 
 		const idPrefix = this.plugin.settings.enable_prefix ? this.plugin.settings.id_prefix : "";
@@ -1037,6 +1091,8 @@ export class FileOutlinerView extends TextFileView {
 
 	private onOutlinerRootPointerDownCapture(evt: PointerEvent): void {
 		if (evt.button !== 0) return;
+		// An explicit click into content ends find mode at the found location.
+		this.closeSearch(false);
 
 		this.blockRangeDrag = null;
 		if (this.blockRangeSelection) this.clearBlockRangeSelection();

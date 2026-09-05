@@ -129,6 +129,14 @@ Outliner 的块编辑器采用“最小桥接”模式（独立的 CM6 EditorVie
 - `fileOutlinerEditorCommandBridgeEnabled` - 是否启用桥接
 - `fileOutlinerEditorCommandAllowedPlugins` - 严格白名单（想要 Ctrl+B 等 core 格式化快捷键，请保留 `core`）
 
+## 页面内搜索
+
+在 Outliner 中按 Ctrl+F（macOS：Cmd+F）搜索当前文件的显示内容，包括嵌入块。Enter / Shift+Enter 或搜索栏箭头切换结果，不进入块编辑态，也不修改引用源文件。
+
+搜索会包含折叠块和当前 Zoom 范围外的块；命中时展开对应路径。Esc 或关闭按钮恢复搜索前的 Zoom、折叠与光标位置。点击正文则退出搜索并留在当前位置。
+
+同一内容嵌入两次会分别计入结果；块引用只搜索引用所展示的范围，不搜索源文件的其他段落。当前提供不区分大小写的文字查找，不提供替换。
+
 ## blp-view（Query/View）
 
 `blp-view` 是一个 Markdown 代码块（需要 Dataview 插件）：

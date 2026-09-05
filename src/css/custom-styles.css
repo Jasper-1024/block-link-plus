@@ -72,6 +72,33 @@
 }
 
 /* When "emphasis line" is disabled, keep the connector line muted (still present, but not accent-colored). */
+.blp-file-outliner-view .blp-outliner-page-search {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	padding: var(--size-4-2);
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.blp-file-outliner-view .blp-outliner-page-search .search-input-container {
+	flex: 1;
+	min-width: 0;
+}
+
+.blp-file-outliner-view .blp-outliner-search-count {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	white-space: nowrap;
+}
+
+.blp-file-outliner-view .is-blp-search-active > .block-main-container {
+	box-shadow: inset 2px 0 var(--interactive-accent);
+}
+
 .blp-file-outliner-view:not(.blp-outliner-emphasis-line-enabled) {
 	--blp-outliner-emphasis-color: var(--ls-guideline-color);
 }

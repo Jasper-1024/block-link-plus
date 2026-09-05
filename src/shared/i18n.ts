@@ -312,6 +312,7 @@ class T {
             moveActiveBlockUp: "Outliner: Move active block up",
             moveActiveBlockDown: "Outliner: Move active block down",
           },
+          search: { placeholder: "Search this outline…", previous: "Previous match", next: "Next match", close: "Close search" },
           contextMenu: {
             copyBlockReference: "Copy block reference",
             copyBlockEmbed: "Copy block embed",
@@ -882,6 +883,7 @@ class T {
             moveActiveBlockUp: "Outliner：向上移动当前块",
             moveActiveBlockDown: "Outliner：向下移动当前块",
           },
+          search: { placeholder: "搜索当前大纲…", previous: "上一个匹配", next: "下一个匹配", close: "关闭搜索" },
           contextMenu: {
             copyBlockReference: "复制块引用",
             copyBlockEmbed: "复制块嵌入",
@@ -1451,6 +1453,7 @@ class T {
             moveActiveBlockUp: "Outliner：向上移動目前區塊",
             moveActiveBlockDown: "Outliner：向下移動目前區塊",
           },
+          search: { placeholder: "搜尋目前大綱…", previous: "上一個相符項目", next: "下一個相符項目", close: "關閉搜尋" },
           contextMenu: {
             copyBlockReference: "複製區塊引用",
             copyBlockEmbed: "複製區塊嵌入",

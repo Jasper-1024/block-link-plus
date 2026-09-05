@@ -191,7 +191,7 @@ export class OutlinerDisplayController {
 		display.replaceChildren(row);
 	}
 
-	public renderBlockDisplay(id: string): void {
+	public async renderBlockDisplay(id: string): Promise<void> {
 		const b = this.host.getBlock(id);
 		if (!b) return;
 		if (!this.host.getDisplayEl(id)) return;
@@ -207,7 +207,7 @@ export class OutlinerDisplayController {
 		tmp.classList.add("markdown-rendered");
 		const component = this.host.addChildComponent();
 
-		void MarkdownRenderer.render(this.host.app, md.sanitized, tmp, sourcePath, component)
+		return MarkdownRenderer.render(this.host.app, md.sanitized, tmp, sourcePath, component)
 			.then(() => {
 				// If another render happened since we started, discard this one.
 				if (this.renderSeqById.get(id) !== seq) {
