@@ -164,6 +164,12 @@
       "path": "scripts/cdp-snippets/regression/file-outliner/search-line-jump.js"
     },
     {
+      "id": "file-outliner-global-search-result-jump",
+      "kind": "regression",
+      "area": "file-outliner",
+      "path": "scripts/cdp-snippets/regression/file-outliner/global-search-result-jump.js"
+    },
+    {
       "id": "file-outliner-tab-shift-tab-order-regression",
       "kind": "regression",
       "area": "file-outliner",

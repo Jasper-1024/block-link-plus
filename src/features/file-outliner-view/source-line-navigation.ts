@@ -55,9 +55,23 @@ export function extractZeroBasedLineFromEphemeralState(state: unknown): number |
 	const rawState = state as {
 		line?: unknown;
 		startLoc?: { line?: unknown };
+		match?: { content?: unknown; matches?: unknown };
 	};
 	const line = rawState.line ?? rawState.startLoc?.line;
-	if (typeof line !== "number" || !Number.isFinite(line)) return null;
+	if (line !== undefined && line !== null) {
+		return typeof line === "number" && Number.isFinite(line) ? Math.max(0, Math.floor(line)) : null;
+	}
 
-	return Math.max(0, Math.floor(line));
+	// Global Search supplies UTF-16 offsets into its source snapshot, not line /
+	// startLoc. Use that same snapshot (including frontmatter and system lines).
+	const content = rawState.match?.content;
+	const matches = rawState.match?.matches;
+	if (typeof content !== "string" || !Array.isArray(matches) || !Array.isArray(matches[0])) return null;
+	const [start, end] = matches[0];
+	if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start || end > content.length) return null;
+	let sourceLine = 0;
+	for (let newline = content.indexOf("\n"); newline >= 0 && newline < start; newline = content.indexOf("\n", newline + 1)) {
+		sourceLine++;
+	}
+	return sourceLine;
 }
