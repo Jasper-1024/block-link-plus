@@ -4,7 +4,17 @@ Version history and new features for Block Link Plus.
 
 ## Unreleased
 
-## v2.0.17 (Current)
+## v2.0.20 (Current)
+
+- Live Preview: Find now includes content in Inline Edit embeds. Next/previous results scroll and highlight without entering edit mode.
+- Outliner: completion popups now close when the cursor leaves the link or its opening brackets are removed, including with other suggestion plugins enabled.
+- Updated the in-app release notes and usage guide.
+
+## v2.0.18–v2.0.19
+
+The initial embedded Find and completion changes were withdrawn for further fixes. Use 2.0.20 for the corrected implementation.
+
+## v2.0.17
 
 - Improved: Outliner can move the active block subtree with `Alt+ArrowUp` / `Alt+ArrowDown`. Choose same-level only (default) or cross-level align in settings.
 - Fixed: completing a `[[` suggestion in Outliner now leaves the caret at the correct post-insert position.

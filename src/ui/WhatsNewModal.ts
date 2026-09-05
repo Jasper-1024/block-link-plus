@@ -154,6 +154,24 @@ const WHATS_NEW_V2_0_17: Record<ObsidianLanguage, string[]> = {
 	],
 };
 
+const WHATS_NEW_V2_0_20: Record<ObsidianLanguage, string[]> = {
+	"en": [
+		"Live Preview: Find now includes content in Inline Edit embeds. Next/previous results scroll and highlight without entering edit mode.",
+		"Outliner: completion popups now close when the cursor leaves the link or its opening brackets are removed, including with other suggestion plugins enabled.",
+		"Updated the in-app release notes and usage guide."
+	],
+	"zh": [
+		"Live Preview：查找现在包含内联编辑嵌入的内容；切换搜索结果只滚动和高亮，不会进入编辑状态。",
+		"Outliner：光标离开链接或删除起始括号时，补全弹窗会正确关闭，兼容其他建议插件。",
+		"同步更新插件内升级说明和使用文档。"
+	],
+	"zh-TW": [
+		"Live Preview：搜尋現在包含內嵌編輯的內容；切換搜尋結果只捲動和高亮，不會進入編輯狀態。",
+		"Outliner：游標離開連結或刪除起始括號時，補全彈窗會正確關閉，相容其他建議外掛。",
+		"同步更新外掛內升級說明和使用文件。"
+	]
+};
+
 export class WhatsNewModal extends Modal {
 	private readonly currentVersion: string;
 	private readonly previousVersion: string;
@@ -207,6 +225,10 @@ export class WhatsNewModal extends Modal {
 	}
 
 	private getWhatsNewItems(): string[] {
+		if (this.currentVersion === "2.0.20") {
+			return WHATS_NEW_V2_0_20[i18n.lang] ?? WHATS_NEW_V2_0_20.en;
+		}
+
 		if (this.currentVersion === "1.8.0") {
 			return i18n.whatsNew.v1_8_0;
 		}
